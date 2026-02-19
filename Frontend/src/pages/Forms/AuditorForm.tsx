@@ -1,0 +1,420 @@
+import { useState, useEffect } from "react";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import ComponentCard from "../../components/common/ComponentCard";
+
+import Input from "../../components/form/input/InputField";
+import FileInput from "../../components/form/input/FileInput";
+import Label from "../../components/form/Label";
+import Button from "../../components/ui/button/Button";
+
+import { Checkbox } from "antd";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
+import Badge from "../../components/ui/badge/Badge";
+
+/* =========================
+   CONSTANTS
+========================= */
+const emailRegex =
+  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+const ALLOWED_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/jpeg",
+  "image/png",
+];
+
+const dateInputClass =
+  "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
+
+export default function Auditor() {
+  /* =========================
+     CREATE / UPDATE FORM STATE
+  ========================= */
+  const [formData, setFormData] = useState({
+    name: "",
+    company: "",
+    shortName: "",
+    hoAddress: "",
+    mobile: "",
+    email: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  const [documents, setDocuments] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  /* ✅ TRACK UPDATE MODE (ADDED) */
+  const [editingId, setEditingId] = useState(null);
+
+  /* =========================
+     TABLE STATE
+  ========================= */
+  const [tableData, setTableData] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  /* =========================
+     FETCH
+  ========================= */
+  const fetchAuditors = async () => {
+    const res = await fetch("http://127.0.0.1:8000/api/auditor/list/");
+    const data = await res.json();
+    setTableData(data);
+  };
+
+  useEffect(() => {
+    fetchAuditors();
+  }, []);
+
+  /* =========================
+     INPUT HANDLER
+  ========================= */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((p) => ({ ...p, [name]: value }));
+  };
+
+  /* =========================
+     FILE HANDLERS
+  ========================= */
+  const handleFiles = (files) => {
+    const valid = [];
+    for (const file of Array.from(files)) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        alert(`Unsupported file: ${file.name}`);
+        return;
+      }
+      if (documents.some((d) => d.name === file.name)) {
+        alert(`Already added: ${file.name}`);
+        return;
+      }
+      valid.push(file);
+    }
+    setDocuments((p) => [...p, ...valid]);
+  };
+
+  const removeFile = (name) =>
+    setDocuments((p) => p.filter((f) => f.name !== name));
+
+  /* =========================
+     CREATE / UPDATE SUBMIT
+  ========================= */
+  const handleSubmit = async () => {
+    if (Object.values(formData).some((v) => !v)) {
+      alert("All fields are required");
+      return;
+    }
+
+    if (new Date(formData.startDate) > new Date(formData.endDate)) {
+      alert("Start date cannot be after end date");
+      return;
+    }
+
+    if (!editingId && !documents.length) {
+      alert("At least one document is required");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      if (editingId) {
+        /* ✅ UPDATE */
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/auditor/${editingId}/update/`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: formData.name,
+              company: formData.company,
+              short_name: formData.shortName,
+              ho_address: formData.hoAddress,
+              mobile: formData.mobile,
+              email: formData.email,
+              start_date: formData.startDate,
+              end_date: formData.endDate,
+            }),
+          }
+        );
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Update failed");
+          return;
+        }
+
+        alert("Auditor updated successfully");
+      } else {
+        /* ✅ CREATE */
+        const payload = new FormData();
+        payload.append("name", formData.name);
+        payload.append("company", formData.company);
+        payload.append("short_name", formData.shortName);
+        payload.append("ho_address", formData.hoAddress);
+        payload.append("mobile", formData.mobile);
+        payload.append("email", formData.email);
+        payload.append("start_date", formData.startDate);
+        payload.append("end_date", formData.endDate);
+
+        documents.forEach((d) => payload.append("documents", d));
+
+        const res = await fetch(
+          "http://127.0.0.1:8000/api/auditor/create/",
+          { method: "POST", body: payload }
+        );
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "Creation failed");
+          return;
+        }
+
+        alert(data.message);
+      }
+
+      /* ✅ RESET */
+      setEditingId(null);
+      setSelectedRows([]);
+      setDocuments([]);
+      setFormData({
+        name: "",
+        company: "",
+        shortName: "",
+        hoAddress: "",
+        mobile: "",
+        email: "",
+        startDate: "",
+        endDate: "",
+      });
+      fetchAuditors();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  /* =========================
+     BULK ACTIONS
+  ========================= */
+  const handleEditSelected = () => {
+    if (selectedRows.length !== 1) {
+      alert("Select exactly one auditor to edit");
+      return;
+    }
+    const a = tableData.find((x) => x.id === selectedRows[0]);
+    setEditingId(a.id);
+    setFormData({
+      name: a.name,
+      company: a.company,
+      shortName: a.short_name,
+      hoAddress: a.ho_address,
+      mobile: a.mobile,
+      email: a.email,
+      startDate: a.start_date,
+      endDate: a.end_date,
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedRows.length) return;
+    if (!confirm("Delete selected auditors?")) return;
+
+    await Promise.all(
+      selectedRows.map((id) =>
+        fetch(`http://127.0.0.1:8000/api/auditor/${id}/delete/`, {
+          method: "DELETE",
+        })
+      )
+    );
+
+    setSelectedRows([]);
+    fetchAuditors();
+  };
+
+  const handleExport = () => {
+    if (!tableData.length) return;
+
+    const ws = XLSX.utils.json_to_sheet(
+      tableData.map((a) => ({
+        Company: a.company,
+        ShortName: a.short_name,
+        Email: a.email,
+        Mobile: a.mobile,
+        StartDate: a.start_date,
+        EndDate: a.end_date,
+        Status: "Active",
+      }))
+    );
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Auditors");
+
+    saveAs(
+      new Blob([XLSX.write(wb, { bookType: "xlsx", type: "array" })]),
+      "auditors.xlsx"
+    );
+  };
+
+  /* =========================
+     RENDER
+  ========================= */
+  return (
+    <div>
+      <PageMeta title="Auditor | HR Compliance" />
+      <PageBreadcrumb pageTitle="Manage Auditor" />
+
+      {/* ================= FORM ================= */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
+        <ComponentCard title="Auditor Details">
+          <div className="space-y-4">
+            <Label>Name</Label>
+            <Input name="name" value={formData.name} onChange={handleChange} />
+
+            <Label>Company</Label>
+            <Input name="company" value={formData.company} onChange={handleChange} />
+
+            <Label>Short Name</Label>
+            <Input name="shortName" value={formData.shortName} onChange={handleChange} />
+
+            <Label>Work Location</Label>
+            <Input name="hoAddress" value={formData.hoAddress} onChange={handleChange} />
+
+            <Label>Mobile</Label>
+            <Input name="mobile" value={formData.mobile} onChange={handleChange} />
+
+            <Label>Email</Label>
+            <Input name="email" value={formData.email} onChange={handleChange} />
+
+            <Label>Start Date</Label>
+            <input type="date" className={dateInputClass}
+              value={formData.startDate}
+              onChange={(e) => handleChange({ target: { name: "startDate", value: e.target.value } })}
+            />
+
+            <Label>End Date</Label>
+            <input type="date" className={dateInputClass}
+              value={formData.endDate}
+              onChange={(e) => handleChange({ target: { name: "endDate", value: e.target.value } })}
+            />
+          </div>
+        </ComponentCard>
+
+        <div className="space-y-6">
+          <ComponentCard title="Documents">
+            <FileInput multiple onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+            {documents.map((f) => (
+              <div key={f.name} className="flex justify-between text-sm mt-2">
+                <span className="truncate">📄 {f.name}</span>
+                <button onClick={() => removeFile(f.name)} className="text-red-500">×</button>
+              </div>
+            ))}
+          </ComponentCard>
+
+          <ComponentCard>
+            <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
+              {submitting
+                ? editingId
+                  ? "Updating..."
+                  : "Creating..."
+                : editingId
+                ? "Update Auditor"
+                : "Create Auditor"}
+            </Button>
+          </ComponentCard>
+        </div>
+      </div>
+
+      {/* ================= TABLE ================= */}
+      <div className="mt-10">
+        <ComponentCard title="Auditors">
+          <div className="mb-5 flex justify-between">
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleExport}>Export to Excel</Button>
+              <Button size="sm" variant="outline" disabled={!selectedRows.length} onClick={handleBulkDelete}>
+                Delete Selected
+              </Button>
+              <Button size="sm" variant="outline" disabled={selectedRows.length !== 1} onClick={handleEditSelected}>
+                Edit Selected
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableCell isHeader className="w-12 px-6 py-4" />
+                  {["Name","Company","Shortname","Work Location","Mobile","Email","Start Date", "End Date"].map((h) => (
+                    <TableCell key={h} isHeader className="px-6 py-4 text-xs font-semibold uppercase text-gray-500 text-center">
+                      {h}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {tableData.map((a) => (
+                  <TableRow key={a.id} className="border-t hover:bg-gray-50">
+                    <TableCell className="px-6 py-5 text-center">
+                      <Checkbox
+                        checked={selectedRows.includes(a.id)}
+                        onChange={(e) =>
+                          setSelectedRows((p) =>
+                            e.target.checked ? [...p, a.id] : p.filter((x) => x !== a.id)
+                          )
+                        }
+                      />
+                    </TableCell>
+
+                    <TableCell className="px-6 py-5 text-center">{a.name}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">{a.company}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">{a.short_name}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">{a.ho_address}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">{a.mobile}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">{a.email}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">{a.start_date}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">{a.end_date}</TableCell>
+
+                    <TableCell className="px-6 py-5 text-center"><Badge color="success">Active</Badge></TableCell>
+                    <TableCell className="px-6 py-5 text-center">
+                      <button
+                        className="bg-blue-50 px-3 py-1 rounded-md text-blue-700"
+                        onClick={() => {
+                          setEditingId(a.id);
+                          setFormData({
+                            name: a.name,
+                            company: a.company,
+                            shortName: a.short_name,
+                            hoAddress: a.ho_address,
+                            mobile: a.mobile,
+                            email: a.email,
+                            startDate: a.start_date,
+                            endDate: a.end_date,
+                          });
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </ComponentCard>
+      </div>
+    </div>
+  );
+}
