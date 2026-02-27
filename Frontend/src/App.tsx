@@ -33,7 +33,13 @@ import ResetPassword from "./pages/AuthPages/ResetPassword";
 import ResetPasswordExpired from "./pages/AuthPages/ResetPasswordExpired";
 
 import AuditChecklist from "./pages/Forms/AuditChecklist";
+import "antd/dist/reset.css";
+
 import Documents from "./pages/Forms/Documents";
+import VendorMapping from "./pages/Forms/VendorMapping";
+
+// ✅ NEW IMPORT
+import VendorCompliancePage from "./pages/VendorCompliancePage";
 
 export default function App() {
   useEffect(() => {
@@ -45,10 +51,9 @@ export default function App() {
       <ScrollToTop />
 
       <Routes>
-        {/* ROOT */}
         <Route path="/" element={<Navigate to="/TailAdmin/" replace />} />
 
-        {/* AUTH ROUTES */}
+        {/* AUTH */}
         <Route
           path="/TailAdmin/signin"
           element={
@@ -59,7 +64,6 @@ export default function App() {
         />
         <Route path="/TailAdmin/signup" element={<SignUp />} />
 
-        {/* RESET PASSWORD */}
         <Route
           path="/TailAdmin/reset-password/:uid/:token"
           element={<ResetPassword />}
@@ -69,7 +73,7 @@ export default function App() {
           element={<ResetPasswordExpired />}
         />
 
-        {/* ================= MAIN SUPERADMIN DASHBOARD ================= */}
+        {/* ================= DASHBOARD ================= */}
         <Route
           path="/TailAdmin/"
           element={
@@ -86,16 +90,75 @@ export default function App() {
           <Route path="blank" element={<Blank />} />
           <Route path="form-elements" element={<FormElements />} />
 
-          {/* COMPLIANCE MODULES */}
-          <Route path="principle-employee" element={<PrincipleEmployeeForm />} />
-          <Route path="vendor" element={<VendorForm />} />
-          <Route path="auditor" element={<AuditorForm />} />
+          {/* ================= COMPLIANCE ================= */}
 
-          {/* EXTRA */}
-          <Route path="audit-checklist" element={<AuditChecklist />} />
-          <Route path="documents" element={<Documents />} />
+          {/* SUPERADMIN */}
+          <Route
+            path="principle-employee"
+            element={
+              <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
+                <PrincipleEmployeeForm />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* UI / MISC */}
+          <Route
+            path="vendor"
+            element={
+              <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
+                <VendorForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="auditor"
+            element={
+              <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
+                <AuditorForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="audit-checklist"
+            element={
+              <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
+                <AuditChecklist />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="documents"
+            element={
+              <ProtectedRoute allowedRoles={["SUPERADMIN"]}>
+                <Documents />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* PE ONLY */}
+          <Route
+            path="vendor-mapping"
+            element={
+              <ProtectedRoute allowedRoles={["PE"]}>
+                <VendorMapping />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ VENDOR ONLY */}
+          <Route
+            path="vendor-compliance"
+            element={
+              <ProtectedRoute allowedRoles={["VENDOR"]}>
+                <VendorCompliancePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ================= UI ================= */}
           <Route path="basic-tables" element={<BasicTables />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="avatars" element={<Avatars />} />
@@ -107,9 +170,6 @@ export default function App() {
           <Route path="bar-chart" element={<BarChart />} />
         </Route>
 
-        {/* UNAUTHORIZED */}
-
-        {/* FALLBACK */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

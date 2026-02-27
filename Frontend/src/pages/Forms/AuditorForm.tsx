@@ -39,6 +39,12 @@ const dateInputClass =
   "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
 
 export default function Auditor() {
+
+  const token = localStorage.getItem("access_token");
+
+  const authHeader = {
+    Authorization: `Bearer ${token}`,
+  };
   /* =========================
      CREATE / UPDATE FORM STATE
   ========================= */
@@ -68,11 +74,22 @@ export default function Auditor() {
   /* =========================
      FETCH
   ========================= */
-  const fetchAuditors = async () => {
-    const res = await fetch("http://127.0.0.1:8000/api/auditor/list/");
-    const data = await res.json();
-    setTableData(data);
-  };
+const fetchAuditors = async () => {
+  try {
+    const res = await fetch(
+      "http://127.0.0.1:8000/api/auditor/list/",
+      { headers: authHeader }
+    );
+
+    if (!res.ok) return;
+
+    const result = await res.json();
+    setTableData(result);
+
+  } catch (error) {
+    console.error("Failed to fetch auditors", error);
+  }
+};
 
   useEffect(() => {
     fetchAuditors();
@@ -171,10 +188,14 @@ export default function Auditor() {
 
         documents.forEach((d) => payload.append("documents", d));
 
-        const res = await fetch(
-          "http://127.0.0.1:8000/api/auditor/create/",
-          { method: "POST", body: payload }
-        );
+          const res = await fetch(
+        "http://127.0.0.1:8000/api/auditor/create/",
+        {
+          method: "POST",
+          headers: authHeader,
+          body: payload,
+        }
+      );
 
         const data = await res.json();
         if (!res.ok) {
@@ -233,9 +254,10 @@ export default function Auditor() {
 
     await Promise.all(
       selectedRows.map((id) =>
-        fetch(`http://127.0.0.1:8000/api/auditor/${id}/delete/`, {
-          method: "DELETE",
-        })
+      fetch(`http://127.0.0.1:8000/api/auditor/${id}/delete/`, {
+        method: "DELETE",
+        headers: authHeader,
+      })
       )
     );
 

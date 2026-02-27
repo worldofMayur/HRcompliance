@@ -34,6 +34,12 @@ const dateInputClass =
   "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
 
 export default function VendorForm() {
+
+  const token = localStorage.getItem("access_token");
+
+    const authHeader = {
+      Authorization: `Bearer ${token}`,
+    };
   /* =========================
      FORM STATE
   ========================= */
@@ -69,11 +75,22 @@ export default function VendorForm() {
   /* =========================
      FETCH
   ========================= */
-  const fetchVendors = async () => {
-    const res = await fetch("http://127.0.0.1:8000/api/vendor/list/");
-    const data = await res.json();
-    setVendors(data);
-  };
+ const fetchVendors = async () => {
+  try {
+    const res = await fetch(
+      "http://127.0.0.1:8000/api/vendor/list/",
+      { headers: authHeader }
+    );
+
+    if (!res.ok) return;
+
+    const result = await res.json();
+    setVendors(result);
+
+  } catch (error) {
+    console.error("Vendor fetch failed", error);
+  }
+};
 
   useEffect(() => {
     fetchVendors();
@@ -152,7 +169,10 @@ export default function VendorForm() {
         `http://127.0.0.1:8000/api/vendor/${editingId}/update/`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeader,
+          },          
           body: JSON.stringify(payload),
         }
       );
@@ -181,7 +201,11 @@ export default function VendorForm() {
 
     const res = await fetch(
       "http://127.0.0.1:8000/api/vendor/create/",
-      { method: "POST", body: payload }
+      {
+        method: "POST",
+        headers: authHeader,
+        body: payload,
+      }
     );
 
     if (!res.ok) {
@@ -250,6 +274,7 @@ export default function VendorForm() {
       selectedRows.map((id) =>
         fetch(`http://127.0.0.1:8000/api/vendor/${id}/delete/`, {
           method: "DELETE",
+          headers: authHeader,
         })
       )
     );

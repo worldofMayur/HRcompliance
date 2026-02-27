@@ -1,11 +1,9 @@
 from django.db import models
 import os
+from accounts.models import User
 
 
 def vendor_document_upload_path(instance, filename):
-    """
-    documents_files/vendor/<SHORT_NAME>/<filename>
-    """
     return os.path.join(
         "vendor",
         instance.vendor.short_name,
@@ -14,6 +12,16 @@ def vendor_document_upload_path(instance, filename):
 
 
 class Vendor(models.Model):
+
+    # ✅ NEW (safe nullable link)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="vendor_profile"
+    )
+
     name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=50, unique=True)
     ho_address = models.TextField()
@@ -25,7 +33,6 @@ class Vendor(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
 
-    # ✅ FREE TEXT (matches input box)
     nature_of_services = models.CharField(max_length=100)
 
     created_at = models.DateTimeField(auto_now_add=True)

@@ -15,6 +15,9 @@ const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
 
+  // ROLE (IMPORTANT)
+  const role = localStorage.getItem("role");
+
   /* =========================
      TOP LOADING BAR REF
   ========================= */
@@ -86,7 +89,6 @@ const AppSidebar: React.FC = () => {
                 height="18"
                 viewBox="0 0 24 24"
                 fill="none"
-                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   d="M12 2L4 5V11C4 16.25 7.4 21.05 12 22C16.6 21.05 20 16.25 20 11V5L12 2Z"
@@ -125,120 +127,151 @@ const AppSidebar: React.FC = () => {
           </h2>
 
           <ul className="flex flex-col gap-3">
-            {/* PRINCIPAL EMPLOYER */}
-            <li>
-              <Link
-                to="principle-employee"
-                onClick={handleNavigation}
-                className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
-                  ${
-                    isActive("/principle-employee")
-                      ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
-                  }`}
-              >
-                <span className="menu-item-icon-size">
-                  <ListIcon />
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text font-medium">
-                    Manage Principal Employer
-                  </span>
-                )}
-              </Link>
-            </li>
 
-            {/* VENDOR */}
-            <li>
-              <Link
-                to="vendor"
-                onClick={handleNavigation}
-                className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
-                  ${
-                    isActive("/vendor")
-                      ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
-                  }`}
-              >
-                <span className="menu-item-icon-size">
-                  <BoxCubeIcon />
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text font-medium">
-                    Manage Vendor
-                  </span>
-                )}
-              </Link>
-            </li>
+            {/* ================= SUPERADMIN MENU ================= */}
+            {role === "SUPERADMIN" && (
+              <>
+                {/* PRINCIPAL EMPLOYER */}
+                <li>
+                  <Link
+                    to="principle-employee"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/principle-employee")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <ListIcon />
+                    </span>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Manage Principal Employer
+                      </span>
+                    )}
+                  </Link>
+                </li>
 
-            {/* AUDITOR */}
-            <li>
-              <Link
-                to="auditor"
-                onClick={handleNavigation}
-                className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
-                  ${
-                    isActive("/auditor")
-                      ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
-                  }`}
-              >
-                <span className="menu-item-icon-size">
-                  <PlugInIcon />
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text font-medium">
-                    Manage Auditor
-                  </span>
-                )}
-              </Link>
-            </li>
+                {/* VENDOR */}
+                <li>
+                  <Link
+                    to="vendor"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/vendor")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <BoxCubeIcon />
+                    </span>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Manage Vendor
+                      </span>
+                    )}
+                  </Link>
+                </li>
 
-            {/* AUDIT CHECKLIST */}
-            <li>
-              <Link
-                to="audit-checklist"
-                onClick={handleNavigation}
-                className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
-                  ${
-                    isActive("/audit-checklist")
-                      ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
-                  }`}
-              >
-                <span className="menu-item-icon-size">
-                  <TableIcon />
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text font-medium">
-                    Manage Audit Checklist
-                  </span>
-                )}
-              </Link>
-            </li>
+                {/* AUDITOR */}
+                <li>
+                  <Link
+                    to="auditor"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/auditor")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <PlugInIcon />
+                    </span>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Manage Auditor
+                      </span>
+                    )}
+                  </Link>
+                </li>
 
-            {/* DOCUMENTS */}
-            <li>
-              <Link
-                to="documents"
-                onClick={handleNavigation}
-                className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
-                  ${
-                    isActive("/documents")
-                      ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
-                  }`}
-              >
-                <span className="menu-item-icon-size">
-                  <BoxCubeIcon />
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text font-medium">
-                    Manage Documents
+                {/* AUDIT CHECKLIST */}
+                <li>
+                  <Link
+                    to="audit-checklist"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/audit-checklist")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <TableIcon />
+                    </span>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Manage Audit Checklist
+                      </span>
+                    )}
+                  </Link>
+                </li>
+
+                {/* DOCUMENTS */}
+                <li>
+                  <Link
+                    to="documents"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/documents")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <BoxCubeIcon />
+                    </span>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Manage Documents
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              </>
+            )}
+
+            {/* ================= PE MENU ================= */}
+            {role === "PE" && (
+              <li>
+                <Link
+                  to="vendor-mapping"
+                  onClick={handleNavigation}
+                  className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                    ${
+                      isActive("/vendor-mapping")
+                        ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                    }`}
+                >
+                  <span className="menu-item-icon-size">
+                    <BoxCubeIcon />
                   </span>
-                )}
-              </Link>
-            </li>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className="menu-item-text font-medium">
+                      Vendor Mapping
+                    </span>
+                  )}
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
       </aside>

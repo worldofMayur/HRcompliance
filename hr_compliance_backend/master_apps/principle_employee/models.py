@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.timezone import now
 from .validators import validate_document_file
 import os
+from accounts.models import User
 
 
 # =========================
@@ -9,14 +10,20 @@ import os
 # =========================
 class PrincipalEmployer(models.Model):
 
+    # ✅ NEW
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="principalemployer_profile"
+    )
+
     RULES_CHOICES = (
         ("central", "Central"),
         ("state", "State"),
     )
 
-    # =========================
-    # BASIC DETAILS
-    # =========================
     name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=50, unique=True)
     ho_address = models.TextField()
@@ -25,15 +32,9 @@ class PrincipalEmployer(models.Model):
     mobile = models.CharField(max_length=10, unique=True)
     email = models.EmailField(unique=True)
 
-    # =========================
-    # DATE FIELDS
-    # =========================
-    start_date = models.DateField(default=now)
+    start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
 
-    # =========================
-    # BUSINESS DETAILS (FREE TEXT)
-    # =========================
     nature_of_business = models.CharField(max_length=100)
     establishment_type = models.CharField(max_length=100)
 
@@ -42,9 +43,6 @@ class PrincipalEmployer(models.Model):
         choices=RULES_CHOICES,
     )
 
-    # =========================
-    # META
-    # =========================
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -1,9 +1,9 @@
-# documents/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from rest_framework.permissions import IsAuthenticated
 
 from .models import DocumentMaster
 from .serializers import DocumentMasterSerializer
@@ -13,9 +13,11 @@ from .serializers import DocumentMasterSerializer
 # LIST DOCUMENTS
 # =========================
 class DocumentMasterListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        docs = DocumentMaster.objects.order_by("name")
-        serializer = DocumentMasterSerializer(docs, many=True)
+        documents = DocumentMaster.objects.all().order_by("name")
+        serializer = DocumentMasterSerializer(documents, many=True)
         return Response(serializer.data)
 
 
@@ -23,6 +25,8 @@ class DocumentMasterListAPIView(APIView):
 # CREATE DOCUMENT
 # =========================
 class DocumentMasterCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = DocumentMasterSerializer(data=request.data)
         if serializer.is_valid():
@@ -38,6 +42,8 @@ class DocumentMasterCreateAPIView(APIView):
 # UPDATE DOCUMENT
 # =========================
 class DocumentMasterUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def put(self, request, pk):
         doc = get_object_or_404(DocumentMaster, pk=pk)
         serializer = DocumentMasterSerializer(doc, data=request.data, partial=True)
@@ -52,6 +58,8 @@ class DocumentMasterUpdateAPIView(APIView):
 # DELETE DOCUMENT
 # =========================
 class DocumentMasterDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, pk):
         doc = get_object_or_404(DocumentMaster, pk=pk)
         doc.delete()
@@ -59,16 +67,12 @@ class DocumentMasterDeleteAPIView(APIView):
 
 
 # =========================
-# BULK DELETE (⌘ + DELETE)
+# BULK DELETE
 # =========================
 class DocumentMasterBulkDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        """
-        payload:
-        {
-          "ids": [1,2,3]
-        }
-        """
         ids = request.data.get("ids", [])
 
         if not ids:
@@ -84,18 +88,12 @@ class DocumentMasterBulkDeleteAPIView(APIView):
 
 
 # =========================
-# BULK UPDATE (⌘ + E)
+# BULK UPDATE
 # =========================
 class DocumentMasterBulkUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        """
-        payload:
-        {
-          "ids": [1,2,3],
-          "frequency": "monthly",
-          "is_active": true
-        }
-        """
         ids = request.data.get("ids", [])
         frequency = request.data.get("frequency")
         is_active = request.data.get("is_active")

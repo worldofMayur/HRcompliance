@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 from django.db import transaction
 from django.conf import settings
@@ -31,7 +32,6 @@ class AuditorCreateAPIView(APIView):
                 serializer.is_valid(raise_exception=True)
                 auditor = serializer.save()
 
-                # ✅ Create user
                 temp_password = get_random_string(10)
                 user = User.objects.create_user(
                     username=auditor.short_name,
@@ -41,7 +41,6 @@ class AuditorCreateAPIView(APIView):
                     is_active=True,
                 )
 
-                # ✅ Documents
                 documents = request.FILES.getlist("documents")
                 if not documents:
                     return Response(
@@ -55,7 +54,6 @@ class AuditorCreateAPIView(APIView):
                         document=doc
                     )
 
-                # ✅ Password reset email
                 token = PasswordResetTokenGenerator().make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 reset_url = f"{settings.FRONTEND_URL}/TailAdmin/reset-password/{uid}/{token}"
@@ -95,61 +93,37 @@ class AuditorCreateAPIView(APIView):
 # LIST AUDITORS
 # ============================
 class AuditorListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        auditors = Auditor.objects.all().order_by("-created_at")
+        auditors = Auditor.objects.all().order_by("name")
         serializer = AuditorSerializer(auditors, many=True)
         return Response(serializer.data)
 
 
 # ============================
-# UPDATE AUDITOR (EDIT)
+# UPDATE AUDITOR
 # ============================
 class AuditorUpdateAPIView(APIView):
-    def put(self, request, pk):
-        try:
-            auditor = Auditor.objects.get(pk=pk)
-        except Auditor.DoesNotExist:
-            return Response(
-                {"error": "Auditor not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+    permission_classes = [IsAuthenticated]
 
-        serializer = AuditorSerializer(
-            auditor,
-            data=request.data,
-            partial=True  # ✅ allow partial updates
-        )
+    def put(self, request, pk):
+        auditor = Auditor.objects.get(pk=pk)
+        serializer = AuditorSerializer(auditor, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
-            return Response(
-                {"message": "Auditor updated successfully"},
-                status=status.HTTP_200_OK,
-            )
-
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+            return Response({"message": "Auditor updated successfully"})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ============================
 # DELETE AUDITOR
 # ============================
 class AuditorDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, pk):
-        try:
-            auditor = Auditor.objects.get(pk=pk)
-        except Auditor.DoesNotExist:
-            return Response(
-                {"error": "Auditor not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # ✅ cascades to AuditorDocument automatically
+        auditor = Auditor.objects.get(pk=pk)
         auditor.delete()
-
-        return Response(
-            {"message": "Auditor deleted successfully"},
-            status=status.HTTP_200_OK,
-        )
+        return Response({"message": "Auditor deleted successfully"})

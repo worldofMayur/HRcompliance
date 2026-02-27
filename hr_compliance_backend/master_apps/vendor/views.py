@@ -16,6 +16,8 @@ from django.shortcuts import get_object_or_404
 
 from .models import Vendor, VendorDocument
 from .serializers import VendorSerializer, VendorDocumentSerializer
+from rest_framework.permissions import IsAuthenticated
+
 
 User = get_user_model()
 
@@ -50,6 +52,9 @@ class VendorCreateAPIView(APIView):
                     role="VENDOR",
                     is_active=True,
                 )
+
+                vendor.user = user
+                vendor.save(update_fields=["user"])
 
                 user.reset_password_used = False
                 user.save(update_fields=["reset_password_used"])
@@ -99,7 +104,10 @@ class VendorCreateAPIView(APIView):
                     to=[vendor.email],
                 )
                 email.attach_alternative(html_content, "text/html")
-                email.send()
+                try:
+                    email.send()
+                except Exception as e:
+                    print("Email sending failed:", e)
 
                 return Response(
                     {"message": "Vendor created successfully"},
@@ -117,7 +125,13 @@ class VendorCreateAPIView(APIView):
 # LIST VENDORS
 # ============================
 class VendorListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
+
+        if request.user.role not in ["SUPERADMIN", "PE"]:
+            return Response({"error": "Unauthorized"}, status=403)
+
         vendors = Vendor.objects.all().order_by("-created_at")
         serializer = VendorSerializer(vendors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -4,6 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 
@@ -16,18 +17,23 @@ urlpatterns = [
     # SUPERADMIN (MASTER)
     # ======================
     path("api/", include("master_apps.principle_employee.urls")),
+
+    # VENDOR
     path("api/vendor/", include("master_apps.vendor.urls")),
+
+    # AUDITOR
     path("api/auditor/", include("master_apps.auditor.urls")),
-    path("api/", include("master_apps.documents.urls")),
+
+    # DOCUMENTS  (EXPLICIT PREFIX ADDED — NO BREAKAGE)
+    path("api/documents/", include("master_apps.documents.urls")),
+
+    # CHECKLIST
     path("api/checklist/", include("master_apps.checklist.urls")),
 
-    # ======================
-    # PORTALS (OPTIONAL – IF URLS EXIST)
-    # ======================
-    # path("api/pe/", include("portal_apps.pe_portal.urls")),
-    # path("api/vendor-portal/", include("portal_apps.vendor_portal.urls")),
-    # path("api/auditor-portal/", include("portal_apps.auditor_portal.urls")),
+    # BRANCHES
+    path("api/", include("master_apps.vendor.branch_urls")),
 ]
+
 
 # ======================
 # MEDIA FILES

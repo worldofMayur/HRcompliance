@@ -1,3 +1,4 @@
 from django.contrib import admin
+from .mapping_models import VendorBranchMapping
 
-# Register your models here.
+admin.site.register(VendorBranchMapping)

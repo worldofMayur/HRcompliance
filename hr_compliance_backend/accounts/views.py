@@ -15,11 +15,12 @@ User = get_user_model()
 class SuperAdminLoginView(APIView):
     """
     Login using email + password
-    Only SUPERADMIN users are allowed
+    Allows SUPERADMIN, PE, VENDOR, AUDITOR
+    Frontend controls access via role
     """
 
     def post(self, request):
-        email = request.data.get("username")  # frontend sends email as username
+        email = request.data.get("username")
         password = request.data.get("password")
 
         if not email or not password:
@@ -34,13 +35,6 @@ class SuperAdminLoginView(APIView):
             return Response(
                 {"error": "Invalid credentials"},
                 status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        # 🔐 Ensure SuperAdmin only
-        if user_obj.role != "SUPERADMIN":
-            return Response(
-                {"error": "Unauthorized access"},
-                status=status.HTTP_403_FORBIDDEN,
             )
 
         user = authenticate(
@@ -63,6 +57,7 @@ class SuperAdminLoginView(APIView):
             "email": user.email,
             "role": user.role,
         })
+
 
 
 
