@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Upload, Button as AntButton, message } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { Table, Upload, Input, Button, message, Divider, Select } from "antd";
+import type { UploadFile } from "antd/es/upload/interface";
+import type { ColumnsType } from "antd/es/table";
+
+const { TextArea } = Input;
+const { Option } = Select;
 
 interface PE {
   id: number;
@@ -24,6 +28,15 @@ interface DocumentType {
   audit_period?: string;
 }
 
+interface DocumentRow {
+  key: string;
+  document_id: number | null;
+  document_name: string;
+  audit_period?: string;
+  fileList: UploadFile[];
+  remark: string;
+}
+
 export default function VendorCompliancePage() {
   const token = localStorage.getItem("access_token");
 
@@ -43,13 +56,14 @@ export default function VendorCompliancePage() {
   const [selectedPE, setSelectedPE] = useState("");
   const [selectedState, setSelectedState] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("");
 
-  /* ================= FILES ================= */
+  const [frequencyBase, setFrequencyBase] = useState("");
 
-  const [mainFileList, setMainFileList] = useState<any[]>([]);
-  const [extraFileList, setExtraFileList] = useState<any[]>([]);
-  const [remarks, setRemarks] = useState("");
+  /* ================= TABLE DATA ================= */
+
+  const [tableData, setTableData] = useState<DocumentRow[]>([]);
+  const [generalRemark, setGeneralRemark] = useState("");
   const [loading, setLoading] = useState(false);
 
   /* ================= LOAD INITIAL ================= */
@@ -87,20 +101,140 @@ export default function VendorCompliancePage() {
       `http://127.0.0.1:8000/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}`,
       authHeader
     );
+
     setDocuments(res.data);
+
+    if (res.data.length > 0) {
+      const base = res.data[0].audit_period || "";
+      setFrequencyBase(base);
+    }
+
+    const rows: DocumentRow[] = res.data.map((doc: DocumentType) => ({
+      key: `doc-${doc.id}`,
+      document_id: doc.id,
+      document_name: doc.name,
+      audit_period: doc.audit_period,
+      fileList: [],
+      remark: "",
+    }));
+
+    setTableData(rows);
   };
+
+  /* ================= PERIOD OPTIONS ================= */
+
+  const getPeriodOptions = () => {
+    const monthly = [
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec"
+    ];
+
+    if (monthly.includes(frequencyBase)) return monthly;
+
+    if (frequencyBase.startsWith("Q"))
+      return [
+        "Q1 (Jan-Mar)",
+        "Q2 (Apr-Jun)",
+        "Q3 (Jul-Sep)",
+        "Q4 (Oct-Dec)"
+      ];
+
+    if (frequencyBase.startsWith("H"))
+      return [
+        "H1 (Apr-Sep)",
+        "H2 (Oct-Mar)"
+      ];
+
+    if (frequencyBase.includes("Year"))
+      return [
+        "Financial Year (Apr-Mar)",
+        "Calendar Year (Jan-Dec)"
+      ];
+
+    return [];
+  };
+
+  /* ================= UPDATE ROW ================= */
+
+  const updateRow = (key: string, updated: Partial<DocumentRow>) => {
+    setTableData(prev =>
+      prev.map(row =>
+        row.key === key ? { ...row, ...updated } : row
+      )
+    );
+  };
+
+  /* ================= ADD ADDITIONAL DOC ================= */
+
+  const addAdditionalDocument = () => {
+    setTableData(prev => [
+      ...prev,
+      {
+        key: `additional-${Date.now()}`,
+        document_id: null,
+        document_name: "Additional Document",
+        audit_period: selectedPeriod,
+        fileList: [],
+        remark: "",
+      }
+    ]);
+  };
+
+  /* ================= TABLE COLUMNS ================= */
+
+  const columns: ColumnsType<DocumentRow> = [
+    {
+      title: "Document Name",
+      dataIndex: "document_name",
+      width: "25%",
+    },
+    {
+      title: "Compliance Period",
+      dataIndex: "audit_period",
+      width: "20%",
+      render: () => selectedPeriod || "-",
+    },
+    {
+      title: "Upload File",
+      width: "25%",
+      render: (_, record) => (
+        <Upload
+          beforeUpload={() => false}
+          fileList={record.fileList}
+          maxCount={1}
+          onChange={({ fileList }) =>
+            updateRow(record.key, { fileList })
+          }
+        >
+          <Button>Select File</Button>
+        </Upload>
+      ),
+    },
+    {
+      title: "Remark",
+      width: "30%",
+      render: (_, record) => (
+        <Input
+          value={record.remark}
+          onChange={(e) =>
+            updateRow(record.key, { remark: e.target.value })
+          }
+        />
+      ),
+    },
+  ];
 
   /* ================= SUBMIT ================= */
 
   const handleSubmit = async () => {
-    if (
-      !selectedPE ||
-      !selectedState ||
-      !selectedBranch ||
-      !selectedDocument ||
-      mainFileList.length === 0
-    ) {
-      message.error("Please complete all required fields.");
+    if (!selectedPE || !selectedState || !selectedBranch || !selectedPeriod) {
+      message.error("Complete all selections.");
+      return;
+    }
+
+    const hasFile = tableData.some(r => r.fileList.length > 0);
+    if (!hasFile) {
+      message.error("Upload at least one document.");
       return;
     }
 
@@ -109,17 +243,28 @@ export default function VendorCompliancePage() {
 
       const formData = new FormData();
       formData.append("pe_id", selectedPE);
-      formData.append("state_id", selectedState);
       formData.append("branch_id", selectedBranch);
-      formData.append("document_id", selectedDocument);
-      formData.append("remarks", remarks);
+      formData.append("state_id", selectedState);
+      formData.append("selected_period", selectedPeriod);
+      formData.append("general_remark", generalRemark);
 
-      // main file
-      formData.append("file", mainFileList[0].originFileObj);
-
-      // extra files
-      extraFileList.forEach((file: any, index: number) => {
-        formData.append(`extra_file_${index}`, file.originFileObj);
+      tableData.forEach((row, index) => {
+        if (row.fileList.length > 0) {
+          formData.append(
+            `document_${index}_file`,
+            row.fileList[0].originFileObj as File
+          );
+          formData.append(
+            `document_${index}_remark`,
+            row.remark
+          );
+          if (row.document_id) {
+            formData.append(
+              `document_${index}_id`,
+              row.document_id.toString()
+            );
+          }
+        }
       });
 
       await axios.post(
@@ -134,87 +279,59 @@ export default function VendorCompliancePage() {
       );
 
       message.success("Compliance submitted successfully.");
-      resetForm();
-    } catch (error) {
-      message.error("Submission failed. Please try again.");
+    } catch {
+      message.error("Submission failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setSelectedPE("");
-    setSelectedState("");
-    setSelectedBranch("");
-    setSelectedDocument("");
-    setMainFileList([]);
-    setExtraFileList([]);
-    setRemarks("");
-    setStates([]);
-    setBranches([]);
-    setDocuments([]);
-  };
+  /* ================= UI ================= */
 
   return (
     <div className="space-y-6">
 
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
-          Submit Compliance Record
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Select mapped branch and upload required compliance documents.
-        </p>
-      </div>
+      <h1 className="text-2xl font-semibold">
+        Submit Compliance Record
+      </h1>
 
-      {/* ================= PRINCIPAL EMPLOYER ================= */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold mb-4">
-          Principal Employer
-        </h2>
-
-        <select
-          className="w-full rounded-lg border border-gray-300 p-2.5 text-sm"
-          value={selectedPE}
-          onChange={(e) => {
-            setSelectedPE(e.target.value);
-            setSelectedState("");
-            setSelectedBranch("");
-            setSelectedDocument("");
-            loadStates(e.target.value);
-          }}
-        >
-          <option value="">Select Principal Employer</option>
-          {peList.map((pe) => (
-            <option key={pe.id} value={pe.id}>
-              {pe.short_name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* ================= BRANCH DETAILS ================= */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold mb-4">
-          Branch Details
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-4">
+      {/* Selection */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border">
+        <div className="grid md:grid-cols-3 gap-4">
+          <select
+            value={selectedPE}
+            onChange={(e) => {
+              setSelectedPE(e.target.value);
+              setSelectedState("");
+              setSelectedBranch("");
+              setSelectedPeriod("");
+              setTableData([]);
+              loadStates(e.target.value);
+            }}
+            className="border rounded-lg p-2.5"
+          >
+            <option value="">Select PE</option>
+            {peList.map(pe => (
+              <option key={pe.id} value={pe.id}>
+                {pe.short_name}
+              </option>
+            ))}
+          </select>
 
           <select
             disabled={!selectedPE}
-            className="rounded-lg border border-gray-300 p-2.5 text-sm disabled:bg-gray-100"
             value={selectedState}
             onChange={(e) => {
               setSelectedState(e.target.value);
               setSelectedBranch("");
-              setSelectedDocument("");
+              setSelectedPeriod("");
+              setTableData([]);
               loadBranches(selectedPE, e.target.value);
             }}
+            className="border rounded-lg p-2.5"
           >
             <option value="">Select State</option>
-            {states.map((s) => (
+            {states.map(s => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
@@ -223,125 +340,89 @@ export default function VendorCompliancePage() {
 
           <select
             disabled={!selectedState}
-            className="rounded-lg border border-gray-300 p-2.5 text-sm disabled:bg-gray-100"
             value={selectedBranch}
             onChange={(e) => {
               setSelectedBranch(e.target.value);
-              setSelectedDocument("");
               loadDocuments(selectedPE, e.target.value);
             }}
+            className="border rounded-lg p-2.5"
           >
             <option value="">Select Branch</option>
-            {branches.map((b) => (
+            {branches.map(b => (
               <option key={b.id} value={b.id}>
                 {b.name}
               </option>
             ))}
           </select>
-
         </div>
       </div>
 
-      {/* ================= DOCUMENT ================= */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold mb-4">
-          Compliance Document
-        </h2>
+      {/* Period Selection */}
+      {selectedBranch && frequencyBase && (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border">
+          <Divider titlePlacement="left">
+            Select Compliance Period ({frequencyBase})
+          </Divider>
 
-        <select
-          disabled={!selectedBranch}
-          className="w-full rounded-lg border border-gray-300 p-2.5 text-sm disabled:bg-gray-100"
-          value={selectedDocument}
-          onChange={(e) => setSelectedDocument(e.target.value)}
-        >
-          <option value="">Select Document</option>
-          {documents.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-
-        {selectedDocument && (
-          <div className="mt-4 text-sm bg-blue-50 p-3 rounded-lg text-blue-700">
-            Audit Period:{" "}
-            {documents.find((d) => d.id === Number(selectedDocument))
-              ?.audit_period || "As per mapping"}
-          </div>
-        )}
-      </div>
-
-      {/* ================= UPLOAD SECTION ================= */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="text-lg font-semibold mb-6">
-          Upload Documents
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-6">
-
-          {/* MAIN FILE */}
-          <div className="bg-gray-50 p-5 rounded-xl border border-dashed border-gray-300">
-            <h3 className="text-sm font-medium mb-4">
-              Main Compliance Document *
-            </h3>
-
-            <Upload
-              beforeUpload={() => false}
-              fileList={mainFileList}
-              onChange={({ fileList }) => setMainFileList(fileList)}
-              maxCount={1}
-            >
-              <AntButton icon={<UploadOutlined />} className="w-full">
-                Select Main Document
-              </AntButton>
-            </Upload>
-          </div>
-
-          {/* SUPPORTING FILES */}
-          <div className="bg-gray-50 p-5 rounded-xl border border-dashed border-gray-300">
-            <h3 className="text-sm font-medium mb-4">
-              Supporting Documents
-            </h3>
-
-            <Upload
-              beforeUpload={() => false}
-              fileList={extraFileList}
-              onChange={({ fileList }) => setExtraFileList(fileList)}
-              multiple
-            >
-              <AntButton icon={<UploadOutlined />} className="w-full">
-                Add Supporting Files
-              </AntButton>
-            </Upload>
-          </div>
-
+          <Select
+            className="w-full"
+            placeholder="Select Period"
+            value={selectedPeriod || undefined}
+            onChange={(value) => setSelectedPeriod(value)}
+          >
+            {getPeriodOptions().map(p => (
+              <Option key={p} value={p}>
+                {p}
+              </Option>
+            ))}
+          </Select>
         </div>
+      )}
 
-        {/* REMARKS */}
-        <div className="mt-6">
-          <label className="block text-sm font-medium mb-2">
-            Remarks
-          </label>
-          <textarea
-            rows={4}
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 p-3 text-sm"
-            placeholder="Add any additional notes..."
+      {/* Documents */}
+      {selectedPeriod && (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border">
+          <Divider titlePlacement="left">
+            Compliance Documents
+          </Divider>
+
+          <Table
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+            bordered
           />
-        </div>
-      </div>
 
-      {/* ================= SUBMIT ================= */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition"
-        >
-          {loading ? "Submitting..." : "Submit Compliance"}
-        </button>
-      </div>
+          <div className="mt-4">
+            <Button type="link" onClick={addAdditionalDocument}>
+              + Add Additional Document
+            </Button>
+          </div>
+
+          <div className="mt-6">
+            <label className="block mb-2 font-medium">
+              General Remarks
+            </label>
+            <TextArea
+              rows={4}
+              value={generalRemark}
+              onChange={(e) => setGeneralRemark(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {selectedPeriod && (
+        <div className="flex justify-end">
+          <Button
+            type="primary"
+            loading={loading}
+            onClick={handleSubmit}
+          >
+            Submit Compliance
+          </Button>
+        </div>
+      )}
 
     </div>
   );

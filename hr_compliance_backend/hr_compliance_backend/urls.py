@@ -25,8 +25,7 @@ urlpatterns = [
     path("api/auditor/", include("master_apps.auditor.urls")),
 
     # DOCUMENTS  (EXPLICIT PREFIX ADDED — NO BREAKAGE)
-    path("api/documents/", include("master_apps.documents.urls")),
-
+path("api/document-master/", include("master_apps.documents.urls")),
     # CHECKLIST
     path("api/checklist/", include("master_apps.checklist.urls")),
 

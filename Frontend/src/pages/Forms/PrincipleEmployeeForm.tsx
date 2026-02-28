@@ -181,10 +181,23 @@ export default function PrincipleEmployeeForm() {
      SUBMIT
   ========================= */
   const handleSubmit = async () => {
-    if (Object.values(formData).some((v) => v === "")) {
-      alert("All fields are required");
-      return;
-    }
+      const requiredFields = [
+        formData.name,
+        formData.shortName,
+        formData.hoAddress,
+        formData.contactPerson,
+        formData.mobile,
+        formData.email,
+        formData.startDate,
+        formData.natureOfBusiness,
+        formData.establishmentType,
+        formData.rulesApplicable,
+      ];
+
+      if (requiredFields.some((v) => !v)) {
+        alert("All required fields must be filled");
+        return;
+}
 
     if (!isEditMode && !documents.length) {
       alert("At least one document is required");
@@ -228,7 +241,13 @@ export default function PrincipleEmployeeForm() {
           { method: "POST", body: payload }
         );
 
-        if (!res.ok) throw new Error("Creation failed");
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.log("Backend Error:", errorData);
+          alert(JSON.stringify(errorData));
+          return;
+        }
+
         alert("Created successfully");
       }
 

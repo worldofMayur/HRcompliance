@@ -5,7 +5,6 @@ from rest_framework import status
 
 from .mapping_models import VendorBranchMapping
 from .mapping_serializers import VendorBranchMappingSerializer
-
 from master_apps.principle_employee.models import PrincipalEmployer
 
 
@@ -21,9 +20,7 @@ class VendorBranchMappingCreateAPIView(APIView):
             return Response({"error": "Unauthorized"}, status=403)
 
         try:
-            pe = PrincipalEmployer.objects.get(
-                email=request.user.email
-            )
+            pe = PrincipalEmployer.objects.get(email=request.user.email)
         except PrincipalEmployer.DoesNotExist:
             return Response({"error": "PE profile not found"}, status=400)
 
@@ -61,7 +58,7 @@ class VendorBranchMappingListAPIView(APIView):
 
 
 # ==========================================================
-# 🔥 VENDOR DROPDOWN APIs (CLEAN VERSION)
+# 🔥 VENDOR DROPDOWN APIs (FINAL CLEAN VERSION)
 # ==========================================================
 
 
@@ -82,9 +79,7 @@ class VendorMappedPEAPIView(APIView):
             vendor=vendor
         ).values_list("principal_employer_id", flat=True).distinct()
 
-        pes = PrincipalEmployer.objects.filter(
-            id__in=pe_ids
-        )
+        pes = PrincipalEmployer.objects.filter(id__in=pe_ids)
 
         data = [
             {
@@ -179,21 +174,24 @@ class VendorMappedDocumentsAPIView(APIView):
 
         vendor = request.user.vendor_profile
 
-        mappings = VendorBranchMapping.objects.filter(
+        documents = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
             branch_id=branch_id,
             document__is_active=True
-        ).select_related("document")
+        ).select_related("document").values(
+            "document__id",
+            "document__name",
+            "audit_period"
+        ).distinct()
 
-        docs_dict = {}
+        formatted = [
+            {
+                "id": d["document__id"],
+                "name": d["document__name"],
+                "audit_period": d["audit_period"]
+            }
+            for d in documents
+        ]
 
-        for mapping in mappings:
-            doc = mapping.document
-            if doc:
-                docs_dict[doc.id] = {
-                    "id": doc.id,
-                    "name": doc.name
-                }
-
-        return Response(list(docs_dict.values()))
+        return Response(formatted)

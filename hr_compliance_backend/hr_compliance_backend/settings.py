@@ -10,18 +10,22 @@ from dotenv import load_dotenv
 pymysql.install_as_MySQLdb()
 load_dotenv()
 
+# ==========================================================
+# BASE
+# ==========================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-dev-key"
+
 DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
-# --------------------
-# Applications
-# --------------------
+# ==========================================================
+# APPLICATIONS
+# ==========================================================
 INSTALLED_APPS = [
-    # Django core
+    # Django Core
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -29,7 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third-party
+    # Third Party
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
@@ -37,34 +41,27 @@ INSTALLED_APPS = [
     # Global
     "accounts",
 
-    # =========================
-    # MASTER APPS (SUPERADMIN)
-    # =========================
+    # ================= MASTER APPS =================
     "master_apps.principle_employee",
     "master_apps.vendor",
     "master_apps.auditor",
     "master_apps.checklist",
     "master_apps.documents",
 
-    # =========================
-    # PORTAL / TRANSACTIONAL
-    # =========================
+    # ================= PORTAL APPS =================
     "portal_apps.principal_employer_docs",
     "portal_apps.vendor_documents",
     "portal_apps.documents_files",
 
-    # =========================
-    # STANDALONE PORTALS (NEW)
-    # =========================
+    # ================= STANDALONE PORTALS =================
     "portal_apps.pe_portal",
     "portal_apps.vendor_portal",
     "portal_apps.auditor_portal",
 ]
 
-
-# --------------------
-# Middleware
-# --------------------
+# ==========================================================
+# MIDDLEWARE
+# ==========================================================
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -78,9 +75,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "hr_compliance_backend.urls"
 
-# --------------------
-# Templates
-# --------------------
+# ==========================================================
+# TEMPLATES
+# ==========================================================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -98,9 +95,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "hr_compliance_backend.wsgi.application"
 
-# --------------------
-# Database
-# --------------------
+# ==========================================================
+# DATABASE (MySQL)
+# ==========================================================
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -115,60 +112,48 @@ DATABASES = {
     }
 }
 
-# --------------------
-# Media (IMPORTANT)
-# --------------------
+# ==========================================================
+# MEDIA FILES
+# ==========================================================
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "portal_apps" / "documents_files"
 
-
-# --------------------
-# Static
-# --------------------
+# ==========================================================
+# STATIC FILES
+# ==========================================================
 STATIC_URL = "/static/"
 
-# --------------------
-# Auth
-# --------------------
+# ==========================================================
+# AUTH USER MODEL
+# ==========================================================
 AUTH_USER_MODEL = "accounts.User"
 
-# --------------------
-# Email
-# --------------------
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "apikey"
-EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = "HR Compliance <hrcompliance.system@gmail.com>"
-
-# --------------------
-# Misc
-# --------------------
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_TZ = True
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CORS_ALLOW_ALL_ORIGINS = True
-
-FRONTEND_URL = "http://localhost:5173"
-
-
-# --------------------
-# Authentication Backends
-# --------------------
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+# ==========================================================
+# EMAIL (SendGrid SMTP)
+# ==========================================================
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-# --------------------
-# Django REST Framework
-# --------------------
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+# IMPORTANT: must be literal "apikey"
+EMAIL_HOST_USER = "apikey"
+
+# Must be defined in .env file
+EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
+
+# Verified sender email in SendGrid
+DEFAULT_FROM_EMAIL = "HR Compliance <kekultesting@gmail.com>"
+
+# ==========================================================
+# DJANGO REST FRAMEWORK
+# ==========================================================
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -178,3 +163,22 @@ REST_FRAMEWORK = {
     ),
 }
 
+# ==========================================================
+# CORS
+# ==========================================================
+CORS_ALLOW_ALL_ORIGINS = True
+
+# ==========================================================
+# TIMEZONE
+# ==========================================================
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ==========================================================
+# FRONTEND URL (for email reset links)
+# ==========================================================
+FRONTEND_URL = "http://localhost:5173"

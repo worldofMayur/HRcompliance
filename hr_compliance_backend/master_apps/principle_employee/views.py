@@ -114,7 +114,7 @@ class PrincipalEmployerCreateAPIView(APIView):
                     to=[principal_employer.email],
                 )
                 email_msg.attach_alternative(html_content, "text/html")
-                email_msg.send()
+                email_msg.send(fail_silently=True)
 
                 return Response(
                     {"message": "Principal Employer created successfully"},
