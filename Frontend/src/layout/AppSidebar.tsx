@@ -18,38 +18,23 @@ const AppSidebar: React.FC = () => {
   // ROLE (IMPORTANT)
   const role = localStorage.getItem("role");
 
-  /* =========================
-     TOP LOADING BAR REF
-  ========================= */
   const loadingBarRef = useRef<any>(null);
 
-  /* =========================
-     ACTIVE ROUTE CHECK
-  ========================= */
   const isActive = useCallback(
     (path: string) => location.pathname.includes(path),
     [location.pathname]
   );
 
-  /* =========================
-     FINISH LOADING ON ROUTE CHANGE
-  ========================= */
   useEffect(() => {
     loadingBarRef.current?.complete();
   }, [location.pathname]);
 
-  /* =========================
-     START LOADING ON CLICK
-  ========================= */
   const handleNavigation = () => {
     loadingBarRef.current?.continuousStart(30);
   };
 
   return (
     <>
-      {/* =========================
-          TOP LOADING BAR
-      ========================= */}
       <LoadingBar
         color="#2563eb"
         height={3}
@@ -70,9 +55,6 @@ const AppSidebar: React.FC = () => {
         onMouseEnter={() => !isExpanded && setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* =========================
-            LOGO
-        ========================= */}
         <div
           className={`py-8 flex ${
             !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
@@ -84,12 +66,7 @@ const AppSidebar: React.FC = () => {
             className="flex items-center gap-3"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M12 2L4 5V11C4 16.25 7.4 21.05 12 22C16.6 21.05 20 16.25 20 11V5L12 2Z"
                   fill="currentColor"
@@ -110,9 +87,6 @@ const AppSidebar: React.FC = () => {
           </Link>
         </div>
 
-        {/* =========================
-            MENU
-        ========================= */}
         <nav className="mb-6">
           <h2
             className={`mb-5 text-xs font-semibold uppercase tracking-wide text-gray-400 flex ${
@@ -131,7 +105,6 @@ const AppSidebar: React.FC = () => {
             {/* ================= SUPERADMIN MENU ================= */}
             {role === "SUPERADMIN" && (
               <>
-                {/* PRINCIPAL EMPLOYER */}
                 <li>
                   <Link
                     to="principle-employee"
@@ -154,7 +127,6 @@ const AppSidebar: React.FC = () => {
                   </Link>
                 </li>
 
-                {/* VENDOR */}
                 <li>
                   <Link
                     to="vendor"
@@ -177,7 +149,6 @@ const AppSidebar: React.FC = () => {
                   </Link>
                 </li>
 
-                {/* AUDITOR */}
                 <li>
                   <Link
                     to="auditor"
@@ -200,7 +171,6 @@ const AppSidebar: React.FC = () => {
                   </Link>
                 </li>
 
-                {/* AUDIT CHECKLIST */}
                 <li>
                   <Link
                     to="audit-checklist"
@@ -223,7 +193,6 @@ const AppSidebar: React.FC = () => {
                   </Link>
                 </li>
 
-                {/* DOCUMENTS */}
                 <li>
                   <Link
                     to="documents"
@@ -272,6 +241,32 @@ const AppSidebar: React.FC = () => {
                 </Link>
               </li>
             )}
+
+            {/* ================= VENDOR MENU ================= */}
+            {role === "VENDOR" && (
+              <li>
+                <Link
+                  to="vendor-compliance"
+                  onClick={handleNavigation}
+                  className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                    ${
+                      isActive("/vendor-compliance")
+                        ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                    }`}
+                >
+                  <span className="menu-item-icon-size">
+                    <TableIcon />
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className="menu-item-text font-medium">
+                      Submit Compliance Records
+                    </span>
+                  )}
+                </Link>
+              </li>
+            )}
+
           </ul>
         </nav>
       </aside>

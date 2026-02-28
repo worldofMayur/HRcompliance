@@ -5,27 +5,35 @@ from .views import (
     VendorUpdateAPIView,
     VendorDeleteAPIView,
 )
-
-# NEW IMPORTS (mapping engine)
 from .mapping_views import (
     VendorBranchMappingCreateAPIView,
     VendorBranchMappingListAPIView,
+    VendorMappedPEAPIView,
+    VendorMappedStatesAPIView,
+    VendorMappedBranchesAPIView,
+    VendorMappedDocumentsAPIView,
 )
-from .vendor_pe_mapping_views import VendorMappedPEListAPIView
+from .compliance_views import VendorSubmitComplianceAPIView
+
 
 urlpatterns = [
-    # =========================
-    # EXISTING ROUTES (UNCHANGED)
-    # =========================
+
+    # EXISTING ROUTES
     path("create/", VendorCreateAPIView.as_view()),
     path("list/", VendorListAPIView.as_view()),
     path("<int:pk>/update/", VendorUpdateAPIView.as_view()),
     path("<int:pk>/delete/", VendorDeleteAPIView.as_view()),
 
-    # =========================
-    # VENDOR BRANCH MAPPING (NEW)
-    # =========================
+    # MAPPING
     path("mapping/create/", VendorBranchMappingCreateAPIView.as_view()),
     path("mapping/list/", VendorBranchMappingListAPIView.as_view()),
-    path("mapped-pe/", VendorMappedPEListAPIView.as_view()),
+
+    # DROPDOWNS
+    path("mapped-pe/", VendorMappedPEAPIView.as_view()),
+    path("mapped-states/", VendorMappedStatesAPIView.as_view()),
+    path("mapped-branches/", VendorMappedBranchesAPIView.as_view()),
+    path("mapped-documents/", VendorMappedDocumentsAPIView.as_view()),
+
+    # ✅ SUBMIT COMPLIANCE (FIXED)
+    path("submit-compliance/", VendorSubmitComplianceAPIView.as_view()),
 ]

@@ -10,11 +10,14 @@ interface Vendor {
   agreement_address?: string;
   nature_of_compliance?: string;
   contact_person?: string;
+  ho_address?: string;
+  nature_of_services?: string;
 }
 
 interface Auditor {
   id: number;
   name: string;
+  email?: string;
 }
 
 interface Document {
@@ -30,6 +33,8 @@ interface StateType {
 interface BranchType {
   id: number;
   address: string;
+  display_address?: string;
+  state?: string;
 }
 
 export default function VendorMapping() {
@@ -55,8 +60,11 @@ export default function VendorMapping() {
 
   const [selectedState, setSelectedState] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedBranchObj, setSelectedBranchObj] = useState<BranchType | null>(null);
 
   const [selectedAuditor, setSelectedAuditor] = useState("");
+  const [selectedAuditorObj, setSelectedAuditorObj] = useState<Auditor | null>(null);
+
   const [selectedRule, setSelectedRule] = useState("");
   const [selectedFrequency, setSelectedFrequency] = useState("");
   const [selectedAuditPeriod, setSelectedAuditPeriod] = useState("");
@@ -94,15 +102,24 @@ export default function VendorMapping() {
     setStates(res.data);
   };
 
-const loadBranchesByState = async (stateName: string) => {
-  const res = await axios.get(
-    `http://127.0.0.1:8000/api/branches/by-state/?state=${stateName}`,
-    authHeader
-  );
+  const loadBranchesByState = async (stateName: string) => {
+    const res = await axios.get(
+      `http://127.0.0.1:8000/api/branches/by-state/?state=${stateName}`,
+      authHeader
+    );
+    setBranches(res.data);
+  };
 
-  console.log("BRANCH API RESPONSE:", res.data);
-  setBranches(res.data);
-};
+  /* ================= DATE FORMAT ================= */
+
+  const formatDateToDDMMYYYY = (date: string) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   /* ================= FREQUENCY LOGIC ================= */
 
@@ -123,40 +140,33 @@ const loadBranchesByState = async (stateName: string) => {
 
   /* ================= SAVE ================= */
 
-const handleSave = async () => {
-  try {
-const payload = {
-  vendor: Number(selectedVendor),
-  branch: Number(selectedBranch),
-  auditor: selectedAuditor ? Number(selectedAuditor) : null,
+  const handleSave = async () => {
+    try {
 
-  start_date: startDate ? startDate.split("T")[0] : null,
-  end_date: endDate ? endDate.split("T")[0] : null,
+      const payload = {
+        vendor: Number(selectedVendor),
+        branch: Number(selectedBranch),
+        auditor: selectedAuditor ? Number(selectedAuditor) : null,
+        start_date: startDate || null,
+        end_date: endDate || null,
+        rule: selectedRule,
+        frequency: selectedFrequency,
+        audit_period: selectedAuditPeriod || null,
+        document: selectedDocument ? Number(selectedDocument) : null,
+      };
 
-  rule: selectedRule,
-  frequency: selectedFrequency,
-  audit_period: selectedAuditPeriod || null,
-  document: selectedDocument ? Number(selectedDocument) : null,
-};
+      const res = await axios.post(
+        "http://127.0.0.1:8000/api/vendor/mapping/create/",
+        payload,
+        authHeader
+      );
 
-try {
-  const res = await axios.post(
-    "http://127.0.0.1:8000/api/vendor/mapping/create/",
-    payload,
-    authHeader
-  );
+      alert("Vendor Mapping Saved Successfully");
 
-  alert("Vendor Mapping Saved Successfully");
-} catch (error: any) {
-  console.log("Mapping Error:", error.response?.data);
-  alert(JSON.stringify(error.response?.data));
-}
-
-  } catch (error: any) {
-    console.log("SAVE ERROR:", error.response?.data);
-    alert("Error saving mapping");
-  }
-};
+    } catch (error: any) {
+      alert(JSON.stringify(error.response?.data));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -190,13 +200,12 @@ try {
           ))}
         </select>
 
-        {/* Vendor details row */}
         {selectedVendorObj && (
           <div className="grid md:grid-cols-6 gap-4 mt-5 text-sm">
             <div><b>Name</b><br />{selectedVendorObj.name}</div>
             <div><b>Agreement Address</b><br />{selectedVendorObj.ho_address || "-"}</div>
-            <div><b>Nature of Mode</b><br />{selectedVendorObj.nature_of_services || "-"}</div>
-            <div><b>Contact</b><br />{selectedVendorObj.contact_person || "-"}</div>
+            <div><b>Nature of Service</b><br />{selectedVendorObj.nature_of_services || "-"}</div>
+            <div><b>Spocname</b><br />{selectedVendorObj.contact_person || "-"}</div>
             <div><b>Email</b><br />{selectedVendorObj.email}</div>
             <div><b>Mobile</b><br />{selectedVendorObj.mobile}</div>
           </div>
@@ -225,7 +234,11 @@ try {
           <select
             className="rounded-lg border border-gray-300 p-2.5 text-sm"
             value={selectedBranch}
-            onChange={(e) => setSelectedBranch(e.target.value)}
+            onChange={(e) => {
+              setSelectedBranch(e.target.value);
+              const branch = branches.find(b => b.id === Number(e.target.value));
+              setSelectedBranchObj(branch || null);
+            }}
           >
             <option value="">Select Branch Address</option>
             {branches.map(b => (
@@ -235,6 +248,13 @@ try {
             ))}
           </select>
         </div>
+
+        {selectedBranchObj && (
+          <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg">
+            <div><b>Full Address:</b> {selectedBranchObj.display_address}</div>
+            <div><b>State:</b> {selectedState}</div>
+          </div>
+        )}
       </div>
 
       {/* AUDIT CONFIG */}
@@ -257,7 +277,14 @@ try {
           />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        {(startDate || endDate) && (
+          <div className="text-sm text-gray-600">
+            {startDate && <div><b>Start Date:</b> {formatDateToDDMMYYYY(startDate)}</div>}
+            {endDate && <div><b>End Date:</b> {formatDateToDDMMYYYY(endDate)}</div>}
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-3 gap-4 mt-4">
           <select className="rounded-lg border border-gray-300 p-2.5 text-sm"
             onChange={(e)=>setSelectedRule(e.target.value)}>
             <option value="">Rule</option>
@@ -291,12 +318,23 @@ try {
         <h2 className="text-lg font-semibold mb-4">Assign Auditor</h2>
 
         <select className="w-full rounded-lg border border-gray-300 p-2.5 text-sm"
-          onChange={(e)=>setSelectedAuditor(e.target.value)}>
+          onChange={(e)=>{
+            setSelectedAuditor(e.target.value);
+            const auditor = auditors.find(a => a.id === Number(e.target.value));
+            setSelectedAuditorObj(auditor || null);
+          }}>
           <option value="">Select Auditor</option>
           {auditors.map(a => (
             <option key={a.id} value={a.id}>{a.name}</option>
           ))}
         </select>
+
+        {selectedAuditorObj && (
+          <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg">
+            <div><b>Name:</b> {selectedAuditorObj.name}</div>
+            <div><b>Email:</b> {selectedAuditorObj.email || "-"}</div>
+          </div>
+        )}
       </div>
 
       {/* DOCUMENT */}
@@ -322,6 +360,7 @@ try {
           Save Vendor Mapping
         </button>
       </div>
+
     </div>
   );
 }

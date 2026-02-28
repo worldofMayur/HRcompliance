@@ -22,11 +22,9 @@ class VendorBranchMapping(models.Model):
 
     # ✅ ADD THIS (VERY IMPORTANT)
     principal_employer = models.ForeignKey(
-        PrincipalEmployer,
-        on_delete=models.CASCADE,
-        related_name="vendor_branch_mappings",
-        null=True,
-        blank=True
+    PrincipalEmployer,
+    on_delete=models.CASCADE,
+    related_name="vendor_branch_mappings"
     )
 
     vendor = models.ForeignKey(
