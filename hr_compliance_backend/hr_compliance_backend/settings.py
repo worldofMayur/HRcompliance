@@ -6,6 +6,8 @@ from pathlib import Path
 import os
 import pymysql
 from dotenv import load_dotenv
+from datetime import timedelta
+
 
 pymysql.install_as_MySQLdb()
 load_dotenv()
@@ -182,3 +184,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # FRONTEND URL (for email reset links)
 # ==========================================================
 FRONTEND_URL = "http://localhost:5173"
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
@@ -30,16 +30,13 @@ import Badge from "../../components/ui/badge/Badge";
 const emailRegex =
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-const dateInputClass =
-  "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
-
 export default function VendorForm() {
-
   const token = localStorage.getItem("access_token");
 
-    const authHeader = {
-      Authorization: `Bearer ${token}`,
-    };
+  const authHeader = {
+    Authorization: `Bearer ${token}`,
+  };
+
   /* =========================
      FORM STATE
   ========================= */
@@ -50,47 +47,44 @@ export default function VendorForm() {
     contactPerson: "",
     mobile: "",
     email: "",
-    startDate: "",
-    endDate: "",
     natureOfServices: "",
   });
 
-  const [errors, setErrors] = useState({});
-  const [documents, setDocuments] = useState([]);
+  const [errors, setErrors] = useState<any>({});
+  const [documents, setDocuments] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
   /* =========================
      TABLE STATE
   ========================= */
-  const [vendors, setVendors] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
   /* =========================
      EDIT STATE
   ========================= */
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const formRef = useRef(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const formRef = useRef<HTMLDivElement | null>(null);
 
   /* =========================
      FETCH
   ========================= */
- const fetchVendors = async () => {
-  try {
-    const res = await fetch(
-      "http://127.0.0.1:8000/api/vendor/list/",
-      { headers: authHeader }
-    );
+  const fetchVendors = async () => {
+    try {
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/vendor/list/",
+        { headers: authHeader }
+      );
 
-    if (!res.ok) return;
+      if (!res.ok) return;
 
-    const result = await res.json();
-    setVendors(result);
-
-  } catch (error) {
-    console.error("Vendor fetch failed", error);
-  }
-};
+      const result = await res.json();
+      setVendors(result);
+    } catch (error) {
+      console.error("Vendor fetch failed", error);
+    }
+  };
 
   useEffect(() => {
     fetchVendors();
@@ -99,13 +93,13 @@ export default function VendorForm() {
   /* =========================
      INPUT HANDLER
   ========================= */
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
 
     if (name === "mobile") {
       const digits = value.replace(/\D/g, "").slice(0, 10);
       setFormData((p) => ({ ...p, mobile: digits }));
-      setErrors((p) => ({
+      setErrors((p: any) => ({
         ...p,
         mobile: digits.length !== 10 ? "Mobile must be 10 digits" : "",
       }));
@@ -113,7 +107,7 @@ export default function VendorForm() {
     }
 
     if (name === "email") {
-      setErrors((p) => ({
+      setErrors((p: any) => ({
         ...p,
         email: emailRegex.test(value) ? "" : "Invalid email",
       }));
@@ -125,16 +119,16 @@ export default function VendorForm() {
   /* =========================
      FILE HANDLERS
   ========================= */
-  const handleFiles = (files) => {
-    const valid = [];
+  const handleFiles = (files: FileList) => {
+    const valid: File[] = [];
     for (const f of Array.from(files)) {
-      if (documents.some((d) => d.name === f.name)) return;
+      if (documents.some((d) => d.name === f.name)) continue;
       valid.push(f);
     }
     setDocuments((p) => [...p, ...valid]);
   };
 
-  const removeFile = (name) => {
+  const removeFile = (name: string) => {
     setDocuments((p) => p.filter((f) => f.name !== name));
   };
 
@@ -160,7 +154,7 @@ export default function VendorForm() {
     setLoading(true);
 
     if (isEditMode) {
-      const payload = {};
+      const payload: any = {};
       Object.entries(formData).forEach(([k, v]) => {
         payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
       });
@@ -172,7 +166,7 @@ export default function VendorForm() {
           headers: {
             "Content-Type": "application/json",
             ...authHeader,
-          },          
+          },
           body: JSON.stringify(payload),
         }
       );
@@ -208,13 +202,28 @@ export default function VendorForm() {
       }
     );
 
-    if (!res.ok) {
-      alert("Creation failed");
-      setLoading(false);
-      return;
+if (!res.ok) {
+  const errorData = await res.json().catch(() => null);
+
+  console.error("Backend Error:", errorData);
+
+  if (errorData) {
+    if (errorData.error) {
+      alert(errorData.error);
+    } else {
+      const firstKey = Object.keys(errorData)[0];
+      alert(`${firstKey}: ${errorData[firstKey]}`);
     }
+  } else {
+    alert("Unknown server error");
+  }
+
+  setLoading(false);
+  return;
+}
 
     alert("Vendor created successfully");
+
     setFormData({
       name: "",
       shortName: "",
@@ -222,10 +231,9 @@ export default function VendorForm() {
       contactPerson: "",
       mobile: "",
       email: "",
-      startDate: "",
-      endDate: "",
       natureOfServices: "",
     });
+
     setDocuments([]);
     fetchVendors();
     setLoading(false);
@@ -250,8 +258,6 @@ export default function VendorForm() {
       contactPerson: v.contact_person,
       mobile: v.mobile,
       email: v.email,
-      startDate: v.start_date,
-      endDate: v.end_date,
       natureOfServices: v.nature_of_services,
     });
 
@@ -297,8 +303,6 @@ export default function VendorForm() {
         "Email",
         "Mobile",
         "Nature of Services",
-        "From",
-        "To",
         "Status",
       ],
       ...vendors.map((v) => [
@@ -308,20 +312,24 @@ export default function VendorForm() {
         v.email,
         v.mobile,
         v.nature_of_services,
-        v.start_date,
-        v.end_date,
         "Active",
       ]),
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(worksheetData);
     ws["!cols"] = [
-      { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 30 },
-      { wch: 14 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 30 },
+      { wch: 14 },
+      { wch: 22 },
+      { wch: 12 },
     ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Vendors");
+
     saveAs(
       new Blob([XLSX.write(wb, { bookType: "xlsx", type: "array" })]),
       "vendors.xlsx"
@@ -336,7 +344,6 @@ export default function VendorForm() {
       <PageMeta title="Vendor | HR Compliance" />
       <PageBreadcrumb pageTitle="Manage Vendor" />
 
-      {/* ================= FORM ================= */}
       <div
         ref={formRef}
         className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]"
@@ -351,18 +358,6 @@ export default function VendorForm() {
 
             <Label>Address</Label>
             <Input name="hoAddress" value={formData.hoAddress} onChange={handleChange} />
-
-            <Label>Agreement Start Date</Label>
-            <input type="date" className={dateInputClass}
-              value={formData.startDate}
-              onChange={(e) => handleChange({ target: { name: "startDate", value: e.target.value } })}
-            />
-
-            <Label>Agreement End Date</Label>
-            <input type="date" className={dateInputClass}
-              value={formData.endDate}
-              onChange={(e) => handleChange({ target: { name: "endDate", value: e.target.value } })}
-            />
 
             <Label>Contact Person</Label>
             <Input name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
@@ -401,7 +396,7 @@ export default function VendorForm() {
         </div>
       </div>
 
-      {/* ================= TABLE (PE STYLE) ================= */}
+      {/* TABLE */}
       <div className="mt-10">
         <ComponentCard title="Vendors">
           <div className="mb-5 flex justify-between">
@@ -428,8 +423,6 @@ export default function VendorForm() {
                     "Email",
                     "Mobile",
                     "Nature of Services",
-                    "From",
-                    "To",
                     "Status",
                   ].map((h) => (
                     <TableCell key={h} isHeader className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
@@ -461,8 +454,6 @@ export default function VendorForm() {
                     <TableCell className="px-6 py-5">{v.email}</TableCell>
                     <TableCell className="px-6 py-5">{v.mobile}</TableCell>
                     <TableCell className="px-6 py-5">{v.nature_of_services}</TableCell>
-                    <TableCell className="px-6 py-5">{v.start_date}</TableCell>
-                    <TableCell className="px-6 py-5">{v.end_date}</TableCell>
                     <TableCell className="px-6 py-5">
                       <Badge color="success">Active</Badge>
                     </TableCell>

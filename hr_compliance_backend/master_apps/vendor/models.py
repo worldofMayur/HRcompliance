@@ -13,7 +13,6 @@ def vendor_document_upload_path(instance, filename):
 
 class Vendor(models.Model):
 
-    # ✅ NEW (safe nullable link)
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -29,9 +28,6 @@ class Vendor(models.Model):
     contact_person = models.CharField(max_length=255)
     mobile = models.CharField(max_length=10, unique=True)
     email = models.EmailField(unique=True)
-
-    start_date = models.DateField()
-    end_date = models.DateField()
 
     nature_of_services = models.CharField(max_length=100)
 

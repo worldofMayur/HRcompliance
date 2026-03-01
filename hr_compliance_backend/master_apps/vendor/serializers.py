@@ -21,10 +21,3 @@ class VendorSerializer(serializers.ModelSerializer):
                 "Mobile must be exactly 10 digits"
             )
         return value
-
-    def validate(self, data):
-        if data["end_date"] < data["start_date"]:
-            raise serializers.ValidationError(
-                {"end_date": "End date must be after start date"}
-            )
-        return data
