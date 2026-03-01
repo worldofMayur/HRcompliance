@@ -1,6 +1,9 @@
 from rest_framework import serializers
-from .models import PrincipalEmployer, PrincipalEmployerDocument
-
+from .models import (
+    PrincipalEmployer,
+    PrincipalEmployerDocument,
+    PrincipalEmployerBranch,   # ✅ ADD THIS
+)
 
 class PrincipalEmployerDocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,5 +85,26 @@ class PrincipalEmployerSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "end_date": "End date must be after start date"
             })
+
+        return data
+
+
+# =========================
+# BRANCH SERIALIZER
+# =========================
+class PrincipalEmployerBranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrincipalEmployerBranch
+        fields = "__all__"
+
+    def validate(self, data):
+        required = ["principal_employer", "state", "short_name", "address"]
+
+        missing = [field for field in required if not data.get(field)]
+
+        if missing:
+            raise serializers.ValidationError(
+                {field: "This field is required" for field in missing}
+            )
 
         return data

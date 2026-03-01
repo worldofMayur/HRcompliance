@@ -16,6 +16,10 @@ from django.utils.timezone import now
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import get_object_or_404
+from .models import PrincipalEmployerBranch
+from .serializers import PrincipalEmployerBranchSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.db import transaction
 
 from .models import PrincipalEmployer, PrincipalEmployerDocument
 from .serializers import (
@@ -184,3 +188,69 @@ class PrincipalEmployerDeleteAPIView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+# =========================
+# BRANCH CREATE
+# =========================
+
+
+class PrincipalEmployerBranchCreateAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        try:
+            with transaction.atomic():
+                serializer = PrincipalEmployerBranchSerializer(
+                    data=request.data
+                )
+                serializer.is_valid(raise_exception=True)
+
+                branch = serializer.save()
+
+                # IMPORTANT → return full saved branch
+                return Response(
+                    PrincipalEmployerBranchSerializer(branch).data,
+                    status=status.HTTP_201_CREATED,
+                )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+class PrincipalEmployerBranchListAPIView(APIView):
+    def get(self, request, pe_id):
+        branches = PrincipalEmployerBranch.objects.filter(
+            principal_employer_id=pe_id
+        ).order_by("-created_at")
+
+        serializer = PrincipalEmployerBranchSerializer(branches, many=True)
+        return Response(serializer.data)
+
+
+class PrincipalEmployerBranchUpdateAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def put(self, request, pk):
+        branch = get_object_or_404(PrincipalEmployerBranch, pk=pk)
+
+        data = request.data.copy()
+
+        # Force original principal employer
+        data["principal_employer"] = branch.principal_employer.id
+
+        serializer = PrincipalEmployerBranchSerializer(
+            branch,
+            data=data,
+            partial=True
+        )
+
+        serializer.is_valid(raise_exception=True)
+        updated_branch = serializer.save()
+
+        return Response(
+            PrincipalEmployerBranchSerializer(updated_branch).data,
+            status=status.HTTP_200_OK
+        )

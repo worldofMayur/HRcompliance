@@ -37,6 +37,166 @@ const dateInputClass =
    COMPONENT
 ========================= */
 export default function PrincipleEmployeeForm() {
+
+    /* =========================
+     BRANCH STATE (NEW)
+  ========================= */
+  const [branchModalOpen, setBranchModalOpen] = useState(false);
+  const [animatedCount, setAnimatedCount] = useState(0);
+  const [selectedPEForBranch, setSelectedPEForBranch] = useState(null);
+  const [selectedPEObject, setSelectedPEObject] = useState(null);
+  const [branchList, setBranchList] = useState([]);
+  const [editingData, setEditingData] = useState({});
+  const [editingBranchId, setEditingBranchId] = useState<number | null>(null);
+
+  useEffect(() => {
+  let start = 0;
+  const end = branchList.length;
+
+  if (start === end) {
+    setAnimatedCount(end);
+    return;
+  }
+
+  const duration = 300;
+  const stepTime = 20;
+  const increment = Math.ceil(end / (duration / stepTime));
+
+  const timer = setInterval(() => {
+    start += increment;
+    if (start >= end) {
+      setAnimatedCount(end);
+      clearInterval(timer);
+    } else {
+      setAnimatedCount(start);
+    }
+  }, stepTime);
+
+  return () => clearInterval(timer);
+}, [branchList]);
+
+    const [branchData, setBranchData] = useState({
+      state: "",
+      short_name: "",
+      address: "",
+      status: "active",   // default active
+    });
+
+const openBranchModal = async (peId) => {
+  const pe = tableData.find((x) => x.id === peId);
+
+  setSelectedPEForBranch(peId);
+  setSelectedPEObject(pe);   // ✅ store full object
+  setBranchModalOpen(true);
+
+  const res = await fetch(
+    `http://127.0.0.1:8000/api/principal-employer/${peId}/branches/`
+  );
+  const data = await res.json();
+  setBranchList(data);
+};
+
+const startEditing = (branch) => {
+  setEditingBranchId(branch.id);
+  setEditingData(branch);
+};
+
+  const resetBranchForm = () => {
+    setBranchData({
+      state: "",
+      short_name: "",
+      address: "",
+    });
+  };
+
+const handleBranchUpdate = async (branchId: number) => {
+  const formData = new FormData();
+
+  formData.append("short_name", branchData.short_name);
+  formData.append("state", branchData.state);
+  formData.append("address", branchData.address);
+  formData.append("status", branchData.status);
+
+  if (branchData.document) {
+    formData.append("document", branchData.document);
+  }
+
+  const res = await fetch(
+    `http://127.0.0.1:8000/api/principal-employer/branch/${branchId}/update/`,
+    {
+      method: "PUT",
+      body: formData,
+    }
+  );
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(JSON.stringify(data));
+    return;
+  }
+
+  // ✅ Update table instantly
+  setBranchList((prev) =>
+    prev.map((b) =>
+      b.id === data.id ? data : b
+    )
+  );
+
+  // Exit edit mode
+  setEditingBranchId(null);
+
+  // Reset form
+  setBranchData({
+    state: "",
+    short_name: "",
+    address: "",
+    status: "active",
+    document: null,
+  });
+};
+
+const handleBranchSubmit = async () => {
+  if (!selectedPEObject) return;
+
+  const formData = new FormData();
+
+  formData.append("principal_employer", selectedPEObject.id);
+  formData.append("state", branchData.state);
+  formData.append("short_name", branchData.short_name);
+  formData.append("address", branchData.address);
+  formData.append("status", branchData.status);
+
+  if (branchData.document) {
+    formData.append("document", branchData.document);
+  }
+
+  const res = await fetch("http://127.0.0.1:8000/api/principal-employer/branch/create/", {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json();
+    console.log(err);
+    return;
+  }
+
+  const newBranch = await res.json();
+
+  // ✅ Immediately update UI
+  setBranchList((prev) => [newBranch, ...prev]);
+
+  // Reset form
+  setBranchData({
+    state: "",
+    short_name: "",
+    address: "",
+    status: "active",
+    document: null,
+  });
+};
   /* =========================
      FORM STATE
   ========================= */
@@ -142,6 +302,38 @@ export default function PrincipleEmployeeForm() {
   const removeDocument = (name) => {
     setDocuments((p) => p.filter((d) => d.name !== name));
   };
+
+const handleExportBranches = () => {
+  if (!branchList.length) return;
+
+  const worksheetData = [
+    ["Principal Employer", "Short Name", "State", "Address", "Status"],
+    ...branchList.map((b) => [
+      selectedPEObject?.name,
+      b.short_name,
+      b.state,
+      b.address,
+      b.status,
+    ]),
+  ];
+
+  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Branches");
+
+  const buffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array",
+  });
+
+  saveAs(
+    new Blob([buffer], {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+    `${selectedPEObject?.short_name}_branches.xlsx`
+  );
+};
 
   /* =========================
      EDIT HANDLER
@@ -296,6 +488,7 @@ export default function PrincipleEmployeeForm() {
         "To",
         "Rules",
         "Status",
+        "Branch",
       ],
       ...filteredData.map((pe) => [
         pe.name,
@@ -503,6 +696,14 @@ export default function PrincipleEmployeeForm() {
                     <TableCell className="px-6 py-5">{pe.end_date || "—"}</TableCell>
                     <TableCell className="px-6 py-5">{pe.rules_applicable}</TableCell>
                     <TableCell className="px-6 py-5 text-green-700">Active</TableCell>
+                    <TableCell className="px-6 py-5">
+                      <Button
+                        size="sm"
+                        onClick={() => openBranchModal(pe.id)}
+                      >
+                        Add / View Branch
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -510,6 +711,338 @@ export default function PrincipleEmployeeForm() {
           </div>
         </ComponentCard>
       </div>
+      {/* ================= BRANCH MODAL ================= */}
+
+{/* ================= ENHANCED BRANCH MODAL ================= */}
+{/* ================= PREMIUM BRANCH MODAL ================= */}
+{branchModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 pb-10 bg-black/40 backdrop-blur-sm px-4">
+    <div className="w-full max-w-6xl rounded-2xl bg-white shadow-2xl overflow-hidden">
+
+      {/* ================= HEADER ================= */}
+      <div className="flex items-center justify-between px-8 py-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-800">
+            {selectedPEObject?.name}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Managing mapped branches
+          </p>
+        </div>
+
+        <button
+          onClick={() => setBranchModalOpen(false)}
+          className="text-gray-500 hover:text-gray-700 text-xl"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* ================= BODY ================= */}
+      <div className="p-8 space-y-10 max-h-[70vh] overflow-y-auto">
+
+        {/* ================= ADD / EDIT FORM ================= */}
+        <div id="branch-form" className="bg-gray-50 border rounded-2xl p-8 space-y-8">
+
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+              {editingBranchId ? "Edit Branch" : "Add New Branch"}
+            </h3>
+
+            {editingBranchId && (
+              <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-medium">
+                Editing Mode
+              </span>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+
+            {/* STATE */}
+            <div>
+              <Label>State</Label>
+              <select
+                className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm"
+                value={branchData.state}
+                onChange={(e) =>
+                  setBranchData({ ...branchData, state: e.target.value })
+                }
+              >
+                <option value="">Select State</option>
+                <option value="Telangana">Telangana</option>
+                <option value="Tamilnadu">Tamilnadu</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Delhi">Delhi</option>
+              </select>
+            </div>
+
+            {/* SHORT NAME */}
+            <div>
+              <Label>Branch Short Name</Label>
+              <Input
+                value={branchData.short_name}
+                onChange={(e) =>
+                  setBranchData({
+                    ...branchData,
+                    short_name: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* STATUS */}
+            <div>
+              <Label>Status</Label>
+              <select
+                className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm"
+                value={branchData.status}
+                onChange={(e) =>
+                  setBranchData({
+                    ...branchData,
+                    status: e.target.value,
+                  })
+                }
+              >
+                <option value="active">Active</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
+
+            {/* ADDRESS */}
+            <div className="md:col-span-2">
+              <Label>Address</Label>
+              <Input
+                value={branchData.address}
+                onChange={(e) =>
+                  setBranchData({
+                    ...branchData,
+                    address: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* DOCUMENT */}
+            <div>
+              <Label>Upload Document (Optional)</Label>
+
+              <div className="mt-2 space-y-3">
+
+                {/* EXISTING DOCUMENT */}
+                {branchData.existingDocument && !branchData.document && (
+                  <div className="flex items-center justify-between text-sm bg-white px-4 py-2 rounded-lg border">
+                    <a
+                      href={`http://127.0.0.1:8000${branchData.existingDocument}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      View Current Document
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBranchData({
+                          ...branchData,
+                          existingDocument: null,
+                        })
+                      }
+                      className="text-xs text-red-500 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+
+                {/* UPLOAD BOX */}
+                <label className="flex items-center justify-between w-full px-4 py-3 border border-gray-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition">
+
+                  <span className="text-sm text-gray-600 truncate">
+                    {branchData.document
+                      ? branchData.document.name
+                      : "Click to upload document"}
+                  </span>
+
+                  <span className="text-xs text-gray-400">
+                    PDF, DOC, XLS (Max 3MB)
+                  </span>
+
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={(e) =>
+                      setBranchData({
+                        ...branchData,
+                        document: e.target.files?.[0] || null,
+                      })
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          {/* FORM BUTTONS */}
+          <div className="flex justify-end gap-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setEditingBranchId(null);
+              setBranchData({
+                state: "",
+                short_name: "",
+                address: "",
+                status: "active",
+                document: null,
+              });
+            }}
+          >
+            Cancel
+          </Button>
+
+        <Button
+          onClick={() =>
+            editingBranchId
+              ? handleBranchUpdate(editingBranchId)
+              : handleBranchSubmit()
+          }
+        >
+          {editingBranchId ? "Update Branch" : "Save Branch"}
+        </Button>
+          </div>
+
+        </div>
+
+        {/* ================= TABLE ================= */}
+        <div className="space-y-6">
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                Mapped Branches
+              </h3>
+              <p className="text-xs text-gray-400 mt-1">
+                Total: {branchList.length}
+              </p>
+            </div>
+
+            <Button size="sm" onClick={handleExportBranches}>
+              Export
+            </Button>
+          </div>
+
+          {branchList.length === 0 ? (
+            <div className="text-center text-sm text-gray-400 py-16 border rounded-xl">
+              No branches mapped yet
+            </div>
+          ) : (
+            <div className="rounded-xl border border-gray-200 overflow-hidden">
+
+              <table className="w-full text-sm">
+
+                <thead className="bg-gray-50 text-xs uppercase text-gray-400 tracking-wide">
+                  <tr>
+                    <th className="px-6 py-3 text-left">Principal Employer</th>
+                    <th className="px-6 py-3 text-left">Short Name</th>
+                    <th className="px-6 py-3 text-left">State</th>
+                    <th className="px-6 py-3 text-left">Address</th>
+                    <th className="px-6 py-3 text-left">Status</th>
+                    <th className="px-6 py-3 text-left">Document</th>
+                    <th className="px-6 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-gray-100">
+
+                  {branchList.map((branch) => (
+                    <tr key={branch.id} className="hover:bg-gray-50 transition">
+
+                      <td className="px-6 py-4 font-medium text-gray-700">
+                        {selectedPEObject?.name}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-700">
+                        {branch.short_name}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {branch.state}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {branch.address}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+                            branch.status === "active"
+                              ? "bg-green-50 text-green-600"
+                              : "bg-red-50 text-red-600"
+                          }`}
+                        >
+                          {branch.status.toUpperCase()}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4 text-sm">
+                        {branch.document ? (
+                          <a
+                            href={`http://127.0.0.1:8000${branch.document}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline"
+                          >
+                            View
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingBranchId(branch.id);
+                            setBranchData({
+                              state: branch.state,
+                              short_name: branch.short_name,
+                              address: branch.address,
+                              status: branch.status,
+                              document: null,
+                              existingDocument: branch.document || null,
+                            });
+
+                            document
+                              .getElementById("branch-form")
+                              ?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      </td>
+
+                    </tr>
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+          )}
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

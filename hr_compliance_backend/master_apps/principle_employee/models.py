@@ -75,3 +75,38 @@ class PrincipalEmployerDocument(models.Model):
 
     def __str__(self):
         return os.path.basename(self.document.name)
+
+
+# =========================
+# PRINCIPAL EMPLOYER BRANCH
+# =========================
+class PrincipalEmployerBranch(models.Model):
+
+    STATUS_CHOICES = (
+        ("active", "Active"),
+        ("closed", "Closed"),
+    )
+
+    principal_employer = models.ForeignKey(
+        PrincipalEmployer,
+        on_delete=models.CASCADE,
+        related_name="branches",
+    )
+
+    state = models.CharField(max_length=100)
+    short_name = models.CharField(max_length=100)
+    address = models.TextField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="active"
+    )
+
+    document = models.FileField(
+        upload_to="principal_employer_branches/",
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
