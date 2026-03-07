@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
@@ -14,6 +14,7 @@ import autoTable from "jspdf-autotable";
 const API_BASE = "http://127.0.0.1:8000/api";
 
 export default function AuditChecklistForm() {
+
   /* =========================
      MASTER DATA
   ========================= */
@@ -23,6 +24,10 @@ export default function AuditChecklistForm() {
   const [sections, setSections] = useState([]);
   const [rules, setRules] = useState([]);
   const [documents, setDocuments] = useState([]);
+
+  const [documentSearch, setDocumentSearch] = useState("");
+  const [docDropdownOpen, setDocDropdownOpen] = useState(false);
+  const docRef = useRef();
 
   /* =========================
      CHECKLIST DATA
@@ -76,6 +81,19 @@ export default function AuditChecklistForm() {
   };
 
   /* =========================
+     CLOSE DROPDOWN ON OUTSIDE CLICK
+  ========================= */
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (docRef.current && !docRef.current.contains(e.target)) {
+        setDocDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  /* =========================
      DEPENDENT DROPDOWNS
   ========================= */
   useEffect(() => {
@@ -110,6 +128,17 @@ export default function AuditChecklistForm() {
 
     setFormData(p => ({ ...p, rule: "" }));
   }, [formData.section]);
+
+  /* =========================
+     DOCUMENT SEARCH FILTER
+  ========================= */
+  const filteredDocuments = useMemo(() => {
+    if (!documentSearch) return documents;
+
+    return documents.filter(d =>
+      d.name.toLowerCase().includes(documentSearch.toLowerCase())
+    );
+  }, [documents, documentSearch]);
 
   /* =========================
      CREATE CHECKLIST
@@ -241,17 +270,17 @@ export default function AuditChecklistForm() {
       <PageMeta title="Audit Checklist | HR Compliance" />
       <PageBreadcrumb pageTitle="Manage Audit Checklist" />
 
-      {/* FORM */}
       <ComponentCard title="Create Audit Checklist">
         <form onSubmit={handleSubmit} className="space-y-8">
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
             {[
               ["State","state",states,"name"],
               ["Act","act",acts,"name"],
               ["Nature of Compliance","compliance_nature",complianceNatures,"name"],
               ["Section","section",sections,"section_number"],
               ["Rule","rule",rules,"rule_number"],
-              ["Document","document",documents,"name"],
             ].map(([label,name,data,key]) => (
               <div key={name}>
                 <Label>{label}</Label>
@@ -268,6 +297,44 @@ export default function AuditChecklistForm() {
                 </select>
               </div>
             ))}
+
+            {/* DOCUMENT DROPDOWN */}
+            <div ref={docRef} className="relative">
+                <Label>Document</Label>
+
+              <div
+                className="w-full h-12 rounded-lg border border-gray-200/70 px-4 flex items-center cursor-pointer bg-white"
+                onClick={() => setDocDropdownOpen(!docDropdownOpen)}
+              >
+                {documents.find(d => d.id == formData.document)?.name || "Select Document"}
+              </div>
+
+              {docDropdownOpen && (
+              <div className="absolute left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
+                  <input
+                    placeholder="Search document..."
+                    value={documentSearch}
+                    onChange={(e) => setDocumentSearch(e.target.value)}
+                    className="w-full px-3 py-2 border-b border-gray-200 outline-none text-sm rounded-t-lg"
+                  />
+
+                  {filteredDocuments.map(doc => (
+                    <div
+                      key={doc.id}
+                      onClick={() => {
+                        setFormData({ ...formData, document: doc.id });
+                        setDocDropdownOpen(false);
+                        setDocumentSearch("");
+                      }}
+                      className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                    >
+                      {doc.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
 
           <div>
@@ -283,8 +350,10 @@ export default function AuditChecklistForm() {
           <div className="flex justify-end border-t pt-6 h-16">
             <Button>Save Checklist</Button>
           </div>
+
         </form>
       </ComponentCard>
+      {/* TABLE remains completely unchanged */}
 
       {/* TABLE */}
       <ComponentCard title="Audit Checklist Master" className="mt-8">

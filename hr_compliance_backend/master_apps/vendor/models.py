@@ -2,7 +2,6 @@ from django.db import models
 import os
 from accounts.models import User
 
-
 def vendor_document_upload_path(instance, filename):
     return os.path.join(
         "vendor",
@@ -26,8 +25,8 @@ class Vendor(models.Model):
     ho_address = models.TextField()
 
     contact_person = models.CharField(max_length=255)
-    mobile = models.CharField(max_length=10, unique=True)
-    email = models.EmailField(unique=True)
+    mobile = models.CharField(max_length=10)
+    email = models.EmailField()
 
     nature_of_services = models.CharField(max_length=100)
 

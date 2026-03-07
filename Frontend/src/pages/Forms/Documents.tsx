@@ -33,6 +33,7 @@ export default function Documents() {
   const [frequencyFilter, setFrequencyFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [peList, setPeList] = useState([]);
 
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -42,7 +43,7 @@ export default function Documents() {
   const [formData, setFormData] = useState({
     name: "",
     frequency: "monthly",
-    is_active: true,
+    principal_employer: "",
   });
 
   /* =========================
@@ -59,9 +60,22 @@ export default function Documents() {
     }
   };
 
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
+useEffect(() => {
+  fetchDocuments();
+  fetchPEs();
+}, []);
+
+  const fetchPEs = async () => {
+  try {
+    const res = await fetch(
+      "http://127.0.0.1:8000/api/document-master/pe-dropdown/"
+    );
+    const data = await res.json();
+    setPeList(data);
+  } catch (err) {
+    console.error("Error loading PE list", err);
+  }
+};
 
   /* =========================
      FILTER + SEARCH
@@ -114,18 +128,24 @@ export default function Documents() {
   /* =========================
      CRUD HANDLERS
   ========================= */
-  const openAdd = () => {
-    setEditDoc(null);
-    setFormData({ name: "", frequency: "monthly", is_active: true });
-    setShowForm(true);
-  };
+const openAdd = () => {
+  setEditDoc(null);
+
+  setFormData({
+    name: "",
+    frequency: "monthly",
+    principal_employer: "",
+  });
+
+  setShowForm(true);
+};
 
   const openEdit = (doc) => {
     setEditDoc(doc);
     setFormData({
       name: doc.name,
       frequency: doc.frequency,
-      is_active: doc.is_active,
+      principal_employer: doc.principal_employer || "",
     });
     setShowForm(true);
   };
@@ -267,9 +287,6 @@ export default function Documents() {
                   FREQUENCY
                 </TableCell>
                 <TableCell isHeader className="px-6 py-4 text-center">
-                  STATUS
-                </TableCell>
-                <TableCell isHeader className="px-6 py-4 text-center">
                   ACTIONS
                 </TableCell>
               </TableRow>
@@ -278,26 +295,8 @@ export default function Documents() {
             <TableBody>
               {(loading || processing) && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center">
+                  <TableCell colSpan={4} className="py-12 text-center">
                     <div className="flex items-center justify-center gap-3 text-gray-500">
-                      <svg
-                        className="h-5 w-5 animate-spin text-blue-600"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        />
-                      </svg>
                       Loading…
                     </div>
                   </TableCell>
@@ -335,12 +334,6 @@ export default function Documents() {
                       <span className="inline-flex min-w-[90px] justify-center rounded-md bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
                         {d.frequency.replace("_", " ")}
                       </span>
-                    </TableCell>
-
-                    <TableCell className="px-6 py-6 text-center align-middle">
-                      <Badge color={d.is_active ? "success" : "warning"}>
-                        {d.is_active ? "Active" : "Inactive"}
-                      </Badge>
                     </TableCell>
 
                     <TableCell className="px-6 py-6 text-center align-middle">
@@ -403,6 +396,25 @@ export default function Documents() {
               />
 
               <select
+              className="w-full h-11 rounded-lg border px-3"
+              value={formData.principal_employer}
+              onChange={(e) =>
+                setFormData((p) => ({
+                  ...p,
+                  principal_employer: e.target.value,
+                }))
+              }
+            >
+              <option value="">Common</option>
+
+              {peList.map((pe) => (
+                <option key={pe.id} value={pe.id}>
+                  {pe.name}
+                </option>
+              ))}
+            </select>
+
+              <select
                 className="w-full h-11 rounded-lg border px-3"
                 value={formData.frequency}
                 onChange={(e) =>
@@ -417,19 +429,6 @@ export default function Documents() {
                 <option value="one_time">One Time</option>
               </select>
 
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={formData.is_active}
-                  onChange={(e) =>
-                    setFormData((p) => ({
-                      ...p,
-                      is_active: e.target.checked,
-                    }))
-                  }
-                />
-                Active
-              </label>
             </div>
 
             <div className="mt-6 flex justify-end gap-3">

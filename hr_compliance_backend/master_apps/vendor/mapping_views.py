@@ -5,22 +5,30 @@ from rest_framework import status
 
 from .mapping_models import VendorBranchMapping
 from .mapping_serializers import VendorBranchMappingSerializer
-from master_apps.principle_employee.models import PrincipalEmployer
+
+from master_apps.principle_employee.models import (
+    PrincipalEmployer,
+    PrincipalEmployerBranch
+)
+
+from master_apps.principle_employee.models import PrincipalEmployerBranch
 
 
 # ==========================================================
-# EXISTING CREATE VIEW (UNCHANGED)
+# 🔥 CREATE MAPPING (PE SIDE)
 # ==========================================================
 class VendorBranchMappingCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
 
+        print("Incoming Data:", request.data)
+
         if request.user.role != "PE":
             return Response({"error": "Unauthorized"}, status=403)
 
         try:
-            pe = PrincipalEmployer.objects.get(email=request.user.email)
+            pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
             return Response({"error": "PE profile not found"}, status=400)
 
@@ -33,24 +41,34 @@ class VendorBranchMappingCreateAPIView(APIView):
             serializer.save()
             return Response({"message": "Mapping created"}, status=201)
 
+        print("Serializer Errors:", serializer.errors)
         return Response(serializer.errors, status=400)
 
 
 # ==========================================================
-# EXISTING LIST VIEW (UNCHANGED)
+# 🔥 LIST MAPPINGS (PE SIDE)
 # ==========================================================
 class VendorBranchMappingListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
 
+        if request.user.role != "PE":
+            return Response([], status=200)
+
         vendor_id = request.GET.get("vendor")
 
         if not vendor_id:
             return Response([], status=200)
 
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([], status=200)
+
         mappings = VendorBranchMapping.objects.filter(
-            vendor_id=vendor_id
+            vendor_id=vendor_id,
+            principal_employer=pe
         ).select_related("vendor", "branch", "auditor", "document")
 
         serializer = VendorBranchMappingSerializer(mappings, many=True)
@@ -58,12 +76,46 @@ class VendorBranchMappingListAPIView(APIView):
 
 
 # ==========================================================
-# 🔥 VENDOR DROPDOWN APIs (FINAL CLEAN VERSION)
+# 🔥 NEW: PE BRANCH DROPDOWN (FOR VENDOR MAPPING SCREEN)
+# ==========================================================
+class PEBranchDropdownAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response([], status=200)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([], status=200)
+
+        branches = PrincipalEmployerBranch.objects.filter(
+            principal_employer=pe,
+            status="active"
+        ).order_by("state")
+
+        data = [
+            {
+                "id": branch.id,
+                "state": branch.state,
+                "short_name": branch.short_name,
+                "address": branch.address
+            }
+            for branch in branches
+        ]
+
+        return Response(data)
+
+
+# ==========================================================
+# 🔥 VENDOR SIDE DROPDOWN APIs (UNCHANGED LOGIC)
 # ==========================================================
 
 
 # ===============================
-# 1️⃣ MAPPED PE LIST
+# 1️⃣ MAPPED PE LIST (Vendor Login)
 # ===============================
 class VendorMappedPEAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -93,7 +145,7 @@ class VendorMappedPEAPIView(APIView):
 
 
 # ===============================
-# 2️⃣ MAPPED STATES
+# 2️⃣ MAPPED STATES (Vendor Login)
 # ===============================
 class VendorMappedStatesAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -110,22 +162,26 @@ class VendorMappedStatesAPIView(APIView):
         mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id
-        ).select_related("branch__state")
+        ).select_related("branch")
 
-        states_dict = {}
+        states = set()
 
         for mapping in mappings:
-            state = mapping.branch.state
-            states_dict[state.id] = {
-                "id": state.id,
-                "name": state.name
-            }
+            states.add(mapping.branch.state)
 
-        return Response(list(states_dict.values()))
+        formatted = [
+            {
+                "id": state,
+                "name": state
+            }
+            for state in states
+        ]
+
+        return Response(formatted)
 
 
 # ===============================
-# 3️⃣ MAPPED BRANCHES
+# 3️⃣ MAPPED BRANCHES (Vendor Login)
 # ===============================
 class VendorMappedBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -133,9 +189,9 @@ class VendorMappedBranchesAPIView(APIView):
     def get(self, request):
 
         pe_id = request.GET.get("pe_id")
-        state_id = request.GET.get("state_id")
+        state = request.GET.get("state")
 
-        if request.user.role != "VENDOR" or not pe_id or not state_id:
+        if request.user.role != "VENDOR" or not pe_id or not state:
             return Response([])
 
         vendor = request.user.vendor_profile
@@ -143,8 +199,8 @@ class VendorMappedBranchesAPIView(APIView):
         mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
-            branch__state_id=state_id
-        ).select_related("branch__city")
+            branch__state=state
+        ).select_related("branch")
 
         branches_dict = {}
 
@@ -152,14 +208,14 @@ class VendorMappedBranchesAPIView(APIView):
             branch = mapping.branch
             branches_dict[branch.id] = {
                 "id": branch.id,
-                "name": f"{branch.city.name} - {branch.address}"
+                "name": f"{branch.short_name} - {branch.address}"
             }
 
         return Response(list(branches_dict.values()))
 
 
 # ===============================
-# 4️⃣ MAPPED DOCUMENTS
+# 4️⃣ MAPPED DOCUMENTS (Vendor Login)
 # ===============================
 class VendorMappedDocumentsAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -178,7 +234,7 @@ class VendorMappedDocumentsAPIView(APIView):
             vendor=vendor,
             principal_employer_id=pe_id,
             branch_id=branch_id,
-            document__is_active=True
+            document__isnull=False
         ).select_related("document").values(
             "document__id",
             "document__name",

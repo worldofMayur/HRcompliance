@@ -13,6 +13,7 @@ from django.utils.encoding import force_bytes
 from django.template.loader import render_to_string
 from django.utils.timezone import now
 from django.core.mail import EmailMultiAlternatives
+from django.shortcuts import get_object_or_404
 
 from .models import Auditor, AuditorDocument
 from .serializers import AuditorSerializer
@@ -28,34 +29,89 @@ class AuditorCreateAPIView(APIView):
         try:
             with transaction.atomic():
 
-                serializer = AuditorSerializer(data=request.data)
-                serializer.is_valid(raise_exception=True)
-                auditor = serializer.save()
+                email = request.data.get("email")
+                mobile = request.data.get("mobile")
 
-                temp_password = get_random_string(10)
-                user = User.objects.create_user(
-                    username=auditor.short_name,
-                    email=auditor.email,
-                    password=temp_password,
-                    role="auditor",
-                    is_active=True,
-                )
+                # ==========================
+                # GLOBAL CROSS MODULE CHECK
+                # ==========================
+                if User.objects.filter(email=email).exists():
+                    return Response(
+                        {"error": "Account with this email already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
+                if User.objects.filter(mobile=mobile).exists():
+                    return Response(
+                        {"error": "Account with this mobile already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # ==========================
+                # AUDITOR MODULE CHECK
+                # ==========================
+                if Auditor.objects.filter(email=email).exists():
+                    return Response(
+                        {"error": "Auditor with this email already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if Auditor.objects.filter(mobile=mobile).exists():
+                    return Response(
+                        {"error": "Auditor with this mobile already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # ==========================
+                # DOCUMENT VALIDATION
+                # ==========================
                 documents = request.FILES.getlist("documents")
+
                 if not documents:
                     return Response(
                         {"error": "Please upload at least one document"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+                # ==========================
+                # CREATE AUDITOR
+                # ==========================
+                serializer = AuditorSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                auditor = serializer.save()
+
+                # ==========================
+                # CREATE USER (LINKED)
+                # ==========================
+                temp_password = get_random_string(10)
+
+                user = User.objects.create_user(
+                    username=auditor.short_name,
+                    email=auditor.email,
+                    mobile=auditor.mobile,
+                    password=temp_password,
+                    role="AUDITOR",
+                    is_active=True,
+                )
+
+                user.reset_password_used = False
+                user.save(update_fields=["reset_password_used"])
+
+                # ==========================
+                # SAVE DOCUMENTS
+                # ==========================
                 for doc in documents:
                     AuditorDocument.objects.create(
                         auditor=auditor,
                         document=doc
                     )
 
+                # ==========================
+                # SEND PASSWORD RESET EMAIL
+                # ==========================
                 token = PasswordResetTokenGenerator().make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
+
                 reset_url = f"{settings.FRONTEND_URL}/TailAdmin/reset-password/{uid}/{token}"
 
                 html_content = render_to_string(
@@ -68,14 +124,15 @@ class AuditorCreateAPIView(APIView):
                     },
                 )
 
-                email = EmailMultiAlternatives(
+                email_obj = EmailMultiAlternatives(
                     subject="Activate Your HR Compliance Account",
                     body="HTML email required",
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[auditor.email],
                 )
-                email.attach_alternative(html_content, "text/html")
-                email.send()
+
+                email_obj.attach_alternative(html_content, "text/html")
+                email_obj.send(fail_silently=True)
 
                 return Response(
                     {"message": "Auditor created & email sent"},
@@ -108,12 +165,33 @@ class AuditorUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, pk):
-        auditor = Auditor.objects.get(pk=pk)
+
+        auditor = get_object_or_404(Auditor, pk=pk)
+
+        email = request.data.get("email")
+        mobile = request.data.get("mobile")
+
+        # ==========================
+        # DUPLICATE CHECK (UPDATE)
+        # ==========================
+        if email and Auditor.objects.exclude(pk=pk).filter(email=email).exists():
+            return Response(
+                {"error": "Another auditor already uses this email"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if mobile and Auditor.objects.exclude(pk=pk).filter(mobile=mobile).exists():
+            return Response(
+                {"error": "Another auditor already uses this mobile"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = AuditorSerializer(auditor, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Auditor updated successfully"})
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -124,6 +202,10 @@ class AuditorDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
-        auditor = Auditor.objects.get(pk=pk)
+
+        auditor = get_object_or_404(Auditor, pk=pk)
         auditor.delete()
-        return Response({"message": "Auditor deleted successfully"})
+
+        return Response(
+            {"message": "Auditor deleted successfully"}
+        )

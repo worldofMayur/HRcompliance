@@ -4,6 +4,7 @@ import shutil
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from django.db import transaction
 from django.conf import settings
@@ -16,23 +17,24 @@ from django.utils.timezone import now
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import get_object_or_404
-from .models import PrincipalEmployerBranch
-from .serializers import PrincipalEmployerBranchSerializer
-from rest_framework.parsers import MultiPartParser, FormParser
-from django.db import transaction
 
-from .models import PrincipalEmployer, PrincipalEmployerDocument
+from .models import (
+    PrincipalEmployer,
+    PrincipalEmployerDocument,
+    PrincipalEmployerBranch,
+)
 from .serializers import (
     PrincipalEmployerSerializer,
     PrincipalEmployerDocumentSerializer,
+    PrincipalEmployerBranchSerializer,
 )
 
 User = get_user_model()
 
 
-# =========================
-# LIST
-# =========================
+# ==========================================================
+# LIST PRINCIPAL EMPLOYERS
+# ==========================================================
 class PrincipalEmployerListAPIView(APIView):
     def get(self, request):
         queryset = PrincipalEmployer.objects.all().order_by("-created_at")
@@ -40,22 +42,44 @@ class PrincipalEmployerListAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# =========================
-# CREATE
-# =========================
+# ==========================================================
+# CREATE PRINCIPAL EMPLOYER
+# ==========================================================
 class PrincipalEmployerCreateAPIView(APIView):
     def post(self, request):
         try:
             with transaction.atomic():
 
                 email = request.data.get("email")
+                mobile = request.data.get("mobile")
 
+                # 🔥 GLOBAL DUPLICATE CHECK (ACCOUNTS)
                 if User.objects.filter(email=email).exists():
                     return Response(
-                        {"error": "An account with this email already exists"},
+                        {"error": "Account with this email already exists"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+                if User.objects.filter(mobile=mobile).exists():
+                    return Response(
+                        {"error": "Account with this mobile already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # 🔥 MODULE DUPLICATE CHECK (PE)
+                if PrincipalEmployer.objects.filter(email=email).exists():
+                    return Response(
+                        {"error": "Principal Employer with this email already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if PrincipalEmployer.objects.filter(mobile=mobile).exists():
+                    return Response(
+                        {"error": "Principal Employer with this mobile already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # CREATE PE
                 serializer = PrincipalEmployerSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 principal_employer = serializer.save()
@@ -65,6 +89,7 @@ class PrincipalEmployerCreateAPIView(APIView):
                 user = User.objects.create_user(
                     username=principal_employer.short_name,
                     email=principal_employer.email,
+                    mobile=principal_employer.mobile,
                     password=temp_password,
                     role="PE",
                     is_active=True,
@@ -73,7 +98,11 @@ class PrincipalEmployerCreateAPIView(APIView):
                 user.reset_password_used = False
                 user.save(update_fields=["reset_password_used"])
 
-                # HANDLE DOCUMENTS
+                # 🔥 LINK USER TO PE
+                principal_employer.user = user
+                principal_employer.save(update_fields=["user"])
+
+                # HANDLE DOCUMENTS (MANDATORY)
                 documents = request.FILES.getlist("document")
                 if not documents:
                     return Response(
@@ -132,21 +161,35 @@ class PrincipalEmployerCreateAPIView(APIView):
             )
 
 
-# =========================
-# UPDATE
-# =========================
+# ==========================================================
+# UPDATE PRINCIPAL EMPLOYER
+# ==========================================================
 class PrincipalEmployerUpdateAPIView(APIView):
     def put(self, request, pk):
         pe = get_object_or_404(PrincipalEmployer, pk=pk)
+
+        email = request.data.get("email")
+        mobile = request.data.get("mobile")
+
+        # 🔥 DUPLICATE CHECK DURING UPDATE
+        if email and PrincipalEmployer.objects.exclude(pk=pk).filter(email=email).exists():
+            return Response(
+                {"error": "Another Principal Employer already uses this email"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if mobile and PrincipalEmployer.objects.exclude(pk=pk).filter(mobile=mobile).exists():
+            return Response(
+                {"error": "Another Principal Employer already uses this mobile"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         data = request.data.copy()
         data.pop("documents", None)
         data.pop("created_at", None)
         data.pop("id", None)
 
-        serializer = PrincipalEmployerSerializer(
-            pe, data=data, partial=True
-        )
+        serializer = PrincipalEmployerSerializer(pe, data=data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -155,9 +198,9 @@ class PrincipalEmployerUpdateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# =========================
-# DELETE
-# =========================
+# ==========================================================
+# DELETE PRINCIPAL EMPLOYER
+# ==========================================================
 class PrincipalEmployerDeleteAPIView(APIView):
     def delete(self, request, pk):
         try:
@@ -165,8 +208,11 @@ class PrincipalEmployerDeleteAPIView(APIView):
 
                 pe = get_object_or_404(PrincipalEmployer, pk=pk)
 
-                User.objects.filter(email=pe.email).delete()
+                # Delete linked user
+                if pe.user:
+                    pe.user.delete()
 
+                # Delete media folder
                 pe_folder = os.path.join(
                     settings.MEDIA_ROOT,
                     "principle_employee",
@@ -190,25 +236,19 @@ class PrincipalEmployerDeleteAPIView(APIView):
             )
 
 
-# =========================
-# BRANCH CREATE
-# =========================
-
-
+# ==========================================================
+# CREATE BRANCH
+# ==========================================================
 class PrincipalEmployerBranchCreateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
         try:
             with transaction.atomic():
-                serializer = PrincipalEmployerBranchSerializer(
-                    data=request.data
-                )
+                serializer = PrincipalEmployerBranchSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
-
                 branch = serializer.save()
 
-                # IMPORTANT → return full saved branch
                 return Response(
                     PrincipalEmployerBranchSerializer(branch).data,
                     status=status.HTTP_201_CREATED,
@@ -220,6 +260,10 @@ class PrincipalEmployerBranchCreateAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
+# ==========================================================
+# LIST BRANCHES BY PE ID (ADMIN SIDE)
+# ==========================================================
 class PrincipalEmployerBranchListAPIView(APIView):
     def get(self, request, pe_id):
         branches = PrincipalEmployerBranch.objects.filter(
@@ -230,6 +274,9 @@ class PrincipalEmployerBranchListAPIView(APIView):
         return Response(serializer.data)
 
 
+# ==========================================================
+# UPDATE BRANCH
+# ==========================================================
 class PrincipalEmployerBranchUpdateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
@@ -237,8 +284,6 @@ class PrincipalEmployerBranchUpdateAPIView(APIView):
         branch = get_object_or_404(PrincipalEmployerBranch, pk=pk)
 
         data = request.data.copy()
-
-        # Force original principal employer
         data["principal_employer"] = branch.principal_employer.id
 
         serializer = PrincipalEmployerBranchSerializer(

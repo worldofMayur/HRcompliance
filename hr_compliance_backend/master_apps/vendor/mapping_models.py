@@ -1,6 +1,6 @@
 from django.db import models
 from .models import Vendor
-from .branch_models import VendorBranch
+from master_apps.principle_employee.models import PrincipalEmployerBranch
 from master_apps.auditor.models import Auditor
 from master_apps.documents.models import DocumentMaster
 from master_apps.principle_employee.models import PrincipalEmployer
@@ -33,8 +33,9 @@ class VendorBranchMapping(models.Model):
         related_name="branch_mappings"
     )
 
+
     branch = models.ForeignKey(
-        VendorBranch,
+        PrincipalEmployerBranch,
         on_delete=models.CASCADE,
         related_name="vendor_mappings"
     )

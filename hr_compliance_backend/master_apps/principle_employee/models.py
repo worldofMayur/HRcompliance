@@ -29,8 +29,8 @@ class PrincipalEmployer(models.Model):
     ho_address = models.TextField()
 
     contact_person = models.CharField(max_length=255)
-    mobile = models.CharField(max_length=10, unique=True)
-    email = models.EmailField(unique=True)
+    mobile = models.CharField(max_length=10)
+    email = models.EmailField()
 
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)

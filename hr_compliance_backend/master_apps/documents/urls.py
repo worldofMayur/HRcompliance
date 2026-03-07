@@ -6,6 +6,7 @@ from .views import (
     DocumentMasterDeleteAPIView,
     DocumentMasterBulkDeleteAPIView,
     DocumentMasterBulkUpdateAPIView,
+    PEDropdownAPIView,
 )
 
 urlpatterns = [
@@ -14,7 +15,8 @@ urlpatterns = [
     path("<int:pk>/update/", DocumentMasterUpdateAPIView.as_view()),
     path("<int:pk>/delete/", DocumentMasterDeleteAPIView.as_view()),
 
-    # 🔥 BULK ACTIONS
     path("bulk-delete/", DocumentMasterBulkDeleteAPIView.as_view()),
     path("bulk-update/", DocumentMasterBulkUpdateAPIView.as_view()),
+
+    path("pe-dropdown/", PEDropdownAPIView.as_view()),
 ]

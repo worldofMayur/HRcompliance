@@ -7,7 +7,7 @@ class Auditor(models.Model):
     company = models.CharField(max_length=255)
     ho_address = models.TextField()
     mobile = models.CharField(max_length=10)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     start_date = models.DateField()
     end_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)

@@ -16,6 +16,10 @@ class User(AbstractUser):
         default="PE"
     )
 
+    # ✅ ADD THESE
+    mobile = models.CharField(max_length=10, unique=True, null=True, blank=True)
+    email = models.EmailField(unique=True)
+
     reset_password_used = models.BooleanField(default=False)
 
     def __str__(self):

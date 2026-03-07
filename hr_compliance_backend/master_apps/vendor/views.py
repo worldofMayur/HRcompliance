@@ -31,23 +31,62 @@ class VendorCreateAPIView(APIView):
             with transaction.atomic():
 
                 email = request.data.get("email")
+                mobile = request.data.get("mobile")
+                vendor_name = request.data.get("name")
 
-                # ✅ PREVENT DUPLICATE VENDOR EMAIL
+                # ==========================
+                # GLOBAL CROSS MODULE CHECK
+                # ==========================
+                if User.objects.filter(email=email).exists():
+                    return Response(
+                        {"error": "Email already registered in system"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # ==========================
+                # VENDOR EMAIL DUPLICATE CHECK
+                # ==========================
                 if Vendor.objects.filter(email=email).exists():
                     return Response(
                         {"error": "Vendor with this email already exists"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+                # -------------------------------------------------------
+                # MOBILE VALIDATION (UPDATED LOGIC)
+                # -------------------------------------------------------
+
+                # 1️⃣ If mobile exists for PE / AUDITOR / SUPERADMIN → block
+                if User.objects.filter(mobile=mobile).exclude(role="VENDOR").exists():
+                    return Response(
+                        {"error": "Mobile already registered with another account"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # 2️⃣ If vendor already exists with same mobile but different company → block
+                existing_vendor = Vendor.objects.filter(mobile=mobile).first()
+
+                if existing_vendor and existing_vendor.name != vendor_name:
+                    return Response(
+                        {"error": "Mobile already registered for another vendor company"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # ==========================
+                # CREATE VENDOR
+                # ==========================
                 serializer = VendorSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 vendor = serializer.save()
 
-                # ✅ CREATE USER
+                # ==========================
+                # CREATE USER (LINKED)
+                # ==========================
                 temp_password = get_random_string(10)
                 user = User.objects.create_user(
                     username=vendor.short_name,
                     email=vendor.email,
+                    mobile=vendor.mobile,
                     password=temp_password,
                     role="VENDOR",
                     is_active=True,
@@ -59,7 +98,9 @@ class VendorCreateAPIView(APIView):
                 user.reset_password_used = False
                 user.save(update_fields=["reset_password_used"])
 
-                # ✅ DOCUMENTS (MANDATORY)
+                # ==========================
+                # DOCUMENTS (MANDATORY)
+                # ==========================
                 documents = request.FILES.getlist("document")
                 if not documents:
                     return Response(
@@ -77,7 +118,9 @@ class VendorCreateAPIView(APIView):
                     doc_serializer.is_valid(raise_exception=True)
                     doc_serializer.save()
 
-                # ✅ EMAIL
+                # ==========================
+                # EMAIL
+                # ==========================
                 token = PasswordResetTokenGenerator().make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
 
@@ -97,15 +140,16 @@ class VendorCreateAPIView(APIView):
                     },
                 )
 
-                email = EmailMultiAlternatives(
+                email_obj = EmailMultiAlternatives(
                     subject="Activate Your HR Compliance Account",
                     body="HTML email required",
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[vendor.email],
                 )
-                email.attach_alternative(html_content, "text/html")
+                email_obj.attach_alternative(html_content, "text/html")
+
                 try:
-                    email.send()
+                    email_obj.send()
                 except Exception as e:
                     print("Email sending failed:", e)
 
@@ -143,6 +187,24 @@ class VendorListAPIView(APIView):
 class VendorUpdateAPIView(APIView):
     def put(self, request, pk):
         vendor = get_object_or_404(Vendor, pk=pk)
+
+        email = request.data.get("email")
+        mobile = request.data.get("mobile")
+
+        # ==========================
+        # DUPLICATE CHECK (UPDATE)
+        # ==========================
+        if email and Vendor.objects.exclude(pk=pk).filter(email=email).exists():
+            return Response(
+                {"error": "Another vendor already uses this email"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if mobile and Vendor.objects.exclude(pk=pk).filter(mobile=mobile).exists():
+            return Response(
+                {"error": "Another vendor already uses this mobile"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         data = request.data.copy()
         data.pop("documents", None)

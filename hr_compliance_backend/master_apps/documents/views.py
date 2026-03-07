@@ -7,6 +7,8 @@ from django.db import transaction
 
 from .models import DocumentMaster
 from .serializers import DocumentMasterSerializer
+from master_apps.principle_employee.models import PrincipalEmployer
+from master_apps.principle_employee.serializers import PrincipalEmployerSerializer
 
 
 # =========================
@@ -126,3 +128,13 @@ class DocumentMasterBulkUpdateAPIView(APIView):
         return Response(
             {"message": f"{updated} documents updated successfully"}
         )
+
+
+
+
+class PEDropdownAPIView(APIView):
+
+    def get(self, request):
+        pes = PrincipalEmployer.objects.all().order_by("name")
+        serializer = PrincipalEmployerSerializer(pes, many=True)
+        return Response(serializer.data)

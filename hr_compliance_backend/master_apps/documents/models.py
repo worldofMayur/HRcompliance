@@ -1,4 +1,6 @@
 from django.db import models
+from master_apps.principle_employee.models import PrincipalEmployer
+
 
 class DocumentMaster(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -13,9 +15,19 @@ class DocumentMaster(models.Model):
         (FREQUENCY_ONE_TIME, "One Time"),
     )
 
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
+
+    # NEW FIELD
+    principal_employer = models.ForeignKey(
+        PrincipalEmployer,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE
+    )
+
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
