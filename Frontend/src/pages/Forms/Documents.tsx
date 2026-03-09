@@ -22,6 +22,13 @@ import {
 const API_URL = "http://127.0.0.1:8000/api/document-master";
 const PAGE_SIZE = 8;
 
+const token = localStorage.getItem("access_token");
+
+const authHeaders = {
+  Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+};
+
 /* =========================
    COMPONENT
 ========================= */
@@ -52,30 +59,38 @@ export default function Documents() {
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/list/`);
+      const res = await fetch(`${API_URL}/list/`, {
+        headers: authHeaders,
+      });
       const data = await res.json();
-      setDocuments(data);
+      setDocuments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error loading documents:", err);
+      setDocuments([]);
     } finally {
       setLoading(false);
     }
   };
 
-useEffect(() => {
-  fetchDocuments();
-  fetchPEs();
-}, []);
+  useEffect(() => {
+    fetchDocuments();
+    fetchPEs();
+  }, []);
 
   const fetchPEs = async () => {
-  try {
-    const res = await fetch(
-      "http://127.0.0.1:8000/api/document-master/pe-dropdown/"
-    );
-    const data = await res.json();
-    setPeList(data);
-  } catch (err) {
-    console.error("Error loading PE list", err);
-  }
-};
+    try {
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/document-master/pe-dropdown/",
+        {
+          headers: authHeaders,
+        }
+      );
+      const data = await res.json();
+      setPeList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error loading PE list", err);
+    }
+  };
 
   /* =========================
      FILTER + SEARCH
@@ -83,7 +98,7 @@ useEffect(() => {
   const filteredDocs = useMemo(() => {
     setProcessing(true);
 
-    const result = documents.filter((d) => {
+    const result = (Array.isArray(documents) ? documents : []).filter((d) => {
       const matchesFrequency =
         frequencyFilter === "all" || d.frequency === frequencyFilter;
 
@@ -128,17 +143,17 @@ useEffect(() => {
   /* =========================
      CRUD HANDLERS
   ========================= */
-const openAdd = () => {
-  setEditDoc(null);
+  const openAdd = () => {
+    setEditDoc(null);
 
-  setFormData({
-    name: "",
-    frequency: "monthly",
-    principal_employer: "",
-  });
+    setFormData({
+      name: "",
+      frequency: "monthly",
+      principal_employer: "",
+    });
 
-  setShowForm(true);
-};
+    setShowForm(true);
+  };
 
   const openEdit = (doc) => {
     setEditDoc(doc);
@@ -164,7 +179,7 @@ const openAdd = () => {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify(formData),
     });
 
@@ -179,7 +194,10 @@ const openAdd = () => {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this document?")) return;
-    await fetch(`${API_URL}/${id}/delete/`, { method: "DELETE" });
+    await fetch(`${API_URL}/${id}/delete/`, {
+      method: "DELETE",
+      headers: authHeaders,
+    });
     fetchDocuments();
   };
 
@@ -189,7 +207,10 @@ const openAdd = () => {
 
     await Promise.all(
       selectedIds.map((id) =>
-        fetch(`${API_URL}/${id}/delete/`, { method: "DELETE" })
+        fetch(`${API_URL}/${id}/delete/`, {
+          method: "DELETE",
+          headers: authHeaders,
+        })
       )
     );
 
@@ -396,23 +417,23 @@ const openAdd = () => {
               />
 
               <select
-              className="w-full h-11 rounded-lg border px-3"
-              value={formData.principal_employer}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  principal_employer: e.target.value,
-                }))
-              }
-            >
-              <option value="">Common</option>
+                className="w-full h-11 rounded-lg border px-3"
+                value={formData.principal_employer}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    principal_employer: e.target.value,
+                  }))
+                }
+              >
+                <option value="">Common</option>
 
-              {peList.map((pe) => (
-                <option key={pe.id} value={pe.id}>
-                  {pe.name}
-                </option>
-              ))}
-            </select>
+                {peList.map((pe) => (
+                  <option key={pe.id} value={pe.id}>
+                    {pe.name}
+                  </option>
+                ))}
+              </select>
 
               <select
                 className="w-full h-11 rounded-lg border px-3"
@@ -428,7 +449,6 @@ const openAdd = () => {
                 <option value="annually">Annually</option>
                 <option value="one_time">One Time</option>
               </select>
-
             </div>
 
             <div className="mt-6 flex justify-end gap-3">

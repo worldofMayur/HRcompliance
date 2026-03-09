@@ -1,9 +1,8 @@
 from django.db import models
 from master_apps.vendor.models import Vendor
 from master_apps.principle_employee.models import PrincipalEmployer
-from master_apps.vendor.branch_models import VendorBranch
+from master_apps.principle_employee.models import PrincipalEmployerBranch
 from master_apps.documents.models import DocumentMaster
-
 
 class VendorComplianceSubmission(models.Model):
 
@@ -19,7 +18,7 @@ class VendorComplianceSubmission(models.Model):
     )
 
     branch = models.ForeignKey(
-        VendorBranch,
+        PrincipalEmployerBranch,
         on_delete=models.CASCADE
     )
 

@@ -15,6 +15,13 @@ const API_BASE = "http://127.0.0.1:8000/api";
 
 export default function AuditChecklistForm() {
 
+  const token = localStorage.getItem("access_token");
+
+  const authHeaders = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+
   /* =========================
      MASTER DATA
   ========================= */
@@ -64,15 +71,19 @@ export default function AuditChecklistForm() {
      INITIAL LOAD
   ========================= */
   useEffect(() => {
-    fetch(`${API_BASE}/checklist/states/`).then(r => r.json()).then(setStates);
-    fetch(`${API_BASE}/checklist/compliance-natures/`).then(r => r.json()).then(setComplianceNatures);
-    fetch(`${API_BASE}/document-master/list/`).then(r => r.json()).then(setDocuments);
+    fetch(`${API_BASE}/checklist/states/`, { headers: authHeaders }).then(r => r.json()).then(setStates);
+    fetch(`${API_BASE}/checklist/compliance-natures/`, { headers: authHeaders }).then(r => r.json()).then(setComplianceNatures);
+
+    fetch(`${API_BASE}/document-master/list/`, { headers: authHeaders })
+      .then(r => r.json())
+      .then(res => setDocuments(Array.isArray(res) ? res : []));
+
     fetchList();
   }, []);
 
   const fetchList = () => {
     setLoading(true);
-    fetch(`${API_BASE}/checklist/list/`)
+    fetch(`${API_BASE}/checklist/list/`, { headers: authHeaders })
       .then(r => r.json())
       .then(res => {
         setChecklists(res);
@@ -99,7 +110,7 @@ export default function AuditChecklistForm() {
   useEffect(() => {
     if (!formData.state) return;
 
-    fetch(`${API_BASE}/checklist/acts/?state=${formData.state}`)
+    fetch(`${API_BASE}/checklist/acts/?state=${formData.state}`, { headers: authHeaders })
       .then(r => r.json())
       .then(setActs);
 
@@ -111,7 +122,7 @@ export default function AuditChecklistForm() {
   useEffect(() => {
     if (!formData.act) return;
 
-    fetch(`${API_BASE}/checklist/sections/?act=${formData.act}`)
+    fetch(`${API_BASE}/checklist/sections/?act=${formData.act}`, { headers: authHeaders })
       .then(r => r.json())
       .then(setSections);
 
@@ -122,7 +133,7 @@ export default function AuditChecklistForm() {
   useEffect(() => {
     if (!formData.section) return;
 
-    fetch(`${API_BASE}/checklist/rules/?section=${formData.section}`)
+    fetch(`${API_BASE}/checklist/rules/?section=${formData.section}`, { headers: authHeaders })
       .then(r => r.json())
       .then(setRules);
 
@@ -135,7 +146,7 @@ export default function AuditChecklistForm() {
   const filteredDocuments = useMemo(() => {
     if (!documentSearch) return documents;
 
-    return documents.filter(d =>
+    return (Array.isArray(documents) ? documents : []).filter(d =>
       d.name.toLowerCase().includes(documentSearch.toLowerCase())
     );
   }, [documents, documentSearch]);
@@ -148,7 +159,7 @@ export default function AuditChecklistForm() {
 
     const res = await fetch(`${API_BASE}/checklist/create/`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify(formData),
     });
 
@@ -181,7 +192,7 @@ export default function AuditChecklistForm() {
   const saveEdit = async (id) => {
     await fetch(`${API_BASE}/checklist/${id}/update/`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders,
       body: JSON.stringify({ auditor_guide: editGuide }),
     });
 
@@ -190,7 +201,10 @@ export default function AuditChecklistForm() {
   };
 
   const toggleStatus = async (id) => {
-    await fetch(`${API_BASE}/checklist/${id}/toggle-status/`, { method: "POST" });
+    await fetch(`${API_BASE}/checklist/${id}/toggle-status/`, {
+      method: "POST",
+      headers: authHeaders
+    });
     fetchList();
   };
 
@@ -269,6 +283,8 @@ export default function AuditChecklistForm() {
     <div>
       <PageMeta title="Audit Checklist | HR Compliance" />
       <PageBreadcrumb pageTitle="Manage Audit Checklist" />
+
+      {/* REST OF YOUR FILE REMAINS EXACTLY THE SAME */}
 
       <ComponentCard title="Create Audit Checklist">
         <form onSubmit={handleSubmit} className="space-y-8">

@@ -44,9 +44,18 @@ export default function SignInForm() {
       localStorage.setItem("refresh_token", res.data.refresh);
 
       // store user info
+      // store user info
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("email", res.data.email);
       localStorage.setItem("role", res.data.role);
+
+      // store PE id
+      if (res.data.principal_employer_id !== null && res.data.principal_employer_id !== undefined) {
+        localStorage.setItem(
+          "principal_employer_id",
+          String(res.data.principal_employer_id)
+        );
+      }
 
       // redirect to main dashboard only
       const role = res.data.role;

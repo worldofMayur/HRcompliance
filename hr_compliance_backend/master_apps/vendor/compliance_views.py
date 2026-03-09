@@ -36,6 +36,7 @@ class VendorSubmitComplianceAPIView(APIView):
         index = 0
 
         while True:
+
             document_id = request.data.get(f"document_{index}_id")
             file = request.FILES.get(f"document_{index}_file")
             remark = request.data.get(f"document_{index}_remark")
@@ -43,26 +44,25 @@ class VendorSubmitComplianceAPIView(APIView):
             if not document_id or not file:
                 break
 
-            # Validate mapping
+            # ✅ Correct mapping validation
             mapping = VendorBranchMapping.objects.filter(
                 vendor=vendor,
                 principal_employer_id=pe_id,
                 branch_id=branch_id,
-                document_id=document_id
+                documents__id=document_id
             ).first()
 
             if not mapping:
                 index += 1
                 continue
 
-            # Create submission
             VendorComplianceSubmission.objects.create(
                 vendor=vendor,
                 principal_employer_id=pe_id,
                 branch_id=branch_id,
                 document_id=document_id,
-                state=mapping.branch.state.name,
-                audit_period=mapping.audit_period,
+                state=mapping.branch.state,
+                audit_period=request.data.get("selected_period"),
                 main_file=file,
                 remarks=remark
             )

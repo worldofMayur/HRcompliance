@@ -35,10 +35,17 @@ class VendorBranchMappingCreateAPIView(APIView):
         data = request.data.copy()
         data["principal_employer"] = pe.id
 
+        documents = data.pop("documents", [])
+
         serializer = VendorBranchMappingSerializer(data=data)
 
         if serializer.is_valid():
-            serializer.save()
+
+            mapping = serializer.save()
+
+            # save multiple documents
+            mapping.documents.set(documents)
+
             return Response({"message": "Mapping created"}, status=201)
 
         print("Serializer Errors:", serializer.errors)
@@ -230,24 +237,20 @@ class VendorMappedDocumentsAPIView(APIView):
 
         vendor = request.user.vendor_profile
 
-        documents = VendorBranchMapping.objects.filter(
+        mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
-            branch_id=branch_id,
-            document__isnull=False
-        ).select_related("document").values(
-            "document__id",
-            "document__name",
-            "audit_period"
-        ).distinct()
+            branch_id=branch_id
+        ).prefetch_related("documents")
 
-        formatted = [
-            {
-                "id": d["document__id"],
-                "name": d["document__name"],
-                "audit_period": d["audit_period"]
-            }
-            for d in documents
-        ]
+        documents = []
 
-        return Response(formatted)
+        for mapping in mappings:
+            for doc in mapping.documents.all():
+                    documents.append({
+                        "id": doc.id,
+                        "name": doc.name,
+                        "frequency": mapping.frequency
+                    })
+
+        return Response(documents)

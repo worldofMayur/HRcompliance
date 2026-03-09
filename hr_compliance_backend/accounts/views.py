@@ -56,6 +56,9 @@ class SuperAdminLoginView(APIView):
             "username": user.username,
             "email": user.email,
             "role": user.role,
+
+            # ✅ ADDED FOR PE DOCUMENT FILTERING
+            "principal_employer_id": user.principal_employer.id if getattr(user, "principal_employer", None) else None
         })
 
 

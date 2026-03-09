@@ -1,8 +1,15 @@
 from rest_framework import serializers
 from .mapping_models import VendorBranchMapping
+from master_apps.documents.models import DocumentMaster
 
 
 class VendorBranchMappingSerializer(serializers.ModelSerializer):
+
+    documents = serializers.PrimaryKeyRelatedField(
+        queryset=DocumentMaster.objects.all(),
+        many=True,
+        required=False
+    )
 
     class Meta:
         model = VendorBranchMapping
@@ -12,14 +19,14 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
             "vendor",
             "branch",
             "auditor",
-            "document",
+            "documents",
             "start_date",
             "end_date",
             "rule",
             "frequency",
-            "audit_period",
             "created_at",
         ]
+
         read_only_fields = ["created_at"]
 
     def validate(self, data):

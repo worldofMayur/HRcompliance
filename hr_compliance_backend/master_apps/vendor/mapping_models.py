@@ -20,11 +20,10 @@ class VendorBranchMapping(models.Model):
         ("ANNUALLY", "Annually"),
     )
 
-    # ✅ ADD THIS (VERY IMPORTANT)
     principal_employer = models.ForeignKey(
-    PrincipalEmployer,
-    on_delete=models.CASCADE,
-    related_name="vendor_branch_mappings"
+        PrincipalEmployer,
+        on_delete=models.CASCADE,
+        related_name="vendor_branch_mappings"
     )
 
     vendor = models.ForeignKey(
@@ -32,7 +31,6 @@ class VendorBranchMapping(models.Model):
         on_delete=models.CASCADE,
         related_name="branch_mappings"
     )
-
 
     branch = models.ForeignKey(
         PrincipalEmployerBranch,
@@ -47,41 +45,17 @@ class VendorBranchMapping(models.Model):
         blank=True
     )
 
-    document = models.ForeignKey(
+    # ✅ MULTIPLE DOCUMENTS
+    documents = models.ManyToManyField(
         DocumentMaster,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True
     )
 
     start_date = models.DateField()
     end_date = models.DateField()
 
-    rule = models.CharField(
-        max_length=20,
-        choices=RULE_CHOICES
-    )
+    rule = models.CharField(max_length=20, choices=RULE_CHOICES)
 
-    frequency = models.CharField(
-        max_length=20,
-        choices=FREQUENCY_CHOICES
-    )
-
-    audit_period = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True
-    )
+    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = (
-            "principal_employer",
-            "vendor",
-            "branch",
-            "start_date",
-        )
-
-    def __str__(self):
-        return f"{self.principal_employer.short_name} → {self.vendor.short_name} → {self.branch.address}"

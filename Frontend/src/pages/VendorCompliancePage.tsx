@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Table, Upload, Input, Button, message, Divider, Select } from "antd";
+import { Table, Upload, Input, Button, message, Select } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
 import type { ColumnsType } from "antd/es/table";
 
@@ -35,9 +35,11 @@ interface DocumentRow {
   audit_period?: string;
   fileList: UploadFile[];
   remark: string;
+  isAdditional?: boolean;
 }
 
 export default function VendorCompliancePage() {
+
   const token = localStorage.getItem("access_token");
 
   const authHeader = {
@@ -88,15 +90,16 @@ export default function VendorCompliancePage() {
     setStates(res.data);
   };
 
-  const loadBranches = async (peId: string, stateId: string) => {
+  const loadBranches = async (peId: string, state: string) => {
     const res = await axios.get(
-      `http://127.0.0.1:8000/api/vendor/mapped-branches/?pe_id=${peId}&state_id=${stateId}`,
+      `http://127.0.0.1:8000/api/vendor/mapped-branches/?pe_id=${peId}&state=${state}`,
       authHeader
     );
     setBranches(res.data);
   };
 
   const loadDocuments = async (peId: string, branchId: string) => {
+
     const res = await axios.get(
       `http://127.0.0.1:8000/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}`,
       authHeader
@@ -105,7 +108,7 @@ export default function VendorCompliancePage() {
     setDocuments(res.data);
 
     if (res.data.length > 0) {
-      const base = res.data[0].audit_period || "";
+      const base = res.data[0].frequency || "";
       setFrequencyBase(base);
     }
 
@@ -124,32 +127,45 @@ export default function VendorCompliancePage() {
   /* ================= PERIOD OPTIONS ================= */
 
   const getPeriodOptions = () => {
-    const monthly = [
-      "Jan","Feb","Mar","Apr","May","Jun",
-      "Jul","Aug","Sep","Oct","Nov","Dec"
-    ];
 
-    if (monthly.includes(frequencyBase)) return monthly;
+    const now = new Date();
+    const year = now.getFullYear();
 
-    if (frequencyBase.startsWith("Q"))
-      return [
-        "Q1 (Jan-Mar)",
-        "Q2 (Apr-Jun)",
-        "Q3 (Jul-Sep)",
-        "Q4 (Oct-Dec)"
+    if (frequencyBase === "MONTHLY") {
+
+      const months = [
+        "Jan","Feb","Mar","Apr","May","Jun",
+        "Jul","Aug","Sep","Oct","Nov","Dec"
       ];
 
-    if (frequencyBase.startsWith("H"))
-      return [
-        "H1 (Apr-Sep)",
-        "H2 (Oct-Mar)"
-      ];
+      return months.map(m => `${m} ${year}`);
+    }
 
-    if (frequencyBase.includes("Year"))
+    if (frequencyBase === "QUARTERLY") {
       return [
-        "Financial Year (Apr-Mar)",
-        "Calendar Year (Jan-Dec)"
+        `Q1 ${year} (Jan–Mar)`,
+        `Q2 ${year} (Apr–Jun)`,
+        `Q3 ${year} (Jul–Sep)`,
+        `Q4 ${year} (Oct–Dec)`
       ];
+    }
+
+    if (frequencyBase === "HALF_YEARLY") {
+      return [
+        `H1 ${year} (Apr–Sep)`,
+        `H2 ${year} (Oct–Mar)`
+      ];
+    }
+
+    if (frequencyBase === "ANNUALLY") {
+
+      const nextYear = year + 1;
+
+      return [
+        `FY ${year}-${String(nextYear).slice(2)}`,
+        `Calendar ${year}`
+      ];
+    }
 
     return [];
   };
@@ -157,6 +173,7 @@ export default function VendorCompliancePage() {
   /* ================= UPDATE ROW ================= */
 
   const updateRow = (key: string, updated: Partial<DocumentRow>) => {
+
     setTableData(prev =>
       prev.map(row =>
         row.key === key ? { ...row, ...updated } : row
@@ -164,9 +181,16 @@ export default function VendorCompliancePage() {
     );
   };
 
+  /* ================= REMOVE ROW ================= */
+
+  const removeRow = (key: string) => {
+    setTableData(prev => prev.filter(row => row.key !== key));
+  };
+
   /* ================= ADD ADDITIONAL DOC ================= */
 
   const addAdditionalDocument = () => {
+
     setTableData(prev => [
       ...prev,
       {
@@ -176,72 +200,117 @@ export default function VendorCompliancePage() {
         audit_period: selectedPeriod,
         fileList: [],
         remark: "",
+        isAdditional: true
       }
     ]);
   };
 
   /* ================= TABLE COLUMNS ================= */
 
-  const columns: ColumnsType<DocumentRow> = [
-    {
-      title: "Document Name",
-      dataIndex: "document_name",
-      width: "25%",
-    },
-    {
-      title: "Compliance Period",
-      dataIndex: "audit_period",
-      width: "20%",
-      render: () => selectedPeriod || "-",
-    },
-    {
-      title: "Upload File",
-      width: "25%",
-      render: (_, record) => (
-        <Upload
-          beforeUpload={() => false}
-          fileList={record.fileList}
-          maxCount={1}
-          onChange={({ fileList }) =>
-            updateRow(record.key, { fileList })
-          }
+const columns: ColumnsType<DocumentRow> = [
+
+  {
+    title: "Document Name",
+    dataIndex: "document_name",
+    width: "25%",
+    align: "center",
+  },
+
+  {
+    title: "Compliance Period",
+    dataIndex: "audit_period",
+    width: "20%",
+    align: "center",
+    render: () => (
+      <span className="font-medium">{selectedPeriod}</span>
+    )
+  },
+
+  {
+    title: "Upload File",
+    width: "25%",
+    align: "center",
+    render: (_, record) => (
+      <Upload
+        beforeUpload={() => false}
+        fileList={record.fileList}
+        maxCount={1}
+        showUploadList={{ showRemoveIcon: true }}
+        onChange={({ fileList }) =>
+          updateRow(record.key, { fileList })
+        }
+      >
+        <Button
+          size="small"
+          style={{
+            borderRadius: 10,
+            height: 30
+          }}
         >
-          <Button>Select File</Button>
-        </Upload>
-      ),
-    },
-    {
-      title: "Remark",
-      width: "30%",
-      render: (_, record) => (
-        <Input
-          value={record.remark}
-          onChange={(e) =>
-            updateRow(record.key, { remark: e.target.value })
-          }
-        />
-      ),
-    },
-  ];
+          Upload
+        </Button>
+      </Upload>
+    ),
+  },
+
+  {
+    title: "Remark",
+    width: "25%",
+    align: "center",
+    render: (_, record) => (
+      <Input
+        size="small"
+        value={record.remark}
+        onChange={(e) =>
+          updateRow(record.key, { remark: e.target.value })
+        }
+        className="rounded-xl text-center"
+        style={{ height: 34 }}
+      />
+    ),
+  },
+
+  {
+    title: "",
+    width: "5%",
+    align: "center",
+    render: (_, record) =>
+      record.isAdditional ? (
+        <Button
+          danger
+          size="small"
+          style={{ borderRadius: 10 }}
+          onClick={() => removeRow(record.key)}
+        >
+          Remove
+        </Button>
+      ) : null,
+  }
+
+];
 
   /* ================= SUBMIT ================= */
 
   const handleSubmit = async () => {
+
     if (!selectedPE || !selectedState || !selectedBranch || !selectedPeriod) {
       message.error("Complete all selections.");
       return;
     }
 
     const hasFile = tableData.some(r => r.fileList.length > 0);
+
     if (!hasFile) {
       message.error("Upload at least one document.");
       return;
     }
 
     try {
+
       setLoading(true);
 
       const formData = new FormData();
+
       formData.append("pe_id", selectedPE);
       formData.append("branch_id", selectedBranch);
       formData.append("state_id", selectedState);
@@ -249,16 +318,21 @@ export default function VendorCompliancePage() {
       formData.append("general_remark", generalRemark);
 
       tableData.forEach((row, index) => {
+
         if (row.fileList.length > 0) {
+
           formData.append(
             `document_${index}_file`,
             row.fileList[0].originFileObj as File
           );
+
           formData.append(
             `document_${index}_remark`,
             row.remark
           );
+
           if (row.document_id) {
+
             formData.append(
               `document_${index}_id`,
               row.document_id.toString()
@@ -278,10 +352,14 @@ export default function VendorCompliancePage() {
         }
       );
 
-      message.success("Compliance submitted successfully.");
+      message.success("Compliance submitted successfully");
+
     } catch {
-      message.error("Submission failed.");
+
+      message.error("Submission failed");
+
     } finally {
+
       setLoading(false);
     }
   };
@@ -289,139 +367,228 @@ export default function VendorCompliancePage() {
   /* ================= UI ================= */
 
   return (
-    <div className="space-y-6">
 
-      <h1 className="text-2xl font-semibold">
-        Submit Compliance Record
-      </h1>
+    <div className="space-y-6 w-full px-8">
 
-      {/* Selection */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border">
-        <div className="grid md:grid-cols-3 gap-4">
-          <select
-            value={selectedPE}
-            onChange={(e) => {
-              setSelectedPE(e.target.value);
-              setSelectedState("");
-              setSelectedBranch("");
-              setSelectedPeriod("");
-              setTableData([]);
-              loadStates(e.target.value);
-            }}
-            className="border rounded-lg p-2.5"
-          >
-            <option value="">Select PE</option>
-            {peList.map(pe => (
-              <option key={pe.id} value={pe.id}>
-                {pe.short_name}
-              </option>
-            ))}
-          </select>
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          Submit Compliance Record
+        </h1>
 
-          <select
-            disabled={!selectedPE}
-            value={selectedState}
-            onChange={(e) => {
-              setSelectedState(e.target.value);
-              setSelectedBranch("");
-              setSelectedPeriod("");
-              setTableData([]);
-              loadBranches(selectedPE, e.target.value);
-            }}
-            className="border rounded-lg p-2.5"
-          >
-            <option value="">Select State</option>
-            {states.map(s => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            disabled={!selectedState}
-            value={selectedBranch}
-            onChange={(e) => {
-              setSelectedBranch(e.target.value);
-              loadDocuments(selectedPE, e.target.value);
-            }}
-            className="border rounded-lg p-2.5"
-          >
-            <option value="">Select Branch</option>
-            {branches.map(b => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <p className="text-sm text-gray-500">
+          Upload compliance documents for the selected branch and period.
+        </p>
       </div>
 
-      {/* Period Selection */}
-      {selectedBranch && frequencyBase && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <Divider titlePlacement="left">
-            Select Compliance Period ({frequencyBase})
-          </Divider>
 
-          <Select
-            className="w-full"
-            placeholder="Select Period"
-            value={selectedPeriod || undefined}
-            onChange={(value) => setSelectedPeriod(value)}
-          >
-            {getPeriodOptions().map(p => (
-              <Option key={p} value={p}>
-                {p}
-              </Option>
-            ))}
-          </Select>
+      {/* FILTERS */}
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border">
+
+        <div className="grid md:grid-cols-4 gap-6">
+
+          {/* PE */}
+
+          <div className="flex flex-col">
+
+            <label className="text-xs font-semibold text-gray-500 mb-1">
+              Principal Employer
+            </label>
+
+            <select
+              value={selectedPE}
+              onChange={(e) => {
+
+                setSelectedPE(e.target.value);
+                setSelectedState("");
+                setSelectedBranch("");
+                setSelectedPeriod("");
+                setTableData([]);
+
+                loadStates(e.target.value);
+              }}
+              className="border rounded-xl px-3 py-2 text-sm"
+            >
+              <option value="">Select PE</option>
+
+              {peList.map(pe => (
+                <option key={pe.id} value={pe.id}>
+                  {pe.short_name}
+                </option>
+              ))}
+
+            </select>
+          </div>
+
+
+          {/* STATE */}
+
+          <div className="flex flex-col">
+
+            <label className="text-xs font-semibold text-gray-500 mb-1">
+              State
+            </label>
+
+            <select
+              disabled={!selectedPE}
+              value={selectedState}
+              onChange={(e) => {
+
+                setSelectedState(e.target.value);
+                setSelectedBranch("");
+                setSelectedPeriod("");
+                setTableData([]);
+
+                loadBranches(selectedPE, e.target.value);
+              }}
+              className="border rounded-xl px-3 py-2 text-sm"
+            >
+              <option value="">Select State</option>
+
+              {states.map(s => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+
+            </select>
+          </div>
+
+
+          {/* BRANCH */}
+
+          <div className="flex flex-col">
+
+            <label className="text-xs font-semibold text-gray-500 mb-1">
+              Branch
+            </label>
+
+            <select
+              disabled={!selectedState}
+              value={selectedBranch}
+              onChange={(e) => {
+
+                setSelectedBranch(e.target.value);
+
+                loadDocuments(selectedPE, e.target.value);
+              }}
+              className="border rounded-xl px-3 py-2 text-sm"
+            >
+              <option value="">Select Branch</option>
+
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+
+            </select>
+          </div>
+
+
+          {/* PERIOD */}
+
+          <div className="flex flex-col">
+
+            <label className="text-xs font-semibold text-gray-500 mb-1">
+              Compliance Period
+            </label>
+
+            <Select
+              disabled={!selectedBranch}
+              className="w-full"
+              placeholder={`Select Period (${frequencyBase || "-"})`}
+              value={selectedPeriod || undefined}
+              onChange={(value) => setSelectedPeriod(value)}
+            >
+
+              {getPeriodOptions().map(p => (
+                <Option key={p} value={p}>
+                  {p}
+                </Option>
+              ))}
+
+            </Select>
+
+          </div>
+
         </div>
-      )}
 
-      {/* Documents */}
+      </div>
+
+
+      {/* DOCUMENT SECTION */}
+
       {selectedPeriod && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <Divider titlePlacement="left">
-            Compliance Documents
-          </Divider>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+
+          <div className="flex justify-between mb-4">
+
+            <h2 className="text-lg font-semibold">
+              Compliance Documents
+            </h2>
+
+            <Button
+              type="primary"
+              ghost
+              onClick={addAdditionalDocument}
+            >
+              + Add Additional Document
+            </Button>
+
+          </div>
+
 
           <Table
             columns={columns}
             dataSource={tableData}
             pagination={false}
             bordered
+            size="middle"
+            scroll={{ x: true }}
+            locale={{
+              emptyText: "No documents available for this branch"
+            }}
           />
 
-          <div className="mt-4">
-            <Button type="link" onClick={addAdditionalDocument}>
-              + Add Additional Document
-            </Button>
-          </div>
 
-          <div className="mt-6">
-            <label className="block mb-2 font-medium">
+          <div className="mt-8">
+
+            <label className="block text-sm font-semibold mb-2">
               General Remarks
             </label>
+
             <TextArea
               rows={4}
+              className="rounded-xl"
               value={generalRemark}
               onChange={(e) => setGeneralRemark(e.target.value)}
             />
+
           </div>
+
         </div>
       )}
 
+
+      {/* SUBMIT BUTTON */}
+
       {selectedPeriod && (
+
         <div className="flex justify-end">
+
           <Button
             type="primary"
+            size="large"
             loading={loading}
             onClick={handleSubmit}
           >
-            Submit Compliance
+            Submit Compliance Record
           </Button>
+
         </div>
+
       )}
 
     </div>

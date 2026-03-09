@@ -4,19 +4,35 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from django.db.models import Q
 
 from .models import DocumentMaster
 from .serializers import DocumentMasterSerializer
 from master_apps.principle_employee.models import PrincipalEmployer
 from master_apps.principle_employee.serializers import PrincipalEmployerSerializer
+from rest_framework.permissions import IsAuthenticated
 
 
-# =========================
-# LIST DOCUMENTS
-# =========================
+from django.db.models import Q
+
+
+from rest_framework.permissions import IsAuthenticated
+
 class DocumentMasterListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        docs = DocumentMaster.objects.order_by("name")
+
+        # fetch PE linked to user
+        pe = PrincipalEmployer.objects.filter(user=request.user).first()
+
+        docs = DocumentMaster.objects.filter(
+            Q(principal_employer__isnull=True) |
+            Q(principal_employer=pe),
+            is_active=True
+        ).order_by("name")
+
         serializer = DocumentMasterSerializer(docs, many=True)
         return Response(serializer.data)
 
@@ -130,8 +146,9 @@ class DocumentMasterBulkUpdateAPIView(APIView):
         )
 
 
-
-
+# =========================
+# PE DROPDOWN
+# =========================
 class PEDropdownAPIView(APIView):
 
     def get(self, request):
