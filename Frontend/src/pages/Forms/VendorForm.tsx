@@ -344,57 +344,160 @@ if (!res.ok) {
       <PageMeta title="Vendor | HR Compliance" />
       <PageBreadcrumb pageTitle="Manage Vendor" />
 
-      <div
-        ref={formRef}
-        className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]"
-      >
-        <ComponentCard title="Vendor Details">
-          <div className="space-y-4">
-            <Label>Name</Label>
-            <Input name="name" value={formData.name} onChange={handleChange} />
+<div
+  ref={formRef}
+  className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]"
+>
 
-            <Label>Short Name</Label>
-            <Input name="shortName" value={formData.shortName} onChange={handleChange} />
+  {/* ================= VENDOR FORM ================= */}
 
-            <Label>Address</Label>
-            <Input name="hoAddress" value={formData.hoAddress} onChange={handleChange} />
+  <ComponentCard title="Vendor Details">
 
-            <Label>Contact Person</Label>
-            <Input name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
-
-            <Label>Mobile</Label>
-            <Input name="mobile" value={formData.mobile} onChange={handleChange} />
-
-            <Label>Email</Label>
-            <Input name="email" value={formData.email} onChange={handleChange} />
-
-            <Label>Nature of Services</Label>
-            <Input name="natureOfServices" value={formData.natureOfServices} onChange={handleChange} />
-          </div>
-        </ComponentCard>
-
-        <div className="space-y-6">
-          <ComponentCard title="Documents">
-            <FileInput multiple onChange={(e) => e.target.files && handleFiles(e.target.files)} />
-            {documents.map((f) => (
-              <div key={f.name} className="mt-2 flex justify-between text-sm">
-                <span className="truncate">📄 {f.name}</span>
-                <button className="text-red-500" onClick={() => removeFile(f.name)}>×</button>
-              </div>
-            ))}
-          </ComponentCard>
-
-          <ComponentCard>
-            <Button className="w-full" onClick={handleSubmit} disabled={loading}>
-              {loading
-                ? "Saving..."
-                : isEditMode
-                ? "Update Vendor"
-                : "Create Vendor"}
-            </Button>
-          </ComponentCard>
-        </div>
+    {isEditMode && (
+      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800">
+        Editing existing Vendor
       </div>
+    )}
+
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+      {/* NAME */}
+      <div>
+        <Label>Name</Label>
+        <Input
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* SHORT NAME */}
+      <div>
+        <Label>Short Name</Label>
+        <Input
+          name="shortName"
+          value={formData.shortName}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* CONTACT PERSON */}
+      <div>
+        <Label>Contact Person</Label>
+        <Input
+          name="contactPerson"
+          value={formData.contactPerson}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* MOBILE */}
+      <div>
+        <Label>Mobile</Label>
+        <Input
+          name="mobile"
+          value={formData.mobile}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* EMAIL */}
+      <div>
+        <Label>Email</Label>
+        <Input
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* SERVICES */}
+      <div>
+        <Label>Nature of Services</Label>
+        <Input
+          name="natureOfServices"
+          value={formData.natureOfServices}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* ADDRESS FULL WIDTH */}
+      <div className="xl:col-span-3">
+        <Label>Head Office Address</Label>
+        <Input
+          name="hoAddress"
+          value={formData.hoAddress}
+          onChange={handleChange}
+        />
+      </div>
+
+    </div>
+
+  </ComponentCard>
+
+
+  {/* ================= DOCUMENTS + BUTTON ================= */}
+
+  <div className="space-y-6">
+
+    {/* DOCUMENT CARD */}
+    <ComponentCard title="Documents">
+
+      <FileInput
+        multiple
+        onChange={(e) =>
+          e.target.files && handleFiles(e.target.files)
+        }
+      />
+
+      {/* DOCUMENT LIST */}
+      {documents.length > 0 && (
+        <div className="mt-4 space-y-2">
+
+          {documents.map((f) => (
+            <div
+              key={f.name}
+              className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50"
+            >
+              <span className="truncate text-gray-700">
+                📄 {f.name}
+              </span>
+
+              <button
+                className="text-red-500 hover:text-red-700 font-medium"
+                onClick={() => removeFile(f.name)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+
+        </div>
+      )}
+
+    </ComponentCard>
+
+
+    {/* SUBMIT BUTTON */}
+    <ComponentCard>
+
+      <Button
+        className="w-full"
+        onClick={handleSubmit}
+        disabled={loading}
+      >
+        {loading
+          ? "Saving..."
+          : isEditMode
+          ? "Update Vendor"
+          : "Create Vendor"}
+      </Button>
+
+    </ComponentCard>
+
+  </div>
+
+</div>
 
       {/* TABLE */}
       <div className="mt-10">

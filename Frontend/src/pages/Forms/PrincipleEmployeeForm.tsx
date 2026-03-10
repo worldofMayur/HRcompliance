@@ -12,6 +12,8 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { Checkbox } from "antd";
 import "antd/dist/reset.css";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 import {
   Table,
@@ -48,6 +50,41 @@ export default function PrincipleEmployeeForm() {
   const [branchList, setBranchList] = useState([]);
   const [editingData, setEditingData] = useState({});
   const [editingBranchId, setEditingBranchId] = useState<number | null>(null);
+  /* =========================
+   DATE STATES
+========================= */
+
+  const [startDateObj, setStartDateObj] = useState<Date | null>(null);
+  const [endDateObj, setEndDateObj] = useState<Date | null>(null);
+
+  const [startInput, setStartInput] = useState("");
+  const [endInput, setEndInput] = useState("");
+
+  const [startError, setStartError] = useState("");
+  const [endError, setEndError] = useState("");
+
+  const parseDate = (value: string) => {
+  const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+  if (!regex.test(value)) return null;
+
+  const [day, month, year] = value.split("/").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+const formatForAPI = (date: Date | null) => {
+  if (!date) return "";
+  return date.toISOString().split("T")[0];
+};
 
   useEffect(() => {
   let start = 0;
@@ -294,10 +331,21 @@ const handleBranchSubmit = async () => {
   /* =========================
      DOCUMENT HANDLERS
   ========================= */
-  const addDocument = (file) => {
-    if (documents.some((d) => d.name === file.name)) return;
-    setDocuments((p) => [...p, file]);
-  };
+    const MAX_FILE_SIZE = 3 * 1024 * 1024;
+
+    const addDocument = (file: File) => {
+      if (file.size > MAX_FILE_SIZE) {
+        alert("File size must be less than 3 MB");
+        return;
+      }
+
+      if (documents.some((d) => d.name === file.name)) {
+        alert("Document already added");
+        return;
+      }
+
+      setDocuments((p) => [...p, file]);
+    };
 
   const removeDocument = (name) => {
     setDocuments((p) => p.filter((d) => d.name !== name));
@@ -338,137 +386,191 @@ const handleExportBranches = () => {
   /* =========================
      EDIT HANDLER
   ========================= */
-  const handleEditSelected = () => {
-    if (selectedRows.length !== 1) {
-      alert("Select exactly one row to edit");
-      return;
-    }
+const handleEditSelected = () => {
+  if (selectedRows.length !== 1) {
+    alert("Select exactly one row to edit");
+    return;
+  }
 
-    const pe = tableData.find((x) => x.id === selectedRows[0]);
-    if (!pe) return;
+  const pe = tableData.find((x) => x.id === selectedRows[0]);
+  if (!pe) return;
 
-    setFormData({
-      name: pe.name,
-      shortName: pe.short_name,
-      hoAddress: pe.ho_address,
-      contactPerson: pe.contact_person,
-      mobile: pe.mobile,
-      email: pe.email,
-      startDate: pe.start_date,
-      endDate: pe.end_date || "",
-      natureOfBusiness: pe.nature_of_business,
-      establishmentType: pe.establishment_type,
-      rulesApplicable: pe.rules_applicable,
-    });
+  setFormData({
+    name: pe.name,
+    shortName: pe.short_name,
+    hoAddress: pe.ho_address,
+    contactPerson: pe.contact_person,
+    mobile: pe.mobile,
+    email: pe.email,
+    startDate: pe.start_date,
+    endDate: pe.end_date || "",
+    natureOfBusiness: pe.nature_of_business,
+    establishmentType: pe.establishment_type,
+    rulesApplicable: pe.rules_applicable,
+  });
 
-    setIsEditMode(true);
-    setEditingId(pe.id);
+  /* =========================
+     SET DATEPICKER VALUES
+  ========================= */
 
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
+  if (pe.start_date) {
+    const start = new Date(pe.start_date);
+    setStartDateObj(start);
+    setStartInput(start.toLocaleDateString("en-GB"));
+  } else {
+    setStartDateObj(null);
+    setStartInput("");
+  }
+
+  if (pe.end_date) {
+    const end = new Date(pe.end_date);
+    setEndDateObj(end);
+    setEndInput(end.toLocaleDateString("en-GB"));
+  } else {
+    setEndDateObj(null);
+    setEndInput("");
+  }
+
+  setIsEditMode(true);
+  setEditingId(pe.id);
+
+  setTimeout(() => {
+    formRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, 100);
+};
 
   /* =========================
      SUBMIT
   ========================= */
-  const handleSubmit = async () => {
-      const requiredFields = [
-        formData.name,
-        formData.shortName,
-        formData.hoAddress,
-        formData.contactPerson,
-        formData.mobile,
-        formData.email,
-        formData.startDate,
-        formData.natureOfBusiness,
-        formData.establishmentType,
-        formData.rulesApplicable,
-      ];
+const handleSubmit = async () => {
 
-      if (requiredFields.some((v) => !v)) {
-        alert("All required fields must be filled");
-        return;
-}
+  const requiredFields = [
+    formData.name,
+    formData.shortName,
+    formData.hoAddress,
+    formData.contactPerson,
+    formData.mobile,
+    formData.email,
+    formData.startDate,
+    formData.natureOfBusiness,
+    formData.establishmentType,
+    formData.rulesApplicable,
+  ];
 
-    if (!isEditMode && !documents.length) {
-      alert("At least one document is required");
-      return;
-    }
+  if (requiredFields.some((v) => !v)) {
+    alert("All required fields must be filled");
+    return;
+  }
 
-    if (Object.values(errors).some(Boolean)) {
-      alert("Fix validation errors");
-      return;
-    }
+  /* =========================
+     DATE VALIDATION
+  ========================= */
 
-    setSubmitting(true);
+  if (startDateObj && endDateObj && endDateObj < startDateObj) {
+    alert("End Date cannot be before Start Date");
+    return;
+  }
 
-    try {
-      if (isEditMode) {
-        const payload = {};
-        Object.entries(formData).forEach(([k, v]) => {
-          payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
-        });
+  if (!isEditMode && !documents.length) {
+    alert("At least one document is required");
+    return;
+  }
 
-        const res = await fetch(
-          `http://127.0.0.1:8000/api/principal-employer/${editingId}/update/`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          }
-        );
+  if (Object.values(errors).some(Boolean)) {
+    alert("Fix validation errors");
+    return;
+  }
 
-        if (!res.ok) throw new Error("Update failed");
-        alert("Updated successfully");
-      } else {
-        const payload = new FormData();
-        Object.entries(formData).forEach(([k, v]) =>
-          payload.append(k.replace(/([A-Z])/g, "_$1").toLowerCase(), v)
-        );
-        documents.forEach((d) => payload.append("document", d));
+  setSubmitting(true);
 
-        const res = await fetch(
-          "http://127.0.0.1:8000/api/principal-employer/create/",
-          { method: "POST", body: payload }
-        );
+  try {
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          console.log("Backend Error:", errorData);
-          alert(JSON.stringify(errorData));
-          return;
-        }
+    if (isEditMode) {
 
-        alert("Created successfully");
-      }
+      const payload: any = {};
 
-      setFormData({
-        name: "",
-        shortName: "",
-        hoAddress: "",
-        contactPerson: "",
-        mobile: "",
-        email: "",
-        startDate: "",
-        endDate: "",
-        natureOfBusiness: "",
-        establishmentType: "",
-        rulesApplicable: "",
+      Object.entries(formData).forEach(([k, v]) => {
+        payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
       });
 
-      setDocuments([]);
-      setSelectedRows([]);
-      setIsEditMode(false);
-      setEditingId(null);
-      fetchPEs();
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/principal-employer/${editingId}/update/`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
+      if (!res.ok) throw new Error("Update failed");
+
+      alert("Updated successfully");
+
+    } else {
+
+      const payload = new FormData();
+
+      Object.entries(formData).forEach(([k, v]) =>
+        payload.append(k.replace(/([A-Z])/g, "_$1").toLowerCase(), v)
+      );
+
+      documents.forEach((d) => payload.append("document", d));
+
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/principal-employer/create/",
+        { method: "POST", body: payload }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.log("Backend Error:", errorData);
+        alert(JSON.stringify(errorData));
+        return;
+      }
+
+      alert("Created successfully");
+    }
+
+    /* =========================
+       RESET FORM
+    ========================= */
+
+    setFormData({
+      name: "",
+      shortName: "",
+      hoAddress: "",
+      contactPerson: "",
+      mobile: "",
+      email: "",
+      startDate: "",
+      endDate: "",
+      natureOfBusiness: "",
+      establishmentType: "",
+      rulesApplicable: "",
+    });
+
+    /* reset datepicker */
+
+    setStartDateObj(null);
+    setEndDateObj(null);
+    setStartInput("");
+    setEndInput("");
+    setStartError("");
+    setEndError("");
+
+    setDocuments([]);
+    setSelectedRows([]);
+    setIsEditMode(false);
+    setEditingId(null);
+
+    fetchPEs();
+
+  } catch (e: any) {
+    alert(e.message);
+  } finally {
+    setSubmitting(false);
+  }
+};
   /* =========================
      EXPORT TO EXCEL
   ========================= */
@@ -554,80 +656,193 @@ const handleExportBranches = () => {
       <PageBreadcrumb pageTitle="Manage Principle Employee" />
 
       {/* ================= FORM ================= */}
-      <div ref={formRef} className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
-        <ComponentCard title="Principle Employee Details">
-          {isEditMode && (
-            <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800">
-              Editing existing Principal Employer
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <Label>Name</Label>
-            <Input name="name" value={formData.name} onChange={handleChange} />
-
-            <Label>Short Name</Label>
-            <Input name="shortName" value={formData.shortName} onChange={handleChange} />
-
-            <Label>HO Address</Label>
-            <Input name="hoAddress" value={formData.hoAddress} onChange={handleChange} />
-
-            <Label>Contact Person</Label>
-            <Input name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
-
-            <Label>Mobile</Label>
-            <Input name="mobile" value={formData.mobile} onChange={handleChange} />
-
-            <Label>Email</Label>
-            <Input name="email" value={formData.email} onChange={handleChange} />
-
-            <Label>Start Date</Label>
-            <input type="date" className={dateInputClass}
-              value={formData.startDate}
-              onChange={(e) => handleChange({ target: { name: "startDate", value: e.target.value } })}
-            />
-
-            <Label>End Date</Label>
-            <input type="date" className={dateInputClass}
-              value={formData.endDate}
-              onChange={(e) => handleChange({ target: { name: "endDate", value: e.target.value } })}
-            />
-
-            <Label>Nature of Business</Label>
-            <Input name="natureOfBusiness" value={formData.natureOfBusiness} onChange={handleChange} />
-
-            <Label>Establishment Type</Label>
-            <Input name="establishmentType" value={formData.establishmentType} onChange={handleChange} />
-
-            <Label>Rules Applicable</Label>
-            <select className={normalSelectClass} name="rulesApplicable"
-              value={formData.rulesApplicable} onChange={handleChange}>
-              <option value="">Select</option>
-              <option value="central">Central</option>
-              <option value="state">State</option>
-            </select>
-          </div>
-        </ComponentCard>
-
-        <div className="space-y-6">
-          <ComponentCard title="Documents">
-            <FileInput multiple onChange={(e) =>
-              e.target.files &&
-              Array.from(e.target.files).forEach(addDocument)
-            } />
-          </ComponentCard>
-
-          <ComponentCard>
-            <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
-              {submitting
-                ? "Submitting..."
-                : isEditMode
-                ? "Update Principal Employer"
-                : "Create Principle Employee"}
-            </Button>
-          </ComponentCard>
-        </div>
+<div ref={formRef} className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
+  <ComponentCard title="Principle Employee Details">
+    {isEditMode && (
+      <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800">
+        Editing existing Principal Employer
       </div>
+    )}
+
+    {/* 3 COLUMN GRID FORM */}
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+      <div>
+        <Label>Name</Label>
+        <Input name="name" value={formData.name} onChange={handleChange} />
+      </div>
+
+      <div>
+        <Label>Short Name</Label>
+        <Input name="shortName" value={formData.shortName} onChange={handleChange} />
+      </div>
+
+      <div>
+        <Label>Contact Person</Label>
+        <Input name="contactPerson" value={formData.contactPerson} onChange={handleChange} />
+      </div>
+
+      <div>
+        <Label>Mobile</Label>
+        <Input name="mobile" value={formData.mobile} onChange={handleChange} />
+      </div>
+
+      <div>
+        <Label>Email</Label>
+        <Input name="email" value={formData.email} onChange={handleChange} />
+      </div>
+
+      <div>
+        <Label>Rules Applicable</Label>
+        <select
+          className={normalSelectClass}
+          name="rulesApplicable"
+          value={formData.rulesApplicable}
+          onChange={handleChange}
+        >
+          <option value="">Select</option>
+          <option value="central">Central</option>
+          <option value="state">State</option>
+        </select>
+      </div>
+
+      <div>
+        <Label>Start Date</Label>
+
+        <DatePicker
+          selected={startDateObj}
+          value={startInput}
+          dateFormat="dd/MM/yyyy"
+          placeholderText="dd/mm/yyyy"
+          className={dateInputClass}
+          onChange={(date: Date | null) => {
+            if (date) {
+              const formatted = date.toLocaleDateString("en-GB");
+
+              setStartInput(formatted);
+              setStartDateObj(date);
+              setStartError("");
+
+              setFormData((p) => ({
+                ...p,
+                startDate: formatForAPI(date),
+              }));
+            }
+          }}
+          onChangeRaw={(e) => {
+            const value = e.target.value;
+            setStartInput(value);
+
+            const parsed = parseDate(value);
+
+            if (parsed) {
+              setStartDateObj(parsed);
+              setStartError("");
+
+              setFormData((p) => ({
+                ...p,
+                startDate: formatForAPI(parsed),
+              }));
+            } else {
+              setStartError("Invalid date format (dd/mm/yyyy)");
+            }
+          }}
+        />
+
+        {startError && (
+          <p className="text-red-500 text-xs mt-1">{startError}</p>
+        )}
+      </div>
+
+      <div>
+        <Label>End Date</Label>
+
+        <DatePicker
+          selected={endDateObj}
+          value={endInput}
+          dateFormat="dd/MM/yyyy"
+          placeholderText="dd/mm/yyyy"
+          minDate={startDateObj || undefined}
+          className={dateInputClass}
+          onChange={(date: Date | null) => {
+            if (date) {
+              const formatted = date.toLocaleDateString("en-GB");
+
+              setEndInput(formatted);
+              setEndDateObj(date);
+              setEndError("");
+
+              setFormData((p) => ({
+                ...p,
+                endDate: formatForAPI(date),
+              }));
+            }
+          }}
+          onChangeRaw={(e) => {
+            const value = e.target.value;
+            setEndInput(value);
+
+            const parsed = parseDate(value);
+
+            if (parsed) {
+              setEndDateObj(parsed);
+              setEndError("");
+
+              setFormData((p) => ({
+                ...p,
+                endDate: formatForAPI(parsed),
+              }));
+            } else {
+              setEndError("Invalid date format (dd/mm/yyyy)");
+            }
+          }}
+        />
+
+        {endError && (
+          <p className="text-red-500 text-xs mt-1">{endError}</p>
+        )}
+      </div>
+
+      <div>
+        <Label>Nature of Business</Label>
+        <Input name="natureOfBusiness" value={formData.natureOfBusiness} onChange={handleChange} />
+      </div>
+
+      <div>
+        <Label>Establishment Type</Label>
+        <Input name="establishmentType" value={formData.establishmentType} onChange={handleChange} />
+      </div>
+
+      <div className="xl:col-span-3">
+        <Label>HO Address</Label>
+        <Input name="hoAddress" value={formData.hoAddress} onChange={handleChange} />
+      </div>
+
+    </div>
+  </ComponentCard>
+
+  <div className="space-y-6">
+    <ComponentCard title="Documents">
+      <FileInput
+        multiple
+        onChange={(e) =>
+          e.target.files &&
+          Array.from(e.target.files).forEach(addDocument)
+        }
+      />
+    </ComponentCard>
+
+    <ComponentCard>
+      <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
+        {submitting
+          ? "Submitting..."
+          : isEditMode
+          ? "Update Principal Employer"
+          : "Create Principle Employee"}
+      </Button>
+    </ComponentCard>
+  </div>
+</div>
 
       {/* ================= TABLE ================= */}
       <div className="mt-10">

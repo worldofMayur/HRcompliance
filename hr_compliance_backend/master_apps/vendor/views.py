@@ -8,25 +8,23 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode
+from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.timezone import now
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
-from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 from .models import Vendor, VendorDocument
 from .serializers import VendorSerializer, VendorDocumentSerializer
-from rest_framework.permissions import IsAuthenticated
-
 
 User = get_user_model()
 
 
-# ============================
-# CREATE VENDOR
-# ============================
 class VendorCreateAPIView(APIView):
+
     def post(self, request):
+
         try:
             with transaction.atomic():
 
@@ -34,36 +32,36 @@ class VendorCreateAPIView(APIView):
                 mobile = request.data.get("mobile")
                 vendor_name = request.data.get("name")
 
-                # ==========================
-                # GLOBAL CROSS MODULE CHECK
-                # ==========================
+                # =====================================
+                # GLOBAL EMAIL DUPLICATE CHECK
+                # =====================================
                 if User.objects.filter(email=email).exists():
                     return Response(
                         {"error": "Email already registered in system"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # ==========================
+                # =====================================
                 # VENDOR EMAIL DUPLICATE CHECK
-                # ==========================
+                # =====================================
                 if Vendor.objects.filter(email=email).exists():
                     return Response(
                         {"error": "Vendor with this email already exists"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # -------------------------------------------------------
-                # MOBILE VALIDATION (UPDATED LOGIC)
-                # -------------------------------------------------------
+                # =====================================
+                # MOBILE VALIDATION
+                # =====================================
 
-                # 1️⃣ If mobile exists for PE / AUDITOR / SUPERADMIN → block
+                # 1️⃣ Mobile already used by PE / Auditor / SuperAdmin
                 if User.objects.filter(mobile=mobile).exclude(role="VENDOR").exists():
                     return Response(
                         {"error": "Mobile already registered with another account"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # 2️⃣ If vendor already exists with same mobile but different company → block
+                # 2️⃣ Same mobile but different vendor company
                 existing_vendor = Vendor.objects.filter(mobile=mobile).first()
 
                 if existing_vendor and existing_vendor.name != vendor_name:
@@ -72,17 +70,18 @@ class VendorCreateAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # ==========================
+                # =====================================
                 # CREATE VENDOR
-                # ==========================
+                # =====================================
                 serializer = VendorSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 vendor = serializer.save()
 
-                # ==========================
-                # CREATE USER (LINKED)
-                # ==========================
+                # =====================================
+                # CREATE USER ACCOUNT
+                # =====================================
                 temp_password = get_random_string(10)
+
                 user = User.objects.create_user(
                     username=vendor.short_name,
                     email=vendor.email,
@@ -92,35 +91,47 @@ class VendorCreateAPIView(APIView):
                     is_active=True,
                 )
 
+                # Link vendor to user
                 vendor.user = user
                 vendor.save(update_fields=["user"])
 
                 user.reset_password_used = False
                 user.save(update_fields=["reset_password_used"])
 
-                # ==========================
+                # =====================================
                 # DOCUMENTS (MANDATORY)
-                # ==========================
+                # =====================================
                 documents = request.FILES.getlist("document")
+
                 if not documents:
                     return Response(
                         {"error": "Please upload at least one document"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+                MAX_FILE_SIZE = 3 * 1024 * 1024  # 3MB
+
                 for file in documents:
+
+                    if file.size > MAX_FILE_SIZE:
+                        return Response(
+                            {"error": f"{file.name} exceeds 3MB limit"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     doc_serializer = VendorDocumentSerializer(
                         data={
                             "vendor": vendor.id,
                             "document": file,
                         }
                     )
+
                     doc_serializer.is_valid(raise_exception=True)
                     doc_serializer.save()
 
-                # ==========================
-                # EMAIL
-                # ==========================
+                # =====================================
+                # PASSWORD RESET EMAIL
+                # =====================================
                 token = PasswordResetTokenGenerator().make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
 
@@ -130,35 +141,60 @@ class VendorCreateAPIView(APIView):
                 html_content = render_to_string(
                     "emails/password_reset.html",
                     {
+                        "role": "Vendor",
                         "contact_person": vendor.contact_person,
                         "company_name": vendor.name,
                         "ho_address": vendor.ho_address,
                         "username": vendor.short_name,
+                        "email": vendor.email,
+                        "mobile": vendor.mobile,
                         "reset_url": reset_url,
                         "login_url": login_url,
                         "year": now().year,
                     },
                 )
 
-                email_obj = EmailMultiAlternatives(
-                    subject="Activate Your HR Compliance Account",
-                    body="HTML email required",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[vendor.email],
-                )
-                email_obj.attach_alternative(html_content, "text/html")
+                email_status = "Email sent successfully"
+
+                # =====================================
+                # SEND EMAIL
+                # =====================================
 
                 try:
-                    email_obj.send()
-                except Exception as e:
-                    print("Email sending failed:", e)
 
+                    print("Sending vendor activation email to:", vendor.email)
+
+                    email_obj = EmailMultiAlternatives(
+                        subject="Activate Your HR Compliance Account",
+                        body="Please activate your HR Compliance account.",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[vendor.email],
+                    )
+
+                    email_obj.attach_alternative(html_content, "text/html")
+
+                    email_obj.send(fail_silently=False)
+
+                    email_status = "Email sent successfully"
+
+                except Exception as e:
+
+                    print("VENDOR EMAIL ERROR:", str(e))
+                    email_status = "Vendor created but email failed"
+
+                # =====================================
+                # RESPONSE
+                # =====================================
                 return Response(
-                    {"message": "Vendor created successfully"},
+                    {
+                        "message": "Vendor created successfully",
+                        "email_status": email_status,
+                    },
                     status=status.HTTP_201_CREATED,
                 )
 
         except Exception as e:
+
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -230,11 +266,34 @@ class VendorUpdateAPIView(APIView):
 # ============================
 # DELETE VENDOR
 # ============================
+
 class VendorDeleteAPIView(APIView):
+
     def delete(self, request, pk):
-        vendor = get_object_or_404(Vendor, pk=pk)
-        vendor.delete()  # cascades to documents
-        return Response(
-            {"message": "Vendor deleted successfully"},
-            status=status.HTTP_200_OK,
-        )
+
+        try:
+            with transaction.atomic():
+
+                vendor = get_object_or_404(Vendor, pk=pk)
+
+                # Store user reference before deleting vendor
+                user = vendor.user
+
+                # Delete vendor (documents cascade automatically)
+                vendor.delete()
+
+                # Delete linked user
+                if user:
+                    user.delete()
+
+                return Response(
+                    {"message": "Vendor deleted successfully"},
+                    status=status.HTTP_200_OK,
+                )
+
+        except Exception as e:
+            print("DELETE ERROR:", str(e))
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

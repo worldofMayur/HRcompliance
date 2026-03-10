@@ -46,14 +46,19 @@ class PrincipalEmployerListAPIView(APIView):
 # CREATE PRINCIPAL EMPLOYER
 # ==========================================================
 class PrincipalEmployerCreateAPIView(APIView):
+
     def post(self, request):
+
         try:
             with transaction.atomic():
 
                 email = request.data.get("email")
                 mobile = request.data.get("mobile")
 
-                # 🔥 GLOBAL DUPLICATE CHECK (ACCOUNTS)
+                # =============================
+                # GLOBAL DUPLICATE CHECK (USER)
+                # =============================
+
                 if User.objects.filter(email=email).exists():
                     return Response(
                         {"error": "Account with this email already exists"},
@@ -66,7 +71,10 @@ class PrincipalEmployerCreateAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # 🔥 MODULE DUPLICATE CHECK (PE)
+                # =============================
+                # MODULE DUPLICATE CHECK (PE)
+                # =============================
+
                 if PrincipalEmployer.objects.filter(email=email).exists():
                     return Response(
                         {"error": "Principal Employer with this email already exists"},
@@ -79,13 +87,20 @@ class PrincipalEmployerCreateAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # CREATE PE
+                # =============================
+                # CREATE PRINCIPAL EMPLOYER
+                # =============================
+
                 serializer = PrincipalEmployerSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 principal_employer = serializer.save()
 
-                # CREATE USER
+                # =============================
+                # CREATE USER ACCOUNT
+                # =============================
+
                 temp_password = get_random_string(10)
+
                 user = User.objects.create_user(
                     username=principal_employer.short_name,
                     email=principal_employer.email,
@@ -98,68 +113,128 @@ class PrincipalEmployerCreateAPIView(APIView):
                 user.reset_password_used = False
                 user.save(update_fields=["reset_password_used"])
 
-                # 🔥 LINK USER TO PE
+                # LINK USER TO PE
                 principal_employer.user = user
                 principal_employer.save(update_fields=["user"])
 
-                # HANDLE DOCUMENTS (MANDATORY)
+                # =============================
+                # DOCUMENTS (MANDATORY)
+                # =============================
+
                 documents = request.FILES.getlist("document")
+
                 if not documents:
                     return Response(
                         {"error": "Please upload at least one document"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+                MAX_FILE_SIZE = 3 * 1024 * 1024  # 3 MB
+
                 for file in documents:
+
+                    # File size validation
+                    if file.size > MAX_FILE_SIZE:
+                        return Response(
+                            {"error": f"{file.name} exceeds 3 MB limit"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     doc_serializer = PrincipalEmployerDocumentSerializer(
                         data={
                             "principal_employer": principal_employer.id,
                             "document": file,
                         }
                     )
+
                     doc_serializer.is_valid(raise_exception=True)
                     doc_serializer.save()
 
-                # SEND RESET EMAIL
+                # =============================
+                # GENERATE PASSWORD RESET LINK
+                # =============================
+
                 token = PasswordResetTokenGenerator().make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
 
                 reset_url = f"{settings.FRONTEND_URL}/TailAdmin/reset-password/{uid}/{token}"
                 login_url = f"{settings.FRONTEND_URL}/TailAdmin/signin"
 
+                # =============================
+                # PREPARE EMAIL CONTENT
+                # =============================
+
                 html_content = render_to_string(
                     "emails/password_reset.html",
                     {
+                        "role": "Principal Employer",
+
                         "contact_person": principal_employer.contact_person,
                         "company_name": principal_employer.name,
-                        "ho_address": principal_employer.ho_address,
                         "username": principal_employer.short_name,
+
+                        "email": principal_employer.email,
+                        "mobile": principal_employer.mobile,
+
+                        "ho_address": principal_employer.ho_address,
+
+                        "nature_of_business": principal_employer.nature_of_business,
+                        "establishment_type": principal_employer.establishment_type,
+                        "rules_applicable": principal_employer.rules_applicable,
+
+                        "start_date": principal_employer.start_date,
+                        "end_date": principal_employer.end_date,
+
                         "reset_url": reset_url,
                         "login_url": login_url,
+
                         "year": now().year,
                     },
                 )
 
-                email_msg = EmailMultiAlternatives(
-                    subject="Activate Your HR Compliance Account",
-                    body="HTML email required",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[principal_employer.email],
-                )
-                email_msg.attach_alternative(html_content, "text/html")
-                email_msg.send(fail_silently=True)
+                # =============================
+                # SEND EMAIL
+                # =============================
+
+                email_status = "Email sent successfully"
+
+                try:
+                    print("Sending activation email to:", principal_employer.email)
+
+                    email_msg = EmailMultiAlternatives(
+                        subject="Activate Your HR Compliance Account",
+                        body="HTML email required",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[principal_employer.email],
+                    )
+
+                    email_msg.attach_alternative(html_content, "text/html")
+
+                    email_msg.send(fail_silently=False)
+
+                except Exception as email_error:
+
+                    print("EMAIL ERROR:", str(email_error))
+                    email_status = "Principal Employer created but email failed"
+
+                # =============================
+                # RESPONSE
+                # =============================
 
                 return Response(
-                    {"message": "Principal Employer created successfully"},
+                    {
+                        "message": "Principal Employer created successfully",
+                        "email_status": email_status,
+                    },
                     status=status.HTTP_201_CREATED,
                 )
 
         except Exception as e:
+
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
 
 # ==========================================================
 # UPDATE PRINCIPAL EMPLOYER

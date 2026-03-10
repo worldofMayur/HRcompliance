@@ -4,22 +4,41 @@ export default function ExpiredResetLink() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="max-w-md w-full bg-white p-6 rounded-lg shadow text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-3">
-          Link Expired
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 text-center">
+
+        {/* Icon */}
+        <div className="flex justify-center mb-5">
+          <div className="h-14 w-14 flex items-center justify-center rounded-full bg-red-100">
+            <span className="text-red-600 text-2xl font-bold">!</span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+          Reset Link Expired
         </h2>
 
-        <p className="text-gray-600 mb-6">
-          This password reset link has already been used or has expired.
+        {/* Message */}
+        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+          This password reset link has either already been used or has expired.
+          For security reasons, reset links can only be used once.
         </p>
 
+        {/* Button */}
         <button
           onClick={() => navigate("/TailAdmin/signin")}
-          className="w-full bg-blue-600 text-white py-2 rounded"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition"
         >
           Go to Sign In
         </button>
+
+        {/* Footer */}
+        <div className="mt-6 text-xs text-gray-400">
+          HR Compliance Portal
+        </div>
+
       </div>
     </div>
   );

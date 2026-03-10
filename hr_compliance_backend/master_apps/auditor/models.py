@@ -1,7 +1,17 @@
 from django.db import models
+from accounts.models import User
 
 
 class Auditor(models.Model):
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="auditor_profile"
+    )
+
     name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=50, unique=True)
     company = models.CharField(max_length=255)
@@ -21,12 +31,15 @@ def auditor_document_path(instance, filename):
 
 
 class AuditorDocument(models.Model):
+
     auditor = models.ForeignKey(
         Auditor,
         related_name="documents",
         on_delete=models.CASCADE
     )
+
     document = models.FileField(upload_to=auditor_document_path)
+
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

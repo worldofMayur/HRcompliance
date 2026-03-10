@@ -94,6 +94,9 @@ class AuditorCreateAPIView(APIView):
                     is_active=True,
                 )
 
+                auditor.user = user
+                auditor.save(update_fields=["user"])
+
                 user.reset_password_used = False
                 user.save(update_fields=["reset_password_used"])
 
@@ -107,35 +110,62 @@ class AuditorCreateAPIView(APIView):
                     )
 
                 # ==========================
-                # SEND PASSWORD RESET EMAIL
+                # GENERATE PASSWORD RESET LINK
                 # ==========================
                 token = PasswordResetTokenGenerator().make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
 
                 reset_url = f"{settings.FRONTEND_URL}/TailAdmin/reset-password/{uid}/{token}"
+                login_url = f"{settings.FRONTEND_URL}/TailAdmin/signin"
 
                 html_content = render_to_string(
                     "emails/password_reset.html",
                     {
+                        "contact_person": auditor.name,
+                        "role": "Auditor",
+
                         "company_name": auditor.company,
                         "username": auditor.short_name,
+                        "email": auditor.email,
+                        "mobile": auditor.mobile,
+
+                        "ho_address": auditor.ho_address,
+                        "start_date": auditor.start_date,
+                        "end_date": auditor.end_date,
+
                         "reset_url": reset_url,
+                        "login_url": login_url,
+
                         "year": now().year,
                     },
                 )
 
-                email_obj = EmailMultiAlternatives(
-                    subject="Activate Your HR Compliance Account",
-                    body="HTML email required",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[auditor.email],
-                )
+                # ==========================
+                # EMAIL FUNCTION
+                # ==========================
+                def send_email():
+                    try:
+                        email_obj = EmailMultiAlternatives(
+                            subject="Activate Your HR Compliance Account",
+                            body="Please activate your HR Compliance account.",
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=[auditor.email],
+                        )
 
-                email_obj.attach_alternative(html_content, "text/html")
-                email_obj.send(fail_silently=True)
+                        email_obj.attach_alternative(html_content, "text/html")
+
+                        email_obj.send(fail_silently=False)
+
+                        print("Auditor activation email sent to:", auditor.email)
+
+                    except Exception as email_error:
+                        print("AUDITOR EMAIL ERROR:", str(email_error))
+
+                # Send email AFTER DB commit
+                transaction.on_commit(send_email)
 
                 return Response(
-                    {"message": "Auditor created & email sent"},
+                    {"message": "Auditor created successfully & email triggered"},
                     status=status.HTTP_201_CREATED,
                 )
 
@@ -203,9 +233,13 @@ class AuditorDeleteAPIView(APIView):
 
     def delete(self, request, pk):
 
-        auditor = get_object_or_404(Auditor, pk=pk)
-        auditor.delete()
+        with transaction.atomic():
 
-        return Response(
-            {"message": "Auditor deleted successfully"}
-        )
+            auditor = get_object_or_404(Auditor, pk=pk)
+
+            if auditor.user:
+                auditor.user.delete()
+
+            auditor.delete()
+
+        return Response({"message": "Auditor deleted successfully"})
