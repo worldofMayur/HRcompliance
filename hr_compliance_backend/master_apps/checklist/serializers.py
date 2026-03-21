@@ -33,18 +33,50 @@ class RuleSerializer(serializers.ModelSerializer):
         fields = ["id", "rule_number"]
 
 
-class AuditChecklistCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AuditChecklist
-        fields = [
-            "state",
-            "act",
-            "compliance_nature",
-            "section",
-            "rule",
-            "document",
-            "auditor_guide",
-        ]
+from rest_framework import serializers
+from .models import AuditChecklist, State, Act, ComplianceNature, Section, Rule
+from master_apps.documents.models import DocumentMaster
+
+
+class AuditChecklistCreateSerializer(serializers.Serializer):
+    state = serializers.IntegerField()
+    act = serializers.IntegerField()
+    compliance_nature = serializers.CharField()
+    section = serializers.CharField()
+    rule = serializers.CharField()
+    document = serializers.IntegerField()
+    auditor_guide = serializers.CharField()
+
+    def create(self, validated_data):
+        state = State.objects.get(id=validated_data["state"])
+        act = Act.objects.get(id=validated_data["act"])
+        document = DocumentMaster.objects.get(id=validated_data["document"])
+
+        compliance, _ = ComplianceNature.objects.get_or_create(
+            name=validated_data["compliance_nature"]
+        )
+
+        section, _ = Section.objects.get_or_create(
+            act=act,
+            section_number=validated_data["section"],
+            defaults={"title": validated_data["section"]}
+        )
+
+        rule, _ = Rule.objects.get_or_create(
+            section=section,
+            rule_number=validated_data["rule"],
+            defaults={"description": validated_data["rule"]}
+        )
+
+        return AuditChecklist.objects.create(
+            state=state,
+            act=act,
+            compliance_nature=compliance,
+            section=section,
+            rule=rule,
+            document=document,
+            auditor_guide=validated_data["auditor_guide"]
+        )
 
 
 class AuditChecklistListSerializer(serializers.ModelSerializer):

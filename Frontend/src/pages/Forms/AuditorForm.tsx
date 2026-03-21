@@ -74,13 +74,29 @@ export default function Auditor() {
   const [endDateObj, setEndDateObj] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [selectedRows, setSelectedRows] = useState([]);
 
   /* =========================
      TABLE STATE
   ========================= */
 
   const [tableData, setTableData] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
+const filteredAuditors = !search.trim()
+  ? tableData
+  : tableData.filter((a) => {
+      const searchText = search.trim().toLowerCase();
+
+      return (
+        a.name?.toLowerCase().includes(searchText) ||
+        a.short_name?.toLowerCase().includes(searchText) ||   // ✅ ADDED
+        a.company?.toLowerCase().includes(searchText) ||
+        a.email?.toLowerCase().includes(searchText) ||
+        a.mobile?.toString().includes(searchText)
+      );
+    });
+
+  
 
   /* =========================
      FETCH AUDITORS
@@ -328,6 +344,8 @@ export default function Auditor() {
     );
   };
 
+  
+
   /* =========================
      RENDER
   ========================= */
@@ -505,35 +523,45 @@ export default function Auditor() {
 
         <ComponentCard title="Auditors">
 
-          <div className="mb-5 flex justify-between">
+<div className="mb-5 flex justify-between items-center">
 
-            <div className="flex gap-2">
+  {/* LEFT SIDE (UNCHANGED) */}
+  <div className="flex gap-2">
 
-              <Button size="sm" onClick={handleExport}>
-                Export to Excel
-              </Button>
+    <Button size="sm" onClick={handleExport}>
+      Export to Excel
+    </Button>
 
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={!selectedRows.length}
-                onClick={handleBulkDelete}
-              >
-                Delete Selected
-              </Button>
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={!selectedRows.length}
+      onClick={handleBulkDelete}
+    >
+      Delete Selected
+    </Button>
 
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={selectedRows.length !== 1}
-                onClick={handleEditSelected}
-              >
-                Edit Selected
-              </Button>
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={selectedRows.length !== 1}
+      onClick={handleEditSelected}
+    >
+      Edit Selected
+    </Button>
 
-            </div>
+  </div>
 
-          </div>
+  {/* RIGHT SIDE SEARCH (NEW) */}
+  <input
+    type="text"
+    placeholder="Search Auditor..."
+    className="h-9 px-3 border border-gray-300 rounded-lg text-sm w-52"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+  />
+
+</div>
 
           <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
 
@@ -570,8 +598,7 @@ export default function Auditor() {
 
               <TableBody>
 
-                {tableData.map((a) => (
-
+{filteredAuditors.map((a) => (
                   <TableRow key={a.id} className="border-t hover:bg-gray-50">
 
                     <TableCell className="px-6 py-5 text-center">

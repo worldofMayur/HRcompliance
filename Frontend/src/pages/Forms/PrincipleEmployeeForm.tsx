@@ -290,10 +290,11 @@ const handleBranchSubmit = async () => {
   ========================= */
   const filteredData = useMemo(() => {
     return tableData.filter((pe) => {
-      const matchesSearch =
-        pe.name.toLowerCase().includes(search.toLowerCase()) ||
-        pe.email.toLowerCase().includes(search.toLowerCase()) ||
-        pe.contact_person.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      pe.name?.toLowerCase().includes(search.toLowerCase()) ||
+      pe.short_name?.toLowerCase().includes(search.toLowerCase()) ||   // ✅ ADD THIS
+      pe.email?.toLowerCase().includes(search.toLowerCase()) ||
+      pe.contact_person?.toLowerCase().includes(search.toLowerCase());
 
       const matchesRule =
         ruleFilter === "all" || pe.rules_applicable === ruleFilter;
@@ -847,17 +848,44 @@ const handleSubmit = async () => {
       {/* ================= TABLE ================= */}
       <div className="mt-10">
         <ComponentCard title="Principal Employers">
-          <div className="mb-5 flex justify-between">
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleExport}>Export to Excel</Button>
-              <Button size="sm" variant="outline" disabled={!selectedRows.length} onClick={handleBulkDelete}>
-                Delete Selected
-              </Button>
-              <Button size="sm" variant="outline" disabled={selectedRows.length !== 1} onClick={handleEditSelected}>
-                Edit Selected
-              </Button>
-            </div>
-          </div>
+<div className="mb-5 flex justify-between items-center">
+  
+  {/* LEFT SIDE (UNCHANGED) */}
+  <div className="flex gap-2">
+    <Button size="sm" onClick={handleExport}>Export to Excel</Button>
+    <Button size="sm" variant="outline" disabled={!selectedRows.length} onClick={handleBulkDelete}>
+      Delete Selected
+    </Button>
+    <Button size="sm" variant="outline" disabled={selectedRows.length !== 1} onClick={handleEditSelected}>
+      Edit Selected
+    </Button>
+  </div>
+
+  {/* RIGHT SIDE (NEW - NON BREAKING) */}
+  <div className="flex gap-3 items-center">
+
+    {/* SEARCH */}
+    <input
+      type="text"
+      placeholder="Search PE..."
+      className="h-9 px-3 border border-gray-300 rounded-lg text-sm w-52"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+    />
+
+    {/* RULE FILTER */}
+    <select
+      className="h-9 px-3 border border-gray-300 rounded-lg text-sm"
+      value={ruleFilter}
+      onChange={(e) => setRuleFilter(e.target.value)}
+    >
+      <option value="all">All</option>
+      <option value="central">Central</option>
+      <option value="state">State</option>
+    </select>
+
+  </div>
+</div>
 
           <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
             <Table>

@@ -574,3 +574,31 @@ span.flatpickr-weekday,
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
 }
+
+
+/* Select box */
+/* 🔥 Remove vertical divider line */
+.custom-select .ant-select-selector::after {
+  display: none !important;
+}
+
+/* Remove any separator near arrow */
+.custom-select .ant-select-arrow {
+  border-left: none !important;
+}
+
+/* 🔼 Increase height slightly */
+.custom-select .ant-select-selector {
+  height: 44px !important;   /* was 40px */
+  padding: 0 14px !important;
+}
+
+/* Fix vertical alignment */
+.custom-select .ant-select-selection-item {
+  line-height: 44px !important;
+}
+
+/* Optional: smoother arrow alignment */
+.custom-select .ant-select-arrow {
+  right: 12px;
+}

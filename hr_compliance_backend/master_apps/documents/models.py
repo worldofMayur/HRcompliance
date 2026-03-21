@@ -10,9 +10,11 @@ class DocumentMaster(models.Model):
     FREQUENCY_ONE_TIME = "one_time"
 
     FREQUENCY_CHOICES = (
-        (FREQUENCY_MONTHLY, "Monthly"),
-        (FREQUENCY_ANNUAL, "Annually"),
-        (FREQUENCY_ONE_TIME, "One Time"),
+        ("monthly", "Monthly"),
+        ("quarterly", "Quarterly"),
+        ("half_yearly", "Half Yearly"),
+        ("annually", "Annually"),
+        ("one_time", "One Time"),
     )
 
     name = models.CharField(max_length=255)

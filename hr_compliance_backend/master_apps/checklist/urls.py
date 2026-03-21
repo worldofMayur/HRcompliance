@@ -9,6 +9,7 @@ from .views import (
     AuditChecklistListAPIView,
     AuditChecklistUpdateAPIView,
     AuditChecklistToggleStatusAPIView,
+    ActCreateAPIView,
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     # 🔥 NEW (DO NOT REMOVE)
     path("<int:pk>/update/", AuditChecklistUpdateAPIView.as_view()),
     path("<int:pk>/toggle-status/", AuditChecklistToggleStatusAPIView.as_view()),
+    path("acts/create/", ActCreateAPIView.as_view()),
 ]

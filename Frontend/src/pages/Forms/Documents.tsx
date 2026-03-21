@@ -22,11 +22,18 @@ import {
 const API_URL = "http://127.0.0.1:8000/api/document-master";
 const PAGE_SIZE = 8;
 
-const token = localStorage.getItem("access_token");
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("access_token");
 
-const authHeaders = {
-  Authorization: `Bearer ${token}`,
-  "Content-Type": "application/json",
+  if (!token) {
+    alert("Session expired. Please login again.");
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
 };
 
 /* =========================
@@ -46,6 +53,7 @@ export default function Documents() {
 
   const [showForm, setShowForm] = useState(false);
   const [editDoc, setEditDoc] = useState(null);
+  const [companyFilter, setCompanyFilter] = useState("all");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -60,7 +68,7 @@ export default function Documents() {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/list/`, {
-        headers: authHeaders,
+headers: getAuthHeaders(),
       });
       const data = await res.json();
       setDocuments(Array.isArray(data) ? data : []);
@@ -82,7 +90,7 @@ export default function Documents() {
       const res = await fetch(
         "http://127.0.0.1:8000/api/document-master/pe-dropdown/",
         {
-          headers: authHeaders,
+headers: getAuthHeaders(),
         }
       );
       const data = await res.json();
@@ -95,24 +103,25 @@ export default function Documents() {
   /* =========================
      FILTER + SEARCH
   ========================= */
-  const filteredDocs = useMemo(() => {
-    setProcessing(true);
+const filteredDocs = useMemo(() => {
+  const searchText = search.trim().toLowerCase();
 
-    const result = (Array.isArray(documents) ? documents : []).filter((d) => {
-      const matchesFrequency =
-        frequencyFilter === "all" || d.frequency === frequencyFilter;
+return documents.filter((d) => {
+  const matchesFrequency =
+    frequencyFilter === "all" || d.frequency === frequencyFilter;
 
-      const matchesSearch = d.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
+  const matchesCompany =
+    companyFilter === "all" ||
+    (companyFilter === "common" && !d.principal_employer_name) ||
+    d.principal_employer_name === companyFilter;
 
-      return matchesFrequency && matchesSearch;
-    });
+  const matchesSearch =
+    d.name?.toLowerCase().includes(searchText) ||
+    d.principal_employer_name?.toLowerCase().includes(searchText);
 
-    setTimeout(() => setProcessing(false), 300);
-    return result;
-  }, [documents, frequencyFilter, search]);
-
+  return matchesFrequency && matchesSearch && matchesCompany;
+});
+}, [documents, frequencyFilter, search, companyFilter]);
   /* =========================
      PAGINATION
   ========================= */
@@ -179,12 +188,18 @@ export default function Documents() {
 
     const res = await fetch(url, {
       method,
-      headers: authHeaders,
+      headers: getAuthHeaders(),
       body: JSON.stringify(formData),
     });
 
     if (!res.ok) {
-      alert("Operation failed");
+const data = await res.json();
+
+if (!res.ok) {
+  console.error(data);
+  alert(data?.detail || data?.error || "Operation failed");
+  return;
+}
       return;
     }
 
@@ -196,26 +211,68 @@ export default function Documents() {
     if (!confirm("Delete this document?")) return;
     await fetch(`${API_URL}/${id}/delete/`, {
       method: "DELETE",
-      headers: authHeaders,
+      headers: getAuthHeaders(),
     });
     fetchDocuments();
   };
 
+  const handleExport = () => {
+  if (!filteredDocs.length) {
+    alert("No data to export");
+    return;
+  }
+
+  const rows = [
+    ["Document Name", "Company", "Frequency"],
+...filteredDocs.map((d) => [
+  `"${d.name}"`,
+  `"${d.principal_employer_name || "Common"}"`,
+  `"${d.frequency}"`,
+]),
+  ];
+
+  const csvContent =
+    "data:text/csv;charset=utf-8," +
+    rows.map((e) => e.join(",")).join("\n");
+
+  const link = document.createElement("a");
+  link.href = encodeURI(csvContent);
+  link.download = "documents.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
   const handleBulkDelete = async () => {
     if (!selectedIds.length) return;
+
     if (!confirm("Delete selected documents?")) return;
 
-    await Promise.all(
-      selectedIds.map((id) =>
-        fetch(`${API_URL}/${id}/delete/`, {
-          method: "DELETE",
-          headers: authHeaders,
-        })
-      )
-    );
+    try {
+      const res = await fetch(`${API_URL}/bulk-delete/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          ids: selectedIds,
+        }),
+      });
 
-    setSelectedIds([]);
-    fetchDocuments();
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Bulk delete failed");
+        return;
+      }
+
+      // ✅ handle partial delete
+      alert(data.message || "Deleted successfully");
+
+      setSelectedIds([]);
+      fetchDocuments();
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    }
   };
 
   /* =========================
@@ -256,7 +313,25 @@ export default function Documents() {
             />
 
             <select
-              className="h-10 rounded-lg border border-gray-300 bg-white px-4 text-sm"
+className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm appearance-none"
+            value={companyFilter}
+            onChange={(e) => {
+              setCompanyFilter(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="all">All Companies</option>
+            <option value="common">Common</option>
+
+            {peList.map((pe) => (
+              <option key={pe.id} value={pe.name}>
+                {pe.name}
+              </option>
+            ))}
+          </select>
+
+            <select
+className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm appearance-none"
               value={frequencyFilter}
               onChange={(e) => {
                 setFrequencyFilter(e.target.value);
@@ -265,6 +340,8 @@ export default function Documents() {
             >
               <option value="all">All Frequencies</option>
               <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="half-yearly">Half-Yearly</option>
               <option value="annually">Annually</option>
               <option value="one_time">One Time</option>
             </select>
@@ -278,6 +355,15 @@ export default function Documents() {
               className="h-10"
             >
               Delete Selected
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={!filteredDocs.length}
+              className="h-10"
+            >
+              Export Excel
             </Button>
           </div>
         </div>
@@ -301,81 +387,108 @@ export default function Documents() {
                   />
                 </TableCell>
 
-                <TableCell isHeader className="px-8 py-4 text-left">
-                  DOCUMENT NAME
-                </TableCell>
-                <TableCell isHeader className="px-6 py-4 text-center">
-                  FREQUENCY
-                </TableCell>
+              <TableCell isHeader className="px-8 py-4 text-left">
+                DOCUMENT NAME
+              </TableCell>
+
+              <TableCell isHeader className="px-6 py-4 text-center">
+                COMPANY NAME
+              </TableCell>
+
+              <TableCell isHeader className="px-6 py-4 text-center">
+                FREQUENCY
+              </TableCell>
                 <TableCell isHeader className="px-6 py-4 text-center">
                   ACTIONS
                 </TableCell>
               </TableRow>
             </TableHeader>
 
-            <TableBody>
-              {(loading || processing) && (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-12 text-center">
-                    <div className="flex items-center justify-center gap-3 text-gray-500">
-                      Loading…
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
+<TableBody>
+  {/* 🔄 LOADING */}
+  {(loading || processing) && (
+    <TableRow>
+      <TableCell colSpan={5} className="py-12 text-center">
+        <div className="flex items-center justify-center gap-3 text-gray-500">
+<div className="animate-pulse">Loading documents...</div>
+        </div>
+      </TableCell>
+    </TableRow>
+  )}
 
-              {!loading &&
-                !processing &&
-                paginatedDocs.map((d, idx) => (
-                  <TableRow
-                    key={d.id}
-                    className={`transition ${
-                      idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"
-                    } hover:bg-blue-50/30`}
-                  >
-                    <TableCell className="w-12 px-4 text-center align-middle">
-                      <Checkbox
-                        checked={selectedIds.includes(d.id)}
-                        onChange={() => toggleSelect(d.id)}
-                      />
-                    </TableCell>
+  {/* 📭 EMPTY STATE */}
+  {!loading && !processing && paginatedDocs.length === 0 && (
+    <TableRow>
+      <TableCell colSpan={5} className="py-10 text-center text-gray-500">
+        No documents found
+      </TableCell>
+    </TableRow>
+  )}
 
-                    <TableCell className="px-8 py-6 align-middle">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">
-                          {d.name}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          Document Master
-                        </span>
-                      </div>
-                    </TableCell>
+  {/* 📄 DATA ROWS */}
+  {!loading &&
+    !processing &&
+    paginatedDocs.map((d, idx) => (
+      <TableRow
+        key={d.id}
+        className={`transition ${
+          idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"
+        } hover:bg-blue-50/30`}
+      >
+        {/* ✅ CHECKBOX */}
+        <TableCell className="w-12 px-4 text-center align-middle">
+          <Checkbox
+            checked={selectedIds.includes(d.id)}
+            onChange={() => toggleSelect(d.id)}
+          />
+        </TableCell>
 
-                    <TableCell className="px-6 py-6 text-center align-middle">
-                      <span className="inline-flex min-w-[90px] justify-center rounded-md bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-                        {d.frequency.replace("_", " ")}
-                      </span>
-                    </TableCell>
+        {/* 📄 DOCUMENT NAME */}
+        <TableCell className="px-8 py-6 align-middle">
+          <div className="flex flex-col">
+            <span className="font-medium text-gray-900">
+              {d.name}
+            </span>
+            <span className="text-xs text-gray-400">
+              Document Master
+            </span>
+          </div>
+        </TableCell>
 
-                    <TableCell className="px-6 py-6 text-center align-middle">
-                      <div className="inline-flex gap-2">
-                        <button
-                          onClick={() => openEdit(d)}
-                          className="rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(d.id)}
-                          className="rounded-md bg-red-50 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-100"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
+        {/* 🏢 COMPANY NAME (IMPROVED UI) */}
+        <TableCell className="px-6 py-6 text-center align-middle">
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${
+              d.principal_employer_name
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            {d.principal_employer_name || "Common"}
+          </span>
+        </TableCell>
+
+        {/* 🔁 FREQUENCY */}
+        <TableCell className="px-6 py-6 text-center align-middle">
+          <span className="inline-flex min-w-[90px] justify-center rounded-md bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
+            {d.frequency?.replace("_", " ")}
+          </span>
+        </TableCell>
+
+        {/* ⚙️ ACTIONS */}
+        <TableCell className="px-6 py-6 text-center align-middle">
+          <div className="inline-flex gap-2">
+            <button
+              onClick={() => openEdit(d)}
+              className="rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 hover:bg-blue-100"
+            >
+              Edit
+            </button>
+          </div>
+        </TableCell>
+      </TableRow>
+    ))}
+</TableBody>
           </Table>
         </div>
 
@@ -445,9 +558,11 @@ export default function Documents() {
                   }))
                 }
               >
-                <option value="monthly">Monthly</option>
-                <option value="annually">Annually</option>
-                <option value="one_time">One Time</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="half_yearly">Half Yearly</option>
+              <option value="annually">Annually</option>
+              <option value="one_time">One Time</option>
               </select>
             </div>
 

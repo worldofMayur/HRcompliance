@@ -67,12 +67,22 @@ export default function VendorCompliancePage() {
   const [tableData, setTableData] = useState<DocumentRow[]>([]);
   const [generalRemark, setGeneralRemark] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mappingStartDate, setMappingStartDate] = useState(null);
+  const [mappingEndDate, setMappingEndDate] = useState(null);
 
   /* ================= LOAD INITIAL ================= */
 
   useEffect(() => {
     loadMappedPE();
   }, []);
+
+useEffect(() => {
+  const options = getPeriodOptions();
+  if (options.length) {
+    setSelectedPeriod(options[options.length - 1]); // latest
+  }
+}, [mappingStartDate, mappingEndDate, frequencyBase]);
+
 
   const loadMappedPE = async () => {
     const res = await axios.get(
@@ -81,6 +91,12 @@ export default function VendorCompliancePage() {
     );
     setPeList(res.data);
   };
+
+  const formatDate = (date) => {
+  if (!date) return "-";
+  const d = new Date(date);
+  return d.toLocaleDateString("en-GB"); // dd/mm/yyyy
+};
 
   const loadStates = async (peId: string) => {
     const res = await axios.get(
@@ -107,10 +123,14 @@ export default function VendorCompliancePage() {
 
     setDocuments(res.data);
 
-    if (res.data.length > 0) {
-      const base = res.data[0].frequency || "";
-      setFrequencyBase(base);
-    }
+      if (res.data.length > 0) {
+        const base = res.data[0].frequency || "";
+        setFrequencyBase(base);
+
+        // ✅ ADD THIS
+        setMappingStartDate(new Date(res.data[0].start_date));
+        setMappingEndDate(new Date(res.data[0].end_date));
+      }
 
     const rows: DocumentRow[] = res.data.map((doc: DocumentType) => ({
       key: `doc-${doc.id}`,
@@ -126,50 +146,128 @@ export default function VendorCompliancePage() {
 
   /* ================= PERIOD OPTIONS ================= */
 
-  const getPeriodOptions = () => {
+const getPeriodOptions = () => {
 
-    const now = new Date();
-    const year = now.getFullYear();
+  if (!mappingStartDate || !mappingEndDate || !frequencyBase) return [];
 
-    if (frequencyBase === "MONTHLY") {
-
-      const months = [
-        "Jan","Feb","Mar","Apr","May","Jun",
-        "Jul","Aug","Sep","Oct","Nov","Dec"
-      ];
-
-      return months.map(m => `${m} ${year}`);
-    }
-
-    if (frequencyBase === "QUARTERLY") {
-      return [
-        `Q1 ${year} (Jan–Mar)`,
-        `Q2 ${year} (Apr–Jun)`,
-        `Q3 ${year} (Jul–Sep)`,
-        `Q4 ${year} (Oct–Dec)`
-      ];
-    }
-
-    if (frequencyBase === "HALF_YEARLY") {
-      return [
-        `H1 ${year} (Apr–Sep)`,
-        `H2 ${year} (Oct–Mar)`
-      ];
-    }
-
-    if (frequencyBase === "ANNUALLY") {
-
-      const nextYear = year + 1;
-
-      return [
-        `FY ${year}-${String(nextYear).slice(2)}`,
-        `Calendar ${year}`
-      ];
-    }
-
-    return [];
+  const format = (start, end) => {
+    const opt = { month: "short" };
+    return `${start.toLocaleString("default", opt)}–${end.toLocaleString("default", opt)} ${start.getFullYear()}`;
   };
 
+  const isOverlapping = (start, end) => {
+    return start <= mappingEndDate && end >= mappingStartDate;
+  };
+
+  const periods = [];
+
+  /* ================= MONTHLY ================= */
+  if (frequencyBase === "MONTHLY") {
+
+    const current = new Date(mappingStartDate);
+
+    current.setDate(1);
+
+    while (current <= mappingEndDate) {
+
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+
+      if (isOverlapping(start, end)) {
+        periods.push(format(start, end));
+      }
+
+      current.setMonth(current.getMonth() + 1);
+    }
+
+    return periods;
+  }
+
+  /* ================= QUARTERLY ================= */
+  if (frequencyBase === "QUARTERLY") {
+
+    const current = new Date(mappingStartDate);
+
+    const qStartMonth = Math.floor(current.getMonth() / 3) * 3;
+    current.setMonth(qStartMonth);
+    current.setDate(1);
+
+    while (current <= mappingEndDate) {
+
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
+
+      if (isOverlapping(start, end)) {
+        periods.push(format(start, end));
+      }
+
+      current.setMonth(current.getMonth() + 3);
+    }
+
+    return periods;
+  }
+
+  /* ================= HALF YEARLY / BI-ANNUALLY ================= */
+  if (frequencyBase === "HALF_YEARLY" || frequencyBase === "BI_ANNUALLY") {
+
+    const current = new Date(mappingStartDate);
+
+    const month = current.getMonth();
+
+    if (month < 6) {
+      current.setMonth(3); // Apr
+    } else {
+      current.setMonth(9); // Oct
+    }
+
+    current.setDate(1);
+
+    while (current <= mappingEndDate) {
+
+      const start = new Date(current);
+
+      let end;
+      if (current.getMonth() === 3) {
+        end = new Date(current.getFullYear(), 8, 30); // Sep
+      } else {
+        end = new Date(current.getFullYear() + 1, 2, 31); // Mar next
+      }
+
+      if (isOverlapping(start, end)) {
+        periods.push(format(start, end));
+      }
+
+      current.setMonth(current.getMonth() + 6);
+    }
+
+    return periods;
+  }
+
+  /* ================= ANNUALLY ================= */
+  if (frequencyBase === "ANNUALLY") {
+
+    const current = new Date(mappingStartDate);
+
+    current.setMonth(0);
+    current.setDate(1);
+
+    while (current <= mappingEndDate) {
+
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), 11, 31);
+
+      if (isOverlapping(start, end)) {
+        periods.push(format(start, end));
+      }
+
+      current.setFullYear(current.getFullYear() + 1);
+    }
+
+    return periods;
+  }
+
+  return [];
+};
   /* ================= UPDATE ROW ================= */
 
   const updateRow = (key: string, updated: Partial<DocumentRow>) => {
@@ -386,8 +484,30 @@ const columns: ColumnsType<DocumentRow> = [
       <div className="bg-white p-6 rounded-xl shadow-sm border">
 
         <div className="grid md:grid-cols-4 gap-6">
+              <p className="text-sm text-gray-500">PE Agreement Validity        </p>
 
           {/* PE */}
+
+          {/* AGREEMENT DATE RANGE */}
+          {mappingStartDate && mappingEndDate && (
+            <div className="md:col-span-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex justify-between items-center text-sm">
+
+              <div>
+                <span className="text-gray-600">Start Date:</span>{" "}
+                <span className="font-semibold text-gray-800">
+                  {formatDate(mappingStartDate)}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-gray-600">End Date:</span>{" "}
+                <span className="font-semibold text-gray-800">
+                  {formatDate(mappingEndDate)}
+                </span>
+              </div>
+
+            </div>
+          )}
 
           <div className="flex flex-col">
 
@@ -494,21 +614,48 @@ const columns: ColumnsType<DocumentRow> = [
               Compliance Period
             </label>
 
-            <Select
-              disabled={!selectedBranch}
-              className="w-full"
-              placeholder={`Select Period (${frequencyBase || "-"})`}
-              value={selectedPeriod || undefined}
-              onChange={(value) => setSelectedPeriod(value)}
-            >
+<Select
+  disabled={!selectedBranch}
+  className="w-full custom-select"
+  placeholder={`Select Period (${frequencyBase || "-"})`}
+  value={selectedPeriod || undefined}
+  onChange={(value) => setSelectedPeriod(value)}
+  dropdownStyle={{
+    borderRadius: 12,
+    padding: 8,
+  }}
+  optionLabelProp="label"
+>
 
-              {getPeriodOptions().map(p => (
-                <Option key={p} value={p}>
-                  {p}
-                </Option>
-              ))}
+  {getPeriodOptions().map((p, index, arr) => {
+    const isLatest = index === arr.length - 1;
 
-            </Select>
+    return (
+      <Option
+        key={p}
+        value={p}
+        label={p}
+      >
+        <div className="flex justify-between items-center">
+
+          {/* PERIOD TEXT */}
+          <span className="font-medium text-gray-700">
+            {p}
+          </span>
+
+          {/* CURRENT BADGE */}
+          {isLatest && (
+            <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
+              Current
+            </span>
+          )}
+
+        </div>
+      </Option>
+    );
+  })}
+
+</Select>
 
           </div>
 

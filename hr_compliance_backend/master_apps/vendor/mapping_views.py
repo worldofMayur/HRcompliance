@@ -229,28 +229,36 @@ class VendorMappedDocumentsAPIView(APIView):
 
     def get(self, request):
 
-        pe_id = request.GET.get("pe_id")
-        branch_id = request.GET.get("branch_id")
-
-        if request.user.role != "VENDOR" or not pe_id or not branch_id:
+        if request.user.role != "VENDOR":
             return Response([])
 
         vendor = request.user.vendor_profile
 
-        mappings = VendorBranchMapping.objects.filter(
+        pe_id = request.GET.get("pe_id")
+        branch_id = request.GET.get("branch_id")
+
+        mapping = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
             branch_id=branch_id
-        ).prefetch_related("documents")
+        ).first()
 
-        documents = []
+        if not mapping:
+            return Response([])
 
-        for mapping in mappings:
-            for doc in mapping.documents.all():
-                    documents.append({
-                        "id": doc.id,
-                        "name": doc.name,
-                        "frequency": mapping.frequency
-                    })
+        documents = mapping.documents.all()
 
-        return Response(documents)
+        response = []
+
+        for doc in documents:
+            response.append({
+                "id": doc.id,
+                "name": doc.name,
+
+                # ✅ CRITICAL FIX
+                "frequency": mapping.frequency,
+                "start_date": mapping.start_date,
+                "end_date": mapping.end_date,
+            })
+
+        return Response(response)

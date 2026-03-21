@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import (
-    State, Act, ComplianceNature, Section, Rule, AuditChecklist
+    State, Act, ComplianceNature, Section, Rule, AuditChecklist, StateAct
 )
 
 from .serializers import (
@@ -93,36 +93,20 @@ class RuleBySectionAPIView(APIView):
 
 
 # =========================
-# CREATE AUDIT CHECKLIST
+# CREATE AUDIT CHECKLIST (✅ FIXED)
 # =========================
 class AuditChecklistCreateAPIView(APIView):
     def post(self, request):
         serializer = AuditChecklistCreateSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        data = serializer.validated_data
-
-        exists = AuditChecklist.objects.filter(
-            state=data["state"],
-            act=data["act"],
-            compliance_nature=data["compliance_nature"],
-            section=data["section"],
-            rule=data["rule"],
-            document=data["document"],
-        ).exists()
-
-        if exists:
-            return Response(
-                {"error": "Checklist already exists for the selected combination"},
-                status=status.HTTP_409_CONFLICT,
-            )
+            return Response(serializer.errors, status=400)
 
         serializer.save()
+
         return Response(
             {"message": "Audit checklist created successfully"},
-            status=status.HTTP_201_CREATED,
+            status=201
         )
 
 
@@ -190,4 +174,26 @@ class AuditChecklistToggleStatusAPIView(APIView):
         return Response(
             {"message": "Checklist status updated"},
             status=status.HTTP_200_OK,
+        )
+
+class ActCreateAPIView(APIView):
+    def post(self, request):
+        name = request.data.get("name")
+        state_id = request.data.get("state")
+
+        if not name:
+            return Response({"error": "Act name required"}, status=400)
+
+        act, _ = Act.objects.get_or_create(name=name.strip())
+
+        # map to state
+        if state_id:
+            StateAct.objects.get_or_create(
+                state_id=state_id,
+                act=act
+            )
+
+        return Response(
+            {"message": "Act created", "id": act.id, "name": act.name},
+            status=201
         )

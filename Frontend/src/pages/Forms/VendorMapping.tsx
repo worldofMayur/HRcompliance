@@ -406,7 +406,7 @@ const toggleDocument = (id: number) => {
       {/* AUDIT CONFIGURATION */}
 {/* AUDIT DATES */}
 <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-  <h2 className="text-lg font-semibold mb-4">Audit Period</h2>
+  <h2 className="text-lg font-semibold mb-4">Agreement Validity</h2>
 
   <div className="grid md:grid-cols-2 gap-4">
 

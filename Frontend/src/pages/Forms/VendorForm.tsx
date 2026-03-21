@@ -66,6 +66,18 @@ export default function VendorForm() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
+  const [search, setSearch] = useState("");
+
+const filteredVendors = vendors.filter((v) => {
+  const searchText = search.toLowerCase();
+
+  return (
+    v.name?.toLowerCase().includes(searchText) ||
+    v.short_name?.toLowerCase().includes(searchText) ||   // ✅ ADDED
+    v.email?.toLowerCase().includes(searchText) ||
+    v.contact_person?.toLowerCase().includes(searchText)
+  );
+});
 
   /* =========================
      FETCH
@@ -423,7 +435,7 @@ if (!res.ok) {
 
       {/* ADDRESS FULL WIDTH */}
       <div className="xl:col-span-3">
-        <Label>Head Office Address</Label>
+        <Label>Address As per PE Agreement</Label>
         <Input
           name="hoAddress"
           value={formData.hoAddress}
@@ -502,17 +514,29 @@ if (!res.ok) {
       {/* TABLE */}
       <div className="mt-10">
         <ComponentCard title="Vendors">
-          <div className="mb-5 flex justify-between">
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleExport}>Export to Excel</Button>
-              <Button size="sm" variant="outline" disabled={!selectedRows.length} onClick={handleBulkDelete}>
-                Delete Selected
-              </Button>
-              <Button size="sm" variant="outline" disabled={selectedRows.length !== 1} onClick={handleEditSelected}>
-                Edit Selected
-              </Button>
-            </div>
-          </div>
+<div className="mb-5 flex justify-between items-center">
+
+  {/* LEFT SIDE (UNCHANGED) */}
+  <div className="flex gap-2">
+    <Button size="sm" onClick={handleExport}>Export to Excel</Button>
+    <Button size="sm" variant="outline" disabled={!selectedRows.length} onClick={handleBulkDelete}>
+      Delete Selected
+    </Button>
+    <Button size="sm" variant="outline" disabled={selectedRows.length !== 1} onClick={handleEditSelected}>
+      Edit Selected
+    </Button>
+  </div>
+
+  {/* RIGHT SIDE SEARCH (NEW) */}
+  <input
+    type="text"
+    placeholder="Search Vendor..."
+    className="h-9 px-3 border border-gray-300 rounded-lg text-sm w-52"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+  />
+
+</div>
 
           <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
             <Table>
@@ -536,8 +560,8 @@ if (!res.ok) {
               </TableHeader>
 
               <TableBody>
-                {vendors.map((v) => (
-                  <TableRow key={v.id} className="border-t hover:bg-gray-50">
+                {filteredVendors.map((v) => (
+                    <TableRow key={v.id} className="border-t hover:bg-gray-50">
                     <TableCell className="px-6 py-5">
                       <Checkbox
                         checked={selectedRows.includes(v.id)}

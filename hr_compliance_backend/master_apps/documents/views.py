@@ -11,6 +11,9 @@ from .serializers import DocumentMasterSerializer
 from master_apps.principle_employee.models import PrincipalEmployer
 from master_apps.principle_employee.serializers import PrincipalEmployerSerializer
 from rest_framework.permissions import IsAuthenticated
+from django.db.models.deletion import ProtectedError
+from django.db.models.deletion import ProtectedError
+from master_apps.checklist.models import AuditChecklist
 
 
 from django.db.models import Q
@@ -19,19 +22,23 @@ from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 
 class DocumentMasterListAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
 
-        # fetch PE linked to user
         pe = PrincipalEmployer.objects.filter(user=request.user).first()
 
-        docs = DocumentMaster.objects.filter(
-            Q(principal_employer__isnull=True) |
-            Q(principal_employer=pe),
-            is_active=True
-        ).order_by("name")
+        if pe:
+            docs = DocumentMaster.objects.filter(
+                Q(principal_employer__isnull=True) |
+                Q(principal_employer=pe),
+                is_active=True
+            )
+        else:
+            # 🔥 IMPORTANT: return ALL documents if no PE linked
+            docs = DocumentMaster.objects.filter(is_active=True)
+
+        docs = docs.order_by("name")
 
         serializer = DocumentMasterSerializer(docs, many=True)
         return Response(serializer.data)
@@ -79,26 +86,36 @@ class DocumentMasterDeleteAPIView(APIView):
 # =========================
 # BULK DELETE (⌘ + DELETE)
 # =========================
+
 class DocumentMasterBulkDeleteAPIView(APIView):
     def post(self, request):
-        """
-        payload:
-        {
-          "ids": [1,2,3]
-        }
-        """
         ids = request.data.get("ids", [])
 
         if not ids:
             return Response(
                 {"error": "No document IDs provided"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=400
             )
 
-        deleted, _ = DocumentMaster.objects.filter(id__in=ids).delete()
-        return Response(
-            {"message": f"{deleted} documents deleted successfully"}
-        )
+        deleted_count = 0
+
+        for doc_id in ids:
+            try:
+                doc = DocumentMaster.objects.get(id=doc_id)
+
+                # 🔥 DELETE dependent records FIRST
+                AuditChecklist.objects.filter(document=doc).delete()
+
+                # Now delete document
+                doc.delete()
+                deleted_count += 1
+
+            except Exception as e:
+                print("Error:", e)
+
+        return Response({
+            "message": f"{deleted_count} documents deleted successfully"
+        })
 
 
 # =========================
