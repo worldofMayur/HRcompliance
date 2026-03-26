@@ -10,6 +10,8 @@ from master_apps.principle_employee.models import (
     PrincipalEmployer,
     PrincipalEmployerBranch
 )
+from master_apps.documents.models import DocumentMaster
+
 
 from master_apps.principle_employee.models import PrincipalEmployerBranch
 
@@ -224,6 +226,9 @@ class VendorMappedBranchesAPIView(APIView):
 # ===============================
 # 4️⃣ MAPPED DOCUMENTS (Vendor Login)
 # ===============================
+
+
+
 class VendorMappedDocumentsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -232,33 +237,30 @@ class VendorMappedDocumentsAPIView(APIView):
         if request.user.role != "VENDOR":
             return Response([])
 
-        vendor = request.user.vendor_profile
+        vendor = getattr(request.user, "vendor_profile", None)
+        if not vendor:
+            return Response([])
 
         pe_id = request.GET.get("pe_id")
         branch_id = request.GET.get("branch_id")
 
-        mapping = VendorBranchMapping.objects.filter(
+        # ✅ GET ALL MAPPINGS (not .first())
+        mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
             branch_id=branch_id
-        ).first()
+        ).prefetch_related("documents")
 
-        if not mapping:
-            return Response([])
+        data = []
 
-        documents = mapping.documents.all()
+        for mapping in mappings:
+            for doc in mapping.documents.all():
+                data.append({
+                    "id": doc.id,
+                    "name": doc.name,
+                    "frequency": mapping.frequency,
+                    "start_date": mapping.start_date,
+                    "end_date": mapping.end_date,
+                })
 
-        response = []
-
-        for doc in documents:
-            response.append({
-                "id": doc.id,
-                "name": doc.name,
-
-                # ✅ CRITICAL FIX
-                "frequency": mapping.frequency,
-                "start_date": mapping.start_date,
-                "end_date": mapping.end_date,
-            })
-
-        return Response(response)
+        return Response(data)

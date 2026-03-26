@@ -3,18 +3,17 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import (
-    State, Act, ComplianceNature, Section, Rule, AuditChecklist, StateAct
+    State, Act, Section, AuditChecklist, StateAct
 )
 
 from .serializers import (
     StateSerializer,
     ActSerializer,
-    ComplianceNatureSerializer,
     SectionSerializer,
-    RuleSerializer,
     AuditChecklistCreateSerializer,
     AuditChecklistListSerializer,
 )
+
 
 # =========================
 # STATE LIST
@@ -38,24 +37,11 @@ class ActByStateAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        qs = Act.objects.filter(
-            stateact__state_id=state_id,
-            is_active=True
-        ).order_by("name")
+        acts = Act.objects.filter(
+            stateact__state_id=state_id
+        ).distinct().order_by("name")
 
-        return Response(ActSerializer(qs, many=True).data, status=status.HTTP_200_OK)
-
-
-# =========================
-# COMPLIANCE NATURE LIST
-# =========================
-class ComplianceNatureListAPIView(APIView):
-    def get(self, request):
-        qs = ComplianceNature.objects.filter(is_active=True).order_by("name")
-        return Response(
-            ComplianceNatureSerializer(qs, many=True).data,
-            status=status.HTTP_200_OK
-        )
+        return Response(ActSerializer(acts, many=True).data)
 
 
 # =========================
@@ -76,37 +62,26 @@ class SectionByActAPIView(APIView):
 
 
 # =========================
-# RULES BY SECTION
-# =========================
-class RuleBySectionAPIView(APIView):
-    def get(self, request):
-        section_id = request.GET.get("section")
-
-        if not section_id:
-            return Response(
-                {"error": "section query parameter is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        qs = Rule.objects.filter(section_id=section_id).order_by("rule_number")
-        return Response(RuleSerializer(qs, many=True).data, status=status.HTTP_200_OK)
-
-
-# =========================
-# CREATE AUDIT CHECKLIST (✅ FIXED)
+# CREATE AUDIT CHECKLIST
 # =========================
 class AuditChecklistCreateAPIView(APIView):
     def post(self, request):
         serializer = AuditChecklistCreateSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+            return Response(
+                {
+                    "error": "Validation failed",
+                    "details": serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         serializer.save()
 
         return Response(
             {"message": "Audit checklist created successfully"},
-            status=201
+            status=status.HTTP_201_CREATED
         )
 
 
@@ -122,17 +97,17 @@ class AuditChecklistListAPIView(APIView):
                 "act",
                 "compliance_nature",
                 "section",
-                "rule",
                 "document",
             )
             .order_by("-id")
         )
+
         serializer = AuditChecklistListSerializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # =========================
-# UPDATE AUDITOR GUIDE (INLINE EDIT)
+# UPDATE CHECKLIST
 # =========================
 class AuditChecklistUpdateAPIView(APIView):
     def put(self, request, pk):
@@ -144,10 +119,29 @@ class AuditChecklistUpdateAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        # ✅ Update all editable fields safely
+        checklist.audit_particulars = request.data.get(
+            "audit_particulars", checklist.audit_particulars
+        )
+
+        checklist.form_number = request.data.get(
+            "form_number", checklist.form_number
+        )
+
         checklist.auditor_guide = request.data.get(
             "auditor_guide", checklist.auditor_guide
         )
-        checklist.save(update_fields=["auditor_guide"])
+
+        # OPTIONAL (only if you want editable)
+        if request.data.get("section"):
+            section, _ = Section.objects.get_or_create(
+                act=checklist.act,
+                section_number=request.data.get("section").strip(),
+                defaults={"title": request.data.get("section").strip()},
+            )
+            checklist.section = section
+
+        checklist.save()
 
         return Response(
             {"message": "Checklist updated successfully"},
@@ -176,17 +170,23 @@ class AuditChecklistToggleStatusAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+# =========================
+# CREATE ACT
+# =========================
 class ActCreateAPIView(APIView):
     def post(self, request):
         name = request.data.get("name")
         state_id = request.data.get("state")
 
         if not name:
-            return Response({"error": "Act name required"}, status=400)
+            return Response(
+                {"error": "Act name required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         act, _ = Act.objects.get_or_create(name=name.strip())
 
-        # map to state
         if state_id:
             StateAct.objects.get_or_create(
                 state_id=state_id,
@@ -195,5 +195,14 @@ class ActCreateAPIView(APIView):
 
         return Response(
             {"message": "Act created", "id": act.id, "name": act.name},
-            status=201
+            status=status.HTTP_201_CREATED
         )
+
+class AuditChecklistDeleteAPIView(APIView):
+    def delete(self, request, pk):
+        try:
+            obj = AuditChecklist.objects.get(pk=pk)
+            obj.delete()
+            return Response({"message": "Deleted"}, status=200)
+        except AuditChecklist.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)

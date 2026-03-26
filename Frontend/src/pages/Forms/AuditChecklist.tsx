@@ -4,7 +4,7 @@ import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
 import Button from "../../components/ui/button/Button";
 import Label from "../../components/form/Label";
-import Badge from "../../components/ui/badge/Badge";
+import Input from "../../components/form/input/InputField";
 
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -17,27 +17,42 @@ export default function AuditChecklistForm() {
 
   const token = localStorage.getItem("access_token");
 
-  const authHeaders = {
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("access_token");
+
+  if (!token || token === "null") {
+    window.location.href = "/login";
+    return {};
+  }
+
+  return {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
+};
+
+const authHeaders = getAuthHeaders(); // ✅ now safe
 
   /* =========================
      MASTER DATA
   ========================= */
   const [states, setStates] = useState([]);
   const [acts, setActs] = useState([]);
-  const [complianceNatures, setComplianceNatures] = useState([]);
   const [sections, setSections] = useState([]);
-  const [rules, setRules] = useState([]);
   const [showActModal, setShowActModal] = useState(false);
-const [newActName, setNewActName] = useState("");
+  const [newActName, setNewActName] = useState("");
   const [documents, setDocuments] = useState([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const [documentSearch, setDocumentSearch] = useState("");
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
-const docRef = useRef<HTMLDivElement | null>(null);
-  /* =========================
+  const [stateSearch, setStateSearch] = useState("");
+  const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
+  const [actSearch, setActSearch] = useState("");
+const [actDropdownOpen, setActDropdownOpen] = useState(false);
+const actRef = useRef(null);
+  const stateRef = useRef(null);
+  const docRef = useRef(null);  /* =========================
      CHECKLIST DATA
   ========================= */
   const [checklists, setChecklists] = useState([]);
@@ -49,32 +64,38 @@ const docRef = useRef<HTMLDivElement | null>(null);
   const [editingId, setEditingId] = useState(null);
   const [editGuide, setEditGuide] = useState("");
 
+    const [editData, setEditData] = useState({
+    audit_particulars: "",
+    form_number: "",
+    auditor_guide: "",
+    section: "",
+  });
+
   /* =========================
      SEARCH & FILTERS
   ========================= */
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
+const [checkpoints, setCheckpoints] = useState([]);
+const [checkpointInput, setCheckpointInput] = useState("");
   /* =========================
      FORM STATE
   ========================= */
-  const [formData, setFormData] = useState({
-    state: "",
-    act: "",
-    compliance_nature: "",
-    section: "",
-    rule: "",
-    document: "",
-    auditor_guide: "",
-  });
+const [formData, setFormData] = useState({
+  state: "",
+  act: "",
+  compliance_nature: "",
+  section: "",
+  document: "",
+  audit_particulars: "",
+  form_number: "",
+});
 
   /* =========================
      INITIAL LOAD
   ========================= */
   useEffect(() => {
     fetch(`${API_BASE}/checklist/states/`, { headers: authHeaders }).then(r => r.json()).then(setStates);
-    fetch(`${API_BASE}/checklist/compliance-natures/`, { headers: authHeaders }).then(r => r.json()).then(setComplianceNatures);
-
     fetch(`${API_BASE}/document-master/list/`, { headers: authHeaders })
       .then(r => r.json())
       .then(res => setDocuments(Array.isArray(res) ? res : []));
@@ -142,6 +163,22 @@ const handleCreateAct = async () => {
   }
 };
 
+const handleAddCheckpoint = () => {
+  if (!checkpointInput.trim()) return;
+
+  const newItem = {
+    id: Date.now(),
+    text: checkpointInput.trim(),
+  };
+
+  setCheckpoints((prev) => [...prev, newItem]);
+  setCheckpointInput("");
+};
+
+const handleDeleteCheckpoint = (id) => {
+  setCheckpoints((prev) => prev.filter((item) => item.id !== id));
+};
+
   const fetchList = () => {
     setLoading(true);
     fetch(`${API_BASE}/checklist/list/`, { headers: authHeaders })
@@ -155,15 +192,25 @@ const handleCreateAct = async () => {
   /* =========================
      CLOSE DROPDOWN ON OUTSIDE CLICK
   ========================= */
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (docRef.current && !docRef.current.contains(e.target)) {
-        setDocDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+useEffect(() => {
+  const handleClick = (e) => {
+    if (docRef.current && !docRef.current.contains(e.target)) {
+      setDocDropdownOpen(false);
+    }
+
+    if (stateRef.current && !stateRef.current.contains(e.target)) {
+      setStateDropdownOpen(false);
+    }
+
+    // ✅ ADD THIS
+    if (actRef.current && !actRef.current.contains(e.target)) {
+      setActDropdownOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClick);
+  return () => document.removeEventListener("mousedown", handleClick);
+}, []);
 
   /* =========================
      DEPENDENT DROPDOWNS
@@ -175,9 +222,8 @@ const handleCreateAct = async () => {
       .then(r => r.json())
       .then(setActs);
 
-    setFormData(p => ({ ...p, act: "", section: "", rule: "" }));
+setFormData(p => ({ ...p, act: "", section: "" }));
     setSections([]);
-    setRules([]);
   }, [formData.state]);
 
   useEffect(() => {
@@ -187,19 +233,17 @@ const handleCreateAct = async () => {
       .then(r => r.json())
       .then(setSections);
 
-    setFormData(p => ({ ...p, section: "", rule: "" }));
-    setRules([]);
+setFormData(p => ({ ...p, section: "" }));
   }, [formData.act]);
 
-  useEffect(() => {
-    if (!formData.section) return;
 
-    fetch(`${API_BASE}/checklist/rules/?section=${formData.section}`, { headers: authHeaders })
-      .then(r => r.json())
-      .then(setRules);
+  const filteredActs = useMemo(() => {
+  if (!actSearch) return acts;
 
-    setFormData(p => ({ ...p, rule: "" }));
-  }, [formData.section]);
+  return acts.filter((a) =>
+    a.name.toLowerCase().includes(actSearch.toLowerCase())
+  );
+}, [acts, actSearch]);
 
   /* =========================
      DOCUMENT SEARCH FILTER
@@ -212,54 +256,154 @@ const handleCreateAct = async () => {
     );
   }, [documents, documentSearch]);
 
+  const filteredStates = useMemo(() => {
+  if (!stateSearch) return states;
+
+  return states.filter((s) =>
+    s.name.toLowerCase().includes(stateSearch.toLowerCase())
+  );
+}, [states, stateSearch]);
+
   /* =========================
      CREATE CHECKLIST
   ========================= */
 const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
+  e.preventDefault();
 
+  // 🔒 1. VALIDATION (STRICT)
+if (
+  !formData.state ||
+  !formData.act ||
+  !formData.section?.trim() ||
+  !formData.document
+) {
+    alert("Please fill all required fields");
+    return;
+  }
+
+  if (checkpoints.length === 0) {
+    alert("Please add at least one checklist point");
+    return;
+  }
+
+  // 🧠 2. SAFE PAYLOAD
+const payload = {
+  state: Number(formData.state),
+  act: Number(formData.act),
+  compliance_nature: "General",
+  section: formData.section.trim(),
+  document: Number(formData.document),
+
+  // ✅ ADD THESE
+  audit_particulars: formData.audit_particulars || "",
+  form_number: formData.form_number || "",
+
+  // ✅ Guidelines only
+  auditor_guide: checkpoints.map(c => `• ${c.text}`).join("\n"),
+};
+
+  try {
+    // 🚀 3. API CALL
     const res = await fetch(`${API_BASE}/checklist/create/`, {
       method: "POST",
       headers: authHeaders,
-      body: JSON.stringify(formData),
+      body: JSON.stringify(payload),
     });
 
+    const data = await res.json();
+
+    // ❌ 4. ERROR HANDLING
     if (!res.ok) {
-      alert("Failed to create checklist");
+      console.error("API Error:", data);
+
+      const message =
+        data?.error ||
+        data?.details ||
+        "Failed to create checklist";
+
+      alert(message);
       return;
     }
 
-    setFormData({
-      state: "",
-      act: "",
-      compliance_nature: "",
-      section: "",
-      rule: "",
-      document: "",
-      auditor_guide: "",
-    });
+    // ✅ 5. SUCCESS UX
+    alert("Checklist created successfully ✅");
 
+    // 🔄 6. RESET (FIXED)
+setFormData({
+  state: "",
+  act: "",
+  compliance_nature: "",
+  section: "",
+  document: "",
+  audit_particulars: "",
+  form_number: "",
+});
+
+    setCheckpoints([]);
+    
+    // 🔁 7. REFRESH LIST
     fetchList();
-  };
 
+  } catch (err) {
+    console.error("Network Error:", err);
+    alert("Something went wrong. Please try again.");
+  }
+};
   /* =========================
      INLINE EDIT
   ========================= */
-  const startEdit = (row) => {
-    setEditingId(row.id);
-    setEditGuide(row.auditor_guide || "");
-  };
+const startEdit = (row) => {
+  setEditingId(row.id);
+  setEditData({
+    audit_particulars: row.audit_particulars || "",
+    form_number: row.form_number || "",
+    auditor_guide: row.auditor_guide || "",
+    section: row.section || "",
+  });
+};
 
-  const saveEdit = async (id) => {
-    await fetch(`${API_BASE}/checklist/${id}/update/`, {
+const saveEdit = async (id) => {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/${id}/update/`, {
       method: "PUT",
       headers: authHeaders,
-      body: JSON.stringify({ auditor_guide: editGuide }),
+      body: JSON.stringify({
+        audit_particulars: editData.audit_particulars,
+        form_number: editData.form_number,
+        auditor_guide: editData.auditor_guide,
+        section: editData.section,
+      }),
     });
 
+    const data = await res.json();
+
+    // ❌ Handle API error
+    if (!res.ok) {
+      console.error("Update failed:", data);
+      alert(data?.error || "Update failed");
+      return;
+    }
+
+    // ✅ Success
+    alert("Updated successfully ✅");
+
     setEditingId(null);
+
+    // reset edit data (important)
+    setEditData({
+      audit_particulars: "",
+      form_number: "",
+      auditor_guide: "",
+      section: "",
+    });
+
     fetchList();
-  };
+
+  } catch (err) {
+    console.error("Network error:", err);
+    alert("Something went wrong while updating");
+  }
+};
 
   const toggleStatus = async (id) => {
     await fetch(`${API_BASE}/checklist/${id}/toggle-status/`, {
@@ -269,36 +413,120 @@ const handleSubmit = async (e: React.FormEvent) => {
     fetchList();
   };
 
+  const toggleSelect = (id: number) => {
+  setSelectedIds((prev) =>
+    prev.includes(id)
+      ? prev.filter((i) => i !== id)
+      : [...prev, id]
+  );
+};
+
+const toggleSelectAll = () => {
+  if (selectedIds.length === filteredChecklists.length) {
+    setSelectedIds([]);
+  } else {
+    setSelectedIds(filteredChecklists.map((c) => c.id));
+  }
+};
+
+
+const deleteSelected = async () => {
+  if (!selectedIds.length) {
+    alert("No checklist selected");
+    return;
+  }
+
+  if (!confirm("Are you sure you want to delete selected checklists?")) return;
+
+  try {
+    await Promise.all(
+      selectedIds.map((id) =>
+        fetch(`${API_BASE}/checklist/${id}/delete/`, {
+          method: "DELETE",
+          headers: authHeaders,
+        })
+      )
+    );
+
+    alert("Deleted successfully ✅");
+
+    setSelectedIds([]);
+    fetchList();
+
+  } catch (err) {
+    console.error(err);
+    alert("Delete failed");
+  }
+};
   /* =========================
      FILTERED TABLE DATA
   ========================= */
-  const filteredChecklists = useMemo(() => {
-    return checklists.filter(c => {
-      const text =
-        `${c.state} ${c.act} ${c.document} ${c.auditor_guide}`.toLowerCase();
+const filteredChecklists = useMemo(() => {
+  const filtered = checklists.filter((c) => {
+    const searchText = search.toLowerCase();
 
-      if (search && !text.includes(search.toLowerCase())) return false;
-      if (statusFilter === "active" && !c.is_active) return false;
-      if (statusFilter === "inactive" && c.is_active) return false;
+    const text = `
+      ${c.state}
+      ${c.act}
+      ${c.audit_particulars}
+      ${c.form_number}
+      ${c.section}
+      ${c.document}
+      ${c.auditor_guide}
+    `.toLowerCase();
 
-      return true;
+    if (search && !text.includes(searchText)) return false;
+
+    if (statusFilter === "active" && !c.is_active) return false;
+    if (statusFilter === "inactive" && c.is_active) return false;
+
+    return true;
+  });
+
+  // ✅ SORT BY STATE → ACT → SECTION (sequential grouping)
+  return filtered.sort((a, b) => {
+    // 1. Sort by state
+    if (a.state !== b.state) {
+      return a.state.localeCompare(b.state);
+    }
+
+    // 2. Then by act
+    if (a.act !== b.act) {
+      return a.act.localeCompare(b.act);
+    }
+
+    // 3. Then by section (numeric-safe)
+    return (a.section || "").localeCompare(b.section || "", undefined, {
+      numeric: true,
+      sensitivity: "base",
     });
-  }, [checklists, search, statusFilter]);
+  });
+}, [checklists, search, statusFilter]);
+
+const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+useEffect(() => {
+  const t = setTimeout(() => {
+    setDebouncedSearch(search);
+  }, 300);
+
+  return () => clearTimeout(t);
+}, [search]);
 
   /* =========================
      EXPORT EXCEL
   ========================= */
   const exportExcel = () => {
-    const data = filteredChecklists.map(c => ({
-      State: c.state,
-      Act: c.act,
-      Compliance: c.compliance_nature,
-      Section: c.section,
-      Rule: c.rule,
-      Document: c.document,
-      "Auditor Guide": c.auditor_guide,
-      Status: c.is_active ? "Active" : "Inactive",
-    }));
+const data = filteredChecklists.map(c => ({
+  State: c.state,
+  Act: c.act,
+  "Audit Particulars": c.audit_particulars,
+  Section: c.section,
+  "Form Number": c.form_number,
+  Document: c.document,
+  "Guidelines for Auditor": c.auditor_guide,
+  Status: c.is_active ? "Active" : "Inactive",
+}));
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -318,14 +546,12 @@ const handleSubmit = async (e: React.FormEvent) => {
     autoTable(doc, {
       startY: 50,
       head: [[
-        "State","Act","Compliance","Section","Rule","Document","Auditor Guide","Status"
+"State","Act","Compliance","Section","Document","Auditor Guide","Status"
       ]],
       body: filteredChecklists.map(c => [
         c.state,
         c.act,
-        c.compliance_nature,
         c.section,
-        c.rule,
         c.document,
         c.auditor_guide || "",
         c.is_active ? "Active" : "Inactive",
@@ -345,150 +571,317 @@ const handleSubmit = async (e: React.FormEvent) => {
     <PageMeta title="Audit Checklist | HR Compliance" />
     <PageBreadcrumb pageTitle="Manage Audit Checklist" />
 
-    <ComponentCard title="Create Audit Checklist">
-      <form onSubmit={handleSubmit} className="space-y-8">
+<ComponentCard title="Create Audit Checklist">
+  <form onSubmit={handleSubmit} className="space-y-6">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">          {/* STATE */}
-          <div>
-            <Label>State</Label>
-<select
-  value={formData.state}
-  onChange={e => setFormData({ ...formData, state: e.target.value })}
-  className="w-full h-12 rounded-lg border border-gray-200/70 px-4 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
-  required
->
-  <option value="">Select State</option>
-  {states.map(s => (
-    <option key={s.id} value={s.id}>
-      {s.name}
-    </option>
-  ))}
-</select>
-          </div>
+    {/* FORM GRID */}
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
 
-          {/* ACT + ADD BUTTON */}
-          <div>
-            <Label>Act</Label>
-            <div className="flex gap-2">
-              <select
-                value={formData.act}
-                onChange={e => setFormData({ ...formData, act: e.target.value })}
-                className="w-full h-12 rounded-lg border border-gray-200/70 px-4 bg-white"
-                required
-              >
-                <option value="">Select Act</option>
-                {acts.map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
+      {/* STATE */}
+{/* STATE (SEARCHABLE) */}
+<div className="space-y-1 relative" ref={stateRef}>
+  <Label>State</Label>
 
-              <Button
-                type="button"
-                onClick={() => setShowActModal(true)}
-              >
-                + Add
-              </Button>
+  {/* SELECT BOX */}
+  <div
+    className="w-full h-11 rounded-lg border border-gray-200 px-4 flex items-center cursor-pointer bg-white"
+    onClick={() => setStateDropdownOpen(!stateDropdownOpen)}
+  >
+    {states.find((s) => s.id === Number(formData.state))?.name ||
+      "Select State"}
+  </div>
+
+  {/* DROPDOWN */}
+  {stateDropdownOpen && (
+    <div className="absolute left-0 right-0 z-50 bg-white border rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
+
+      {/* SEARCH */}
+    <input
+      placeholder="Search state..."
+      value={stateSearch}
+      onChange={(e) => setStateSearch(e.target.value)}
+      className="w-full h-10 px-3 text-sm rounded-t-lg border-b border-gray-200 outline-none"
+    />
+
+      {/* LIST */}
+      {filteredStates.map((s) => (
+        <div
+          key={s.id}
+          onClick={() => {
+            setFormData({ ...formData, state: s.id });
+            setStateDropdownOpen(false);
+            setStateSearch("");
+          }}
+          className={`px-3 py-2 text-sm cursor-pointer ${
+            formData.state == s.id
+              ? "bg-blue-100 font-medium"
+              : "hover:bg-gray-100"
+          }`}
+        >
+          {s.name}
+        </div>
+      ))}
+
+      {/* EMPTY */}
+      {filteredStates.length === 0 && (
+        <div className="px-3 py-2 text-sm text-gray-500">
+          No states found
+        </div>
+      )}
+    </div>
+  )}
+
+  {/* SELECTED STATE */}
+  {formData.state && (
+    <div className="text-xs text-green-700 mt-2">
+      Selected: {
+        states.find((s) => s.id === Number(formData.state))?.name
+      }
+    </div>
+  )}
+</div>
+
+{/* ACT */}
+<div className="space-y-1 relative" ref={actRef}>
+  <Label>Act</Label>
+
+  <div className="flex gap-2 items-start">
+
+    {/* DROPDOWN */}
+    <div className="relative w-full">
+      <div
+        className="w-full h-11 rounded-lg border border-gray-200 px-4 flex items-center cursor-pointer bg-white"
+        onClick={() => setActDropdownOpen(!actDropdownOpen)}
+      >
+        {acts.find((a) => a.id === Number(formData.act))?.name ||
+          "Select Act"}
+      </div>
+
+      {actDropdownOpen && (
+        <div className="absolute left-0 right-0 z-50 bg-white border rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
+
+          {/* SEARCH */}
+          <input
+            placeholder="Search act..."
+            value={actSearch}
+            onChange={(e) => setActSearch(e.target.value)}
+            className="w-full h-10 px-3 text-sm rounded-t-lg border-b border-gray-200 outline-none"
+          />
+
+          {/* LIST */}
+          {filteredActs.map((a) => (
+            <div
+              key={a.id}
+              onClick={() => {
+                setFormData({ ...formData, act: a.id });
+                setActDropdownOpen(false);
+                setActSearch("");
+              }}
+              className={`px-3 py-2 text-sm cursor-pointer ${
+                formData.act == a.id
+                  ? "bg-blue-100 font-medium"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              {a.name}
             </div>
-          </div>
+          ))}
 
-          {/* COMPLIANCE */}
-<div>
-  <Label>Nature of Compliance</Label>
-  <input
-    value={formData.compliance_nature}
-    onChange={e =>
-      setFormData({ ...formData, compliance_nature: e.target.value })
+          {filteredActs.length === 0 && (
+            <div className="px-3 py-2 text-sm text-gray-500">
+              No acts found
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* ADD BUTTON */}
+    <Button
+      type="button"
+      onClick={() => setShowActModal(true)}
+      className="h-11 px-4 whitespace-nowrap shrink-0"
+    >
+      + Add
+    </Button>
+  </div>
+
+  {/* SELECTED */}
+  {formData.act && (
+    <div className="text-xs text-green-700 mt-2">
+      Selected: {
+        acts.find((a) => a.id === Number(formData.act))?.name
+      }
+    </div>
+  )}
+</div>
+
+  {/* AUDIT PARTICULARS */}
+<div className="space-y-1">
+  <Label>Audit Particulars</Label>
+  <Input
+    value={formData.audit_particulars}
+    onChange={(e) =>
+      setFormData({ ...formData, audit_particulars: e.target.value })
     }
-    className="w-full h-12 rounded-lg border border-gray-200/70 px-4"
-    placeholder="Enter compliance nature"
-    required
+    placeholder="Enter audit particulars"
+    className="h-11"
   />
 </div>
 
-          {/* SECTION INPUT */}
-          <div>
-            <Label>Section/ Rule</Label>
-            <input
-              value={formData.section}
-              onChange={e => setFormData({ ...formData, section: e.target.value })}
-              className="w-full h-12 rounded-lg border border-gray-200/70 px-4"
-              placeholder="Enter Section"
-              required
-            />
-          </div>
+      {/* SECTION */}
+<div className="space-y-1">
+  <Label>Section / Clause</Label>
 
-          {/* RULE DROPDOWN */}
-          <div>
-            <Label>Jurisdiction</Label>
-            <select
-              value={formData.rule}
-              onChange={e => setFormData({ ...formData, rule: e.target.value })}
-              className="w-full h-12 rounded-lg border border-gray-200/70 px-4 bg-white"
-              required
-            >
-              <option value="">Select</option>
-              <option value="STATE">State</option>
-              <option value="CENTRAL">Central</option>
-            </select>
-          </div>
+  <Input
+    value={formData.section}
+    onChange={(e) =>
+      setFormData({ ...formData, section: e.target.value })
+    }
+    placeholder="Enter section (e.g. 370, 12A)"
+    className="h-11"
+  />
 
-          {/* DOCUMENT DROPDOWN */}
-          <div ref={docRef} className="relative">
-            <Label>Document</Label>
+  {formData.section && (
+    <div className="text-xs text-green-700 mt-2">
+      Entered: {formData.section}
+    </div>
+  )}
+</div>
 
-            <div
-              className="w-full h-12 rounded-lg border border-gray-200/70 px-4 flex items-center cursor-pointer bg-white"
-              onClick={() => setDocDropdownOpen(!docDropdownOpen)}
-            >
-              {documents.find(d => d.id == formData.document)?.name || "Select Document"}
-            </div>
+{/* FORM NUMBER */}
+<div className="space-y-1">
+  <Label>Form Number</Label>
+  <Input
+    value={formData.form_number}
+    onChange={(e) =>
+      setFormData({ ...formData, form_number: e.target.value })
+    }
+    placeholder="Enter form number (e.g. Form II)"
+    className="h-11"
+  />
+</div>
 
-            {docDropdownOpen && (
-              <div className="absolute left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
 
-                <input
-                  placeholder="Search document..."
-                  value={documentSearch}
-                  onChange={(e) => setDocumentSearch(e.target.value)}
-                  className="w-full px-3 py-2 border-b border-gray-200 outline-none text-sm"
-                />
+      {/* DOCUMENT */}
+<div className="space-y-1 relative" ref={docRef}>
+  <Label>Document</Label>
 
-                {filteredDocuments.map(doc => (
-                  <div
-                    key={doc.id}
-                    onClick={() => {
-                      setFormData({ ...formData, document: doc.id });
-                      setDocDropdownOpen(false);
-                      setDocumentSearch("");
-                    }}
-                    className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                  >
-                    {doc.name}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+  <div
+    className="w-full h-11 rounded-lg border border-gray-200 px-4 flex items-center cursor-pointer bg-white"
+    onClick={() => setDocDropdownOpen(!docDropdownOpen)}
+  >
+    {documents.find((d) => d.id === Number(formData.document))?.name ||
+      "Select Document"}
+  </div>
 
+  {docDropdownOpen && (
+    <div className="absolute left-0 right-0 z-50 bg-white border rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
+      <input
+        placeholder="Search document..."
+        value={documentSearch}
+        onChange={(e) => setDocumentSearch(e.target.value)}
+        className="w-full h-10 px-3 text-sm rounded-t-lg border-b border-gray-200 outline-none focus:ring-2 focus:ring-blue-100"
+      />
+
+      {filteredDocuments.map((doc) => (
+        <div
+          key={doc.id}
+          onClick={() => {
+            setFormData({ ...formData, document: doc.id });
+            setDocDropdownOpen(false);
+            setDocumentSearch("");
+          }}
+          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+        >
+          {doc.name}
         </div>
+      ))}
+    </div>
+  )}
 
-        {/* AUDITOR GUIDE */}
-        <div>
-          <Label>Auditor Guide / Checkpoints</Label>
-          <textarea
-            rows={5}
-            value={formData.auditor_guide}
-            onChange={e => setFormData({ ...formData, auditor_guide: e.target.value })}
-            className="w-full rounded-lg border border-gray-200/70 px-4 py-3"
-          />
-        </div>
+  {/* ✅ SELECTED DOCUMENT */}
+  {formData.document && (
+    <div className="text-xs text-green-700 mt-2">
+      Selected: {
+        documents.find((d) => d.id === Number(formData.document))?.name
+      }
+    </div>
+  )}
+</div>
 
-        <div className="flex justify-end border-t pt-6 h-16">
-          <Button>Save Checklist</Button>
-        </div>
 
-      </form>
-    </ComponentCard>
+    </div>
+
+    {/* AUDITOR GUIDE */}
+<div className="space-y-2">
+  <Label>Guidelines for Auditor</Label>
+
+  {/* TEXTAREA */}
+  <textarea
+    rows={3}
+    value={checkpointInput}
+    onChange={(e) => setCheckpointInput(e.target.value)}
+    placeholder="Enter checklist point..."
+    className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:ring-2 focus:ring-blue-100 outline-none"
+  />
+
+  {/* ADD BUTTON */}
+  <div className="flex justify-end">
+    <Button type="button" onClick={handleAddCheckpoint} className="h-10">
+      + Add Point
+    </Button>
+  </div>
+
+  {/* CHECKLIST LIST */}
+  {checkpoints.length > 0 && (
+    <ul className="list-disc pl-5 mt-3 space-y-2">
+      {checkpoints.map((item) => (
+        <li
+          key={item.id}
+          className="flex items-start justify-between gap-3 text-sm text-gray-700"
+        >
+          {/* TEXT */}
+          <span className="leading-relaxed">{item.text}</span>
+
+          {/* CLEAN REMOVE BUTTON */}
+          <button
+            onClick={() => handleDeleteCheckpoint(item.id)}
+            className="text-red-400 hover:text-red-600 transition text-xs"
+          >
+            ✕
+          </button>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
+    {/* ACTIONS */}
+    <div className="flex justify-end gap-3 border-t pt-5">
+      <Button
+        variant="outline"
+        className="h-10"
+        onClick={() =>
+          setFormData({
+            state: "",
+            act: "",
+            section: "",
+            document: "",
+            auditor_guide: "",
+          })
+        }
+      >
+        Reset
+      </Button>
+
+      <Button type="submit" className="h-10">
+        Save Checklist
+      </Button>
+    </div>
+
+  </form>
+</ComponentCard>
 
     {/* ADD ACT MODAL */}
     {showActModal && (
@@ -518,85 +911,237 @@ const handleSubmit = async (e: React.FormEvent) => {
     )}
 
     {/* TABLE (UNCHANGED) */}
-    <ComponentCard title="Audit Checklist Master" className="mt-8">
+<ComponentCard title="Audit Checklist Master" className="mt-8">
 
-      <div className="flex justify-between items-center mb-4 gap-3">
-        <input
-          placeholder="Search checklist..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="h-10 w-64 rounded-lg border border-gray-200 px-4 text-sm"
-        />
+  {/* 🔹 HEADER / FILTER BAR */}
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
 
-        <div className="flex gap-2">
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            className="h-10 rounded-lg border px-3 text-sm"
+    {/* SEARCH */}
+    <input
+      placeholder="Search checklist..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className="h-10 w-full md:w-72 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+    />
+
+    {/* FILTERS + ACTIONS */}
+    <div className="flex flex-wrap items-center gap-2">
+
+      {/* STATUS FILTER */}
+
+
+      {/* EXPORT BUTTONS */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={exportExcel}
+        disabled={!filteredChecklists.length}
+      >
+        Export Excel
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={deleteSelected}
+        disabled={!selectedIds.length}
+      >
+        Delete Selected
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={exportPDF}
+        disabled={!filteredChecklists.length}
+      >
+        Export PDF
+      </Button>
+    </div>
+  </div>
+
+  {/* 🔹 TABLE */}
+<div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+  <table className="min-w-[1500px] w-full text-sm">
+
+    {/* HEADER */}
+    <thead className="bg-gray-50 sticky top-0 z-10">
+      <tr>
+
+        {/* ✅ SELECT ALL CHECKBOX */}
+        <th className="px-3 py-3">
+          <input
+            type="checkbox"
+            checked={
+              selectedIds.length === filteredChecklists.length &&
+              filteredChecklists.length > 0
+            }
+            onChange={toggleSelectAll}
+          />
+        </th>
+
+        {[
+          "State",
+          "Act",
+          "Audit Particulars",
+          "Section",
+          "Form Number",
+          "Document",
+          "Guidelines for Auditor",
+          "Actions",
+        ].map((h) => (
+          <th
+            key={h}
+            className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase text-left"
           >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            {h}
+          </th>
+        ))}
+      </tr>
+    </thead>
 
-          <Button variant="outline" size="sm" onClick={exportExcel}>
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={exportPDF}>
-            Export PDF
-          </Button>
-        </div>
-      </div>
+    {/* BODY */}
+    <tbody>
 
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="min-w-[1800px] w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              {["State","Act","Compliance","Section","Rule","Document","Auditor Guide","Status","Actions"]
-                .map(h => (
-                  <th key={h} className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase">
-                    {h}
-                  </th>
-                ))}
-            </tr>
-          </thead>
+      {/* 🔄 LOADING */}
+      {loading && (
+        <tr>
+          <td colSpan={9} className="py-12 text-center text-gray-500">
+            Loading checklist...
+          </td>
+        </tr>
+      )}
 
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={9} className="py-10 text-center text-gray-500">
-                  Loading…
-                </td>
-              </tr>
-            ) : filteredChecklists.map(c => (
-              <tr key={c.id} className="border-t hover:bg-gray-50">
-                <td className="px-5 py-4">{c.state}</td>
-                <td className="px-5 py-4">{c.act}</td>
-                <td className="px-5 py-4">{c.compliance_nature}</td>
-                <td className="px-5 py-4">{c.section}</td>
-                <td className="px-5 py-4">{c.rule}</td>
-                <td className="px-5 py-4">{c.document}</td>
-                <td className="px-5 py-4 max-w-[450px]">{c.auditor_guide}</td>
-                <td className="px-5 py-4">
-                  <Badge color={c.is_active ? "success" : "warning"}>
-                    {c.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </td>
-                <td className="px-5 py-4">
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => startEdit(c)}>Edit</Button>
-                    <Button size="sm" variant="outline" onClick={() => toggleStatus(c.id)}>
-                      {c.is_active ? "Deactivate" : "Activate"}
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* 📭 EMPTY */}
+      {!loading && filteredChecklists.length === 0 && (
+        <tr>
+          <td colSpan={9} className="py-12 text-center text-gray-500">
+            No checklist found
+          </td>
+        </tr>
+      )}
 
-    </ComponentCard>
+      {/* 📄 DATA */}
+      {!loading &&
+        filteredChecklists.map((c, idx) => (
+          <tr
+            key={c.id}
+            className={`border-t transition ${
+              idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"
+            } hover:bg-blue-50/30`}
+          >
+
+            {/* ✅ ROW CHECKBOX */}
+            <td className="px-3 py-4">
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(c.id)}
+                onChange={() => toggleSelect(c.id)}
+              />
+            </td>
+
+            <td className="px-5 py-4">{c.state}</td>
+
+            <td className="px-5 py-4">{c.act}</td>
+
+            {/* AUDIT PARTICULARS */}
+            <td className="px-5 py-4">
+              {editingId === c.id ? (
+                <Input
+                  value={editData.audit_particulars}
+                  onChange={(e) =>
+                    setEditData({ ...editData, audit_particulars: e.target.value })
+                  }
+                />
+              ) : (
+                c.audit_particulars || "-"
+              )}
+            </td>
+
+            {/* SECTION */}
+            <td className="px-5 py-4">
+              {editingId === c.id ? (
+                <Input
+                  value={editData.section}
+                  onChange={(e) =>
+                    setEditData({ ...editData, section: e.target.value })
+                  }
+                />
+              ) : (
+                c.section
+              )}
+            </td>
+
+            {/* FORM NUMBER */}
+            <td className="px-5 py-4">
+              {editingId === c.id ? (
+                <Input
+                  value={editData.form_number}
+                  onChange={(e) =>
+                    setEditData({ ...editData, form_number: e.target.value })
+                  }
+                />
+              ) : (
+                c.form_number || "-"
+              )}
+            </td>
+
+            <td className="px-5 py-4">{c.document}</td>
+
+            {/* GUIDELINES */}
+            <td className="px-5 py-4 max-w-[420px]">
+              {editingId === c.id ? (
+                <textarea
+                  value={editData.auditor_guide}
+                  onChange={(e) =>
+                    setEditData({ ...editData, auditor_guide: e.target.value })
+                  }
+                  className="w-full border rounded px-2 py-1"
+                />
+              ) : (
+                <div className="whitespace-pre-line">
+                  {c.auditor_guide || "-"}
+                </div>
+              )}
+            </td>
+
+            {/* ACTIONS */}
+            <td className="px-5 py-4 space-x-2">
+              {editingId === c.id ? (
+                <>
+                  <Button size="sm" onClick={() => saveEdit(c.id)}>
+                    Save
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditData({
+                        audit_particulars: "",
+                        form_number: "",
+                        auditor_guide: "",
+                        section: "",
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button size="sm" onClick={() => startEdit(c)}>
+                  Edit
+                </Button>
+              )}
+            </td>
+
+          </tr>
+        ))}
+    </tbody>
+  </table>
+</div>
+</ComponentCard>
   </div>
 );
 }

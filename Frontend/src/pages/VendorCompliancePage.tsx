@@ -150,22 +150,27 @@ const getPeriodOptions = () => {
 
   if (!mappingStartDate || !mappingEndDate || !frequencyBase) return [];
 
+  const today = new Date();
+
   const format = (start, end) => {
     const opt = { month: "short" };
     return `${start.toLocaleString("default", opt)}–${end.toLocaleString("default", opt)} ${start.getFullYear()}`;
   };
 
-  const isOverlapping = (start, end) => {
-    return start <= mappingEndDate && end >= mappingStartDate;
-  };
+const isValidPeriod = (start, end) => {
+  return (
+    start <= mappingEndDate &&
+    end >= mappingStartDate &&
+    start <= today   // ✅ ALLOW CURRENT PERIOD
+  );
+};
 
-  const periods = [];
+  const periods: string[] = [];
 
   /* ================= MONTHLY ================= */
   if (frequencyBase === "MONTHLY") {
 
     const current = new Date(mappingStartDate);
-
     current.setDate(1);
 
     while (current <= mappingEndDate) {
@@ -173,7 +178,7 @@ const getPeriodOptions = () => {
       const start = new Date(current);
       const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
-      if (isOverlapping(start, end)) {
+      if (isValidPeriod(start, end)) {
         periods.push(format(start, end));
       }
 
@@ -187,17 +192,17 @@ const getPeriodOptions = () => {
   if (frequencyBase === "QUARTERLY") {
 
     const current = new Date(mappingStartDate);
-
     const qStartMonth = Math.floor(current.getMonth() / 3) * 3;
+
     current.setMonth(qStartMonth);
     current.setDate(1);
 
-    while (current <= mappingEndDate) {
+    while (current <= mappingEndDate && current <= today) {
 
       const start = new Date(current);
       const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
 
-      if (isOverlapping(start, end)) {
+      if (isValidPeriod(start, end)) {
         periods.push(format(start, end));
       }
 
@@ -207,33 +212,27 @@ const getPeriodOptions = () => {
     return periods;
   }
 
-  /* ================= HALF YEARLY / BI-ANNUALLY ================= */
+  /* ================= HALF YEARLY ================= */
   if (frequencyBase === "HALF_YEARLY" || frequencyBase === "BI_ANNUALLY") {
 
     const current = new Date(mappingStartDate);
 
     const month = current.getMonth();
-
-    if (month < 6) {
-      current.setMonth(3); // Apr
-    } else {
-      current.setMonth(9); // Oct
-    }
-
+    current.setMonth(month < 6 ? 3 : 9); // Apr or Oct
     current.setDate(1);
 
-    while (current <= mappingEndDate) {
+    while (current <= mappingEndDate && current <= today) {
 
       const start = new Date(current);
 
       let end;
       if (current.getMonth() === 3) {
-        end = new Date(current.getFullYear(), 8, 30); // Sep
+        end = new Date(current.getFullYear(), 8, 30);
       } else {
-        end = new Date(current.getFullYear() + 1, 2, 31); // Mar next
+        end = new Date(current.getFullYear() + 1, 2, 31);
       }
 
-      if (isOverlapping(start, end)) {
+      if (isValidPeriod(start, end)) {
         periods.push(format(start, end));
       }
 
@@ -247,16 +246,15 @@ const getPeriodOptions = () => {
   if (frequencyBase === "ANNUALLY") {
 
     const current = new Date(mappingStartDate);
-
     current.setMonth(0);
     current.setDate(1);
 
-    while (current <= mappingEndDate) {
+    while (current <= mappingEndDate && current <= today) {
 
       const start = new Date(current);
       const end = new Date(current.getFullYear(), 11, 31);
 
-      if (isOverlapping(start, end)) {
+      if (isValidPeriod(start, end)) {
         periods.push(format(start, end));
       }
 
@@ -489,25 +487,29 @@ const columns: ColumnsType<DocumentRow> = [
           {/* PE */}
 
           {/* AGREEMENT DATE RANGE */}
-          {mappingStartDate && mappingEndDate && (
-            <div className="md:col-span-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex justify-between items-center text-sm">
+{mappingStartDate && mappingEndDate && (
+  <div className="md:col-span-4  rounded-lg px-4 py-3 flex items-center justify-between text-sm">
 
-              <div>
-                <span className="text-gray-600">Start Date:</span>{" "}
-                <span className="font-semibold text-gray-800">
-                  {formatDate(mappingStartDate)}
-                </span>
-              </div>
+    <div className="flex items-center gap-6">
 
-              <div>
-                <span className="text-gray-600">End Date:</span>{" "}
-                <span className="font-semibold text-gray-800">
-                  {formatDate(mappingEndDate)}
-                </span>
-              </div>
+      <div>
+        <span className="text-gray-500">Start:</span>
+        <span className="ml-1 font-medium text-gray-800">
+          {formatDate(mappingStartDate)}
+        </span>
+      </div>
 
-            </div>
-          )}
+      <div>
+        <span className="text-gray-500">End:</span>
+        <span className="ml-1 font-medium text-gray-800">
+          {formatDate(mappingEndDate)}
+        </span>
+      </div>
+
+    </div>
+
+  </div>
+)}
 
           <div className="flex flex-col">
 

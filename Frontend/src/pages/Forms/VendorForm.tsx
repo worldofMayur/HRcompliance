@@ -31,11 +31,18 @@ const emailRegex =
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function VendorForm() {
+const getAuthHeaders = () => {
   const token = localStorage.getItem("access_token");
 
-  const authHeader = {
+  if (!token || token === "null") {
+    window.location.href = "/login";
+    return {};
+  }
+
+  return {
     Authorization: `Bearer ${token}`,
   };
+};
 
   /* =========================
      FORM STATE
@@ -86,7 +93,7 @@ const filteredVendors = vendors.filter((v) => {
     try {
       const res = await fetch(
         "http://127.0.0.1:8000/api/vendor/list/",
-        { headers: authHeader }
+        { headers: getAuthHeaders() }
       );
 
       if (!res.ok) return;
@@ -292,7 +299,7 @@ if (!res.ok) {
       selectedRows.map((id) =>
         fetch(`http://127.0.0.1:8000/api/vendor/${id}/delete/`, {
           method: "DELETE",
-          headers: authHeader,
+          headers: getAuthHeaders(),
         })
       )
     );

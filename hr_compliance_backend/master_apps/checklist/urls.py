@@ -2,27 +2,37 @@ from django.urls import path
 from .views import (
     StateListAPIView,
     ActByStateAPIView,
-    ComplianceNatureListAPIView,
     SectionByActAPIView,
-    RuleBySectionAPIView,
     AuditChecklistCreateAPIView,
     AuditChecklistListAPIView,
     AuditChecklistUpdateAPIView,
     AuditChecklistToggleStatusAPIView,
+    AuditChecklistDeleteAPIView,
     ActCreateAPIView,
 )
 
-urlpatterns = [
-    path("states/", StateListAPIView.as_view()),
-    path("acts/", ActByStateAPIView.as_view()),
-    path("compliance-natures/", ComplianceNatureListAPIView.as_view()),
-    path("sections/", SectionByActAPIView.as_view()),
-    path("rules/", RuleBySectionAPIView.as_view()),
-    path("create/", AuditChecklistCreateAPIView.as_view()),
-    path("list/", AuditChecklistListAPIView.as_view()),
+app_name = "checklist"
 
-    # 🔥 NEW (DO NOT REMOVE)
-    path("<int:pk>/update/", AuditChecklistUpdateAPIView.as_view()),
-    path("<int:pk>/toggle-status/", AuditChecklistToggleStatusAPIView.as_view()),
-    path("acts/create/", ActCreateAPIView.as_view()),
+urlpatterns = [
+    # =========================
+    # MASTER DATA
+    # =========================
+    path("states/", StateListAPIView.as_view(), name="state-list"),
+    path("acts/", ActByStateAPIView.as_view(), name="act-by-state"),
+    path("acts/create/", ActCreateAPIView.as_view(), name="act-create"),
+    path("sections/", SectionByActAPIView.as_view(), name="section-by-act"),
+
+    # =========================
+    # CHECKLIST
+    # =========================
+    path("create/", AuditChecklistCreateAPIView.as_view(), name="checklist-create"),
+    path("list/", AuditChecklistListAPIView.as_view(), name="checklist-list"),
+    
+
+    # =========================
+    # ACTIONS
+    # =========================
+    path("<int:pk>/update/", AuditChecklistUpdateAPIView.as_view(), name="checklist-update"),
+    path("<int:pk>/delete/", AuditChecklistDeleteAPIView.as_view(), name="checklist-delete"),
+    path("<int:pk>/toggle-status/", AuditChecklistToggleStatusAPIView.as_view(), name="checklist-toggle"),
 ]
