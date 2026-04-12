@@ -21,7 +21,8 @@ from .serializers import (
 class StateListAPIView(APIView):
     def get(self, request):
         qs = State.objects.filter(is_active=True).order_by("name")
-        return Response(StateSerializer(qs, many=True).data, status=status.HTTP_200_OK)
+        serializer = StateSerializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # =========================
@@ -41,7 +42,8 @@ class ActByStateAPIView(APIView):
             stateact__state_id=state_id
         ).distinct().order_by("name")
 
-        return Response(ActSerializer(acts, many=True).data)
+        serializer = ActSerializer(acts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # =========================
@@ -58,7 +60,8 @@ class SectionByActAPIView(APIView):
             )
 
         qs = Section.objects.filter(act_id=act_id).order_by("section_number")
-        return Response(SectionSerializer(qs, many=True).data, status=status.HTTP_200_OK)
+        serializer = SectionSerializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # =========================
@@ -77,7 +80,16 @@ class AuditChecklistCreateAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        serializer.save()
+        created_objects = serializer.save()
+
+        # HANDLE BULK RESPONSE
+        if isinstance(created_objects, list):
+            return Response(
+                {
+                    "message": f"{len(created_objects)} checklist(s) created successfully",
+                },
+                status=status.HTTP_201_CREATED
+            )
 
         return Response(
             {"message": "Audit checklist created successfully"},
@@ -119,7 +131,6 @@ class AuditChecklistUpdateAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # ✅ Update all editable fields safely
         checklist.audit_particulars = request.data.get(
             "audit_particulars", checklist.audit_particulars
         )
@@ -132,7 +143,7 @@ class AuditChecklistUpdateAPIView(APIView):
             "auditor_guide", checklist.auditor_guide
         )
 
-        # OPTIONAL (only if you want editable)
+        # OPTIONAL: update section
         if request.data.get("section"):
             section, _ = Section.objects.get_or_create(
                 act=checklist.act,
@@ -194,15 +205,31 @@ class ActCreateAPIView(APIView):
             )
 
         return Response(
-            {"message": "Act created", "id": act.id, "name": act.name},
+            {
+                "message": "Act created",
+                "id": act.id,
+                "name": act.name
+            },
             status=status.HTTP_201_CREATED
         )
 
+
+# =========================
+# DELETE CHECKLIST
+# =========================
 class AuditChecklistDeleteAPIView(APIView):
     def delete(self, request, pk):
         try:
             obj = AuditChecklist.objects.get(pk=pk)
             obj.delete()
-            return Response({"message": "Deleted"}, status=200)
+
+            return Response(
+                {"message": "Deleted"},
+                status=status.HTTP_200_OK
+            )
+
         except AuditChecklist.DoesNotExist:
-            return Response({"error": "Not found"}, status=404)
+            return Response(
+                {"error": "Not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )

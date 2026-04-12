@@ -267,6 +267,57 @@ const AppSidebar: React.FC = () => {
               </li>
             )}
 
+
+            {/* ================= AUDITOR MENU ================= */}
+{role === "AUDITOR" && (
+  <>
+    <li>
+      <Link
+        to="auditor-dashboard"
+        onClick={handleNavigation}
+        className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+          ${
+            isActive("/auditor-dashboard")
+              ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+          }`}
+      >
+        <span className="menu-item-icon-size">
+          <TableIcon />
+        </span>
+        {(isExpanded || isHovered || isMobileOpen) && (
+          <span className="menu-item-text font-medium">
+            Audit Dashboard
+          </span>
+        )}
+      </Link>
+    </li>
+
+    {/* OPTIONAL - Future ready */}
+    <li>
+      <Link
+        to="audit-history"
+        onClick={handleNavigation}
+        className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+          ${
+            isActive("/audit-history")
+              ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+          }`}
+      >
+        <span className="menu-item-icon-size">
+          <ListIcon />
+        </span>
+        {(isExpanded || isHovered || isMobileOpen) && (
+          <span className="menu-item-text font-medium">
+            Notifications
+          </span>
+        )}
+      </Link>
+    </li>
+  </>
+)}
+
           </ul>
         </nav>
       </aside>

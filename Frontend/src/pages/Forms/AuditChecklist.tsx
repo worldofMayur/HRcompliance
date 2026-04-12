@@ -43,6 +43,7 @@ const authHeaders = getAuthHeaders(); // ✅ now safe
   const [newActName, setNewActName] = useState("");
   const [documents, setDocuments] = useState([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [stateFilter, setStateFilter] = useState("");
 
   const [documentSearch, setDocumentSearch] = useState("");
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
@@ -267,16 +268,15 @@ setFormData(p => ({ ...p, section: "" }));
   /* =========================
      CREATE CHECKLIST
   ========================= */
-const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // 🔒 1. VALIDATION (STRICT)
-if (
-  !formData.state ||
-  !formData.act ||
-  !formData.section?.trim() ||
-  !formData.document
-) {
+  if (
+    !formData.state ||
+    !formData.act ||
+    !formData.section?.trim() ||
+    !formData.document
+  ) {
     alert("Please fill all required fields");
     return;
   }
@@ -286,24 +286,21 @@ if (
     return;
   }
 
-  // 🧠 2. SAFE PAYLOAD
-const payload = {
-  state: Number(formData.state),
-  act: Number(formData.act),
-  compliance_nature: "General",
-  section: formData.section.trim(),
-  document: Number(formData.document),
-
-  // ✅ ADD THESE
-  audit_particulars: formData.audit_particulars || "",
-  form_number: formData.form_number || "",
-
-  // ✅ Guidelines only
-  auditor_guide: checkpoints.map(c => `• ${c.text}`).join("\n"),
-};
-
   try {
-    // 🚀 3. API CALL
+    const payload = {
+      state: Number(formData.state),
+      act: Number(formData.act),
+      compliance_nature: "General",
+      section: formData.section.trim(),
+      document: Number(formData.document),
+
+      audit_particulars: formData.audit_particulars || "",
+      form_number: formData.form_number || "",
+
+      // ✅ SEND ARRAY ONCE
+      auditor_guide: checkpoints.map(c => c.text),
+    };
+
     const res = await fetch(`${API_BASE}/checklist/create/`, {
       method: "POST",
       headers: authHeaders,
@@ -312,41 +309,29 @@ const payload = {
 
     const data = await res.json();
 
-    // ❌ 4. ERROR HANDLING
     if (!res.ok) {
-      console.error("API Error:", data);
-
-      const message =
-        data?.error ||
-        data?.details ||
-        "Failed to create checklist";
-
-      alert(message);
+      alert(data?.error || "Failed to create checklist");
       return;
     }
 
-    // ✅ 5. SUCCESS UX
     alert("Checklist created successfully ✅");
 
-    // 🔄 6. RESET (FIXED)
-setFormData({
-  state: "",
-  act: "",
-  compliance_nature: "",
-  section: "",
-  document: "",
-  audit_particulars: "",
-  form_number: "",
-});
+    setFormData({
+      state: "",
+      act: "",
+      compliance_nature: "",
+      section: "",
+      document: "",
+      audit_particulars: "",
+      form_number: "",
+    });
 
     setCheckpoints([]);
-    
-    // 🔁 7. REFRESH LIST
     fetchList();
 
   } catch (err) {
-    console.error("Network Error:", err);
-    alert("Something went wrong. Please try again.");
+    console.error(err);
+    alert("Something went wrong");
   }
 };
   /* =========================
@@ -476,6 +461,7 @@ const filteredChecklists = useMemo(() => {
     `.toLowerCase();
 
     if (search && !text.includes(searchText)) return false;
+    if (stateFilter && c.state !== stateFilter) return false;
 
     if (statusFilter === "active" && !c.is_active) return false;
     if (statusFilter === "inactive" && c.is_active) return false;
@@ -501,7 +487,7 @@ const filteredChecklists = useMemo(() => {
       sensitivity: "base",
     });
   });
-}, [checklists, search, statusFilter]);
+}, [checklists, search, statusFilter, stateFilter]);
 
 const [debouncedSearch, setDebouncedSearch] = useState(search);
 
@@ -822,16 +808,15 @@ const data = filteredChecklists.map(c => ({
     rows={3}
     value={checkpointInput}
     onChange={(e) => setCheckpointInput(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault(); // 🚫 stop newline
+        handleAddCheckpoint(); // ✅ add point
+      }
+    }}
     placeholder="Enter checklist point..."
     className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:ring-2 focus:ring-blue-100 outline-none"
   />
-
-  {/* ADD BUTTON */}
-  <div className="flex justify-end">
-    <Button type="button" onClick={handleAddCheckpoint} className="h-10">
-      + Add Point
-    </Button>
-  </div>
 
   {/* CHECKLIST LIST */}
   {checkpoints.length > 0 && (
@@ -862,15 +847,20 @@ const data = filteredChecklists.map(c => ({
       <Button
         variant="outline"
         className="h-10"
-        onClick={() =>
+        onClick={() => {
           setFormData({
             state: "",
             act: "",
+            compliance_nature: "",
             section: "",
             document: "",
-            auditor_guide: "",
-          })
-        }
+            audit_particulars: "",
+            form_number: "",
+          });
+
+          setCheckpoints([]);        // ✅ clear added points
+          setCheckpointInput("");    // ✅ clear textarea
+        }}
       >
         Reset
       </Button>
@@ -927,37 +917,48 @@ const data = filteredChecklists.map(c => ({
     {/* FILTERS + ACTIONS */}
     <div className="flex flex-wrap items-center gap-2">
 
-      {/* STATUS FILTER */}
+  {/* ✅ STATE FILTER (ADD HERE) */}
+  <select
+    value={stateFilter}
+    onChange={(e) => setStateFilter(e.target.value)}
+    className="h-10 rounded-lg border border-gray-200 px-3 text-sm"
+  >
+    <option value="">All States</option>
+    {states.map((s) => (
+      <option key={s.id} value={s.name}>
+        {s.name}
+      </option>
+    ))}
+  </select>
 
+  {/* EXISTING BUTTONS */}
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={exportExcel}
+    disabled={!filteredChecklists.length}
+  >
+    Export Excel
+  </Button>
 
-      {/* EXPORT BUTTONS */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={exportExcel}
-        disabled={!filteredChecklists.length}
-      >
-        Export Excel
-      </Button>
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={deleteSelected}
+    disabled={!selectedIds.length}
+  >
+    Delete Selected
+  </Button>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={deleteSelected}
-        disabled={!selectedIds.length}
-      >
-        Delete Selected
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={exportPDF}
-        disabled={!filteredChecklists.length}
-      >
-        Export PDF
-      </Button>
-    </div>
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={exportPDF}
+    disabled={!filteredChecklists.length}
+  >
+    Export PDF
+  </Button>
+</div>
   </div>
 
   {/* 🔹 TABLE */}
@@ -1022,122 +1023,145 @@ const data = filteredChecklists.map(c => ({
       )}
 
       {/* 📄 DATA */}
-      {!loading &&
-        filteredChecklists.map((c, idx) => (
-          <tr
-            key={c.id}
-            className={`border-t transition ${
-              idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"
-            } hover:bg-blue-50/30`}
-          >
+      {/* 📄 DATA */}
+{!loading && (() => {
+  const groupedData = Object.values(
+    filteredChecklists.reduce((acc, item) => {
+      const key = `${item.state}-${item.act}-${item.section}-${item.document}-${item.audit_particulars}`;
+      if (!acc[key]) {
+        acc[key] = {
+          ...item,
+          auditor_guide: Array.isArray(item.auditor_guide)
+          ? item.auditor_guide
+          : [item.auditor_guide],
+        };
+      } else {
+          if (Array.isArray(item.auditor_guide)) {
+            acc[key].auditor_guide.push(...item.auditor_guide);
+          } else {
+            acc[key].auditor_guide.push(item.auditor_guide);
+          }
+      }
 
-            {/* ✅ ROW CHECKBOX */}
-            <td className="px-3 py-4">
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(c.id)}
-                onChange={() => toggleSelect(c.id)}
-              />
-            </td>
+      return acc;
+    }, {})
+  );
 
-            <td className="px-5 py-4">{c.state}</td>
+  return groupedData.map((c, idx) => (
+    <tr
+      key={c.id}
+      className={`border-t transition ${
+        idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"
+      } hover:bg-blue-50/30`}
+    >
 
-            <td className="px-5 py-4">{c.act}</td>
+      <td className="px-3 py-4">
+        <input
+          type="checkbox"
+          checked={selectedIds.includes(c.id)}
+          onChange={() => toggleSelect(c.id)}
+        />
+      </td>
 
-            {/* AUDIT PARTICULARS */}
-            <td className="px-5 py-4">
-              {editingId === c.id ? (
-                <Input
-                  value={editData.audit_particulars}
-                  onChange={(e) =>
-                    setEditData({ ...editData, audit_particulars: e.target.value })
-                  }
-                />
-              ) : (
-                c.audit_particulars || "-"
-              )}
-            </td>
+      <td className="px-5 py-4">{c.state}</td>
+      <td className="px-5 py-4">{c.act}</td>
 
-            {/* SECTION */}
-            <td className="px-5 py-4">
-              {editingId === c.id ? (
-                <Input
-                  value={editData.section}
-                  onChange={(e) =>
-                    setEditData({ ...editData, section: e.target.value })
-                  }
-                />
-              ) : (
-                c.section
-              )}
-            </td>
+      <td className="px-5 py-4">
+        {editingId === c.id ? (
+          <Input
+            value={editData.audit_particulars}
+            onChange={(e) =>
+              setEditData({ ...editData, audit_particulars: e.target.value })
+            }
+          />
+        ) : (
+          c.audit_particulars || "-"
+        )}
+      </td>
 
-            {/* FORM NUMBER */}
-            <td className="px-5 py-4">
-              {editingId === c.id ? (
-                <Input
-                  value={editData.form_number}
-                  onChange={(e) =>
-                    setEditData({ ...editData, form_number: e.target.value })
-                  }
-                />
-              ) : (
-                c.form_number || "-"
-              )}
-            </td>
+      <td className="px-5 py-4">
+        {editingId === c.id ? (
+          <Input
+            value={editData.section}
+            onChange={(e) =>
+              setEditData({ ...editData, section: e.target.value })
+            }
+          />
+        ) : (
+          c.section
+        )}
+      </td>
 
-            <td className="px-5 py-4">{c.document}</td>
+      <td className="px-5 py-4">
+        {editingId === c.id ? (
+          <Input
+            value={editData.form_number}
+            onChange={(e) =>
+              setEditData({ ...editData, form_number: e.target.value })
+            }
+          />
+        ) : (
+          c.form_number || "-"
+        )}
+      </td>
 
-            {/* GUIDELINES */}
-            <td className="px-5 py-4 max-w-[420px]">
-              {editingId === c.id ? (
-                <textarea
-                  value={editData.auditor_guide}
-                  onChange={(e) =>
-                    setEditData({ ...editData, auditor_guide: e.target.value })
-                  }
-                  className="w-full border rounded px-2 py-1"
-                />
-              ) : (
-                <div className="whitespace-pre-line">
-                  {c.auditor_guide || "-"}
-                </div>
-              )}
-            </td>
+      <td className="px-5 py-4">{c.document}</td>
 
-            {/* ACTIONS */}
-            <td className="px-5 py-4 space-x-2">
-              {editingId === c.id ? (
-                <>
-                  <Button size="sm" onClick={() => saveEdit(c.id)}>
-                    Save
-                  </Button>
+      {/* ✅ GROUPED GUIDELINES */}
+      <td className="px-5 py-4 max-w-[420px]">
+        {editingId === c.id ? (
+          <textarea
+            value={editData.auditor_guide}
+            onChange={(e) =>
+              setEditData({ ...editData, auditor_guide: e.target.value })
+            }
+            className="w-full border rounded px-2 py-1"
+          />
+        ) : (
+          <div className="whitespace-pre-line">
+            {c.auditor_guide.map((point, i) => (
+            <div key={i}>
+              <span className="font-bold mr-1">•</span>
+              {point}
+            </div>            
+          ))}
+          </div>
+        )}
+      </td>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setEditingId(null);
-                      setEditData({
-                        audit_particulars: "",
-                        form_number: "",
-                        auditor_guide: "",
-                        section: "",
-                      });
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </>
-              ) : (
-                <Button size="sm" onClick={() => startEdit(c)}>
-                  Edit
-                </Button>
-              )}
-            </td>
+      <td className="px-5 py-4 space-x-2">
+        {editingId === c.id ? (
+          <>
+            <Button size="sm" onClick={() => saveEdit(c.id)}>
+              Save
+            </Button>
 
-          </tr>
-        ))}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setEditingId(null);
+                setEditData({
+                  audit_particulars: "",
+                  form_number: "",
+                  auditor_guide: "",
+                  section: "",
+                });
+              }}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button size="sm" onClick={() => startEdit(c)}>
+            Edit
+          </Button>
+        )}
+      </td>
+
+    </tr>
+  ));
+})()}
     </tbody>
   </table>
 </div>

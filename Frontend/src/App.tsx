@@ -19,6 +19,7 @@ import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import AuditorDashboard from "./pages/Auditor/AuditorDashboard";
 import Home from "./pages/Dashboard/Home";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -84,6 +85,16 @@ export default function App() {
         >
           <Route index element={<Home />} />
 
+          {/* ✅ AUDITOR DASHBOARD (FIXED POSITION) */}
+          <Route
+            path="auditor-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["AUDITOR"]}>
+                <AuditorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
           {/* CORE */}
           <Route path="profile" element={<UserProfiles />} />
           <Route path="calendar" element={<Calendar />} />
@@ -148,7 +159,7 @@ export default function App() {
             }
           />
 
-          {/* ✅ VENDOR ONLY */}
+          {/* VENDOR ONLY */}
           <Route
             path="vendor-compliance"
             element={

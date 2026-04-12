@@ -21,11 +21,18 @@ class VendorSubmitComplianceAPIView(APIView):
         if request.user.role != "VENDOR":
             return Response({"error": "Unauthorized"}, status=403)
 
-        vendor = Vendor.objects.get(email=request.user.email)
+        try:
+            vendor = Vendor.objects.get(email=request.user.email)
+        except Vendor.DoesNotExist:
+            return Response(
+                {"error": "Vendor profile not found"},
+                status=404
+            )
 
         pe_id = request.data.get("pe_id")
         branch_id = request.data.get("branch_id")
         state_id = request.data.get("state_id")
+        selected_period = request.data.get("selected_period")
 
         if not all([pe_id, branch_id]):
             return Response(
@@ -34,38 +41,61 @@ class VendorSubmitComplianceAPIView(APIView):
             )
 
         index = 0
+        latest_submission = None
 
         while True:
 
-            document_id = request.data.get(f"document_{index}_id")
             file = request.FILES.get(f"document_{index}_file")
             remark = request.data.get(f"document_{index}_remark")
+            document_id = request.data.get(f"document_{index}_id")
 
-            if not document_id or not file:
+            # stop when no more files
+            if not file:
                 break
 
-            # ✅ Correct mapping validation
-            mapping = VendorBranchMapping.objects.filter(
-                vendor=vendor,
-                principal_employer_id=pe_id,
-                branch_id=branch_id,
-                documents__id=document_id
-            ).first()
+            # ===============================
+            # MAIN COMPLIANCE DOCUMENTS
+            # ===============================
+            if document_id:
 
-            if not mapping:
-                index += 1
-                continue
+                mapping = VendorBranchMapping.objects.filter(
+                    vendor=vendor,
+                    principal_employer_id=pe_id,
+                    branch_id=branch_id,
+                    documents__id=document_id
+                ).first()
 
-            VendorComplianceSubmission.objects.create(
-                vendor=vendor,
-                principal_employer_id=pe_id,
-                branch_id=branch_id,
-                document_id=document_id,
-                state=mapping.branch.state,
-                audit_period=request.data.get("selected_period"),
-                main_file=file,
-                remarks=remark
-            )
+                if mapping:
+
+                    latest_submission = VendorComplianceSubmission.objects.create(
+                        vendor=vendor,
+                        principal_employer_id=pe_id,
+                        branch_id=branch_id,
+                        document_id=document_id,
+                        state=mapping.branch.state,
+                        audit_period=selected_period,
+                        main_file=file,
+                        remarks=remark
+                    )
+
+            # ===============================
+            # ADDITIONAL / EXCEPTION FILES
+            # ===============================
+            else:
+
+                existing_submission = VendorComplianceSubmission.objects.filter(
+                    vendor=vendor,
+                    principal_employer_id=pe_id,
+                    branch_id=branch_id,
+                    audit_period=selected_period
+                ).order_by("-submitted_at").first()
+
+                if existing_submission:
+
+                    VendorComplianceSupportingFile.objects.create(
+                        submission=existing_submission,
+                        file=file
+                    )
 
             index += 1
 

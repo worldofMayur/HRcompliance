@@ -1,21 +1,40 @@
 from rest_framework.permissions import BasePermission
 
 
-class IsSuperAdmin(BasePermission):
+class BaseRolePermission(BasePermission):
+    """
+    Base class for role-based permissions
+    """
+
+    allowed_roles = []
+
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "SUPERADMIN"
+        user = request.user
+
+        return (
+            user
+            and user.is_authenticated
+            and getattr(user, "role", None) in self.allowed_roles
+        )
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Optional: object-level permission (future use)
+        """
+        return self.has_permission(request, view)
 
 
-class IsPE(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "PE"
+class IsSuperAdmin(BaseRolePermission):
+    allowed_roles = ["SUPERADMIN"]
 
 
-class IsVendor(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "VENDOR"
+class IsPE(BaseRolePermission):
+    allowed_roles = ["PE"]
 
 
-class IsAuditor(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "AUDITOR"
+class IsVendor(BaseRolePermission):
+    allowed_roles = ["VENDOR"]
+
+
+class IsAuditor(BaseRolePermission):
+    allowed_roles = ["AUDITOR"]

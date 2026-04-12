@@ -20,7 +20,8 @@ class SuperAdminLoginView(APIView):
     """
 
     def post(self, request):
-        email = request.data.get("username")
+        # ✅ BACKWARD COMPATIBLE INPUT HANDLING
+        email = request.data.get("email") or request.data.get("username")
         password = request.data.get("password")
 
         if not email or not password:
@@ -28,6 +29,9 @@ class SuperAdminLoginView(APIView):
                 {"error": "Email and password required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # ✅ NORMALIZE EMAIL
+        email = email.strip().lower()
 
         try:
             user_obj = User.objects.get(email=email)
@@ -48,6 +52,14 @@ class SuperAdminLoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        # ✅ OPTIONAL HARDENING (SAFE)
+        ALLOWED_ROLES = {"SUPERADMIN", "PE", "VENDOR", "AUDITOR"}
+        if user.role not in ALLOWED_ROLES:
+            return Response(
+                {"error": "Unauthorized role"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         refresh = RefreshToken.for_user(user)
 
         return Response({
@@ -55,13 +67,15 @@ class SuperAdminLoginView(APIView):
             "refresh": str(refresh),
             "username": user.username,
             "email": user.email,
-            "role": user.role,
+            "role": user.role,  # unchanged
 
-            # ✅ ADDED FOR PE DOCUMENT FILTERING
-            "principal_employer_id": user.principal_employer.id if getattr(user, "principal_employer", None) else None
+            # ✅ PE FILTERING (UNCHANGED)
+            "principal_employer_id": (
+                user.principal_employer.id
+                if getattr(user, "principal_employer", None)
+                else None
+            )
         })
-
-
 
 
 class ResetPasswordAPIView(APIView):

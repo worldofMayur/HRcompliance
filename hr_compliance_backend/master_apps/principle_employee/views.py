@@ -311,15 +311,60 @@ class PrincipalEmployerDeleteAPIView(APIView):
             )
 
 
-# ==========================================================
-# CREATE BRANCH
-# ==========================================================
 class PrincipalEmployerBranchCreateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
         try:
             with transaction.atomic():
+
+                pe_id = request.data.get("principal_employer")
+                state = request.data.get("state")
+                short_name = request.data.get("short_name")
+
+                # =============================
+                # 🚫 BLOCK MANUAL "ALL BRANCHES"
+                # =============================
+                if short_name == "All Branches":
+                    return Response(
+                        {"error": "Cannot manually create 'All Branches'"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # =============================
+                # CHECK EXISTING BRANCHES
+                # =============================
+                existing_branches = PrincipalEmployerBranch.objects.filter(
+                    principal_employer_id=pe_id
+                )
+
+                # =============================
+                # PREVENT DUPLICATE "ALL BRANCHES"
+                # =============================
+                # =============================
+                # CHECK IF "ALL BRANCHES" EXISTS FOR THIS STATE
+                # =============================
+                all_branch_exists = PrincipalEmployerBranch.objects.filter(
+                    principal_employer_id=pe_id,
+                    state=state,
+                    short_name="All Branches"
+                ).exists()
+
+                # =============================
+                # AUTO CREATE "ALL BRANCHES" PER STATE
+                # =============================
+                if not all_branch_exists:
+                    PrincipalEmployerBranch.objects.create(
+                        principal_employer_id=pe_id,
+                        state=state,
+                        short_name="All Branches",
+                        address=state,
+                        status="active"
+                    )
+
+                # =============================
+                # CREATE USER BRANCH
+                # =============================
                 serializer = PrincipalEmployerBranchSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 branch = serializer.save()
@@ -349,14 +394,20 @@ class PrincipalEmployerBranchListAPIView(APIView):
         return Response(serializer.data)
 
 
-# ==========================================================
-# UPDATE BRANCH
-# ==========================================================
 class PrincipalEmployerBranchUpdateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def put(self, request, pk):
         branch = get_object_or_404(PrincipalEmployerBranch, pk=pk)
+
+        # =============================
+        # 🚫 BLOCK UPDATE FOR "ALL BRANCHES"
+        # =============================
+        if branch.short_name == "All Branches":
+            return Response(
+                {"error": "'All Branches' cannot be modified"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         data = request.data.copy()
         data["principal_employer"] = branch.principal_employer.id

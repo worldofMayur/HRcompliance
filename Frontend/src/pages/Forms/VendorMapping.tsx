@@ -81,7 +81,6 @@ export default function VendorMapping() {
   const [selectedFrequency, setSelectedFrequency] = useState("");
   const [selectedDocument, setSelectedDocument] = useState("");
 
-  const [shortNames, setShortNames] = useState<string[]>([]);
   const [selectedShortName, setSelectedShortName] = useState("");
   const [vendorSearch, setVendorSearch] = useState("");
   const [showVendorDropdown, setShowVendorDropdown] = useState(false);
@@ -332,12 +331,6 @@ const toggleDocument = (id: number) => {
 
         const filtered = allBranches.filter(b => b.state === state);
         setBranches(filtered);
-
-        const uniqueShortNames = Array.from(
-          new Set(filtered.map(b => b.short_name))
-        );
-
-        setShortNames(uniqueShortNames);
       }}
     >
       <option value="">Select State</option>
@@ -353,27 +346,25 @@ const toggleDocument = (id: number) => {
       className="rounded-lg border border-gray-300 p-2.5 text-sm"
       value={selectedShortName}
       onChange={(e) => {
-        const shortName = e.target.value;
+        const branchId = e.target.value;
 
-        setSelectedShortName(shortName);
+        setSelectedBranch(branchId);
 
-        const branch = allBranches.find(
-          b => b.state === selectedState && b.short_name === shortName
-        );
+        const branch = branches.find(b => String(b.id) === branchId);
 
         if (branch) {
-          setSelectedBranch(String(branch.id));
           setSelectedBranchObj(branch);
+          setSelectedShortName(branch.short_name);
         } else {
-          setSelectedBranch("");
           setSelectedBranchObj(null);
+          setSelectedShortName("");
         }
       }}
     >
       <option value="">Select Short Name</option>
-      {shortNames.map((sn, index) => (
-        <option key={index} value={sn}>
-          {sn}
+      {branches.map((b) => (
+        <option key={b.id} value={b.id}>
+          {b.short_name}
         </option>
       ))}
     </select>
@@ -393,13 +384,20 @@ const toggleDocument = (id: number) => {
   )}
 
   {/* Branch Summary */}
-  {selectedBranchObj && (
-    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg space-y-1">
-      <div><b>State:</b> {selectedState}</div>
-      <div><b>Branch Short Name:</b> {selectedShortName}</div>
-      <div><b>Branch Address:</b> {selectedBranchObj.address}</div>
-    </div>
-  )}
+{selectedBranchObj && (
+  <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg space-y-1">
+    <div><b>State:</b> {selectedState}</div>
+    <div><b>Branch Short Name:</b> {selectedShortName}</div>
+    <div><b>Branch Address:</b> {selectedBranchObj.address}</div>
+  </div>
+)}
+
+{/* ✅ ADD HERE */}
+{selectedBranchObj?.short_name === "All Branches" && (
+  <div className="mt-3 text-sm bg-yellow-50 p-3 rounded-lg">
+    This mapping applies to entire {selectedState}
+  </div>
+)}
 
 </div>
 

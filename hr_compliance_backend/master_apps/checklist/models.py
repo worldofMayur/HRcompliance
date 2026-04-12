@@ -68,7 +68,7 @@ class Rule(models.Model):
 
 
 # =========================
-# CHECKLIST MASTER (UPDATED)
+# CHECKLIST MASTER
 # =========================
 
 class AuditChecklist(models.Model):
@@ -76,12 +76,12 @@ class AuditChecklist(models.Model):
     state = models.ForeignKey(State, on_delete=models.PROTECT)
     act = models.ForeignKey(Act, on_delete=models.PROTECT)
 
-    # 🔥 keep this (backend dependency)
+    # REQUIRED
     compliance_nature = models.ForeignKey(ComplianceNature, on_delete=models.PROTECT)
 
     section = models.ForeignKey(Section, on_delete=models.PROTECT)
 
-    # 🔥 OPTIONAL
+    # OPTIONAL
     rule = models.ForeignKey(Rule, on_delete=models.PROTECT, null=True, blank=True)
 
     document = models.ForeignKey(
@@ -89,11 +89,11 @@ class AuditChecklist(models.Model):
         on_delete=models.PROTECT
     )
 
-    # ✅ NEW FIELDS (MATCHES YOUR EXCEL)
+    # UI FIELDS
     audit_particulars = models.TextField(blank=True, null=True)
     form_number = models.CharField(max_length=100, blank=True, null=True)
 
-    # ✅ MAIN FIELD (Guidelines for Auditor)
+    # SINGLE CHECKPOINT PER ROW
     auditor_guide = models.TextField()
 
     is_active = models.BooleanField(default=True)
@@ -104,6 +104,7 @@ class AuditChecklist(models.Model):
             models.Index(fields=["state", "act"]),
             models.Index(fields=["is_active"]),
         ]
+        ordering = ["state", "act", "section"]
 
     def __str__(self):
-        return f"{self.act} - {self.document}"
+        return f"{self.act} | {self.section} | {self.audit_particulars or ''} | {self.auditor_guide[:30]}"

@@ -118,10 +118,7 @@ DATABASES = {
 # MEDIA FILES
 # ==========================================================
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "portal_apps" / "documents_files"
-
-# ==========================================================
-# STATIC FILES
+MEDIA_ROOT = BASE_DIR# STATIC FILES
 # ==========================================================
 STATIC_URL = "/static/"
 

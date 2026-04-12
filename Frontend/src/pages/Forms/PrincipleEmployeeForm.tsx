@@ -56,6 +56,7 @@ export default function PrincipleEmployeeForm() {
 
   const [startDateObj, setStartDateObj] = useState<Date | null>(null);
   const [endDateObj, setEndDateObj] = useState<Date | null>(null);
+  const [states, setStates] = useState([]);
 
   const [startInput, setStartInput] = useState("");
   const [endInput, setEndInput] = useState("");
@@ -118,6 +119,13 @@ const formatForAPI = (date: Date | null) => {
       address: "",
       status: "active",   // default active
     });
+
+    useEffect(() => {
+  fetch("http://127.0.0.1:8000/api/checklist/states/")
+    .then(res => res.json())
+    .then(data => setStates(data))
+    .catch(err => console.log("State fetch error", err));
+}, []);
 
 const openBranchModal = async (peId) => {
   const pe = tableData.find((x) => x.id === peId);
@@ -194,6 +202,7 @@ const handleBranchUpdate = async (branchId: number) => {
 };
 
 const handleBranchSubmit = async () => {
+  const isFirstBranch = branchList.length === 0;
   if (!selectedPEObject) return;
 
   const formData = new FormData();
@@ -224,6 +233,38 @@ const handleBranchSubmit = async () => {
 
   // ✅ Immediately update UI
   setBranchList((prev) => [newBranch, ...prev]);
+
+    // =========================
+  // AUTO CREATE "ALL BRANCHES"
+  // =========================
+  if (isFirstBranch) {
+    const autoForm = new FormData();
+
+    autoForm.append("principal_employer", selectedPEObject.id);
+    autoForm.append("state", branchData.state);
+    autoForm.append("short_name", "All Branches");
+    autoForm.append("address", branchData.state); // state as address
+    autoForm.append("status", "active");
+
+    try {
+      const autoRes = await fetch(
+        "http://127.0.0.1:8000/api/principal-employer/branch/create/",
+        {
+          method: "POST",
+          body: autoForm,
+        }
+      );
+
+      if (autoRes.ok) {
+        const autoBranch = await autoRes.json();
+
+        // add to UI
+        setBranchList((prev) => [autoBranch, ...prev]);
+      }
+    } catch (err) {
+      console.log("Auto All Branch creation failed", err);
+    }
+  }
 
   // Reset form
   setBranchData({
@@ -1012,11 +1053,12 @@ const handleSubmit = async () => {
                 }
               >
                 <option value="">Select State</option>
-                <option value="Telangana">Telangana</option>
-                <option value="Tamilnadu">Tamilnadu</option>
-                <option value="Karnataka">Karnataka</option>
-                <option value="Maharashtra">Maharashtra</option>
-                <option value="Delhi">Delhi</option>
+
+                {states.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </div>
 

@@ -1,8 +1,47 @@
+import os
+from uuid import uuid4
 from django.db import models
+from django.utils.text import slugify
 from master_apps.vendor.models import Vendor
-from master_apps.principle_employee.models import PrincipalEmployer
-from master_apps.principle_employee.models import PrincipalEmployerBranch
+from master_apps.principle_employee.models import PrincipalEmployer, PrincipalEmployerBranch
 from master_apps.documents.models import DocumentMaster
+
+
+def compliance_main_upload_path(instance, filename):
+    filename = f"{uuid4().hex}_{filename}"
+
+    pe_name = slugify(instance.principal_employer.short_name)
+    vendor_name = slugify(instance.vendor.short_name)
+    audit_period = slugify(instance.audit_period or "general")
+
+    return os.path.join(
+        "compliance",
+        pe_name,
+        vendor_name,
+        audit_period,
+        "main",
+        filename
+    )
+
+
+def compliance_supporting_upload_path(instance, filename):
+    filename = f"{uuid4().hex}_{filename}"
+
+    submission = instance.submission
+
+    pe_name = slugify(submission.principal_employer.short_name)
+    vendor_name = slugify(submission.vendor.short_name)
+    audit_period = slugify(submission.audit_period or "general")
+
+    return os.path.join(
+        "compliance",
+        pe_name,
+        vendor_name,
+        audit_period,
+        "exception_approval_documents",
+        filename
+    )
+
 
 class VendorComplianceSubmission(models.Model):
 
@@ -36,7 +75,7 @@ class VendorComplianceSubmission(models.Model):
     )
 
     main_file = models.FileField(
-        upload_to="compliance/main/"
+        upload_to=compliance_main_upload_path
     )
 
     remarks = models.TextField(
@@ -47,7 +86,8 @@ class VendorComplianceSubmission(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.vendor.short_name} - {self.document.name}"
+        return f"{self.vendor.short_name} - {self.document.name} - {self.audit_period}"
+
 
 class VendorComplianceSupportingFile(models.Model):
 
@@ -58,7 +98,10 @@ class VendorComplianceSupportingFile(models.Model):
     )
 
     file = models.FileField(
-        upload_to="compliance/supporting/"
+        upload_to=compliance_supporting_upload_path
     )
 
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Supporting File - {self.submission.id}"

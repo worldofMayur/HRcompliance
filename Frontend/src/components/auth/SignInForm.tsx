@@ -60,15 +60,17 @@ export default function SignInForm() {
       // redirect to main dashboard only
       const role = res.data.role;
 
-        if (role === "SUPERADMIN") {
-          navigate("/TailAdmin/", { replace: true });
-        } else if (role === "PE") {
-          navigate("/TailAdmin/vendor-mapping", { replace: true });
-        } else if (role === "VENDOR") {
-          navigate("/TailAdmin/vendor-compliance", { replace: true });
-        } else {
-          navigate("/TailAdmin/", { replace: true });
-        }
+      if (role === "SUPERADMIN") {
+        navigate("/TailAdmin/", { replace: true });
+      } else if (role === "PE") {
+        navigate("/TailAdmin/vendor-mapping", { replace: true });
+      } else if (role === "VENDOR") {
+        navigate("/TailAdmin/vendor-compliance", { replace: true });
+      } else if (role === "AUDITOR") {
+        navigate("/TailAdmin/auditor-dashboard", { replace: true }); // ✅ NEW
+      } else {
+        navigate("/TailAdmin/", { replace: true });
+      }
 
     } catch (err: any) {
       if (err.response?.status === 401) {

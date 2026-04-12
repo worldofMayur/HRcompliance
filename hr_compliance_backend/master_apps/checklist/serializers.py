@@ -50,12 +50,11 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
     section = serializers.CharField()
     document = serializers.IntegerField()
 
-    # ✅ NEW FIELDS
     audit_particulars = serializers.CharField()
     form_number = serializers.CharField(required=False, allow_blank=True)
 
-    # ✅ Guidelines
-    auditor_guide = serializers.CharField()
+    # ✅ ACCEPT BOTH STRING & LIST
+    auditor_guide = serializers.JSONField()
 
     def validate(self, data):
         if not data.get("state"):
@@ -90,7 +89,7 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
         except DocumentMaster.DoesNotExist:
             raise serializers.ValidationError("Invalid document")
 
-        # ✅ Compliance (safe default handling)
+        # ✅ Compliance
         compliance, _ = ComplianceNature.objects.get_or_create(
             name=validated_data["compliance_nature"].strip()
         )
@@ -102,32 +101,41 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
             defaults={"title": validated_data["section"].strip()}
         )
 
-        # 🚫 Duplicate check
-        exists = AuditChecklist.objects.filter(
-            state=state,
-            act=act,
-            section=section,
-            document=document
-        ).exists()
+        guide_input = validated_data["auditor_guide"]
 
-        if exists:
-            raise serializers.ValidationError("Checklist already exists")
+        # 🔥 HANDLE BOTH CASES
+        if isinstance(guide_input, str):
+            checklist_points = [guide_input.strip()]
+        elif isinstance(guide_input, list):
+            checklist_points = [str(p).strip() for p in guide_input if str(p).strip()]
+        else:
+            raise serializers.ValidationError("Invalid auditor_guide format")
 
-        # ✅ Create checklist
-        return AuditChecklist.objects.create(
-            state=state,
-            act=act,
-            compliance_nature=compliance,
-            section=section,
-            document=document,
-            audit_particulars=validated_data["audit_particulars"],
-            form_number=validated_data.get("form_number", ""),
-            auditor_guide=validated_data["auditor_guide"],
-        )
+        if not checklist_points:
+            raise serializers.ValidationError("Checklist points cannot be empty")
+
+        # 🚀 CREATE MULTIPLE ROWS
+        objects = [
+            AuditChecklist(
+                state=state,
+                act=act,
+                compliance_nature=compliance,
+                section=section,
+                document=document,
+                audit_particulars=validated_data["audit_particulars"],
+                form_number=validated_data.get("form_number", ""),
+                auditor_guide=point,
+            )
+            for point in checklist_points
+        ]
+
+        AuditChecklist.objects.bulk_create(objects)
+
+        return objects
 
 
 # =========================
-# LIST SERIALIZER (UPDATED)
+# LIST SERIALIZER (UNCHANGED)
 # =========================
 
 class AuditChecklistListSerializer(serializers.ModelSerializer):
@@ -137,7 +145,6 @@ class AuditChecklistListSerializer(serializers.ModelSerializer):
     section = serializers.CharField(source="section.section_number")
     document = serializers.CharField(source="document.name")
 
-    # ✅ NEW FIELDS
     audit_particulars = serializers.CharField()
     form_number = serializers.CharField()
 

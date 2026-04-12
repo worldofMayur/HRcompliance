@@ -145,23 +145,45 @@ useEffect(() => {
   };
 
   /* ================= PERIOD OPTIONS ================= */
-
 const getPeriodOptions = () => {
 
   if (!mappingStartDate || !mappingEndDate || !frequencyBase) return [];
 
+  // Normalize dates (avoid time issues)
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const startBoundary = new Date(mappingStartDate);
+  startBoundary.setHours(0, 0, 0, 0);
+
+  const endBoundary = new Date(mappingEndDate);
+  endBoundary.setHours(0, 0, 0, 0);
 
   const format = (start, end) => {
     const opt = { month: "short" };
-    return `${start.toLocaleString("default", opt)}–${end.toLocaleString("default", opt)} ${start.getFullYear()}`;
+
+    const startMonth = start.toLocaleString("default", opt);
+    const endMonth = end.toLocaleString("default", opt);
+
+    const year = start.getFullYear();
+
+    // ✅ MONTHLY CASE
+    if (
+      start.getMonth() === end.getMonth() &&
+      start.getFullYear() === end.getFullYear()
+    ) {
+      return `${startMonth} ${year}`;
+    }
+
+    // ✅ RANGE CASE
+    return `${startMonth}–${endMonth} ${year}`;
   };
 
 const isValidPeriod = (start, end) => {
   return (
     start <= mappingEndDate &&
     end >= mappingStartDate &&
-    start <= today   // ✅ ALLOW CURRENT PERIOD
+    start <= today // ✅ allow current period
   );
 };
 
@@ -170,13 +192,17 @@ const isValidPeriod = (start, end) => {
   /* ================= MONTHLY ================= */
   if (frequencyBase === "MONTHLY") {
 
-    const current = new Date(mappingStartDate);
+    const current = new Date(startBoundary);
     current.setDate(1);
 
-    while (current <= mappingEndDate) {
+    while (current <= endBoundary) {
 
       const start = new Date(current);
-      const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+      const end = new Date(
+        current.getFullYear(),
+        current.getMonth() + 1,
+        0
+      );
 
       if (isValidPeriod(start, end)) {
         periods.push(format(start, end));
@@ -184,23 +210,25 @@ const isValidPeriod = (start, end) => {
 
       current.setMonth(current.getMonth() + 1);
     }
-
-    return periods;
   }
 
   /* ================= QUARTERLY ================= */
-  if (frequencyBase === "QUARTERLY") {
+  else if (frequencyBase === "QUARTERLY") {
 
-    const current = new Date(mappingStartDate);
+    const current = new Date(startBoundary);
     const qStartMonth = Math.floor(current.getMonth() / 3) * 3;
 
     current.setMonth(qStartMonth);
     current.setDate(1);
 
-    while (current <= mappingEndDate && current <= today) {
+    while (current <= endBoundary) {
 
       const start = new Date(current);
-      const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
+      const end = new Date(
+        current.getFullYear(),
+        current.getMonth() + 3,
+        0
+      );
 
       if (isValidPeriod(start, end)) {
         periods.push(format(start, end));
@@ -208,29 +236,26 @@ const isValidPeriod = (start, end) => {
 
       current.setMonth(current.getMonth() + 3);
     }
-
-    return periods;
   }
 
   /* ================= HALF YEARLY ================= */
-  if (frequencyBase === "HALF_YEARLY" || frequencyBase === "BI_ANNUALLY") {
+  else if (frequencyBase === "HALF_YEARLY" || frequencyBase === "BI_ANNUALLY") {
 
-    const current = new Date(mappingStartDate);
+    const current = new Date(startBoundary);
 
+    // Align to Jan or Jul
     const month = current.getMonth();
-    current.setMonth(month < 6 ? 3 : 9); // Apr or Oct
+    current.setMonth(month < 6 ? 0 : 6);
     current.setDate(1);
 
-    while (current <= mappingEndDate && current <= today) {
+    while (current <= endBoundary) {
 
       const start = new Date(current);
 
-      let end;
-      if (current.getMonth() === 3) {
-        end = new Date(current.getFullYear(), 8, 30);
-      } else {
-        end = new Date(current.getFullYear() + 1, 2, 31);
-      }
+      const end =
+        current.getMonth() === 0
+          ? new Date(current.getFullYear(), 5, 30)   // Jan–Jun
+          : new Date(current.getFullYear(), 11, 31); // Jul–Dec
 
       if (isValidPeriod(start, end)) {
         periods.push(format(start, end));
@@ -238,18 +263,17 @@ const isValidPeriod = (start, end) => {
 
       current.setMonth(current.getMonth() + 6);
     }
-
-    return periods;
   }
 
   /* ================= ANNUALLY ================= */
-  if (frequencyBase === "ANNUALLY") {
+  else if (frequencyBase === "ANNUALLY") {
 
-    const current = new Date(mappingStartDate);
+    const current = new Date(startBoundary);
+
     current.setMonth(0);
     current.setDate(1);
 
-    while (current <= mappingEndDate && current <= today) {
+    while (current <= endBoundary) {
 
       const start = new Date(current);
       const end = new Date(current.getFullYear(), 11, 31);
@@ -260,11 +284,10 @@ const isValidPeriod = (start, end) => {
 
       current.setFullYear(current.getFullYear() + 1);
     }
-
-    return periods;
   }
 
-  return [];
+  // ✅ REMOVE DUPLICATES + SORT
+  return Array.from(new Set(periods));
 };
   /* ================= UPDATE ROW ================= */
 
