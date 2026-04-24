@@ -12,7 +12,8 @@ from .mapping_views import (
     VendorMappedStatesAPIView,
     VendorMappedBranchesAPIView,
     VendorMappedDocumentsAPIView,
-    PEBranchDropdownAPIView,   # ✅ ADD THIS
+    PEBranchDropdownAPIView,
+    VendorBranchMappingUpdateAPIView,  # ✅ already here
 )
 from .compliance_views import VendorSubmitComplianceAPIView
 
@@ -33,11 +34,16 @@ urlpatterns = [
     path("mapping/create/", VendorBranchMappingCreateAPIView.as_view()),
     path("mapping/list/", VendorBranchMappingListAPIView.as_view()),
 
-    # ✅ NEW — PE BRANCH DROPDOWN
+    # ✅ UPDATE API (FIXED URL)
+    path("vendor-mapping/<int:pk>/", VendorBranchMappingUpdateAPIView.as_view()),
+
+    # =========================
+    # PE BRANCH DROPDOWN
+    # =========================
     path("pe/branches/", PEBranchDropdownAPIView.as_view()),
 
     # =========================
-    # VENDOR DROPDOWN APIs (Vendor Login)
+    # VENDOR DROPDOWN APIs
     # =========================
     path("mapped-pe/", VendorMappedPEAPIView.as_view()),
     path("mapped-states/", VendorMappedStatesAPIView.as_view()),

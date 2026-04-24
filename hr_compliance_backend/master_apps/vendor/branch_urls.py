@@ -3,6 +3,8 @@ from .branch_views import (
     BranchStateListAPIView,
     BranchAddressListAPIView,
 )
+from .branch_views import VendorBranchMappingListAPIView
+
 
 urlpatterns = [
     path("branches/states/", BranchStateListAPIView.as_view()),
@@ -10,4 +12,5 @@ urlpatterns = [
 
     # ADD THIS
     path("branches/by-state/", BranchAddressListAPIView.as_view()),
+    path("vendor-mapping/list/", VendorBranchMappingListAPIView.as_view()),
 ]

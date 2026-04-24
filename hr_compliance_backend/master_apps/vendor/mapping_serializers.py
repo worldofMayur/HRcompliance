@@ -11,52 +11,65 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    status = serializers.CharField(read_only=True)
+
+    vendor_name = serializers.CharField(source="vendor.name", read_only=True)
+    branch_name = serializers.CharField(source="branch.short_name", read_only=True)
+    auditor_name = serializers.CharField(source="auditor.name", read_only=True)
+
     class Meta:
         model = VendorBranchMapping
         fields = [
             "id",
             "principal_employer",
             "vendor",
+            "vendor_name",
             "branch",
+            "branch_name",
             "auditor",
+            "auditor_name",
             "documents",
             "start_date",
             "end_date",
             "rule",
             "frequency",
+            "status",
             "created_at",
         ]
+        read_only_fields = ["created_at", "status"]
 
-        read_only_fields = ["created_at"]
-
+    # =========================
+    # ✅ MAIN VALIDATION
+    # =========================
     def validate(self, data):
 
         start_date = data.get("start_date")
         end_date = data.get("end_date")
 
+        # ✅ DATE CHECK
         if start_date and end_date:
             if end_date < start_date:
                 raise serializers.ValidationError({
                     "end_date": "End date must be after start date"
                 })
 
-        return data
-
-    def validate_unique(self, data):
-        """
-        Prevent duplicate mappings
-        """
+        # ✅ DUPLICATE CHECK (FIXED)
         principal_employer = data.get("principal_employer")
         vendor = data.get("vendor")
         branch = data.get("branch")
-        start_date = data.get("start_date")
 
-        if VendorBranchMapping.objects.filter(
+        qs = VendorBranchMapping.objects.filter(
             principal_employer=principal_employer,
             vendor=vendor,
             branch=branch,
             start_date=start_date
-        ).exists():
+        )
+
+        # exclude self during update
+        if self.instance:
+            qs = qs.exclude(id=self.instance.id)
+
+        if qs.exists():
             raise serializers.ValidationError(
                 "This vendor is already mapped to this branch for the selected start date."
             )

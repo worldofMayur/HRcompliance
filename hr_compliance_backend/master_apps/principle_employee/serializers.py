@@ -2,8 +2,9 @@ from rest_framework import serializers
 from .models import (
     PrincipalEmployer,
     PrincipalEmployerDocument,
-    PrincipalEmployerBranch,   # ✅ ADD THIS
+    PrincipalEmployerBranch,
 )
+
 
 class PrincipalEmployerDocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,9 +37,13 @@ class PrincipalEmployerSerializer(serializers.ModelSerializer):
         many=True, read_only=True
     )
 
+    # ✅ ADD THIS (CRITICAL)
+    status = serializers.CharField(read_only=True)
+
     class Meta:
         model = PrincipalEmployer
         fields = "__all__"
+        read_only_fields = ["status"]  # ✅ PROTECT STATUS
 
     # =========================
     # MOBILE VALIDATION

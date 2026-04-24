@@ -16,16 +16,24 @@ class Auditor(models.Model):
     short_name = models.CharField(max_length=50, unique=True)
     company = models.CharField(max_length=255)
     ho_address = models.TextField()
-    mobile = models.CharField(max_length=10)
+
+    # ✅ increased length (safe, no breaking)
+    mobile = models.CharField(max_length=15)
+
     email = models.EmailField()
+
     start_date = models.DateField()
     end_date = models.DateField()
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
 
 
+# ===============================
+# 📁 DOCUMENT UPLOAD PATH
+# ===============================
 def auditor_document_path(instance, filename):
     return f"auditor/{instance.auditor.short_name}/{filename}"
 
@@ -44,3 +52,62 @@ class AuditorDocument(models.Model):
 
     def __str__(self):
         return f"{self.auditor.short_name} document"
+
+
+# ===============================
+# 📊 AUDIT ENTRY MODEL (UPDATED SAFE)
+# ===============================
+class AuditEntry(models.Model):
+
+    auditor = models.ForeignKey(
+        Auditor,
+        on_delete=models.CASCADE,
+        related_name="audit_entries"
+    )
+
+    checklist = models.ForeignKey(
+        "checklist.AuditChecklist",
+        on_delete=models.CASCADE
+    )
+
+    # ✅ KEEPING SAME (no breaking change)
+    branch_id = models.IntegerField()
+
+    audit_period = models.CharField(max_length=100)
+
+    # ✅ CONTROLLED STATUS
+    STATUS_CHOICES = [
+        ("Complied", "Complied"),
+        ("Not Applicable", "Not Applicable"),
+        ("Delayed Complied", "Delayed Complied"),
+    ]
+
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES
+    )
+
+    observation = models.TextField(blank=True, null=True)
+    recommendation = models.TextField(blank=True, null=True)
+
+    # ✅ optional future use (safe)
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # ✅ PREVENT DUPLICATES (VERY IMPORTANT)
+        unique_together = ("checklist", "branch_id", "audit_period")
+
+        # ✅ PERFORMANCE OPTIMIZATION
+        indexes = [
+            models.Index(fields=["branch_id", "audit_period"]),
+        ]
+
+    def __str__(self):
+        return f"{self.auditor.short_name} - {self.audit_period}"

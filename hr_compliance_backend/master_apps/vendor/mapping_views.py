@@ -2,18 +2,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-
 from .mapping_models import VendorBranchMapping
 from .mapping_serializers import VendorBranchMappingSerializer
-
 from master_apps.principle_employee.models import (
     PrincipalEmployer,
     PrincipalEmployerBranch
 )
 from master_apps.documents.models import DocumentMaster
-
-
 from master_apps.principle_employee.models import PrincipalEmployerBranch
+from rest_framework.generics import UpdateAPIView
+from django.utils.timezone import now   # ✅ ADDED
 
 
 # ==========================================================
@@ -78,7 +76,7 @@ class VendorBranchMappingListAPIView(APIView):
         mappings = VendorBranchMapping.objects.filter(
             vendor_id=vendor_id,
             principal_employer=pe
-        ).select_related("vendor", "branch", "auditor", "document")
+        ).select_related("vendor", "branch", "auditor").prefetch_related("documents")
 
         serializer = VendorBranchMappingSerializer(mappings, many=True)
         return Response(serializer.data)
@@ -119,9 +117,8 @@ class PEBranchDropdownAPIView(APIView):
 
 
 # ==========================================================
-# 🔥 VENDOR SIDE DROPDOWN APIs (UNCHANGED LOGIC)
+# 🔥 VENDOR SIDE DROPDOWN APIs
 # ==========================================================
-
 
 # ===============================
 # 1️⃣ MAPPED PE LIST (Vendor Login)
@@ -168,9 +165,13 @@ class VendorMappedStatesAPIView(APIView):
 
         vendor = request.user.vendor_profile
 
+        today = now().date()   # ✅ ADDED
+
         mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
-            principal_employer_id=pe_id
+            principal_employer_id=pe_id,
+            status="Active",
+            end_date__gte=today   # ✅ CRITICAL FIX
         ).select_related("branch")
 
         states = set()
@@ -205,16 +206,25 @@ class VendorMappedBranchesAPIView(APIView):
 
         vendor = request.user.vendor_profile
 
+        today = now().date()   # ✅ ADDED
+
         mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
-            branch__state=state
+            branch__state=state,
+            status="Active",
+            end_date__gte=today   # ✅ CRITICAL FIX
         ).select_related("branch")
 
         branches_dict = {}
 
         for mapping in mappings:
             branch = mapping.branch
+
+            # ✅ FILTER INACTIVE BRANCHES
+            if branch.status != "active":
+                continue
+
             branches_dict[branch.id] = {
                 "id": branch.id,
                 "name": f"{branch.short_name} - {branch.address}"
@@ -226,9 +236,6 @@ class VendorMappedBranchesAPIView(APIView):
 # ===============================
 # 4️⃣ MAPPED DOCUMENTS (Vendor Login)
 # ===============================
-
-
-
 class VendorMappedDocumentsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -244,11 +251,14 @@ class VendorMappedDocumentsAPIView(APIView):
         pe_id = request.GET.get("pe_id")
         branch_id = request.GET.get("branch_id")
 
-        # ✅ GET ALL MAPPINGS (not .first())
+        today = now().date()   # ✅ ADDED
+
         mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
-            branch_id=branch_id
+            branch_id=branch_id,
+            status="Active",
+            end_date__gte=today   # ✅ CRITICAL FIX
         ).prefetch_related("documents")
 
         data = []
@@ -264,3 +274,28 @@ class VendorMappedDocumentsAPIView(APIView):
                 })
 
         return Response(data)
+
+
+# ==========================================================
+# 🔥 UPDATE MAPPING (EDIT FROM UI)
+# ==========================================================
+class VendorBranchMappingUpdateAPIView(UpdateAPIView):
+    queryset = VendorBranchMapping.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        obj = self.get_object()
+
+        serializer = VendorBranchMappingSerializer(
+            obj,
+            data=request.data,
+            partial=True
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({
+            "message": "Mapping updated successfully",
+            "updated_end_date": serializer.data.get("end_date")
+        })

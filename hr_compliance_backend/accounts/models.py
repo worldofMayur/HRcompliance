@@ -50,3 +50,24 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+
+def is_business_active(self):
+    """
+    Check if linked business account is active.
+    DOES NOT block login, only used for API-level control.
+    """
+
+    if self.role == "PE":
+        pe = getattr(self, "principalemployer_profile", None)
+        if pe and pe.status == "Inactive":
+            return False
+
+    if self.role == "VENDOR":
+        vendor = getattr(self, "vendor_profile", None)
+        if vendor:
+            # If ALL mappings inactive → block
+            if not vendor.branch_mappings.filter(status="Active").exists():
+                return False
+
+    return True

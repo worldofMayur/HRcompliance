@@ -10,18 +10,22 @@ from accounts.models import User
 # =========================
 class PrincipalEmployer(models.Model):
 
-    # ✅ NEW
+    STATUS_CHOICES = (
+        ("Active", "Active"),
+        ("Inactive", "Inactive"),
+    )
+
+    RULES_CHOICES = (
+        ("central", "Central"),
+        ("state", "State"),
+    )
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="principalemployer_profile"
-    )
-
-    RULES_CHOICES = (
-        ("central", "Central"),
-        ("state", "State"),
     )
 
     name = models.CharField(max_length=255)
@@ -35,6 +39,13 @@ class PrincipalEmployer(models.Model):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
 
+    # ✅ NEW STATUS FIELD
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default="Active"
+    )
+
     nature_of_business = models.CharField(max_length=100)
     establishment_type = models.CharField(max_length=100)
 
@@ -45,6 +56,25 @@ class PrincipalEmployer(models.Model):
 
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # =========================
+    # ✅ STATUS LOGIC
+    # =========================
+    def update_status(self):
+        today = now().date()
+
+        # If end_date is in past → Inactive
+        if self.end_date and self.end_date < today:
+            self.status = "Inactive"
+        else:
+            self.status = "Active"
+
+    # =========================
+    # ✅ AUTO UPDATE ON SAVE
+    # =========================
+    def save(self, *args, **kwargs):
+        self.update_status()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.short_name})"
@@ -110,3 +140,6 @@ class PrincipalEmployerBranch(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.short_name} - {self.state}"

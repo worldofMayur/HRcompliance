@@ -2,11 +2,15 @@ import os
 from uuid import uuid4
 from django.db import models
 from django.utils.text import slugify
+
 from master_apps.vendor.models import Vendor
 from master_apps.principle_employee.models import PrincipalEmployer, PrincipalEmployerBranch
 from master_apps.documents.models import DocumentMaster
 
 
+# ===============================
+# 📁 MAIN FILE PATH
+# ===============================
 def compliance_main_upload_path(instance, filename):
     filename = f"{uuid4().hex}_{filename}"
 
@@ -24,6 +28,9 @@ def compliance_main_upload_path(instance, filename):
     )
 
 
+# ===============================
+# 📁 SUPPORTING FILE PATH
+# ===============================
 def compliance_supporting_upload_path(instance, filename):
     filename = f"{uuid4().hex}_{filename}"
 
@@ -43,6 +50,9 @@ def compliance_supporting_upload_path(instance, filename):
     )
 
 
+# ===============================
+# 📄 MAIN SUBMISSION MODEL
+# ===============================
 class VendorComplianceSubmission(models.Model):
 
     vendor = models.ForeignKey(
@@ -78,9 +88,16 @@ class VendorComplianceSubmission(models.Model):
         upload_to=compliance_main_upload_path
     )
 
-    remarks = models.TextField(
+    general_remark = models.TextField(
         null=True,
         blank=True
+    )
+
+    # ✅ NEW FIELD (CC EMAILS)
+    cc_emails = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="List of CC email recipients"
     )
 
     submitted_at = models.DateTimeField(auto_now_add=True)
@@ -89,6 +106,9 @@ class VendorComplianceSubmission(models.Model):
         return f"{self.vendor.short_name} - {self.document.name} - {self.audit_period}"
 
 
+# ===============================
+# 📎 SUPPORTING FILE MODEL
+# ===============================
 class VendorComplianceSupportingFile(models.Model):
 
     submission = models.ForeignKey(

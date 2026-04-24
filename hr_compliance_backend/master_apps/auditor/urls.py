@@ -23,6 +23,7 @@ from .views import (
     SaveAuditAPIView,
     AuditorCompliancePeriodAPIView,
     AuditorMappingDetailsAPIView,
+    AuditorComplianceRemarksAPIView,
 )
 from .views import DownloadAuditDocumentsZipAPIView
 
@@ -74,5 +75,10 @@ urlpatterns = [
     "audit/documents-zip/<int:branch_id>/",
     DownloadAuditDocumentsZipAPIView.as_view(),
     name="audit-documents-zip"
+    ),
+    path(
+    "compliance-remarks/",
+    AuditorComplianceRemarksAPIView.as_view(),
+    name="auditor-compliance-remarks"
     ),
 ]

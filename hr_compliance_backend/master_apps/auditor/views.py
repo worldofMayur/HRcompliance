@@ -32,16 +32,17 @@ import zipfile
 import os
 from django.http import HttpResponse
 from io import BytesIO
+from .models import AuditEntry
+import logging
 
-
-# ❌ REMOVED WRONG IMPORT
-# from master_apps.documents.models import AuditSubmission
-
-
+logger = logging.getLogger(__name__)
+# ================= ZIP DOWNLOAD =================
 class DownloadAuditDocumentsZipAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, branch_id):
+
+        import re
 
         vendor_id = request.GET.get("vendor_id")
         audit_period = request.GET.get("audit_period")
@@ -50,21 +51,57 @@ class DownloadAuditDocumentsZipAPIView(APIView):
             branch_id=branch_id,
             vendor_id=vendor_id,
             audit_period=audit_period
-        )
+        ).select_related("branch", "vendor")
+
+        # ✅ NEW: HANDLE EMPTY CASE
+        if not submissions.exists():
+            return Response({"error": "No documents found"}, status=404)
 
         buffer = BytesIO()
 
+        def clean(text):
+            return re.sub(r'[^A-Za-z0-9_-]', '_', text or "")
+
+        first_sub = submissions.first()
+
+        vendor_name = first_sub.vendor.short_name if first_sub and first_sub.vendor else "vendor"
+        branch_name = first_sub.branch.short_name if first_sub and first_sub.branch else "branch"
+
+        safe_vendor = clean(vendor_name)
+        safe_branch = clean(branch_name)
+        safe_period = clean(audit_period or "period")
+
+        zip_filename = f"{safe_vendor}_{safe_branch}_{safe_period}.zip"
+
         with zipfile.ZipFile(buffer, "w") as zip_file:
+
             for sub in submissions:
                 try:
-                    if not sub.main_file:
-                        continue
+                    if sub.main_file:
+                        file_path = sub.main_file.path
 
-                    file_path = sub.main_file.path
+                        if os.path.exists(file_path):
+                            file_name = os.path.basename(file_path)
 
-                    if os.path.exists(file_path):
-                        file_name = os.path.basename(file_path)
-                        zip_file.write(file_path, arcname=file_name)
+                            zip_file.write(
+                                file_path,
+                                arcname=f"main_documents/{sub.id}_{file_name}"
+                            )
+
+                    for supp in sub.supporting_files.all():
+                        try:
+                            supp_path = supp.file.path
+
+                            if os.path.exists(supp_path):
+                                supp_name = os.path.basename(supp_path)
+
+                                zip_file.write(
+                                    supp_path,
+                                    arcname=f"additional_documents/{sub.id}_{supp_name}"
+                                )
+
+                        except Exception as e:
+                            print("SUPPORTING FILE ERROR:", str(e))
 
                 except Exception as e:
                     print("ZIP ERROR:", str(e))
@@ -72,18 +109,215 @@ class DownloadAuditDocumentsZipAPIView(APIView):
         buffer.seek(0)
 
         response = HttpResponse(buffer, content_type="application/zip")
-        response["Content-Disposition"] = 'attachment; filename="audit_documents.zip"'
+        response["Content-Disposition"] = f'attachment; filename="{zip_filename}"'
 
         return response
 
-# ==========================================================
-# ================= EXISTING CRUD (UNCHANGED) ===============
-# ==========================================================
 
-# (KEEP YOUR EXISTING CREATE / LIST / UPDATE / DELETE EXACTLY SAME)
-# ---- NO CHANGE BELOW ----
+# ================= SAVE AUDIT (UPDATED ONLY) =================
 
-# ============================ CREATE ============================
+class SaveAuditAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+
+        from django.conf import settings
+        from django.core.mail import EmailMultiAlternatives
+
+        branch_id = request.data.get("branch_id")
+        audit_period = request.data.get("audit_period")
+        entries = request.data.get("entries", [])
+
+        logger.info("🔄 Audit API called")
+
+        # =========================
+        # VALIDATION
+        # =========================
+        if not branch_id or not entries:
+            logger.error("❌ Missing data")
+            return Response({"error": "Missing required data"}, status=400)
+
+        # =========================
+        # SECURITY CHECK
+        # =========================
+        mapping = VendorBranchMapping.objects.filter(
+            auditor__user=request.user,
+            branch_id=branch_id
+        ).select_related("vendor", "principal_employer", "branch").first()
+
+        if not mapping:
+            logger.error("❌ Unauthorized mapping")
+            return Response({"error": "Unauthorized mapping"}, status=403)
+
+        vendor = mapping.vendor
+        pe = mapping.principal_employer
+        branch = mapping.branch
+
+        logger.info(f"✅ Mapping found: {vendor.short_name} - {branch.short_name}")
+
+        # =========================
+        # VALIDATE STATUS
+        # =========================
+        valid_status = [
+            "Complied",
+            "Not Applicable",
+            "Not Applicable For Audit Period",
+            "Delayed Complied",
+            "Exceptional Approval - Delayed Complied"
+        ]
+
+        for entry in entries:
+            if entry.get("status") not in valid_status:
+                logger.error("❌ Invalid status found")
+                return Response({"error": "Invalid status"}, status=400)
+
+        logger.info("✅ All statuses valid")
+
+        # =========================
+        # SAVE / UPDATE (UPSERT)
+        # =========================
+        saved_count = 0
+
+        for entry in entries:
+            AuditEntry.objects.update_or_create(
+                checklist_id=entry.get("checklist_id"),
+                branch_id=branch_id,
+                audit_period=audit_period,
+                defaults={
+                    "auditor": request.user.auditor_profile,
+                    "status": entry.get("status"),
+                    "observation": entry.get("observation"),
+                    "recommendation": entry.get("recommendation"),
+                    "submitted_by": request.user
+                }
+            )
+            saved_count += 1
+
+        logger.info(f"✅ {saved_count} audit entries saved")
+
+        # =========================
+        # CERTIFICATE CONDITION
+        # =========================
+        if not all(e.get("status") in valid_status for e in entries):
+            logger.warning("❌ Certificate not issued")
+            return Response({"message": "Audit saved but certificate not issued"})
+
+        logger.info("🎯 Certificate condition satisfied")
+
+        # =========================
+        # GET CC EMAILS
+        # =========================
+        submissions = VendorComplianceSubmission.objects.filter(
+            branch_id=branch_id,
+            vendor=vendor,
+            audit_period=audit_period
+        ).order_by("-submitted_at")
+
+        cc_emails = []
+
+        for sub in submissions:
+            if sub.cc_emails:
+                cc_emails = sub.cc_emails
+                break
+
+        logger.info(f"📧 Email TO: {vendor.email}")
+        logger.info(f"📧 Email CC: {', '.join(cc_emails) if cc_emails else 'None'}")
+
+        # =========================
+        # SEND EMAIL (SMTP - FIXED)
+        # =========================
+        try:
+            subject = f"Compliance Clearance – {audit_period} – {branch.state} – {pe.short_name} – {vendor.short_name}"
+
+            html_content = f"""
+            <div style="font-family: Arial; line-height:1.6;">
+                <p>Hello {vendor.name},</p>
+
+                <p>Compliance Clearance Certificate has been issued.</p>
+
+                <ul>
+                    <li><b>PE Name:</b> {pe.name}</li>
+                    <li><b>State:</b> {branch.state}</li>
+                    <li><b>Branch:</b> {branch.short_name}</li>
+                    <li><b>Audit Period:</b> {audit_period}</li>
+                </ul>
+            """
+
+            # Exceptional Approval section
+            exception_entries = [
+                e for e in entries
+                if e.get("status") in ["Delayed Complied", "Exceptional Approval - Delayed Complied"]
+            ]
+
+            if exception_entries:
+                html_content += "<h4>Exceptional Approval:</h4>"
+                for e in exception_entries:
+                    html_content += f"""
+                    <p>
+                    <b>Observation:</b> {e.get('observation') or '-'}<br>
+                    <b>Recommendation:</b> {e.get('recommendation') or '-'}
+                    </p>
+                    """
+
+            html_content += "<p>Thanks & Regards<br>Vendor Compliance Audit Tool</p></div>"
+
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body="Compliance Certificate Issued",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[vendor.email],
+                cc=cc_emails if cc_emails else []
+            )
+
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+
+            logger.info(
+                f"✅ Email sent successfully | TO: {vendor.email} | CC: {', '.join(cc_emails) if cc_emails else 'None'}"
+            )
+
+        except Exception as e:
+            logger.error(
+                f"❌ Email failed | TO: {vendor.email} | Error: {str(e)}"
+            )
+
+        # =========================
+        # FINAL RESPONSE
+        # =========================
+        return Response({
+            "message": "Audit saved & certificate issued successfully"
+        })
+
+class AuditorMappedStatesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        pe_id = request.GET.get("pe_id")
+        vendor_id = request.GET.get("vendor_id")
+
+        if request.user.role != "AUDITOR":
+            return Response([])
+
+        mappings = VendorBranchMapping.objects.filter(
+            auditor__user=request.user,
+            principal_employer_id=pe_id,
+            vendor_id=vendor_id
+        ).select_related("branch")
+
+        states = set()
+
+        for m in mappings:
+            if m.branch and m.branch.state:
+                states.add(m.branch.state)
+
+        return Response([
+            {"id": state, "name": state}
+            for state in states
+        ])
+
+# ================= CREATE =================
 class AuditorCreateAPIView(APIView):
     def post(self, request):
         try:
@@ -180,7 +414,7 @@ class AuditorCreateAPIView(APIView):
             return Response({"error": str(e)}, status=500)
 
 
-# ============================ LIST ============================
+# ================= LIST =================
 class AuditorListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -190,7 +424,7 @@ class AuditorListAPIView(APIView):
         return Response(serializer.data)
 
 
-# ============================ UPDATE ============================
+# ================= UPDATE =================
 class AuditorUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -205,7 +439,7 @@ class AuditorUpdateAPIView(APIView):
         return Response(serializer.errors, status=400)
 
 
-# ============================ DELETE ============================
+# ================= DELETE =================
 class AuditorDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -221,11 +455,7 @@ class AuditorDeleteAPIView(APIView):
         return Response({"message": "Auditor deleted successfully"})
 
 
-# ==========================================================
-# ================= NEW AUDITOR FLOW ========================
-# ==========================================================
-
-# 🔥 1. PE LIST
+# ================= AUDITOR FLOW =================
 class AuditorMappedPEAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -235,16 +465,11 @@ class AuditorMappedPEAPIView(APIView):
         )
 
         pe_ids = mappings.values_list("principal_employer_id", flat=True).distinct()
-
         pes = PrincipalEmployer.objects.filter(id__in=pe_ids)
 
-        return Response([
-            {"id": pe.id, "short_name": pe.short_name}
-            for pe in pes
-        ])
+        return Response([{"id": pe.id, "short_name": pe.short_name} for pe in pes])
 
 
-# 🔥 2. VENDOR LIST
 class AuditorMappedVendorAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -257,24 +482,18 @@ class AuditorMappedVendorAPIView(APIView):
         )
 
         vendor_ids = mappings.values_list("vendor_id", flat=True).distinct()
-
         vendors = Vendor.objects.filter(id__in=vendor_ids)
 
-        return Response([
-            {"id": v.id, "name": v.name}
-            for v in vendors
-        ])
+        return Response([{"id": v.id, "name": v.name} for v in vendors])
 
 
-# 🔥 3. BRANCH LIST
-# 🔥 4. BRANCH LIST (UPDATED WITH STATE FILTER)
 class AuditorMappedBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         pe_id = request.GET.get("pe_id")
         vendor_id = request.GET.get("vendor_id")
-        state = request.GET.get("state")  # ✅ NEW
+        state = request.GET.get("state")
 
         mappings = VendorBranchMapping.objects.filter(
             auditor__user=request.user,
@@ -282,7 +501,6 @@ class AuditorMappedBranchesAPIView(APIView):
             vendor_id=vendor_id
         ).select_related("branch")
 
-        # ✅ Apply state filter if provided
         if state:
             mappings = mappings.filter(branch__state__iexact=state)
 
@@ -295,20 +513,15 @@ class AuditorMappedBranchesAPIView(APIView):
         ])
 
 
+# ================= CHECKLIST =================
 class AuditChecklistAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, branch_id):
 
-        # ===============================
-        # GET SELECTED FILTERS
-        # ===============================
         vendor_id = request.GET.get("vendor_id")
         audit_period = request.GET.get("audit_period")
 
-        # ===============================
-        # GET BRANCH MAPPING
-        # ===============================
         mappings = VendorBranchMapping.objects.filter(
             auditor__user=request.user,
             branch_id=branch_id
@@ -320,69 +533,37 @@ class AuditChecklistAPIView(APIView):
         branch = mappings.first().branch
         state = branch.state
 
-        # ===============================
-        # GET ONLY FILTERED SUBMISSIONS
-        # ===============================
         submissions = VendorComplianceSubmission.objects.filter(
             branch_id=branch_id,
             vendor_id=vendor_id,
             audit_period=audit_period
         )
 
-        submitted_document_ids = submissions.values_list(
-            "document_id",
-            flat=True
-        )
+        submitted_document_ids = submissions.values_list("document_id", flat=True)
 
         submission_map = {
             sub.document_id: sub
             for sub in submissions
         }
 
-        # ===============================
-        # GET CHECKLIST ONLY FOR
-        # SUBMITTED DOCUMENTS
-        # ===============================
         checklist_qs = AuditChecklist.objects.filter(
             state__name__iexact=state,
             is_active=True,
             document_id__in=submitted_document_ids
-        ).select_related(
-            "act",
-            "section",
-            "document"
-        )
+        ).select_related("act", "section", "document")
 
-        # ===============================
-        # GET ONLY FILTERED SUBMISSIONS
-        # ===============================
-        submissions = VendorComplianceSubmission.objects.filter(
-            branch_id=branch_id,
-            vendor_id=vendor_id,
-            audit_period=audit_period
-        )
+        # ✅ SAFE ACCESS
+        auditor = getattr(request.user, "auditor_profile", None)
 
-        submission_map = {
-            sub.document_id: sub
-            for sub in submissions
-        }
+        auditor_doc = None
+        if auditor:
+            auditor_doc = AuditorDocument.objects.filter(
+                auditor=auditor
+            ).order_by("-uploaded_at").first()
 
         response = []
 
-        # ===============================
-        # AUDITOR MASTER DOC (GUIDELINE DOC)
-        # ===============================
-        auditor = request.user.auditor_profile
-
-        auditor_doc = AuditorDocument.objects.filter(
-            auditor=auditor
-        ).order_by("-uploaded_at").first()
-
-        # ===============================
-        # BUILD RESPONSE
-        # ===============================
         for item in checklist_qs:
-
             sub = submission_map.get(item.document_id)
 
             response.append({
@@ -390,35 +571,61 @@ class AuditChecklistAPIView(APIView):
                 "state": item.state.name,
                 "act_name": item.act.name,
                 "audit_particulars": item.audit_particulars,
-                "section_rule": (
-                    item.section.section_number
-                    if item.section else ""
-                ),
+                "section_rule": item.section.section_number if item.section else "",
                 "form_number": item.form_number,
-                "document_name": (
-                    item.document.name
-                    if item.document else ""
-                ),
-
-                # auditor guideline master document
-                "document": (
-                    request.build_absolute_uri(
-                        auditor_doc.document.url
-                    )
-                    if auditor_doc and auditor_doc.document
-                    else None
-                ),
-
+                "document_name": item.document.name if item.document else "",
+                "document": request.build_absolute_uri(auditor_doc.document.url)
+                if auditor_doc and auditor_doc.document else None,
                 "auditor_guide": item.auditor_guide,
-
-                # compliance status based on vendor upload
-                "status": (
-                    "Complied"
-                    if sub else "Not Complied"
-                ),
+                "status": "Complied" if sub else "Not Complied",
             })
 
         return Response(response)
+
+
+# ================= REMARKS =================
+class AuditorComplianceRemarksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "AUDITOR":
+            return Response([], status=403)
+
+        branch_id = request.GET.get("branch_id")
+        vendor_id = request.GET.get("vendor_id")
+
+        submissions = VendorComplianceSubmission.objects.filter(
+            branch_id=branch_id,
+            vendor_id=vendor_id
+        ).select_related("document").order_by("-submitted_at")
+
+        data = {}
+
+        for sub in submissions:
+
+            # ✅ USE audit_period (more accurate)
+            date_key = sub.submitted_at.strftime("%Y-%m-%d")
+
+            if date_key not in data:
+                data[date_key] = {
+                    "date": date_key,
+                    "general_remark": None,
+                    "documents": []
+                }
+
+            if sub.general_remark:
+                data[date_key]["general_remark"] = sub.general_remark
+
+            data[date_key]["documents"].append({
+                "document_name": sub.document.name if sub.document else "",
+                "remark": None,
+                "file": sub.main_file.url if sub.main_file else None
+            })
+
+        # ✅ SORTED RESPONSE
+        return Response(sorted(data.values(), key=lambda x: x["date"], reverse=True))
+
 
 class AuditorCompliancePeriodAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -447,44 +654,6 @@ class AuditorCompliancePeriodAPIView(APIView):
             })
 
         return Response(data)
-
-# 🔥 3. STATE LIST (NEW)
-class AuditorMappedStatesAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-
-        pe_id = request.GET.get("pe_id")
-        vendor_id = request.GET.get("vendor_id")
-
-        if request.user.role != "AUDITOR":
-            return Response([])
-
-        mappings = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
-            principal_employer_id=pe_id,
-            vendor_id=vendor_id
-        ).select_related("branch")
-
-        states = set()
-
-        for m in mappings:
-            if m.branch and m.branch.state:
-                states.add(m.branch.state)
-
-        return Response([
-            {"id": state, "name": state}
-            for state in states
-        ])
-
-
-# 🔥 5. SAVE AUDIT
-class SaveAuditAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        return Response({"message": "Audit saved successfully"})
-
 
 class AuditorMappingDetailsAPIView(APIView):
     permission_classes = [IsAuthenticated]

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Table, Upload, Input, Button, message, Select } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
+import CCEmailInput from "./CCEmailInput";
 import type { ColumnsType } from "antd/es/table";
 
 const { TextArea } = Input;
@@ -34,7 +35,6 @@ interface DocumentRow {
   document_name: string;
   audit_period?: string;
   fileList: UploadFile[];
-  remark: string;
   isAdditional?: boolean;
 }
 
@@ -52,6 +52,8 @@ export default function VendorCompliancePage() {
   const [states, setStates] = useState<StateType[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [documents, setDocuments] = useState<DocumentType[]>([]);
+  const [ccEmails, setCcEmails] = useState<string[]>([]);
+  const docRef = useRef(null);
 
   /* ================= SELECTED ================= */
 
@@ -82,6 +84,24 @@ useEffect(() => {
     setSelectedPeriod(options[options.length - 1]); // latest
   }
 }, [mappingStartDate, mappingEndDate, frequencyBase]);
+
+useEffect(() => {
+  if (selectedPE) {
+    loadStates(selectedPE);
+  }
+}, [selectedPE]);
+
+useEffect(() => {
+  if (selectedPE && selectedState) {
+    loadBranches(selectedPE, selectedState);
+  }
+}, [selectedState]);
+
+useEffect(() => {
+  if (selectedPE && selectedBranch) {
+    loadDocuments(selectedPE, selectedBranch);
+  }
+}, [selectedBranch]);
 
 
   const loadMappedPE = async () => {
@@ -114,35 +134,77 @@ useEffect(() => {
     setBranches(res.data);
   };
 
-  const loadDocuments = async (peId: string, branchId: string) => {
+    const refreshAll = async () => {
+    if (selectedPE) {
+      await loadStates(selectedPE);
+    }
+    if (selectedPE && selectedState) {
+      await loadBranches(selectedPE, selectedState);
+    }
+    if (selectedPE && selectedBranch) {
+      await loadDocuments(selectedPE, selectedBranch);
+    }
+  };
+
+const loadDocuments = async (peId: string, branchId: string) => {
+    if (!peId || !branchId) return;
+  try {
 
     const res = await axios.get(
       `http://127.0.0.1:8000/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}`,
       authHeader
     );
 
-    setDocuments(res.data);
+    const data = res.data || [];
 
-      if (res.data.length > 0) {
-        const base = res.data[0].frequency || "";
-        setFrequencyBase(base);
+    setDocuments(data);
 
-        // ✅ ADD THIS
-        setMappingStartDate(new Date(res.data[0].start_date));
-        setMappingEndDate(new Date(res.data[0].end_date));
-      }
+    // ✅ HANDLE MAPPING DATA SAFELY
+    if (data.length > 0) {
 
-    const rows: DocumentRow[] = res.data.map((doc: DocumentType) => ({
+      const base = data[0].frequency || "";
+      setFrequencyBase(base);
+
+      setMappingStartDate(data[0].start_date ? new Date(data[0].start_date) : null);
+      setMappingEndDate(data[0].end_date ? new Date(data[0].end_date) : null);
+
+    } else {
+
+      // ✅ RESET if no data
+      setFrequencyBase("");
+      setMappingStartDate(null);
+      setMappingEndDate(null);
+    }
+
+    // ✅ BUILD TABLE ROWS
+    const rows: DocumentRow[] = data.map((doc: DocumentType) => ({
       key: `doc-${doc.id}`,
       document_id: doc.id,
       document_name: doc.name,
       audit_period: doc.audit_period,
       fileList: [],
-      remark: "",
     }));
 
     setTableData(rows);
-  };
+
+    // ✅ AUTO SCROLL TO DOCUMENT SECTION
+    setTimeout(() => {
+      docRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+
+  } catch (error) {
+
+    console.error(error);
+    message.error("Failed to load documents");
+
+    // ✅ SAFE RESET ON ERROR
+    setDocuments([]);
+    setTableData([]);
+    setFrequencyBase("");
+    setMappingStartDate(null);
+    setMappingEndDate(null);
+  }
+};
 
   /* ================= PERIOD OPTIONS ================= */
 const getPeriodOptions = () => {
@@ -318,7 +380,6 @@ const isValidPeriod = (start, end) => {
         document_name: "Additional Document",
         audit_period: selectedPeriod,
         fileList: [],
-        remark: "",
         isAdditional: true
       }
     ]);
@@ -331,23 +392,13 @@ const columns: ColumnsType<DocumentRow> = [
   {
     title: "Document Name",
     dataIndex: "document_name",
-    width: "25%",
+    width: "35%",
     align: "center",
-  },
-
-  {
-    title: "Compliance Period",
-    dataIndex: "audit_period",
-    width: "20%",
-    align: "center",
-    render: () => (
-      <span className="font-medium">{selectedPeriod}</span>
-    )
   },
 
   {
     title: "Upload File",
-    width: "25%",
+    width: "30%",
     align: "center",
     render: (_, record) => (
       <Upload
@@ -359,13 +410,7 @@ const columns: ColumnsType<DocumentRow> = [
           updateRow(record.key, { fileList })
         }
       >
-        <Button
-          size="small"
-          style={{
-            borderRadius: 10,
-            height: 30
-          }}
-        >
+        <Button size="small" style={{ borderRadius: 10 }}>
           Upload
         </Button>
       </Upload>
@@ -373,116 +418,126 @@ const columns: ColumnsType<DocumentRow> = [
   },
 
   {
-    title: "Remark",
-    width: "25%",
-    align: "center",
-    render: (_, record) => (
-      <Input
-        size="small"
-        value={record.remark}
-        onChange={(e) =>
-          updateRow(record.key, { remark: e.target.value })
-        }
-        className="rounded-xl text-center"
-        style={{ height: 34 }}
-      />
-    ),
-  },
-
-  {
     title: "",
-    width: "5%",
+    width: "10%",
     align: "center",
     render: (_, record) =>
       record.isAdditional ? (
-        <Button
-          danger
-          size="small"
-          style={{ borderRadius: 10 }}
-          onClick={() => removeRow(record.key)}
-        >
+        <Button danger size="small" onClick={() => removeRow(record.key)}>
           Remove
         </Button>
       ) : null,
   }
-
 ];
 
   /* ================= SUBMIT ================= */
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
 
-    if (!selectedPE || !selectedState || !selectedBranch || !selectedPeriod) {
-      message.error("Complete all selections.");
-      return;
-    }
+  if (!selectedPE || !selectedState || !selectedBranch || !selectedPeriod) {
+    message.error("Complete all selections.");
+    return;
+  }
 
-    const hasFile = tableData.some(r => r.fileList.length > 0);
+  const hasFile = tableData.some(r => r.fileList.length > 0);
 
-    if (!hasFile) {
-      message.error("Upload at least one document.");
-      return;
-    }
+  if (!hasFile) {
+    message.error("Upload at least one document.");
+    return;
+  }
 
-    try {
+  if (!generalRemark.trim()) {
+    message.error("Please enter general remark.");
+    return;
+  }
 
-      setLoading(true);
+  // ✅ CC EMAIL VALIDATION
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-      const formData = new FormData();
+  const invalidEmails = (ccEmails || []).filter(e => !isValidEmail(e));
 
-      formData.append("pe_id", selectedPE);
-      formData.append("branch_id", selectedBranch);
-      formData.append("state_id", selectedState);
-      formData.append("selected_period", selectedPeriod);
-      formData.append("general_remark", generalRemark);
+  if (invalidEmails.length > 0) {
+    message.error("Invalid email(s) in CC field");
+    return;
+  }
 
-      tableData.forEach((row, index) => {
+  try {
+    setLoading(true);
 
-        if (row.fileList.length > 0) {
+    const formData = new FormData();
 
+    formData.append("pe_id", selectedPE);
+    formData.append("branch_id", selectedBranch);
+    formData.append("state_id", selectedState);
+    formData.append("selected_period", selectedPeriod);
+    formData.append("general_remark", generalRemark);
+
+    // ✅ ADD CC EMAILS
+    formData.append("cc_emails", JSON.stringify(ccEmails || []));
+
+    let fileIndex = 0;
+
+    tableData.forEach((row) => {
+      if (row.fileList.length > 0) {
+
+        formData.append(
+          `document_${fileIndex}_file`,
+          row.fileList[0].originFileObj as File
+        );
+
+        if (row.document_id) {
           formData.append(
-            `document_${index}_file`,
-            row.fileList[0].originFileObj as File
+            `document_${fileIndex}_id`,
+            row.document_id.toString()
           );
-
-          formData.append(
-            `document_${index}_remark`,
-            row.remark
-          );
-
-          if (row.document_id) {
-
-            formData.append(
-              `document_${index}_id`,
-              row.document_id.toString()
-            );
-          }
         }
-      });
 
-      await axios.post(
-        "http://127.0.0.1:8000/api/vendor/submit-compliance/",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+        fileIndex++;
+      }
+    });
 
-      message.success("Compliance submitted successfully");
+    await axios.post(
+      "http://127.0.0.1:8000/api/vendor/submit-compliance/",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
-    } catch {
+    // ✅ REFRESH DROPDOWNS (ONLY ACTIVE DATA)
+    await refreshAll();
 
-      message.error("Submission failed");
+    message.success({
+      content: "Compliance submitted successfully",
+      duration: 3,
+    });
 
-    } finally {
+    // ✅ CLEAR ONLY FORM DATA (IMPORTANT)
+    setTableData([]);
+    setGeneralRemark("");
+    setCcEmails([]);
 
-      setLoading(false);
-    }
-  };
+  } catch (err: any) {
 
+    console.error(err);
+
+    const errorMsg =
+      err?.response?.data?.error ||
+      "Submission failed";
+
+    message.error(errorMsg);
+
+  } finally {
+    setLoading(false);
+  }
+};
+
+const uploadedCount = tableData.filter(r => r.fileList.length > 0).length;
+const totalDocs = tableData.length;
   /* ================= UI ================= */
 
   return (
@@ -505,8 +560,6 @@ const columns: ColumnsType<DocumentRow> = [
       <div className="bg-white p-6 rounded-xl shadow-sm border">
 
         <div className="grid md:grid-cols-4 gap-6">
-              <p className="text-sm text-gray-500">PE Agreement Validity        </p>
-
           {/* PE */}
 
           {/* AGREEMENT DATE RANGE */}
@@ -543,14 +596,13 @@ const columns: ColumnsType<DocumentRow> = [
             <select
               value={selectedPE}
               onChange={(e) => {
+                const peId = e.target.value;
 
-                setSelectedPE(e.target.value);
+                setSelectedPE(peId);
                 setSelectedState("");
                 setSelectedBranch("");
                 setSelectedPeriod("");
                 setTableData([]);
-
-                loadStates(e.target.value);
               }}
               className="border rounded-xl px-3 py-2 text-sm"
             >
@@ -578,13 +630,12 @@ const columns: ColumnsType<DocumentRow> = [
               disabled={!selectedPE}
               value={selectedState}
               onChange={(e) => {
+                const state = e.target.value;
 
-                setSelectedState(e.target.value);
+                setSelectedState(state);
                 setSelectedBranch("");
                 setSelectedPeriod("");
                 setTableData([]);
-
-                loadBranches(selectedPE, e.target.value);
               }}
               className="border rounded-xl px-3 py-2 text-sm"
             >
@@ -611,11 +662,10 @@ const columns: ColumnsType<DocumentRow> = [
             <select
               disabled={!selectedState}
               value={selectedBranch}
-              onChange={(e) => {
+                onChange={(e) => {
+                const branchId = e.target.value;
 
-                setSelectedBranch(e.target.value);
-
-                loadDocuments(selectedPE, e.target.value);
+                setSelectedBranch(branchId);
               }}
               className="border rounded-xl px-3 py-2 text-sm"
             >
@@ -636,7 +686,7 @@ const columns: ColumnsType<DocumentRow> = [
           <div className="flex flex-col">
 
             <label className="text-xs font-semibold text-gray-500 mb-1">
-              Compliance Period
+              Compliance Audit Period
             </label>
 
 <Select
@@ -691,38 +741,135 @@ const columns: ColumnsType<DocumentRow> = [
 
       {/* DOCUMENT SECTION */}
 
-      {selectedPeriod && (
+  {selectedPeriod && (
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
+    <div ref={docRef} className="bg-white p-6 rounded-xl shadow-sm border">
 
-          <div className="flex justify-between mb-4">
+  <div className="flex justify-between items-center mb-4">
 
-            <h2 className="text-lg font-semibold">
-              Compliance Documents
-            </h2>
+    {/* LEFT SIDE */}
+    <div className="flex items-center gap-3">
 
-            <Button
-              type="primary"
-              ghost
-              onClick={addAdditionalDocument}
-            >
-              + Add Additional Document
-            </Button>
+      <h2 className="text-lg font-semibold text-gray-800 leading-none">
+        Compliance Documents
+      </h2>
 
-          </div>
+      <span className="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-medium leading-none">
+        {selectedPeriod}
+      </span>
+
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="flex items-center gap-4">
+
+      {/* ✅ UPLOAD PROGRESS */}
+      <span className="text-sm font-medium text-gray-600">
+        {totalDocs === 0
+          ? "No documents"
+          : `${uploadedCount}/${totalDocs} Uploaded`}
+      </span>
+
+      {/* ADD BUTTON */}
+      <Button
+        type="primary"
+        ghost
+        onClick={addAdditionalDocument}
+      >
+        + Add Additional Document
+      </Button>
+
+    </div>
+
+  </div>
 
 
-          <Table
-            columns={columns}
-            dataSource={tableData}
-            pagination={false}
-            bordered
-            size="middle"
-            scroll={{ x: true }}
-            locale={{
-              emptyText: "No documents available for this branch"
-            }}
-          />
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+
+  {/* EMPTY STATE */}
+{tableData.length === 0 && (
+  <div className="col-span-full text-center py-10">
+
+    <div className="text-gray-400 text-lg">
+      ⚠ No compliance documents available
+    </div>
+
+    <p className="text-xs text-gray-400 mt-2">
+      No documents are mapped for this branch
+    </p>
+
+  </div>
+)}
+
+  {tableData.map((record) => (
+
+    <div
+      key={record.key}
+      className="border rounded-2xl p-4 bg-white shadow-sm hover:shadow-md transition h-32 flex flex-col justify-between"
+    >
+
+      {/* TOP: NAME + TAG */}
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-gray-800 truncate">
+          {record.document_name}
+        </span>
+
+        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+          Required
+        </span>
+      </div>
+
+      {/* MIDDLE: UPLOAD BUTTON */}
+      <div className="flex items-center justify-between">
+
+        <Upload
+          beforeUpload={() => false}
+          fileList={record.fileList}
+          maxCount={1}
+          showUploadList={false}   // cleaner UI
+          onChange={({ fileList }) =>
+            updateRow(record.key, { fileList })
+          }
+        >
+          <Button
+            size="small"
+            className="rounded-lg bg-blue-600 text-white hover:bg-blue-700 border-none"
+          >
+            Upload
+          </Button>
+        </Upload>
+
+        {/* REMOVE BUTTON */}
+        {record.isAdditional && (
+          <Button
+            danger
+            size="small"
+            onClick={() => removeRow(record.key)}
+          >
+            Remove
+          </Button>
+        )}
+
+      </div>
+
+      {/* BOTTOM: FILE NAME */}
+      <div className="text-xs truncate">
+
+        {record.fileList.length > 0 ? (
+          <span className="text-green-600 font-medium">
+            ✔ Uploaded: {record.fileList[0].name}
+          </span>
+        ) : (
+<span className="text-gray-400 italic">No file uploaded</span>
+        )}
+
+      </div>
+
+    </div>
+
+  ))}
+
+</div>
 
 
           <div className="mt-8">
@@ -750,14 +897,22 @@ const columns: ColumnsType<DocumentRow> = [
 
         <div className="flex justify-end">
 
-          <Button
-            type="primary"
-            size="large"
-            loading={loading}
-            onClick={handleSubmit}
-          >
-            Submit Compliance Record
-          </Button>
+        <Button
+          type="primary"
+          size="medium"
+          loading={loading}
+          disabled={
+            !selectedPE ||
+            !selectedState ||
+            !selectedBranch ||
+            !selectedPeriod ||
+            tableData.every(r => r.fileList.length === 0) ||
+            !generalRemark.trim()
+          }
+          onClick={handleSubmit}
+        >
+          Submit Compliance Record
+        </Button>
 
         </div>
 

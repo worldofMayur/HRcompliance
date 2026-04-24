@@ -21,7 +21,6 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import AuditorDashboard from "./pages/Auditor/AuditorDashboard";
 import Home from "./pages/Dashboard/Home";
-
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
 
@@ -39,8 +38,12 @@ import "antd/dist/reset.css";
 import Documents from "./pages/Forms/Documents";
 import VendorMapping from "./pages/Forms/VendorMapping";
 
-// ✅ NEW IMPORT
+// EXISTING
 import VendorCompliancePage from "./pages/VendorCompliancePage";
+
+// 🆕 NEW PE COMPONENTS
+import ManageVendor from "./pages/PrincipleEmployee/ManageVendor";
+import Notifications from "./pages/PrincipleEmployee/Notifications";
 
 export default function App() {
   useEffect(() => {
@@ -85,7 +88,7 @@ export default function App() {
         >
           <Route index element={<Home />} />
 
-          {/* ✅ AUDITOR DASHBOARD (FIXED POSITION) */}
+          {/* AUDITOR */}
           <Route
             path="auditor-dashboard"
             element={
@@ -149,7 +152,7 @@ export default function App() {
             }
           />
 
-          {/* PE ONLY */}
+          {/* ================= PE ================= */}
           <Route
             path="vendor-mapping"
             element={
@@ -159,7 +162,28 @@ export default function App() {
             }
           />
 
-          {/* VENDOR ONLY */}
+          {/* 🆕 MANAGE VENDOR (PE) */}
+          <Route
+            path="manage-vendor"
+            element={
+              <ProtectedRoute allowedRoles={["PE"]}>
+                <ManageVendor />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 🆕 NOTIFICATIONS (PE) */}
+          <Route
+            path="vendor-notifications"
+            element={
+              <ProtectedRoute allowedRoles={["PE"]}>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* VENDOR */}
+          {/* VENDOR */}
           <Route
             path="vendor-compliance"
             element={

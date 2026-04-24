@@ -219,53 +219,108 @@ const AppSidebar: React.FC = () => {
 
             {/* ================= PE MENU ================= */}
             {role === "PE" && (
-              <li>
-                <Link
-                  to="vendor-mapping"
-                  onClick={handleNavigation}
-                  className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
-                    ${
-                      isActive("/vendor-mapping")
-                        ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
-                    }`}
-                >
-                  <span className="menu-item-icon-size">
-                    <BoxCubeIcon />
-                  </span>
-                  {(isExpanded || isHovered || isMobileOpen) && (
-                    <span className="menu-item-text font-medium">
-                      Vendor Mapping
+              <>
+                {/* 🔹 Vendor Mapping */}
+                <li>
+                  <Link
+                    to="vendor-mapping"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/vendor-mapping")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <BoxCubeIcon />
                     </span>
-                  )}
-                </Link>
-              </li>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Vendor Mapping
+                      </span>
+                    )}
+                  </Link>
+                </li>
+
+                {/* 🔹 Manage Vendor */}
+                <li>
+                  <Link
+                    to="manage-vendor"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/manage-vendor")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <BoxCubeIcon />
+                    </span>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Manage Vendor
+                      </span>
+                    )}
+                  </Link>
+                </li>
+
+                {/* 🔹 Notifications */}
+                <li>
+                  <Link
+                    to="vendor-notifications"
+                    onClick={handleNavigation}
+                    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+                      ${
+                        isActive("/vendor-notifications")
+                          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                      }`}
+                  >
+                    <span className="menu-item-icon-size">
+                      <ListIcon />
+                    </span>
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Notifications
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              </>
             )}
 
             {/* ================= VENDOR MENU ================= */}
             {role === "VENDOR" && (
-              <li>
-                <Link
-                  to="vendor-compliance"
-                  onClick={handleNavigation}
-                  className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
-                    ${
-                      isActive("/vendor-compliance")
-                        ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
-                    }`}
-                >
-                  <span className="menu-item-icon-size">
-                    <TableIcon />
-                  </span>
-                  {(isExpanded || isHovered || isMobileOpen) && (
-                    <span className="menu-item-text font-medium">
-                      Submit Compliance Records
-                    </span>
-                  )}
-                </Link>
-              </li>
-            )}
+  <>
+    {/* Submit Compliance */}
+    <li>
+      <Link
+        to="vendor-compliance"
+        onClick={handleNavigation}
+        className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+          ${
+            isActive("/vendor-compliance")
+              ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+          }`}
+      >
+        <span className="menu-item-icon-size">
+          <TableIcon />
+        </span>
+        {(isExpanded || isHovered || isMobileOpen) && (
+          <span className="menu-item-text font-medium">
+            Submit Compliance Records
+          </span>
+        )}
+      </Link>
+    </li>
+
+        {/* ✅ NEW: Manage CC Emails */}
+
+      </>
+    )}
 
 
             {/* ================= AUDITOR MENU ================= */}

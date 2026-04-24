@@ -23,6 +23,7 @@ export default function AuditorDashboard() {
   const [selectedVendor, setSelectedVendor] = useState("");
   const [selectedState, setSelectedState] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
+  const [remarksData, setRemarksData] = useState<any[]>([]);
   const [auditPeriod, setAuditPeriod] = useState("");
   const [frequencyBase, setFrequencyBase] = useState("");
 const [mappingStartDate, setMappingStartDate] = useState<any>(null);
@@ -270,30 +271,38 @@ const loadMappingDetails = async (peId: string, vendorId: string, branchId: stri
     setBranches(res.data);
   };
 
-  const loadChecklist = async () => {
-    try {
-      setLoading(true);
+const loadChecklist = async () => {
+  try {
+    setLoading(true);
 
-      const res = await axios.get(
+    const [checklistRes, remarksRes] = await Promise.all([
+      axios.get(
         `http://127.0.0.1:8000/api/auditor/audit/checklist/${selectedBranch}/?vendor_id=${selectedVendor}&audit_period=${auditPeriod}`,
         authHeader
-      );
+      ),
+      axios.get(
+        `http://127.0.0.1:8000/api/auditor/compliance-remarks/?branch_id=${selectedBranch}&vendor_id=${selectedVendor}`,
+        authHeader
+      )
+    ]);
 
-      const rows = res.data.map((item: any) => ({
-        ...item,
-        observation: "",
-        recommendation: "",
-      }));
+    const rows = checklistRes.data.map((item: any) => ({
+      ...item,
+      observation: "",
+      recommendation: "",
+    }));
 
-      setChecklist(rows);
-      setIsModalOpen(true);
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to load checklist");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setChecklist(rows);
+    setRemarksData(remarksRes.data); // 🔥 IMPORTANT
+    setIsModalOpen(true);
+
+  } catch (err) {
+    console.error(err);
+    message.error("Failed to load data");
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* ================= VALIDATION ================= */
 
@@ -415,31 +424,43 @@ const loadMappingDetails = async (peId: string, vendorId: string, branchId: stri
 
     {
       title: "Auditor Observation",
-      render: (_: any, record: any, index: number) => (
-      <Input
-        value={record.observation}
-        onChange={(e) =>
-          updateField(record.id, "observation", e.target.value)
-        }
-        className="rounded-xl px-3 shadow-sm"
-        style={{ height: 74 }}
-      />
+      width: 260,
+      render: (_: any, record: any) => (
+        <Input
+          value={record.observation}
+          onChange={(e) =>
+            updateField(record.id, "observation", e.target.value)
+          }
+          className="rounded-xl px-3 shadow-sm"
+          style={{
+            height: 100,
+            whiteSpace: "nowrap",
+            overflowX: "auto"
+          }}
+          placeholder="Enter observation"
+        />
       ),
     },
 
-    {
-      title: "Action Recommendation",
-      render: (_: any, record: any, index: number) => (
-      <Input
-        value={record.recommendation}
-        onChange={(e) =>
-          updateField(record.id, "recommendation", e.target.value)
-        }
-        className="rounded-xl px-3 shadow-sm"
-        style={{ height: 74 }}
-      />
-      ),
-    },
+{
+  title: "Action Recommendation",
+  width: 260,
+  render: (_: any, record: any) => (
+    <Input
+      value={record.recommendation}
+      onChange={(e) =>
+        updateField(record.id, "recommendation", e.target.value)
+      }
+      className="rounded-xl px-3 shadow-sm"
+      style={{
+        height: 100,
+        whiteSpace: "nowrap",
+        overflowX: "auto"
+      }}
+      placeholder="Enter recommendation"
+    />
+  ),
+},
   ];
 
   const groupedChecklist = Object.values(
@@ -620,10 +641,10 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
 <Modal
   open={isModalOpen}
   footer={null}
-  width={1400}
+  width={1700}
   closable={false}
   bodyStyle={{
-    height: "75vh",
+    height: "80vh",
     overflow: "hidden",
     padding: 0,
   }}
@@ -649,60 +670,126 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
     {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
     <div className="p-4 space-y-4 border-b bg-white">
 
-      {/* SUMMARY */}
-      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm flex flex-wrap gap-6">
+      {/* 🔥 VENDOR REMARKS */}
+    <div className="grid grid-cols-12 gap-4">
 
-        <div className="text-blue-900">
-          <span className="font-semibold">PE:</span>{" "}
+  {/* 🔥 LEFT: REMARKS */}
+  <div className="col-span-8 bg-white border rounded-xl p-4 shadow-sm">
+
+  <h3 className="font-semibold text-gray-800 mb-3">
+    Vendor Submitted Remarks
+  </h3>
+
+  <div className="space-y-3 max-h-52 overflow-y-auto pr-2">
+
+    {remarksData.length === 0 && (
+      <div className="text-sm text-gray-400">
+        No remarks submitted yet
+      </div>
+    )}
+
+    {remarksData.map((group, index) => (
+      <div key={index} className="border rounded-lg p-3 bg-gray-50">
+
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-medium text-blue-600">
+            {new Date(group.date).toLocaleDateString("en-GB")}
+          </span>
+
+          <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
+            Submitted
+          </span>
+        </div>
+
+        {group.general_remark && (
+          <div className="text-sm text-gray-800 mb-2">
+            <span className="font-medium text-gray-600">
+              General:
+            </span>{" "}
+            {group.general_remark}
+          </div>
+        )}
+
+        
+      </div>
+    ))}
+
+  </div>
+
+  {/* 🔥 MOVE DOWNLOAD HERE */}
+  <div className="mt-4 flex justify-between items-center p-4 bg-blue-50 border border-blue-200 rounded-xl">
+
+    <div>
+      <div className="text-sm font-medium text-blue-900">
+        Audit Documents
+      </div>
+      <div className="text-xs text-blue-700">
+        Download all supporting files for verification
+      </div>
+    </div>
+
+    <Button
+      type="primary"
+      icon={<DownloadOutlined />}
+      loading={downloading}
+      onClick={downloadZip}
+      disabled={!selectedBranch}
+      className="rounded-lg px-5 shadow-sm"
+    >
+      {downloading ? "Downloading..." : "Download Audit Document"}
+    </Button>
+
+  </div>
+
+</div>
+  {/* 🔥 RIGHT: SUMMARY */}
+  <div className="col-span-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+
+    <h3 className="font-semibold text-blue-900 mb-3">
+      Audit Summary
+    </h3>
+
+    <div className="space-y-2 text-sm">
+
+      <div>
+        <span className="text-gray-500">PE:</span>
+        <div className="font-medium text-gray-800">
           {peList.find(p => p.id == selectedPE)?.short_name || "-"}
         </div>
+      </div>
 
-        <div className="text-blue-900">
-          <span className="font-semibold">Vendor:</span>{" "}
+      <div>
+        <span className="text-gray-500">Vendor:</span>
+        <div className="font-medium text-gray-800">
           {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
         </div>
+      </div>
 
-        <div className="text-blue-900">
-          <span className="font-semibold">State:</span>{" "}
+      <div>
+        <span className="text-gray-500">State:</span>
+        <div className="font-medium text-gray-800">
           {selectedState || "-"}
         </div>
+      </div>
 
-        <div className="text-blue-900">
-          <span className="font-semibold">Branch:</span>{" "}
+      <div>
+        <span className="text-gray-500">Branch:</span>
+        <div className="font-medium text-gray-800">
           {branches.find(b => b.id == selectedBranch)?.name || "-"}
         </div>
+      </div>
 
-        <div className="text-blue-900">
-          <span className="font-semibold">Audit Period:</span>{" "}
+      <div>
+        <span className="text-gray-500">Audit Period:</span>
+        <div className="font-medium text-blue-700">
           {auditPeriod || "-"}
         </div>
-
       </div>
 
-      {/* DOWNLOAD */}
-      <div className="flex justify-between items-center p-4 bg-blue-50 border border-blue-200 rounded-xl">
+    </div>
+  </div>
 
-        <div>
-          <div className="text-sm font-medium text-blue-900">
-            Audit Documents
-          </div>
-          <div className="text-xs text-blue-700">
-            Download all supporting files for verification
-          </div>
-        </div>
-
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          loading={downloading}
-          onClick={downloadZip}
-          disabled={!selectedBranch}
-          className="rounded-lg px-5 shadow-sm"
-        >
-          {downloading ? "Downloading..." : "Download Audit Document"}
-        </Button>
-
-      </div>
+</div>
 
     </div>
 
