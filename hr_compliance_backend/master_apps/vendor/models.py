@@ -47,3 +47,15 @@ class VendorDocument(models.Model):
 
     def __str__(self):
         return os.path.basename(self.document.name)
+
+class VendorCCEmail(models.Model):
+    vendor = models.ForeignKey(
+        Vendor,
+        on_delete=models.CASCADE,
+        related_name="cc_emails"
+    )
+    email = models.EmailField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.vendor.short_name} - {self.email}"

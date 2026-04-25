@@ -17,6 +17,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Vendor, VendorDocument
 from .serializers import VendorSerializer, VendorDocumentSerializer
+from .models import VendorCCEmail
+from .serializers import VendorCCEmailSerializer
 
 User = get_user_model()
 
@@ -297,3 +299,62 @@ class VendorDeleteAPIView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class VendorCCEmailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_vendor(self, request):
+        try:
+            return request.user.vendor_profile
+        except:
+            return None
+
+    # 🔹 GET: Fetch saved emails
+    def get(self, request):
+        vendor = self.get_vendor(request)
+
+        if not vendor:
+            return Response({"error": "Vendor not found"}, status=404)
+
+        emails = VendorCCEmail.objects.filter(vendor=vendor)
+        serializer = VendorCCEmailSerializer(emails, many=True)
+
+        return Response(serializer.data, status=200)
+
+    # 🔹 POST: Save emails
+    def post(self, request):
+        vendor = self.get_vendor(request)
+
+        if not vendor:
+            return Response({"error": "Vendor not found"}, status=404)
+
+        emails = request.data.get("emails", [])
+
+        if not isinstance(emails, list):
+            return Response({"error": "Invalid format"}, status=400)
+
+        if len(emails) > 2:
+            return Response({"error": "Max 2 emails allowed"}, status=400)
+
+        # ✅ Validate emails
+        import re
+        email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+
+        for email in emails:
+            if not re.match(email_regex, email):
+                return Response({"error": f"Invalid email: {email}"}, status=400)
+
+        # ✅ Replace old emails
+        VendorCCEmail.objects.filter(vendor=vendor).delete()
+
+        for email in emails:
+            VendorCCEmail.objects.create(
+                vendor=vendor,
+                email=email
+            )
+
+        return Response(
+            {"message": "CC emails saved successfully"},
+            status=200
+        )

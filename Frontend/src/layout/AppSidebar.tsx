@@ -317,6 +317,29 @@ const AppSidebar: React.FC = () => {
       </Link>
     </li>
 
+    <li>
+  <Link
+    to="manage-cc-emails"
+    onClick={handleNavigation}
+    className={`menu-item group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all
+      ${
+        isActive("/manage-cc-emails")
+          ? "bg-brand-50 text-brand-600 dark:bg-white/[0.08]"
+          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+      }`}
+  >
+    <span className="menu-item-icon-size">
+      <ListIcon />
+    </span>
+
+    {(isExpanded || isHovered || isMobileOpen) && (
+      <span className="menu-item-text font-medium">
+        Manage CC Emails
+      </span>
+    )}
+  </Link>
+</li>
+
         {/* ✅ NEW: Manage CC Emails */}
 
       </>

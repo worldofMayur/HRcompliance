@@ -78,8 +78,13 @@ class AuditEntry(models.Model):
     # ✅ CONTROLLED STATUS
     STATUS_CHOICES = [
         ("Complied", "Complied"),
+        ("Not Complied", "Not Complied"),
         ("Not Applicable", "Not Applicable"),
+        ("Not Applicable For Audit Period", "Not Applicable For Audit Period"),
         ("Delayed Complied", "Delayed Complied"),
+        ("Exceptional Approval - Delayed Complied", "Exceptional Approval - Delayed Complied"),
+        ("Exceptional Approval- Not Complied", "Exceptional Approval- Not Complied"),
+        ("Incorrect Document Submitted", "Incorrect Document Submitted"),
     ]
 
     status = models.CharField(

@@ -5,6 +5,8 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const API_BASE = "http://127.0.0.1:8000/api";
 
@@ -17,7 +19,17 @@ export default function ManageVendor() {
   const [dateTo, setDateTo] = useState("");
 
   const [editingRowId, setEditingRowId] = useState(null);
-  const [editData, setEditData] = useState({});
+  const [editData, setEditData] = useState<any>({});
+
+  // ✅ DATE STATES (same as VendorMapping)
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+  const [startDate, endDate] = dateRange;
+
+  const [startInput, setStartInput] = useState("");
+  const [endInput, setEndInput] = useState("");
+
+  const [startError, setStartError] = useState("");
+  const [endError, setEndError] = useState("");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -116,6 +128,27 @@ export default function ManageVendor() {
     ).padStart(2, "0")}/${String(d.getFullYear()).slice(-2)}`;
   };
 
+  const parseDate = (value: string) => {
+  const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+  if (!regex.test(value)) return null;
+
+  const [day, month, year] = value.split("/").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) return null;
+
+  return date;
+};
+
+const formatForAPI = (date: Date | null) => {
+  if (!date) return null;
+  return date.toISOString().split("T")[0];
+};
+
   const getUniqueValues = (key) => {
     return [...new Set(vendors.map((v) => v[key]).filter(Boolean))];
   };
@@ -123,6 +156,15 @@ export default function ManageVendor() {
   // ✅ OPEN MODAL
   const handleEdit = (vendor) => {
     setEditingRowId(vendor.id);
+
+    const start = parseCustomDate(vendor.start_date);
+    const end = parseCustomDate(vendor.end_date);
+
+    setDateRange([start, end]);
+
+    setStartInput(start ? start.toLocaleDateString("en-GB") : "");
+    setEndInput(end ? end.toLocaleDateString("en-GB") : "");
+
     setEditData({
       start_date: vendor.start_date || "",
       end_date: vendor.end_date || "",
@@ -130,6 +172,7 @@ export default function ManageVendor() {
       audit_frequency: vendor.audit_frequency || "",
       auditor_name: vendor.auditor_name || "",
     });
+
     setOpen(true);
   };
 
@@ -371,26 +414,83 @@ export default function ManageVendor() {
   <div className="grid grid-cols-2 gap-4">
 
     {/* START DATE */}
-    <div className="flex flex-col">
-      <label className="text-xs mb-1">Agreement Start Date</label>
-      <input
-        type="date"
-        value={editData.start_date || ""}
-        onChange={(e) => handleChange("start_date", e.target.value)}
-        className="border rounded px-3 py-2 text-sm"
-      />
-    </div>
+{/* START DATE */}
+<div className="flex flex-col">
+  <label className="text-xs mb-1">Agreement Start Date</label>
 
-    {/* END DATE */}
-    <div className="flex flex-col">
-      <label className="text-xs mb-1">Agreement End Date</label>
-      <input
-        type="date"
-        value={editData.end_date || ""}
-        onChange={(e) => handleChange("end_date", e.target.value)}
-        className="border rounded px-3 py-2 text-sm"
-      />
-    </div>
+  <DatePicker
+    selected={startDate}
+    value={startInput}
+    onChange={(date: Date | null) => {
+      if (date) {
+        const formatted = date.toLocaleDateString("en-GB");
+        setStartInput(formatted);
+        setDateRange([date, endDate]);
+        setStartError("");
+        handleChange("start_date", formatForAPI(date));
+      }
+    }}
+    onChangeRaw={(e: any) => {
+      const value = e.target.value;
+      setStartInput(value);
+
+      const parsed = parseDate(value);
+
+      if (parsed) {
+        setDateRange([parsed, endDate]);
+        setStartError("");
+        handleChange("start_date", formatForAPI(parsed));
+      } else {
+        setStartError("Invalid date format (dd/mm/yyyy)");
+      }
+    }}
+    dateFormat="dd/MM/yyyy"
+    placeholderText="dd/mm/yyyy"
+    className="border rounded px-3 py-2 text-sm"
+  />
+
+  {startError && <p className="text-red-500 text-xs">{startError}</p>}
+</div>
+
+
+{/* END DATE */}
+<div className="flex flex-col">
+  <label className="text-xs mb-1">Agreement End Date</label>
+
+  <DatePicker
+    selected={endDate}
+    value={endInput}
+    onChange={(date: Date | null) => {
+      if (date) {
+        const formatted = date.toLocaleDateString("en-GB");
+        setEndInput(formatted);
+        setDateRange([startDate, date]);
+        setEndError("");
+        handleChange("end_date", formatForAPI(date));
+      }
+    }}
+    onChangeRaw={(e: any) => {
+      const value = e.target.value;
+      setEndInput(value);
+
+      const parsed = parseDate(value);
+
+      if (parsed) {
+        setDateRange([startDate, parsed]);
+        setEndError("");
+        handleChange("end_date", formatForAPI(parsed));
+      } else {
+        setEndError("Invalid date format (dd/mm/yyyy)");
+      }
+    }}
+    dateFormat="dd/MM/yyyy"
+    placeholderText="dd/mm/yyyy"
+    minDate={startDate || undefined}
+    className="border rounded px-3 py-2 text-sm"
+  />
+
+  {endError && <p className="text-red-500 text-xs">{endError}</p>}
+</div>
 
     {/* AUDIT RULE DROPDOWN */}
     <div className="flex flex-col">

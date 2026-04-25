@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Vendor, VendorDocument
+from .models import VendorCCEmail
 
 
 class VendorDocumentSerializer(serializers.ModelSerializer):
@@ -21,3 +22,8 @@ class VendorSerializer(serializers.ModelSerializer):
                 "Mobile must be exactly 10 digits"
             )
         return value
+
+class VendorCCEmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VendorCCEmail
+        fields = ["id", "email"]

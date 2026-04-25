@@ -23,7 +23,7 @@ import AuditorDashboard from "./pages/Auditor/AuditorDashboard";
 import Home from "./pages/Dashboard/Home";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
-
+import ManageCCEmails from "./pages/CCEmailInput";
 import { logActiveSession } from "./utils/SessionLogger";
 
 import PrincipleEmployeeForm from "./pages/Forms/PrincipleEmployeeForm";
@@ -189,6 +189,15 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["VENDOR"]}>
                 <VendorCompliancePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="manage-cc-emails"
+            element={
+              <ProtectedRoute allowedRoles={["VENDOR"]}>
+                <ManageCCEmails />
               </ProtectedRoute>
             }
           />

@@ -42,9 +42,14 @@ const [compliancePeriods, setCompliancePeriods] = useState<any[]>([]);
 
 /* 🔥 ADD THIS RIGHT BELOW */
 useEffect(() => {
+  if (!mappingStartDate || !mappingEndDate || !frequencyBase) return;
+
   const options = getPeriodOptions();
+
   if (options.length) {
     setAuditPeriod(options[options.length - 1]);
+  } else {
+    setAuditPeriod("");
   }
 }, [mappingStartDate, mappingEndDate, frequencyBase]);
 
@@ -178,10 +183,12 @@ const getPeriodOptions = () => {
   };
 
   const isValidPeriod = (start: Date, end: Date) => {
+    if (!mappingStartDate || !mappingEndDate) return false;
+
     return (
-      start <= mappingEndDate &&
-      end >= mappingStartDate &&
-      start <= today
+      start.getTime() <= mappingEndDate.getTime() &&
+      end.getTime() >= mappingStartDate.getTime() &&
+      start.getTime() <= today.getTime()
     );
   };
 
@@ -247,8 +254,16 @@ const loadMappingDetails = async (peId: string, vendorId: string, branchId: stri
     );
 
     setFrequencyBase(res.data.frequency);
-    setMappingStartDate(new Date(res.data.start_date));
-    setMappingEndDate(new Date(res.data.end_date));
+    const start = res.data.start_date ? new Date(res.data.start_date) : null;
+    const end = res.data.end_date ? new Date(res.data.end_date) : null;
+
+    if (!start || isNaN(start.getTime()) || !end || isNaN(end.getTime())) {
+      console.error("Invalid mapping dates", res.data);
+      return;
+    }
+
+    setMappingStartDate(start);
+    setMappingEndDate(end);
 
   } catch (err) {
     console.error(err);
@@ -345,35 +360,83 @@ const loadChecklist = async () => {
 
   /* ================= SUBMIT ================= */
 
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
+const handleSubmit = async () => {
+  try {
+    setLoading(true);
 
-      const payload = {
-        branch_id: selectedBranch,
-        audit_period: auditPeriod,
-        entries: checklist.map((row) => ({
-          checklist_id: row.id,
-          observation: row.observation,
-          recommendation: row.recommendation,
-          status: row.status,
-        })),
-      };
+    // =========================
+    // ✅ VALIDATION (STRICT)
+    // =========================
+    const invalidRow = groupedChecklist.find(
+      (row) =>
+        !row.status ||
+        !["Complied", "Exceptional Approval - Delayed Complied", "Not Applicable For Audit Period"].includes(row.status) ||
+        !row.observation ||
+        !row.recommendation ||
+        !row.observation.trim() ||
+        !row.recommendation.trim()
+    );
 
-      await axios.post(
-        "http://127.0.0.1:8000/api/auditor/save-audit/",
-        payload,
-        authHeader
+    if (invalidRow) {
+      message.error(
+        "All rows must have valid status + Observation & Recommendation"
       );
-
-      message.success("Audit submitted successfully");
-      setIsModalOpen(false);
-    } catch {
-      message.error("Submission failed");
-    } finally {
       setLoading(false);
+      return;
     }
-  };
+
+    // =========================
+    // ✅ PAYLOAD (FIXED SOURCE)
+    // =========================
+    const payload = {
+      branch_id: selectedBranch,
+      audit_period: auditPeriod,
+      entries: groupedChecklist.map((row) => ({
+        checklist_id: row.id,
+        observation: row.observation?.trim(),
+        recommendation: row.recommendation?.trim(),
+        status: row.status,
+      })),
+    };
+
+    console.log("📤 FINAL PAYLOAD:", payload);
+
+    // =========================
+    // ✅ API CALL
+    // =========================
+    const res = await axios.post(
+      "http://127.0.0.1:8000/api/auditor/save-audit/",
+      payload,
+      authHeader
+    );
+
+    console.log("✅ RESPONSE:", res.data);
+
+    message.success(res.data.message || "Audit submitted successfully");
+
+    setIsModalOpen(false);
+
+  } catch (err: any) {
+    console.error("❌ ERROR:", err);
+
+    const details = err?.response?.data?.details;
+
+    if (details) {
+      const msg = details
+        .map((d: any) => `Row ${d.row}: ${d.error}`)
+        .join("\n");
+
+      alert(msg);
+    } else {
+      message.error(
+        err?.response?.data?.error || "Submission failed"
+      );
+    }
+
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* ================= TABLE ================= */
 
@@ -643,11 +706,7 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
   footer={null}
   width={1700}
   closable={false}
-  bodyStyle={{
-    height: "80vh",
-    overflow: "hidden",
-    padding: 0,
-  }}
+  styles={{ body: { height: "80vh", overflow: "hidden", padding: 0 } }}
   style={{ top: 20 }}
   title={
     <div className="flex justify-between items-center">

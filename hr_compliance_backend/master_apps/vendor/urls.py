@@ -16,6 +16,8 @@ from .mapping_views import (
     VendorBranchMappingUpdateAPIView,  # ✅ already here
 )
 from .compliance_views import VendorSubmitComplianceAPIView
+from .views import VendorCCEmailAPIView
+
 
 
 urlpatterns = [
@@ -54,4 +56,5 @@ urlpatterns = [
     # COMPLIANCE
     # =========================
     path("submit-compliance/", VendorSubmitComplianceAPIView.as_view()),
+    path("cc-emails/", VendorCCEmailAPIView.as_view()),
 ]
