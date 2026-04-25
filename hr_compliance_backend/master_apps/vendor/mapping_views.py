@@ -12,6 +12,8 @@ from master_apps.documents.models import DocumentMaster
 from master_apps.principle_employee.models import PrincipalEmployerBranch
 from rest_framework.generics import UpdateAPIView
 from django.utils.timezone import now   # ✅ ADDED
+from django.db.models import Q
+
 
 
 # ==========================================================
@@ -35,16 +37,19 @@ class VendorBranchMappingCreateAPIView(APIView):
         data = request.data.copy()
         data["principal_employer"] = pe.id
 
-        documents = data.pop("documents", [])
+        document_ids = data.pop("document_ids", [])
 
-        serializer = VendorBranchMappingSerializer(data=data)
+        serializer = VendorBranchMappingSerializer(
+            data=data,
+            context={"request": request}   # ✅ ADD THIS
+        )
 
         if serializer.is_valid():
 
             mapping = serializer.save()
 
             # save multiple documents
-            mapping.documents.set(documents)
+            mapping.documents.set(document_ids)
 
             return Response({"message": "Mapping created"}, status=201)
 
@@ -57,15 +62,9 @@ class VendorBranchMappingCreateAPIView(APIView):
 # ==========================================================
 class VendorBranchMappingListAPIView(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
 
         if request.user.role != "PE":
-            return Response([], status=200)
-
-        vendor_id = request.GET.get("vendor")
-
-        if not vendor_id:
             return Response([], status=200)
 
         try:
@@ -74,9 +73,12 @@ class VendorBranchMappingListAPIView(APIView):
             return Response([], status=200)
 
         mappings = VendorBranchMapping.objects.filter(
-            vendor_id=vendor_id,
             principal_employer=pe
-        ).select_related("vendor", "branch", "auditor").prefetch_related("documents")
+        ).select_related(
+            "vendor", "branch", "auditor"
+        ).prefetch_related(
+            "documents"   # ✅ IMPORTANT
+        )
 
         serializer = VendorBranchMappingSerializer(mappings, many=True)
         return Response(serializer.data)
@@ -169,9 +171,9 @@ class VendorMappedStatesAPIView(APIView):
 
         mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
-            principal_employer_id=pe_id,
-            status="Active",
-            end_date__gte=today   # ✅ CRITICAL FIX
+            principal_employer_id=pe_id
+        ).filter(
+            Q(end_date__gte=today) | Q(end_date__isnull=True)
         ).select_related("branch")
 
         states = set()
@@ -289,13 +291,23 @@ class VendorBranchMappingUpdateAPIView(UpdateAPIView):
         serializer = VendorBranchMappingSerializer(
             obj,
             data=request.data,
-            partial=True
+            partial=True,
+            context={"request": request}
         )
 
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        mapping = serializer.save()
+
+        # ✅ FIXED DOCUMENT UPDATE
+        document_ids = request.data.get("document_ids", None)
+        documents = request.data.get("documents", None)
+
+        if document_ids is not None:
+            mapping.documents.set(document_ids)
+        elif documents is not None:
+            mapping.documents.set(documents)
 
         return Response({
             "message": "Mapping updated successfully",
-            "updated_end_date": serializer.data.get("end_date")
+            "data": serializer.data
         })

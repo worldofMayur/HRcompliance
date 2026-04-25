@@ -53,17 +53,21 @@ class VendorBranchMapping(models.Model):
     # ✅ MULTIPLE DOCUMENTS
     documents = models.ManyToManyField(
         DocumentMaster,
-        blank=True
+        blank=True,
+        related_name="vendor_mappings"
     )
 
-    start_date = models.DateField()
-    end_date = models.DateField()
+    # ✅ DATE FIELDS
+    start_date = models.DateField(db_index=True)
+    end_date = models.DateField(db_index=True)
+
+    # 🔥 NEW: EFFECTIVE DATE
+    effective_date = models.DateField(null=True, blank=True)
 
     rule = models.CharField(max_length=20, choices=RULE_CHOICES)
-
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
 
-    # ✅ STATUS FIELD (with index for performance)
+    # ✅ STATUS FIELD (kept for DB but controlled safely)
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
@@ -74,32 +78,59 @@ class VendorBranchMapping(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # =========================
-    # ✅ STATUS LOGIC (SAFE)
+    # ✅ SAFE STATUS LOGIC
     # =========================
     def update_status(self):
         today = now().date()
 
-        # 1️⃣ If PE is inactive → force inactive (safe check)
+        # 1️⃣ PE inactive
         if (
             self.principal_employer and
             hasattr(self.principal_employer, "status") and
             self.principal_employer.status == "Inactive"
         ):
-            self.status = "Inactive"
-            return
+            return "Inactive"
 
-        # 2️⃣ If end_date passed → inactive
+        # 2️⃣ End date expired
         if self.end_date and self.end_date < today:
-            self.status = "Inactive"
-        else:
-            self.status = "Active"
+            return "Inactive"
+
+        return "Active"
 
     # =========================
-    # ✅ AUTO UPDATE ON SAVE
+    # ✅ CONTROLLED SAVE
     # =========================
     def save(self, *args, **kwargs):
-        self.update_status()
+        today = now().date()
+
+        # 🔥 APPLY STATUS ONLY IF EFFECTIVE DATE IS VALID
+        if not self.effective_date or self.effective_date <= today:
+            self.status = self.update_status()
+
+        # ❗ If effective_date is future → do not change status yet
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.vendor} - {self.branch} ({self.status})"
+
+
+# =========================
+# 🔥 HISTORY TRACKING MODEL
+# =========================
+class VendorMappingHistory(models.Model):
+    mapping = models.ForeignKey(
+        VendorBranchMapping,
+        on_delete=models.CASCADE,
+        related_name="history"
+    )
+
+    changed_by = models.CharField(max_length=100)
+    change_type = models.CharField(max_length=50)
+
+    old_data = models.JSONField(null=True, blank=True)
+    new_data = models.JSONField(null=True, blank=True)
+
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Mapping {self.mapping.id} - {self.change_type}"

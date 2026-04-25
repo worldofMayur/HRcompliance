@@ -20,7 +20,12 @@ export default function ManageVendor() {
 
   const [editingRowId, setEditingRowId] = useState(null);
   const [editData, setEditData] = useState<any>({});
+  const [isDirty, setIsDirty] = useState(false);
+  const [effectiveDate, setEffectiveDate] = useState(new Date());
+  const [documents, setDocuments] = useState([]); // master list
+const [selectedDocuments, setSelectedDocuments] = useState([]); // selected docs
 
+  const [selectedDoc, setSelectedDoc] = useState("");
   // ✅ DATE STATES (same as VendorMapping)
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [startDate, endDate] = dateRange;
@@ -50,23 +55,52 @@ export default function ManageVendor() {
     Authorization: `Bearer ${token}`,
   };
 
-  useEffect(() => {
-    fetchVendors();
-  }, []);
+useEffect(() => {
+  fetchVendors();
+  fetchDocuments(); // 👈 ADD THIS
+}, []);
 
-  const fetchVendors = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/vendor-mapping/list/`, {
-        headers,
-      });
-      const data = await res.json();
-      setVendors(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchDocuments = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/document-master/list/`, {
+      headers,
+    });
+    const data = await res.json();
+    setDocuments(data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const calculateStatus = (endDate) => {
+  if (!endDate) return "Active";
+
+  const today = new Date();
+  const end = new Date(endDate);
+
+  const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+
+  if (diff < 0) return "Expired";
+  if (diff <= 7) return "Expiring Soon";
+  return "Active";
+};
+
+const fetchVendors = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/vendor/mapping/list/`, {
+      headers,
+    });
+    const data = await res.json();
+
+    console.log("API DATA:", data);   // 👈 ADD THIS
+
+    setVendors(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ✅ EXPORT EXCEL (UNCHANGED)
   const exportToExcel = () => {
@@ -154,59 +188,130 @@ const formatForAPI = (date: Date | null) => {
   };
 
   // ✅ OPEN MODAL
-  const handleEdit = (vendor) => {
-    setEditingRowId(vendor.id);
+const handleEdit = (vendor) => {
+  setEditingRowId(vendor.id);
 
-    const start = parseCustomDate(vendor.start_date);
-    const end = parseCustomDate(vendor.end_date);
+  const start = parseCustomDate(vendor.start_date);
+  const end = parseCustomDate(vendor.end_date);
 
-    setDateRange([start, end]);
+  setDateRange([start, end]);
+  setEffectiveDate(new Date());
 
-    setStartInput(start ? start.toLocaleDateString("en-GB") : "");
-    setEndInput(end ? end.toLocaleDateString("en-GB") : "");
+  setStartInput(start ? start.toLocaleDateString("en-GB") : "");
+  setEndInput(end ? end.toLocaleDateString("en-GB") : "");
 
-    setEditData({
-      start_date: vendor.start_date || "",
-      end_date: vendor.end_date || "",
-      audit_rule: vendor.audit_rule || "",
-      audit_frequency: vendor.audit_frequency || "",
-      auditor_name: vendor.auditor_name || "",
-    });
+  setEditData({
+    start_date: vendor.start_date || "",
+    end_date: vendor.end_date || "",
+    audit_rule: vendor.rule || "",
+    audit_frequency: vendor.frequency || "",
+    auditor_name: vendor.auditor_name || "",
+  });
 
-    setOpen(true);
-  };
+  setSelectedDocuments(
+    (vendor.documents || []).map((doc) => {
+      // already object
+      if (doc?.id) return doc;
 
-  const handleCancel = () => {
-    setOpen(false);
-  };
+      // convert ID → object
+      const found = documents.find((d) => d.id === doc);
+      return found || { id: doc, name: `Doc ${doc}` };
+    })
+  );
+  setSelectedDoc(""); // ✅ reset dropdown
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch(`${API_BASE}/vendor/vendor-mapping/${editingRowId}/`, {
+  setIsDirty(false); // ✅ NEW
+  setOpen(true);
+};
+
+const handleCancel = () => {
+  if (isDirty && !window.confirm("Unsaved changes will be lost. Continue?")) return;
+
+  setOpen(false);
+  setSelectedDocuments([]);
+  setIsDirty(false);
+};
+
+const getLiveStatus = () => {
+  if (!endDate) return null;
+
+  const today = new Date();
+  const diff = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+
+  if (diff < 0) return "Expired";
+  if (diff <= 7) return "Expiring Soon";
+  return "Active";
+};
+
+const handleSave = async () => {
+  setSaving(true);
+
+  // ✅ VALIDATION (runs only on click)
+  if (!startDate || !endDate) {
+    alert("Please select both Start Date and End Date");
+    setSaving(false);
+    return;
+  }
+
+  if (endDate <= startDate) {
+    alert("End Date must be after Start Date");
+    setSaving(false);
+    return;
+  }
+
+  try {
+    const payload = {
+      ...editData,
+
+      rule: editData.audit_rule,
+      frequency: editData.audit_frequency,
+
+      start_date: formatForAPI(startDate),
+      end_date: formatForAPI(endDate),
+      effective_date: formatForAPI(effectiveDate),
+
+      // ✅ ADD THIS LINE
+      documents: selectedDocuments.map((d) => d.id),
+      document_ids: selectedDocuments.map((d) => d.id),
+    };
+
+    console.log("🚀 FINAL PAYLOAD:", payload);
+
+    const res = await fetch(
+      `${API_BASE}/vendor/vendor-mapping/${editingRowId}/`,
+      {
         method: "PATCH",
         headers: {
           ...headers,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(editData),
-      });
+        body: JSON.stringify(payload),
+      }
+    );
 
-      if (!res.ok) throw new Error("Update failed");
-
-      fetchVendors();
-      setOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update");
-    } finally {
-      setSaving(false);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      console.error("🚨 BACKEND ERROR:", errorData);
+      alert(JSON.stringify(errorData));
+      throw new Error("Update failed");
     }
-  };
 
-  const handleChange = (field, value) => {
-    setEditData((prev) => ({ ...prev, [field]: value }));
-  };
+    // ✅ refresh data
+    fetchVendors();
+    setOpen(false);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update");
+  } finally {
+    setSaving(false);
+  }
+};
+
+const handleChange = (field, value) => {
+  setIsDirty(true);
+  setEditData((prev) => ({ ...prev, [field]: value }));
+};
 
   // ✅ FILTER LOGIC (UNCHANGED)
   const filteredVendors = useMemo(() => {
@@ -215,7 +320,9 @@ const formatForAPI = (date: Date | null) => {
     if (search.trim()) {
       const query = search.toLowerCase();
       result = result.filter((v) =>
-        Object.values(v).join(" ").toLowerCase().includes(query)
+        Object.values(v)
+  .map(val => (typeof val === "object" ? JSON.stringify(val) : val))
+  .join(" ").toLowerCase().includes(query)
       );
     }
 
@@ -296,15 +403,16 @@ const formatForAPI = (date: Date | null) => {
         <div className="overflow-x-auto border rounded-xl">
           <table className="min-w-[1300px] w-full text-sm">
 
-            <thead className="bg-gray-50">
-              <tr>
+      <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
                 {[
-                  "Status","Vendor Short Name","Vendor Name","State","Branch",
-                  "Agreement Start Date","Agreement End Date",
-                  "Audit Rule","Audit Frequency","Assigned Auditor",
-                  "Vendor SPOC Email ID","SPOC Mobile Number","Nature of Services",
-                  "Actions"
-                ].map((h) => (
+                "Status","Vendor Short Name","Vendor Name","State","Branch",
+                "Agreement Start Date","Agreement End Date",
+                "Audit Rule","Audit Frequency","Assigned Auditor",
+                "Mapped Documents",   // 👈 ADD THIS
+                "Vendor SPOC Email ID","SPOC Mobile Number","Nature of Services",
+                "Actions"
+              ].map((h) => (
                   <th key={h} className="px-4 py-3 text-xs text-left">{h}</th>
                 ))}
               </tr>
@@ -353,43 +461,86 @@ const formatForAPI = (date: Date | null) => {
 
             <tbody>
               {filteredVendors.map((v) => (
-                <tr key={v.id} className="border-t">
-                  {/* ✅ STATUS COLUMN */}
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        v.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {v.status}
-                    </span>
-                  </td>
+<tr
+  key={v.id}
+  className={`border-t hover:bg-gray-50 transition ${
+    calculateStatus(v.end_date) === "Expired"
+      ? "bg-red-50"
+      : calculateStatus(v.end_date) === "Expiring Soon"
+      ? "bg-yellow-50"
+      : ""
+  }`}
+>
+  <td className="px-4 py-3">
+    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+      v.status === "Active"
+        ? "bg-green-100 text-green-700"
+        : "bg-red-100 text-red-700"
+    }`}>
+      {v.status}
+    </span>
+  </td>
 
-                  <td className="px-4 py-3">{v.vendor_short_name}</td>
-                  <td className="px-4 py-3">{v.vendor_name}</td>
-                  <td className="px-4 py-3">{v.state}</td>
-                  <td className="px-4 py-3">{v.branch}</td>
-                  <td className="px-4 py-3">{formatDate(v.start_date)}</td>
-                  <td className="px-4 py-3">{formatDate(v.end_date)}</td>
-                  <td className="px-4 py-3">{v.audit_rule}</td>
-                  <td className="px-4 py-3">{v.audit_frequency}</td>
-                  <td className="px-4 py-3">{v.auditor_name}</td>
-                  <td className="px-4 py-3">{v.vendor_email}</td>
-                  <td className="px-4 py-3">{v.vendor_mobile}</td>
-                  <td className="px-4 py-3">{v.nature_of_services}</td>
+  <td className="px-4 py-3 font-medium">{v.vendor_short_name || "-"}</td>
+  <td className="px-4 py-3">{v.vendor_name || "-"}</td>
+  <td className="px-4 py-3">{v.state || "-"}</td>
+  <td className="px-4 py-3">{v.branch_name || "-"}</td>
 
-                  <td className="px-4 py-3">
-                  <Button
-                    type="primary"
-                    size="small"
-                    onClick={() => handleEdit(v)}
-                  >
-                    Edit
-                  </Button>
-                  </td>
-                </tr>
+  <td className="px-4 py-3">{formatDate(v.start_date)}</td>
+  <td className="px-4 py-3">{formatDate(v.end_date)}</td>
+
+  <td className="px-4 py-3">{v.rule || "-"}</td>
+  <td className="px-4 py-3">{v.frequency || "-"}</td>
+  <td className="px-4 py-3">{v.auditor_name || "-"}</td>
+
+{/* ✅ DOCUMENTS */}
+<td className="px-4 py-3 max-w-[250px]">
+  <div className="flex flex-wrap gap-1">
+    {Array.isArray(v.documents) && v.documents.length > 0 ? (
+      v.documents.map((doc) => {
+        // ✅ CASE 1: already object with name
+        if (doc && typeof doc === "object" && doc.name) {
+          return (
+            <span
+              key={doc.id}
+              className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded truncate max-w-[120px]"
+              title={doc.name}
+            >
+              {doc.name}
+            </span>
+          );
+        }
+
+        // ✅ CASE 2: only ID → find from master documents
+        const foundDoc = documents.find((d) => d.id === doc);
+
+        return (
+          <span
+            key={doc}
+            className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded truncate max-w-[120px]"
+            title={foundDoc?.name || `Doc ${doc}`}
+          >
+            {foundDoc?.name || `Doc ${doc}`}
+          </span>
+        );
+      })
+    ) : (
+      "-"
+    )}
+  </div>
+</td>
+
+  <td className="px-4 py-3">{v.vendor_email || "-"}</td>
+  <td className="px-4 py-3">{v.vendor_mobile || "-"}</td>
+  <td className="px-4 py-3">{v.nature_of_services || "-"}</td>
+
+  <td className="px-4 py-3">
+    <Button type="primary" size="small" onClick={() => handleEdit(v)}>
+      Edit
+    </Button>
+  </td>
+
+</tr>
               ))}
             </tbody>
 
@@ -400,146 +551,196 @@ const formatForAPI = (date: Date | null) => {
       {/* ✅ ANT MODAL */}
 <Modal
   open={open}
-  title="Edit Vendor"
   onCancel={handleCancel}
-  footer={[
-    <Button key="cancel" onClick={handleCancel}>
-      Cancel
-    </Button>,
-    <Button key="save" type="primary" loading={saving} onClick={handleSave}>
-      Save
-    </Button>,
-  ]}
+  footer={null}
+  width={750}
+  centered
+  style={{ borderRadius: "16px" }}
+  bodyStyle={{
+    padding: "20px",
+    maxHeight: "80vh",
+    overflowY: "auto",
+    borderRadius: "16px",
+  }}
 >
-  <div className="grid grid-cols-2 gap-4">
+  <div className="bg-white rounded-2xl space-y-5 text-sm">
 
-    {/* START DATE */}
-{/* START DATE */}
-<div className="flex flex-col">
-  <label className="text-xs mb-1">Agreement Start Date</label>
+    {/* 🔹 HEADER */}
+    <div className="flex justify-between items-center">
+      <h2 className="font-semibold text-lg tracking-tight">
+        Edit Vendor Mapping
+      </h2>
 
-  <DatePicker
-    selected={startDate}
-    value={startInput}
-    onChange={(date: Date | null) => {
-      if (date) {
-        const formatted = date.toLocaleDateString("en-GB");
-        setStartInput(formatted);
-        setDateRange([date, endDate]);
-        setStartError("");
-        handleChange("start_date", formatForAPI(date));
-      }
-    }}
-    onChangeRaw={(e: any) => {
-      const value = e.target.value;
-      setStartInput(value);
-
-      const parsed = parseDate(value);
-
-      if (parsed) {
-        setDateRange([parsed, endDate]);
-        setStartError("");
-        handleChange("start_date", formatForAPI(parsed));
-      } else {
-        setStartError("Invalid date format (dd/mm/yyyy)");
-      }
-    }}
-    dateFormat="dd/MM/yyyy"
-    placeholderText="dd/mm/yyyy"
-    className="border rounded px-3 py-2 text-sm"
-  />
-
-  {startError && <p className="text-red-500 text-xs">{startError}</p>}
-</div>
-
-
-{/* END DATE */}
-<div className="flex flex-col">
-  <label className="text-xs mb-1">Agreement End Date</label>
-
-  <DatePicker
-    selected={endDate}
-    value={endInput}
-    onChange={(date: Date | null) => {
-      if (date) {
-        const formatted = date.toLocaleDateString("en-GB");
-        setEndInput(formatted);
-        setDateRange([startDate, date]);
-        setEndError("");
-        handleChange("end_date", formatForAPI(date));
-      }
-    }}
-    onChangeRaw={(e: any) => {
-      const value = e.target.value;
-      setEndInput(value);
-
-      const parsed = parseDate(value);
-
-      if (parsed) {
-        setDateRange([startDate, parsed]);
-        setEndError("");
-        handleChange("end_date", formatForAPI(parsed));
-      } else {
-        setEndError("Invalid date format (dd/mm/yyyy)");
-      }
-    }}
-    dateFormat="dd/MM/yyyy"
-    placeholderText="dd/mm/yyyy"
-    minDate={startDate || undefined}
-    className="border rounded px-3 py-2 text-sm"
-  />
-
-  {endError && <p className="text-red-500 text-xs">{endError}</p>}
-</div>
-
-    {/* AUDIT RULE DROPDOWN */}
-    <div className="flex flex-col">
-      <label className="text-xs mb-1">Audit Rule</label>
-      <select
-        value={editData.audit_rule || ""}
-        onChange={(e) => handleChange("audit_rule", e.target.value)}
-        className="border rounded px-3 py-2 text-sm"
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+          getLiveStatus() === "Expired"
+            ? "bg-red-100 text-red-700"
+            : getLiveStatus() === "Expiring Soon"
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-green-100 text-green-700"
+        }`}
       >
-        <option value="">Select</option>
-        {getUniqueValues("audit_rule").map((val) => (
-          <option key={val} value={val}>{val}</option>
-        ))}
-      </select>
+        {getLiveStatus() || "Active"}
+      </span>
     </div>
 
-    {/* AUDIT FREQUENCY DROPDOWN */}
-    <div className="flex flex-col">
-      <label className="text-xs mb-1">Audit Frequency</label>
-      <select
-        value={editData.audit_frequency || ""}
-        onChange={(e) => handleChange("audit_frequency", e.target.value)}
-        className="border rounded px-3 py-2 text-sm"
-      >
-        <option value="">Select</option>
-        {getUniqueValues("audit_frequency").map((val) => (
-          <option key={val} value={val}>{val}</option>
-        ))}
-      </select>
+    {/* 🔹 DATES */}
+    <div className="grid grid-cols-2 gap-3">
+      <DatePicker
+        selected={startDate}
+        onChange={(date) => {
+          if (date) {
+            setDateRange([date, endDate]);
+            handleChange("start_date", formatForAPI(date));
+          }
+        }}
+        className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm 
+        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+        placeholderText="Start Date"
+      />
+
+<DatePicker
+  selected={endDate}
+  onChange={(date) => {
+    if (date) {
+      setDateRange([startDate, date]);
+      handleChange("end_date", formatForAPI(date));
+    }
+  }}
+  className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm 
+  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+  placeholderText="End Date"
+/>
     </div>
 
-    {/* AUDITOR DROPDOWN */}
-    <div className="flex flex-col col-span-2">
-      <label className="text-xs mb-1">Assigned Auditor</label>
+    {/* 🔹 AUDIT */}
+    <div className="grid grid-cols-3 gap-3">
+
+    <select
+  value={editData.audit_rule || ""}
+  onChange={(e) => handleChange("audit_rule", e.target.value)}
+    className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
+        focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
+>
+  <option value="">Rule</option>
+  {getUniqueValues("rule").map((val) => (
+    <option key={val}>{val}</option>
+  ))}
+</select>
+
+<select
+  value={editData.audit_frequency || ""}
+  onChange={(e) => handleChange("audit_frequency", e.target.value)}
+    className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
+        focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
+>
+  <option value="">Frequency</option>
+  {getUniqueValues("frequency").map((val) => (
+    <option key={val}>{val}</option>
+  ))}
+</select>
+
       <select
         value={editData.auditor_name || ""}
         onChange={(e) => handleChange("auditor_name", e.target.value)}
-        className="border rounded px-3 py-2 text-sm"
+        className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
+        focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
       >
-        <option value="">Select</option>
+        <option value="">Auditor</option>
         {getUniqueValues("auditor_name").map((val) => (
-          <option key={val} value={val}>{val}</option>
+          <option key={val}>{val}</option>
         ))}
       </select>
+
+    </div>
+
+    {/* 🔹 DOCUMENTS */}
+    <div>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {selectedDocuments.length > 0 ? (
+          selectedDocuments.map((doc) => (
+            <span
+              key={doc.id}
+              className="bg-blue-50 text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center gap-1"
+            >
+              {doc.name}
+              <button
+                onClick={() =>
+                  setSelectedDocuments(
+                    selectedDocuments.filter((d) => d.id !== doc.id)
+                  )
+                }
+                className="text-red-500"
+              >
+                ✕
+              </button>
+            </span>
+          ))
+        ) : (
+          <span className="text-xs text-gray-400">No documents</span>
+        )}
+      </div>
+
+      <div className="flex gap-2">
+        <select
+          value={selectedDoc}
+          onChange={(e) => setSelectedDoc(e.target.value)}
+          className="flex-1 h-10 border border-gray-200 rounded-lg px-3 text-sm 
+          focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
+        >
+          <option value="">Add Document</option>
+          {documents.map((doc) => (
+            <option key={doc.id} value={doc.id}>
+              {doc.name}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={() => {
+            const doc = documents.find((d) => d.id == selectedDoc);
+            if (doc && !selectedDocuments.some((d) => d.id === doc.id)) {
+              setSelectedDocuments([...selectedDocuments, doc]);
+              setSelectedDoc("");
+            }
+          }}
+          className="px-4 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition"
+        >
+          +
+        </button>
+      </div>
+    </div>
+
+    {/* 🔹 FOOTER */}
+    <div className="flex justify-between items-center pt-3 border-t">
+
+      <DatePicker
+        selected={effectiveDate}
+        onChange={(date) => setEffectiveDate(date)}
+        className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
+        focus:ring-2 focus:ring-blue-500 outline-none"
+      />
+
+      <div className="flex gap-2">
+        <button
+          onClick={handleCancel}
+          className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleSave}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition"
+        >
+          Save
+        </button>
+      </div>
+
     </div>
 
   </div>
 </Modal>
-
     </div>
   );
 }
