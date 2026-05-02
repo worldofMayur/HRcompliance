@@ -1,5 +1,4 @@
-import { useNavigate } from "react-router";
-
+import { useNavigate } from "react-router-dom";
 export default function ResetPasswordExpired() {
   const navigate = useNavigate();
 
@@ -28,7 +27,7 @@ export default function ResetPasswordExpired() {
 
         {/* Button */}
         <button
-          onClick={() => navigate("/TailAdmin/signin")}
+          onClick={() => navigate("/signin")}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition"
         >
           Go to Sign In

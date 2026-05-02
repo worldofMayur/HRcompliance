@@ -39,11 +39,8 @@ import VendorNotifications from "./pages/VendorNotifications";
 import Documents from "./pages/Forms/Documents";
 import VendorMapping from "./pages/Forms/VendorMapping";
 
-// EXISTING
 import VendorCompliancePage from "./pages/VendorCompliancePage";
 
-
-// 🆕 NEW PE COMPONENTS
 import ManageVendor from "./pages/PrincipleEmployee/ManageVendor";
 import Notifications from "./pages/PrincipleEmployee/Notifications";
 
@@ -57,23 +54,28 @@ export default function App() {
       <ScrollToTop />
 
       <Routes>
-        <Route path="/" element={<Navigate to="/TailAdmin/" replace />} />
+
+        {/* ROOT */}
+        <Route path="/" element={<Navigate to="/signin" replace />} />
 
         {/* AUTH */}
         <Route
-          path="/TailAdmin/signin"
+          path="/signin"
           element={
             <PublicRoute>
               <SignIn />
             </PublicRoute>
           }
         />
-        <Route path="/TailAdmin/signup" element={<SignUp />} />
 
+        <Route path="/signup" element={<SignUp />} />
+
+        {/* RESET PASSWORD */}
         <Route
-          path="/TailAdmin/reset-password/:uid/:token"
+          path="/reset-password/:uid/:token"
           element={<ResetPassword />}
         />
+
         <Route
           path="/reset-password-expired"
           element={<ResetPasswordExpired />}
@@ -81,7 +83,7 @@ export default function App() {
 
         {/* ================= DASHBOARD ================= */}
         <Route
-          path="/TailAdmin/"
+          path="/"
           element={
             <ProtectedRoute>
               <AppLayout />
@@ -117,7 +119,11 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="vendor-notifications" element={<VendorNotifications />} />
+
+          <Route
+            path="vendor-notifications"
+            element={<VendorNotifications />}
+          />
 
           <Route
             path="vendor"
@@ -156,6 +162,7 @@ export default function App() {
           />
 
           {/* ================= PE ================= */}
+
           <Route
             path="vendor-mapping"
             element={
@@ -165,7 +172,6 @@ export default function App() {
             }
           />
 
-          {/* 🆕 MANAGE VENDOR (PE) */}
           <Route
             path="manage-vendor"
             element={
@@ -175,7 +181,6 @@ export default function App() {
             }
           />
 
-          {/* 🆕 NOTIFICATIONS (PE) */}
           <Route
             path="vendor-notifications"
             element={
@@ -185,8 +190,8 @@ export default function App() {
             }
           />
 
-          {/* VENDOR */}
-          {/* VENDOR */}
+          {/* ================= VENDOR ================= */}
+
           <Route
             path="vendor-compliance"
             element={
@@ -206,6 +211,7 @@ export default function App() {
           />
 
           {/* ================= UI ================= */}
+
           <Route path="basic-tables" element={<BasicTables />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="avatars" element={<Avatars />} />
@@ -217,7 +223,9 @@ export default function App() {
           <Route path="bar-chart" element={<BarChart />} />
         </Route>
 
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
+
       </Routes>
     </Router>
   );

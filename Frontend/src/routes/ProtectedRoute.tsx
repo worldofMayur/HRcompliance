@@ -11,7 +11,7 @@ export default function ProtectedRoute({ children, allowedRoles }: Props) {
 
   // Not logged in
   if (!token) {
-    return <Navigate to="/TailAdmin/signin" replace />;
+    return <Navigate to="/signin" replace />;
   }
 
   // Role restriction

@@ -1,69 +1,128 @@
 import { useEffect, useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
 
   const navigate = useNavigate();
 
+  // Load user info
   useEffect(() => {
-    const storedUsername = localStorage.getItem("username");
-    const storedEmail = localStorage.getItem("email");
-    const storedRole = localStorage.getItem("role");
+    const loadUserData = () => {
+      setUsername(localStorage.getItem("username") || "");
+      setEmail(localStorage.getItem("email") || "");
+      setRole(localStorage.getItem("role") || "");
+    };
 
-    if (storedUsername) setUsername(storedUsername);
-    if (storedEmail) setEmail(storedEmail);
-    if (storedRole) setRole(storedRole);
+    loadUserData();
+
+    window.addEventListener("storage", loadUserData);
+
+    return () => {
+      window.removeEventListener("storage", loadUserData);
+    };
   }, []);
 
-  function toggleDropdown() {
-    setIsOpen(!isOpen);
-  }
+  // Toggle dropdown
+  const toggleDropdown = () => {
+    setIsOpen((prev) => !prev);
+  };
 
-  function closeDropdown() {
+  // Close dropdown
+  const closeDropdown = () => {
     setIsOpen(false);
-  }
+  };
 
-  function handleLogout() {
-    localStorage.clear();
-    console.log("🚪 Logged out. Session cleared.");
-    navigate("/TailAdmin/signin");
-  }
+  // Logout
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("email");
+      localStorage.removeItem("role");
+      localStorage.removeItem("principal_employer_id");
 
-  // ✅ SAFE DISPLAY NAME (FIX)
+      sessionStorage.clear();
+
+      console.log("✅ Logged out successfully");
+
+      navigate("/signin", {
+        replace: true,
+      });
+
+      window.location.reload();
+    } catch (error) {
+      console.error("❌ Logout failed:", error);
+    }
+  };
+
+  // Safe display values
   const displayName =
     username ||
     (email ? email.split("@")[0] : "") ||
-    "—";
+    "User";
 
-  const displayEmail = email || "—";
+  const displayEmail = email || "No Email";
+
+  // Role color
+  const getRoleColor = () => {
+    switch (role) {
+      case "SUPERADMIN":
+        return "text-purple-500";
+
+      case "AUDITOR":
+        return "text-blue-500";
+
+      case "PE":
+        return "text-green-500";
+
+      case "VENDOR":
+        return "text-orange-500";
+
+      default:
+        return "text-gray-400";
+    }
+  };
+
+  // Image fallback
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>
+  ) => {
+    e.currentTarget.src =
+      "https://ui-avatars.com/api/?name=User";
+  };
 
   return (
     <div className="relative">
-      {/* 🔹 BUTTON */}
+      {/* USER BUTTON */}
       <button
         onClick={toggleDropdown}
         className="flex items-center gap-3 px-2 py-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+        aria-label="User menu"
       >
-        {/* Avatar + Online Dot */}
+        {/* AVATAR */}
         <div className="relative">
           <div className="h-11 w-11 rounded-full overflow-hidden border border-gray-200 shadow-sm">
             <img
-              src="./images/user/owner.jpg"
+              src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
               alt="User"
+              onError={handleImageError}
               className="h-full w-full object-cover"
             />
           </div>
 
+          {/* ONLINE DOT */}
           <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
         </div>
 
-        {/* User Info */}
+        {/* USER INFO */}
         <div className="hidden sm:flex flex-col items-start">
           <span className="text-sm font-semibold text-gray-800 dark:text-white">
             {displayName}
@@ -76,13 +135,7 @@ export default function UserDropdown() {
 
             {role && (
               <span
-                className={`text-[10px] uppercase tracking-wide ${
-                  role === "SUPERADMIN"
-                    ? "text-purple-500"
-                    : role === "AUDITOR"
-                    ? "text-blue-500"
-                    : "text-gray-400"
-                }`}
+                className={`text-[10px] uppercase tracking-wide ${getRoleColor()}`}
               >
                 {role}
               </span>
@@ -90,7 +143,7 @@ export default function UserDropdown() {
           </div>
         </div>
 
-        {/* Arrow */}
+        {/* ARROW */}
         <svg
           className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -106,19 +159,20 @@ export default function UserDropdown() {
         </svg>
       </button>
 
-      {/* 🔹 DROPDOWN */}
+      {/* DROPDOWN */}
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
         className="absolute right-0 mt-6 w-[300px] rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 p-4 shadow-xl"
       >
         {/* HEADER */}
-        <div className="flex items-center gap-3 pb-4 border-b">
+        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
           <div className="relative">
             <div className="h-12 w-12 rounded-full overflow-hidden border shadow-sm">
               <img
-                src="./images/user/user-01.jpg"
+                src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
                 alt="User"
+                onError={handleImageError}
                 className="h-full w-full object-cover"
               />
             </div>
@@ -139,7 +193,10 @@ export default function UserDropdown() {
               {role && (
                 <>
                   <span className="text-gray-300">•</span>
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+
+                  <span
+                    className={`text-[10px] uppercase tracking-wide ${getRoleColor()}`}
+                  >
                     {role}
                   </span>
                 </>
@@ -172,10 +229,10 @@ export default function UserDropdown() {
         </ul>
 
         {/* LOGOUT */}
-        <div className="pt-3 border-t">
+        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
           >
             Sign Out
           </button>

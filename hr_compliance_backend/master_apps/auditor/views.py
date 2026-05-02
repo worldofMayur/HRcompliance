@@ -19,11 +19,11 @@ from django.shortcuts import get_object_or_404
 from master_apps.checklist.models import AuditChecklist
 from master_apps.vendor.models import VendorCCEmail
 from master_apps.vendor.models import SystemNotification
-
-
 from .models import Auditor, AuditorDocument
 from .serializers import AuditorSerializer
-
+from master_apps.vendor.utils import apply_mapping_for_period
+from datetime import datetime
+import calendar
 
 # ================= NEW IMPORTS =================
 from master_apps.vendor.mapping_models import VendorBranchMapping
@@ -118,18 +118,22 @@ class AuditorCreateAPIView(APIView):
                     "year": now().year,
                 })
 
+                # ... after creating html_content ...
+
                 def send_email():
                     try:
-                        email_obj = EmailMultiAlternatives(
+                        email = EmailMultiAlternatives(
                             subject="Activate Your HR Compliance Account",
-                            body="Please activate your HR Compliance account.",
+                            body="Please activate your account",
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             to=[auditor.email],
                         )
-                        email_obj.attach_alternative(html_content, "text/html")
-                        email_obj.send()
+
+                        email.attach_alternative(html_content, "text/html")
+                        email.send(print("EMAIL SENT SUCCESSFULLY"))
+                        logger.info(f"✅ Activation email sent to {auditor.email}")
                     except Exception as e:
-                        print("EMAIL ERROR:", str(e))
+                        logger.error(f"❌ EMAIL ERROR to {auditor.email}: {str(e)}", exc_info=True)
 
                 transaction.on_commit(send_email)
 
@@ -379,25 +383,31 @@ class SaveAuditAPIView(APIView):
 
         if all_valid:
             try:
-                logger.info(f"📨 Sending → {vendor.email} | CC: {cc_emails}")
+                logger.info(f"📨 Sending compliance email to {vendor.email}")
 
-                email = EmailMultiAlternatives(
-                    subject=subject,
-                    body="Compliance Certificate Issued",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[vendor.email],
-                    cc=cc_emails
-                )
+                resend.api_key = settings.RESEND_API_KEY
 
-                email.attach_alternative(html_content, "text/html")
-                email.send(fail_silently=False)
+                r = resend.Emails.send({
+                    "from": f"HR Compliance <{settings.DEFAULT_FROM_EMAIL}>",
+                    "to": vendor.email,
+                    "cc": cc_emails,
+                    "subject": subject,
+                    "html": html_content,
+                })
+
+                logger.info("✅ Compliance email sent successfully")
+
+                return Response({
+                    "message": "Audit saved & email sent successfully"
+                })
 
             except Exception as e:
-                logger.error(f"❌ Email failed: {str(e)}")
+                logger.error(f"❌ Email sending failed: {str(e)}", exc_info=True)
+                return Response({
+                    "message": "Audit saved successfully (email sending failed)"
+                })
 
-            return Response({
-                "message": "Audit saved & email sent successfully"
-            })
+# Inside SaveAuditAPIView.post() — replace the notification block
 
         else:
             logger.info("❌ Invalid audit → creating notification")
@@ -407,15 +417,13 @@ class SaveAuditAPIView(APIView):
             for entry in entries:
                 checklist = AuditChecklist.objects.filter(
                     id=entry.get("checklist_id")
-                ).first()
+                ).select_related("document").first()
 
                 formatted_entries.append({
-                    "audit_particular": (
-                        checklist.audit_particulars if checklist else f"ID {entry.get('checklist_id')}"
-                    ),
-                    "document_name": (
-                        checklist.document.name if checklist and checklist.document else "N/A"
-                    ),
+                    "checklist_id": entry.get("checklist_id"),
+                    "audit_particular": checklist.audit_particulars if checklist else "",
+                    "document_id": checklist.document_id if checklist and checklist.document else None,
+                    "document_name": checklist.document.name if checklist and checklist.document else "N/A",
                     "status": entry.get("status"),
                     "observation": entry.get("observation"),
                     "recommendation": entry.get("recommendation"),
@@ -423,22 +431,26 @@ class SaveAuditAPIView(APIView):
 
             SystemNotification.objects.create(
                 user=vendor.user,
-                title="Audit Validation Update",
+                title="Audit Requires Action - Re-upload Required",
                 type="VENDOR",
                 branch_id=branch_id,
                 audit_period=audit_period,
                 data={
                     "vendor": vendor.name,
-                    "pe": pe.short_name,
+                    "vendor_id": vendor.id,
+                    "pe_id": pe.id,                    # ← Important
+                    "pe_short_name": pe.short_name,
+                    "branch_id": branch_id,            # ← Important
+                    "branch_short_name": branch.short_name,
                     "state": branch.state,
-                    "branch": branch.short_name,
                     "audit_period": audit_period,
-                    "entries": formatted_entries   # ✅ THIS IS KEY
+                    "entries": formatted_entries,
+                    "action": "reupload"
                 }
             )
 
             return Response({
-                "message": "Audit saved. Vendor notified to re-upload"
+                "message": "Audit saved. Vendor notified to re-upload documents."
             })
 
 # ================= LIST =================
@@ -594,18 +606,65 @@ class AuditChecklistAPIView(APIView):
             audit_period=audit_period
         )
 
-        submitted_document_ids = submissions.values_list("document_id", flat=True)
-
+        # ✅ ALL vendor submissions map
         submission_map = {
             sub.document_id: sub
             for sub in submissions
+            if sub.document_id
         }
 
+        # ✅ PERIOD-BASED DOCUMENT FILTERING
+
+        mapping = mappings.first()
+
+        target_date = now().date()
+
+        try:
+            if audit_period and "–" in audit_period:
+
+                # Example: Jan–Mar 2026
+                end_part = audit_period.split("–")[1].strip()
+
+                month_name, year = end_part.split()
+
+                month_number = datetime.strptime(month_name, "%b").month
+
+                last_day = calendar.monthrange(
+                    int(year),
+                    month_number
+                )[1]
+
+                target_date = datetime(
+                    int(year),
+                    month_number,
+                    last_day
+                ).date()
+
+        except Exception as e:
+            print("PERIOD PARSE ERROR:", str(e))
+
+        # ✅ APPLY VIRTUAL MAPPING
+        virtual_mapping = apply_mapping_for_period(
+            mapping,
+            target_date=target_date
+        )
+
+        doc_ids = getattr(
+            virtual_mapping,
+            "_documents_cache",
+            []
+        )
+
+        # ✅ ONLY VALID DOCS FOR PERIOD
         checklist_qs = AuditChecklist.objects.filter(
             state__name__iexact=state,
             is_active=True,
-            document_id__in=submitted_document_ids
-        ).select_related("act", "section", "document")
+            document_id__in=doc_ids
+        ).select_related(
+            "act",
+            "section",
+            "document"
+        )
 
         # ✅ SAFE ACCESS
         auditor = getattr(request.user, "auditor_profile", None)
@@ -623,16 +682,45 @@ class AuditChecklistAPIView(APIView):
 
             response.append({
                 "id": item.id,
-                "state": item.state.name,
-                "act_name": item.act.name,
-                "audit_particulars": item.audit_particulars,
+                "state": item.state.name if item.state else "",
+                "act_name": item.act.name if item.act else "",
+                "audit_particulars": item.audit_particulars or "",
                 "section_rule": item.section.section_number if item.section else "",
-                "form_number": item.form_number,
-                "document_name": item.document.name if item.document else "",
-                "document": request.build_absolute_uri(auditor_doc.document.url)
-                if auditor_doc and auditor_doc.document else None,
+                "form_number": item.form_number or "",
+
+                # ✅ SAFE DOCUMENT NAME
+                "document_name": (
+                    item.document.name
+                    if item.document
+                    else "Document Not Mapped"
+                ),
+
+                # ✅ VENDOR FILE
+                "vendor_document": (
+                    request.build_absolute_uri(sub.main_file.url)
+                    if sub and sub.main_file
+                    else None
+                ),
+
+                # ✅ AUDITOR REFERENCE FILE
+                "document": (
+                    request.build_absolute_uri(auditor_doc.document.url)
+                    if auditor_doc and auditor_doc.document
+                    else None
+                ),
+
                 "auditor_guide": item.auditor_guide,
-                "status": "Complied" if sub else "Not Complied",
+
+                # ✅ PROFESSIONAL STATUS
+                "status": (
+                    "Uploaded"
+                    if sub
+                    else "Document Pending"
+                ),
+
+                # ✅ UI SUPPORT FLAGS
+                "document_available": bool(sub),
+                "has_checkpoints": True,
             })
 
         return Response(response)

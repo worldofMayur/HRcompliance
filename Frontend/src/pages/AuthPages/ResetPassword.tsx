@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export default function ResetPassword() {
@@ -59,7 +59,7 @@ export default function ResetPassword() {
       alert(data.error);
     } else {
       alert("Password set successfully");
-      navigate("/TailAdmin/signin");
+      navigate("/signin");
     }
   };
 

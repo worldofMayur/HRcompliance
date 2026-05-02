@@ -13,6 +13,7 @@ from .compliance_models import (
 )
 from .models import Vendor
 from .mapping_models import VendorBranchMapping
+from .utils import apply_pending_updates
 
 
 class VendorSubmitComplianceAPIView(APIView):
@@ -84,6 +85,8 @@ class VendorSubmitComplianceAPIView(APIView):
                 {"error": "Cannot submit. Contract expired."},
                 status=400
             )
+            
+        active_mapping_exists = mapping is not None
 
         if not active_mapping_exists:
             return Response(

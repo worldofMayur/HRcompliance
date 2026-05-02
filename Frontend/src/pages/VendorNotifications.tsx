@@ -114,7 +114,7 @@ export default function VendorNotifications() {
                     });
                     }
                 }}
-                className={`cursor-pointer border rounded-lg p-3 transition hover:shadow ${
+                className={`cursor-pointer border rounded-md p-3 transition hover:shadow ${
                     n.is_read ? "bg-white" : "bg-blue-50 border-blue-200"
                 }`}
                 >

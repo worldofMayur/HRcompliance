@@ -134,22 +134,27 @@ AUTHENTICATION_BACKENDS = [
 # ==========================================================
 # EMAIL (SendGrid SMTP)
 # ==========================================================
+# ================= EMAIL SETTINGS (BREVO) =================
+# EMAIL SETTINGS
+# ==========================================================
+# EMAIL (RESEND)
+# ==========================================================
+# ==========================================================
+# EMAIL CONFIGURATION (GMAIL SMTP)
+# ==========================================================
+
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
 
-# IMPORTANT: must be literal "apikey"
-EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_USER = "noreply.hrcompliance@gmail.com"
+EMAIL_HOST_PASSWORD = "xkjzfrhnyorhccaw"
 
-# Must be defined in .env file
-EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# Verified sender email in SendGrid
-DEFAULT_FROM_EMAIL = "HR Compliance <kekultesting@gmail.com>"
-
+EMAIL_TIMEOUT = 30
 # ==========================================================
 # DJANGO REST FRAMEWORK
 # ==========================================================
