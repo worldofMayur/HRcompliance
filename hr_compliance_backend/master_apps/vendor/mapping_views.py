@@ -188,9 +188,34 @@ class VendorMappedPEAPIView(APIView):
 
         vendor = request.user.vendor_profile
 
-        pe_ids = VendorBranchMapping.objects.filter(
+        today = now().date()
+
+        valid_pe_ids = set()
+
+        mappings = VendorBranchMapping.objects.filter(
             vendor=vendor
-        ).values_list("principal_employer_id", flat=True).distinct()
+        )
+
+        for mapping in mappings:
+            apply_pending_updates(mapping)
+
+            mapping.status = mapping.update_status()
+
+            # ✅ EFFECTIVE DATE CHECK
+            if mapping.effective_date and mapping.effective_date > today:
+                continue
+
+            # ✅ ACTIVE STATUS ONLY
+            if mapping.status != "Active":
+                continue
+
+            # ✅ CONTRACT NOT EXPIRED
+            if mapping.end_date and mapping.end_date < today:
+                continue
+
+            valid_pe_ids.add(mapping.principal_employer_id)
+
+        pe_ids = list(valid_pe_ids)
 
         pes = PrincipalEmployer.objects.filter(id__in=pe_ids)
 
@@ -233,6 +258,11 @@ class VendorMappedStatesAPIView(APIView):
             apply_pending_updates(mapping)
 
             mapping.status = mapping.update_status()
+
+            # ✅ EFFECTIVE DATE FILTER
+            if mapping.effective_date and mapping.effective_date > today:
+                continue
+
             # ✅ FILTER AFTER UPDATE
             if mapping.status != "Active":
                 continue
@@ -284,6 +314,10 @@ class VendorMappedBranchesAPIView(APIView):
             apply_pending_updates(mapping)
 
             mapping.status = mapping.update_status()
+
+            # ✅ EFFECTIVE DATE FILTER
+            if mapping.effective_date and mapping.effective_date > today:
+                continue
 
             # ✅ FILTER AFTER UPDATE
             if mapping.status != "Active":

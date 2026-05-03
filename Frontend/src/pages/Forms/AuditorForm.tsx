@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
+import api from "../../utils/api";
 
 /* =========================
    CONSTANTS
@@ -46,12 +47,6 @@ const dateInputClass =
 ========================= */
 
 export default function Auditor() {
-
-  const token = localStorage.getItem("access_token");
-
-  const authHeader = {
-    Authorization: `Bearer ${token}`,
-  };
 
   /* =========================
      FORM STATE
@@ -82,19 +77,25 @@ export default function Auditor() {
   ========================= */
 
   const [tableData, setTableData] = useState([]);
-const filteredAuditors = !search.trim()
-  ? tableData
-  : tableData.filter((a) => {
-      const searchText = search.trim().toLowerCase();
+  const filteredAuditors =
+    Array.isArray(tableData)
+      ? !search.trim()
+        ? tableData
+        : tableData.filter((a) => {
 
-      return (
-        a.name?.toLowerCase().includes(searchText) ||
-        a.short_name?.toLowerCase().includes(searchText) ||   // ✅ ADDED
-        a.company?.toLowerCase().includes(searchText) ||
-        a.email?.toLowerCase().includes(searchText) ||
-        a.mobile?.toString().includes(searchText)
-      );
-    });
+            const searchText =
+              search.trim().toLowerCase();
+
+            return (
+              a.name?.toLowerCase().includes(searchText) ||
+              a.short_name?.toLowerCase().includes(searchText) ||
+              a.company?.toLowerCase().includes(searchText) ||
+              a.email?.toLowerCase().includes(searchText) ||
+              a.mobile?.toString().includes(searchText)
+            );
+
+          })
+      : [];
 
   
 
@@ -103,19 +104,28 @@ const filteredAuditors = !search.trim()
   ========================= */
 
   const fetchAuditors = async () => {
+
     try {
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/auditor/list/",
-        { headers: authHeader }
+
+      const res = await api.get(
+        "/api/auditor/list/"
       );
 
-      if (!res.ok) return;
-
-      const result = await res.json();
-      setTableData(result);
+      setTableData(
+        Array.isArray(res.data)
+          ? res.data
+          : []
+      );
 
     } catch (error) {
-      console.error("Failed to fetch auditors", error);
+
+      console.error(
+        "Failed to fetch auditors",
+        error
+      );
+
+      setTableData([]);
+
     }
   };
 
@@ -188,30 +198,19 @@ const filteredAuditors = !search.trim()
 
       if (editingId) {
 
-        const res = await fetch(
-          `http://127.0.0.1:8000/api/auditor/${editingId}/update/`,
+        await api.put(
+          `/api/auditor/${editingId}/update/`,
           {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: formData.name,
-              company: formData.company,
-              short_name: formData.shortName,
-              ho_address: formData.hoAddress,
-              mobile: formData.mobile,
-              email: formData.email,
-              start_date: formData.startDate,
-              end_date: formData.endDate,
-            }),
+            name: formData.name,
+            company: formData.company,
+            short_name: formData.shortName,
+            ho_address: formData.hoAddress,
+            mobile: formData.mobile,
+            email: formData.email,
+            start_date: formData.startDate,
+            end_date: formData.endDate,
           }
         );
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          alert(data.error || "Update failed");
-          return;
-        }
 
         alert("Auditor updated successfully");
 
@@ -230,23 +229,12 @@ const filteredAuditors = !search.trim()
 
         documents.forEach((d) => payload.append("documents", d));
 
-        const res = await fetch(
-          "http://127.0.0.1:8000/api/auditor/create/",
-          {
-            method: "POST",
-            headers: authHeader,
-            body: payload,
-          }
+        await api.post(
+          "/api/auditor/create/",
+          payload
         );
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          alert(data.error || "Creation failed");
-          return;
-        }
-
-        alert(data.message);
+        alert("Auditor created successfully");
       }
 
       /* RESET FORM */
@@ -254,6 +242,9 @@ const filteredAuditors = !search.trim()
       setEditingId(null);
       setSelectedRows([]);
       setDocuments([]);
+
+      setStartDateObj(null);
+      setEndDateObj(null);
 
       setFormData({
         name: "",
@@ -308,10 +299,9 @@ const filteredAuditors = !search.trim()
 
     await Promise.all(
       selectedRows.map((id) =>
-        fetch(`http://127.0.0.1:8000/api/auditor/${id}/delete/`, {
-          method: "DELETE",
-          headers: authHeader,
-        })
+        api.delete(
+          `/api/auditor/${id}/delete/`
+        )
       )
     );
 

@@ -16,6 +16,7 @@ export default function ManageVendor() {
   const [search, setSearch] = useState("");
 
   const [dateFrom, setDateFrom] = useState("");
+  const [auditors, setAuditors] = useState([]);
   const [dateTo, setDateTo] = useState("");
 
   const [editingRowId, setEditingRowId] = useState(null);
@@ -57,8 +58,24 @@ const [selectedDocuments, setSelectedDocuments] = useState([]); // selected docs
 
 useEffect(() => {
   fetchVendors();
-  fetchDocuments(); // 👈 ADD THIS
+  fetchDocuments();
+  fetchAuditors();
 }, []);
+
+
+const fetchAuditors = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/auditor/list/`, {
+      headers,
+    });
+
+    const data = await res.json();
+
+    setAuditors(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 const fetchDocuments = async () => {
   try {
@@ -205,7 +222,7 @@ const handleEdit = (vendor) => {
     end_date: vendor.end_date || "",
     audit_rule: vendor.rule || "",
     audit_frequency: vendor.frequency || "",
-    auditor_name: vendor.auditor_name || "",
+    auditor_id: vendor.auditor_id || "",
   });
 
   setSelectedDocuments(
@@ -265,6 +282,7 @@ const handleSave = async () => {
 
       rule: editData.audit_rule,
       frequency: editData.audit_frequency,
+      auditor: editData.auditor_id || null,
 
       start_date: formatForAPI(startDate),
       end_date: formatForAPI(endDate),
@@ -640,17 +658,20 @@ className={`border-t hover:bg-gray-50 transition ${
   ))}
 </select>
 
-      <select
-        value={editData.auditor_name || ""}
-        onChange={(e) => handleChange("auditor_name", e.target.value)}
-        className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
-        focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
-      >
-        <option value="">Auditor</option>
-        {getUniqueValues("auditor_name").map((val) => (
-          <option key={val}>{val}</option>
-        ))}
-      </select>
+    <select
+      value={editData.auditor_id || ""}
+      onChange={(e) => handleChange("auditor_id", e.target.value)}
+      className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
+      focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
+    >
+      <option value="">Select Auditor</option>
+
+      {auditors.map((auditor) => (
+        <option key={auditor.id} value={auditor.id}>
+          {auditor.name}
+        </option>
+      ))}
+    </select>
 
     </div>
 

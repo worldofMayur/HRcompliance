@@ -47,6 +47,10 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source="vendor.name", read_only=True)
     branch_name = serializers.CharField(source="branch.short_name", read_only=True)
     auditor_name = serializers.CharField(source="auditor.name", read_only=True)
+    auditor_id = serializers.IntegerField(
+    source="auditor.id",
+    read_only=True
+    )
     vendor_short_name = serializers.CharField(source="vendor.short_name", read_only=True)
     vendor_email = serializers.CharField(source="vendor.email", read_only=True)
     vendor_mobile = serializers.CharField(source="vendor.mobile", read_only=True)
@@ -121,8 +125,18 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
             "frequency": instance.frequency,
             "start_date": str(instance.start_date),
             "end_date": str(instance.end_date),
-            "effective_date": str(instance.effective_date) if instance.effective_date else None,
-            "documents": previous_documents,   # ✅ FIXED
+            "effective_date": (
+                str(instance.effective_date)
+                if instance.effective_date else None
+            ),
+
+            # ✅ ADD THIS
+            "auditor_id": (
+                instance.auditor.id
+                if instance.auditor else None
+            ),
+
+            "documents": previous_documents,
         }
 
         document_ids = validated_data.pop("document_ids", None)
@@ -160,10 +174,38 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
 
             safe_new_data = {
                 "rule": validated_data.get("rule", instance.rule),
-                "frequency": validated_data.get("frequency", instance.frequency),
-                "start_date": str(validated_data.get("start_date", instance.start_date)),
-                "end_date": str(validated_data.get("end_date", instance.end_date)),
+
+                "frequency": validated_data.get(
+                    "frequency",
+                    instance.frequency
+                ),
+
+                "start_date": str(
+                    validated_data.get(
+                        "start_date",
+                        instance.start_date
+                    )
+                ),
+
+                "end_date": str(
+                    validated_data.get(
+                        "end_date",
+                        instance.end_date
+                    )
+                ),
+
                 "effective_date": str(effective_date),
+
+                # ✅ ADD THIS
+                "auditor_id": (
+                    validated_data.get("auditor").id
+                    if validated_data.get("auditor")
+                    else (
+                        instance.auditor.id
+                        if instance.auditor else None
+                    )
+                ),
+
                 "documents": safe_documents,
             }
 
@@ -191,11 +233,30 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
 
         new_data = {
             "rule": instance.rule,
+
             "frequency": instance.frequency,
+
             "start_date": str(instance.start_date),
+
             "end_date": str(instance.end_date),
-            "effective_date": str(instance.effective_date) if instance.effective_date else None,
-            "documents": list(instance.documents.values_list("id", flat=True)),
+
+            "effective_date": (
+                str(instance.effective_date)
+                if instance.effective_date else None
+            ),
+
+            # ✅ ADD THIS
+            "auditor_id": (
+                instance.auditor.id
+                if instance.auditor else None
+            ),
+
+            "documents": list(
+                instance.documents.values_list(
+                    "id",
+                    flat=True
+                )
+            ),
         }
 
         VendorMappingHistory.objects.create(

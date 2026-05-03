@@ -56,7 +56,16 @@ export default function App() {
       <Routes>
 
         {/* ROOT */}
-        <Route path="/" element={<Navigate to="/signin" replace />} />
+        <Route
+          path="/"
+          element={
+            localStorage.getItem("access_token") ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/signin" replace />
+            )
+          }
+        />
 
         {/* AUTH */}
         <Route
@@ -91,8 +100,8 @@ export default function App() {
           }
         >
           <Route index element={<Home />} />
+          <Route path="dashboard" element={<Home />} />
 
-          {/* AUDITOR */}
           <Route
             path="auditor-dashboard"
             element={

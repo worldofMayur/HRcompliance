@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
+import { logoutUser } from "../../utils/auth";
+import api from "../../utils/api";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,29 +41,19 @@ export default function UserDropdown() {
     setIsOpen(false);
   };
 
-  // Logout
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("username");
-      localStorage.removeItem("email");
-      localStorage.removeItem("role");
-      localStorage.removeItem("principal_employer_id");
-
-      sessionStorage.clear();
-
-      console.log("✅ Logged out successfully");
-
-      navigate("/signin", {
-        replace: true,
-      });
-
-      window.location.reload();
-    } catch (error) {
-      console.error("❌ Logout failed:", error);
+const handleLogout = async () => {
+  try {
+    const refresh = localStorage.getItem("refresh_token");
+    if (refresh) {
+      await api.post("/api/auth/logout/", { refresh });
     }
-  };
+  } catch (err) {
+    console.error("Backend logout failed (non-critical)", err);
+  } finally {
+    logoutUser(); // clears localStorage
+    navigate("/signin", { replace: true });
+  }
+};
 
   // Safe display values
   const displayName =

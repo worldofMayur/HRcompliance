@@ -10,28 +10,11 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import api from "../../utils/api";
 
 const API_BASE = "http://127.0.0.1:8000/api";
 
 export default function AuditChecklistForm() {
-
-  const token = localStorage.getItem("access_token");
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("access_token");
-
-  if (!token || token === "null") {
-    window.location.href = "/login";
-    return {};
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-};
-
-const authHeaders = getAuthHeaders(); // ✅ now safe
 
   /* =========================
      MASTER DATA
@@ -96,12 +79,27 @@ const [formData, setFormData] = useState({
      INITIAL LOAD
   ========================= */
   useEffect(() => {
-    fetch(`${API_BASE}/checklist/states/`, { headers: authHeaders }).then(r => r.json()).then(setStates);
-    fetch(`${API_BASE}/document-master/list/`, { headers: authHeaders })
-      .then(r => r.json())
-      .then(res => setDocuments(Array.isArray(res) ? res : []));
+
+    api.get("/api/checklist/states/")
+      .then((res) => {
+        setStates(
+          Array.isArray(res.data)
+            ? res.data
+            : []
+        );
+      });
+
+    api.get("/api/document-master/list/")
+      .then((res) => {
+        setDocuments(
+          Array.isArray(res.data)
+            ? res.data
+            : []
+        );
+      });
 
     fetchList();
+
   }, []);
 
 const handleCreateAct = async () => {
@@ -116,20 +114,15 @@ const handleCreateAct = async () => {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/checklist/acts/create/`, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify({
+    const res = await api.post(
+      "/api/checklist/acts/create/",
+      {
         name: newActName,
         state: formData.state,
-      }),
-    });
+      }
+    );
 
-    if (!res.ok) {
-      throw new Error("Failed to create act");
-    }
-
-    const data = await res.json();
+    const data = res.data;
 
     // ✅ Instant UI update (no delay)
     setActs(prev => {
@@ -180,14 +173,32 @@ const handleDeleteCheckpoint = (id) => {
   setCheckpoints((prev) => prev.filter((item) => item.id !== id));
 };
 
-  const fetchList = () => {
+  const fetchList = async () => {
+
     setLoading(true);
-    fetch(`${API_BASE}/checklist/list/`, { headers: authHeaders })
-      .then(r => r.json())
-      .then(res => {
-        setChecklists(res);
-        setLoading(false);
-      });
+
+    try {
+
+      const res = await api.get(
+        "/api/checklist/list/"
+      );
+
+      setChecklists(
+        Array.isArray(res.data)
+          ? res.data
+          : []
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+      setChecklists([]);
+
+    } finally {
+
+      setLoading(false);
+    }
   };
 
   /* =========================
@@ -219,9 +230,16 @@ useEffect(() => {
   useEffect(() => {
     if (!formData.state) return;
 
-    fetch(`${API_BASE}/checklist/acts/?state=${formData.state}`, { headers: authHeaders })
-      .then(r => r.json())
-      .then(setActs);
+  api.get(
+    `/api/checklist/acts/?state=${formData.state}`
+  )
+  .then((res) => {
+    setActs(
+      Array.isArray(res.data)
+        ? res.data
+        : []
+    );
+  });
 
 setFormData(p => ({ ...p, act: "", section: "" }));
     setSections([]);
@@ -230,9 +248,16 @@ setFormData(p => ({ ...p, act: "", section: "" }));
   useEffect(() => {
     if (!formData.act) return;
 
-    fetch(`${API_BASE}/checklist/sections/?act=${formData.act}`, { headers: authHeaders })
-      .then(r => r.json())
-      .then(setSections);
+  api.get(
+    `/api/checklist/sections/?act=${formData.act}`
+  )
+  .then((res) => {
+    setSections(
+      Array.isArray(res.data)
+        ? res.data
+        : []
+    );
+  });
 
 setFormData(p => ({ ...p, section: "" }));
   }, [formData.act]);
@@ -301,18 +326,10 @@ const handleSubmit = async (e) => {
       auditor_guide: checkpoints.map(c => c.text),
     };
 
-    const res = await fetch(`${API_BASE}/checklist/create/`, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data?.error || "Failed to create checklist");
-      return;
-    }
+    await api.post(
+      "/api/checklist/create/",
+      payload
+    );
 
     alert("Checklist created successfully ✅");
 
@@ -349,27 +366,23 @@ const startEdit = (row) => {
 
 const saveEdit = async (id) => {
   try {
-    const res = await fetch(`${API_BASE}/checklist/${id}/update/`, {
-      method: "PUT",
-      headers: authHeaders,
-      body: JSON.stringify({
-        audit_particulars: editData.audit_particulars,
-        form_number: editData.form_number,
-        auditor_guide: editData.auditor_guide,
-        section: editData.section,
-      }),
-    });
+    await api.put(
+      `/api/checklist/${id}/update/`,
+      {
+        audit_particulars:
+          editData.audit_particulars,
 
-    const data = await res.json();
+        form_number:
+          editData.form_number,
 
-    // ❌ Handle API error
-    if (!res.ok) {
-      console.error("Update failed:", data);
-      alert(data?.error || "Update failed");
-      return;
-    }
+        auditor_guide:
+          editData.auditor_guide,
 
-    // ✅ Success
+        section:
+          editData.section,
+      }
+    );
+
     alert("Updated successfully ✅");
 
     setEditingId(null);
@@ -391,10 +404,9 @@ const saveEdit = async (id) => {
 };
 
   const toggleStatus = async (id) => {
-    await fetch(`${API_BASE}/checklist/${id}/toggle-status/`, {
-      method: "POST",
-      headers: authHeaders
-    });
+    await api.post(
+      `/api/checklist/${id}/toggle-status/`
+    );
     fetchList();
   };
 
@@ -426,10 +438,9 @@ const deleteSelected = async () => {
   try {
     await Promise.all(
       selectedIds.map((id) =>
-        fetch(`${API_BASE}/checklist/${id}/delete/`, {
-          method: "DELETE",
-          headers: authHeaders,
-        })
+      api.delete(
+        `/api/checklist/${id}/delete/`
+      )
       )
     );
 
@@ -447,7 +458,11 @@ const deleteSelected = async () => {
      FILTERED TABLE DATA
   ========================= */
 const filteredChecklists = useMemo(() => {
-  const filtered = checklists.filter((c) => {
+    if (!Array.isArray(checklists)) {
+      return [];
+    }
+
+    const filtered = checklists.filter((c) => {
     const searchText = search.toLowerCase();
 
     const text = `

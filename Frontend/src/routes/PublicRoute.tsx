@@ -1,14 +1,17 @@
-import { Navigate } from "react-router";
+import { Navigate } from "react-router-dom";
+import { isAuthenticated } from "../utils/auth";
 
 interface Props {
   children: JSX.Element;
 }
 
-export default function PublicRoute({ children }: Props) {
-  const token = localStorage.getItem("access_token");
+export default function PublicRoute({
+  children,
+}: Props) {
+  const authenticated = isAuthenticated();
 
-  if (token) {
-    return <Navigate to="/TailAdmin/" replace />;
+  if (authenticated) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

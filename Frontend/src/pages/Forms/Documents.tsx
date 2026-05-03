@@ -5,6 +5,7 @@ import ComponentCard from "../../components/common/ComponentCard";
 import Button from "../../components/ui/button/Button";
 import Badge from "../../components/ui/badge/Badge";
 import Input from "../../components/form/input/InputField";
+import api from "../../utils/api";
 
 import { Checkbox } from "antd";
 
@@ -21,20 +22,6 @@ import {
 ========================= */
 const API_URL = "http://127.0.0.1:8000/api/document-master";
 const PAGE_SIZE = 8;
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("access_token");
-
-  if (!token) {
-    alert("Session expired. Please login again.");
-    return {};
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-};
 
 /* =========================
    COMPONENT
@@ -65,17 +52,32 @@ export default function Documents() {
      FETCH DOCUMENTS
   ========================= */
   const fetchDocuments = async () => {
+
     setLoading(true);
+
     try {
-      const res = await fetch(`${API_URL}/list/`, {
-headers: getAuthHeaders(),
-      });
-      const data = await res.json();
-      setDocuments(Array.isArray(data) ? data : []);
+
+      const res = await api.get(
+        "/api/document-master/list/"
+      );
+
+      setDocuments(
+        Array.isArray(res.data)
+          ? res.data
+          : []
+      );
+
     } catch (err) {
-      console.error("Error loading documents:", err);
+
+      console.error(
+        "Error loading documents:",
+        err
+      );
+
       setDocuments([]);
+
     } finally {
+
       setLoading(false);
     }
   };
@@ -86,17 +88,27 @@ headers: getAuthHeaders(),
   }, []);
 
   const fetchPEs = async () => {
+
     try {
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/document-master/pe-dropdown/",
-        {
-headers: getAuthHeaders(),
-        }
+
+      const res = await api.get(
+        "/api/document-master/pe-dropdown/"
       );
-      const data = await res.json();
-      setPeList(Array.isArray(data) ? data : []);
+
+      setPeList(
+        Array.isArray(res.data)
+          ? res.data
+          : []
+      );
+
     } catch (err) {
-      console.error("Error loading PE list", err);
+
+      console.error(
+        "Error loading PE list",
+        err
+      );
+
+      setPeList([]);
     }
   };
 
@@ -106,8 +118,12 @@ headers: getAuthHeaders(),
 const filteredDocs = useMemo(() => {
   const searchText = search.trim().toLowerCase();
 
-return documents.filter((d) => {
-  const matchesFrequency =
+    if (!Array.isArray(documents)) {
+      return [];
+    }
+
+    return documents.filter((d) => {
+    const matchesFrequency =
     frequencyFilter === "all" || d.frequency === frequencyFilter;
 
   const matchesCompany =
@@ -180,26 +196,35 @@ return documents.filter((d) => {
       return;
     }
 
-    const url = editDoc
-      ? `${API_URL}/${editDoc.id}/update/`
-      : `${API_URL}/create/`;
+    try {
 
-    const method = editDoc ? "PUT" : "POST";
+      if (editDoc) {
 
-    const res = await fetch(url, {
-      method,
-      headers: getAuthHeaders(),
-      body: JSON.stringify(formData),
-    });
+        await api.put(
+          `/api/document-master/${editDoc.id}/update/`,
+          formData
+        );
 
-    if (!res.ok) {
-const data = await res.json();
+      } else {
 
-if (!res.ok) {
-  console.error(data);
-  alert(data?.detail || data?.error || "Operation failed");
-  return;
-}
+        await api.post(
+          "/api/document-master/create/",
+          formData
+        );
+      }
+
+    } catch (error: any) {
+
+      console.error(
+        error.response?.data
+      );
+
+      alert(
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        "Operation failed"
+      );
+
       return;
     }
 
@@ -209,10 +234,9 @@ if (!res.ok) {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this document?")) return;
-    await fetch(`${API_URL}/${id}/delete/`, {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-    });
+      await api.delete(
+        `/api/document-master/${id}/delete/`
+      );
     fetchDocuments();
   };
 
@@ -249,20 +273,14 @@ if (!res.ok) {
     if (!confirm("Delete selected documents?")) return;
 
     try {
-      const res = await fetch(`${API_URL}/bulk-delete/`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
+      const res = await api.post(
+        "/api/document-master/bulk-delete/",
+        {
           ids: selectedIds,
-        }),
-      });
+        }
+      );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Bulk delete failed");
-        return;
-      }
+      const data = res.data;
 
       // ✅ handle partial delete
       alert(data.message || "Deleted successfully");

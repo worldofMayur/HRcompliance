@@ -42,16 +42,31 @@ const [compliancePeriods, setCompliancePeriods] = useState<any[]>([]);
 
 /* 🔥 ADD THIS RIGHT BELOW */
 useEffect(() => {
-  if (!mappingStartDate || !mappingEndDate || !frequencyBase) return;
+
+  if (
+    !mappingStartDate ||
+    !mappingEndDate ||
+    !frequencyBase
+  ) {
+    setCompliancePeriods([]);
+    return;
+  }
 
   const options = getPeriodOptions();
 
-  if (options.length) {
+  setCompliancePeriods(options);
+
+  if (options.length > 0) {
     setAuditPeriod(options[options.length - 1]);
   } else {
     setAuditPeriod("");
   }
-}, [mappingStartDate, mappingEndDate, frequencyBase]);
+
+}, [
+  mappingStartDate,
+  mappingEndDate,
+  frequencyBase
+]);
 
   const loadPE = async () => {
     const res = await axios.get(
@@ -152,94 +167,95 @@ const downloadZip = async () => {
 };
 
 const getPeriodOptions = () => {
-
-  if (!mappingStartDate || !mappingEndDate || !frequencyBase) return [];
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  if (!mappingStartDate || !mappingEndDate || !frequencyBase) {
+    return [];
+  }
 
   const startBoundary = new Date(mappingStartDate);
-  startBoundary.setHours(0, 0, 0, 0);
-
   const endBoundary = new Date(mappingEndDate);
-  endBoundary.setHours(0, 0, 0, 0);
-
-  const format = (start: Date, end: Date) => {
-    const opt: any = { month: "short" };
-
-    const startMonth = start.toLocaleString("default", opt);
-    const endMonth = end.toLocaleString("default", opt);
-
-    const year = start.getFullYear();
-
-    if (
-      start.getMonth() === end.getMonth() &&
-      start.getFullYear() === end.getFullYear()
-    ) {
-      return `${startMonth} ${year}`;
-    }
-
-    return `${startMonth}–${endMonth} ${year}`;
-  };
-
-  const isValidPeriod = (start: Date, end: Date) => {
-    if (!mappingStartDate || !mappingEndDate) return false;
-
-    return (
-      start.getTime() <= mappingEndDate.getTime() &&
-      end.getTime() >= mappingStartDate.getTime() &&
-      start.getTime() <= today.getTime()
-    );
-  };
+  const today = new Date();
+  today.setHours(23, 59, 59, 999); // Treat today as fully available
 
   const periods: string[] = [];
 
-  /* ================= MONTHLY ================= */
-  if (frequencyBase === "MONTHLY") {
+  const formatPeriod = (start: Date, end: Date): string => {
+    const monthOpt: Intl.DateTimeFormatOptions = { month: "short" };
+    const startMonth = start.toLocaleString("default", monthOpt);
+    const endMonth = end.toLocaleString("default", monthOpt);
+    const year = start.getFullYear();
 
-    const current = new Date(startBoundary);
+    return start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+      ? `${startMonth} ${year}`
+      : `${startMonth}–${endMonth} ${year}`;
+  };
+
+  const isValidPeriod = (start: Date, end: Date): boolean => {
+    return (
+      start.getTime() <= endBoundary.getTime() &&
+      end.getTime() >= startBoundary.getTime() &&
+      start.getTime() <= today.getTime()   // Only periods that have started
+    );
+  };
+
+  const normalizedFrequency = String(frequencyBase).trim().toUpperCase();
+
+  let current = new Date(startBoundary.getTime()); // Fresh copy
+
+  if (normalizedFrequency === "MONTHLY") {
     current.setDate(1);
-
     while (current <= endBoundary) {
-
       const start = new Date(current);
-      const end = new Date(
-        current.getFullYear(),
-        current.getMonth() + 1,
-        0
-      );
+      const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
       if (isValidPeriod(start, end)) {
-        periods.push(format(start, end));
+        periods.push(formatPeriod(start, end));
       }
-
       current.setMonth(current.getMonth() + 1);
     }
-  }
-
-  /* ================= QUARTERLY ================= */
-  else if (frequencyBase === "QUARTERLY") {
-
-    const current = new Date(startBoundary);
-    const qStartMonth = Math.floor(current.getMonth() / 3) * 3;
-
-    current.setMonth(qStartMonth);
+  } 
+  else if (normalizedFrequency === "QUARTERLY") {
+    // Align to quarter start
+    const quarterStartMonth = Math.floor(current.getMonth() / 3) * 3;
+    current.setMonth(quarterStartMonth);
     current.setDate(1);
 
     while (current <= endBoundary) {
-
       const start = new Date(current);
-      const end = new Date(
-        current.getFullYear(),
-        current.getMonth() + 3,
-        0
-      );
+      const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
 
       if (isValidPeriod(start, end)) {
-        periods.push(format(start, end));
+        periods.push(formatPeriod(start, end));
       }
-
       current.setMonth(current.getMonth() + 3);
+    }
+  } 
+  else if (normalizedFrequency === "HALF_YEARLY" || normalizedFrequency === "HALF YEARLY") {
+    const halfStartMonth = current.getMonth() < 6 ? 0 : 6;
+    current.setMonth(halfStartMonth);
+    current.setDate(1);
+
+    while (current <= endBoundary) {
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), current.getMonth() + 6, 0);
+
+      if (isValidPeriod(start, end)) {
+        periods.push(formatPeriod(start, end));
+      }
+      current.setMonth(current.getMonth() + 6);
+    }
+  } 
+  else if (normalizedFrequency === "ANNUALLY") {
+    current.setMonth(0);
+    current.setDate(1);
+
+    while (current <= endBoundary) {
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), 11, 31);
+
+      if (isValidPeriod(start, end)) {
+        periods.push(formatPeriod(start, end));
+      }
+      current.setFullYear(current.getFullYear() + 1);
     }
   }
 
@@ -253,20 +269,17 @@ const loadMappingDetails = async (peId: string, vendorId: string, branchId: stri
       authHeader
     );
 
-    setFrequencyBase(res.data.frequency);
+    setFrequencyBase(res.data.frequency || "");
+
     const start = res.data.start_date ? new Date(res.data.start_date) : null;
     const end = res.data.end_date ? new Date(res.data.end_date) : null;
 
-    if (!start || isNaN(start.getTime()) || !end || isNaN(end.getTime())) {
-      console.error("Invalid mapping dates", res.data);
-      return;
-    }
-
-    setMappingStartDate(start);
-    setMappingEndDate(end);
+    if (start && !isNaN(start.getTime())) setMappingStartDate(start);
+    if (end && !isNaN(end.getTime())) setMappingEndDate(end);
 
   } catch (err) {
     console.error(err);
+    message.error("Failed to load mapping details");
   }
 };
 
@@ -636,33 +649,39 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
   </div>
 
   {/* Branch */}
-  <div className="flex flex-col min-w-[180px]">
-    <select
-      value={selectedBranch}
-      onChange={(e) => {
-        const branchId = e.target.value;
-        setSelectedBranch(branchId);
+ {/* Branch */}
+<div className="flex flex-col min-w-[180px]">
+  <select
+    value={selectedBranch}
+    onChange={(e) => {
+      const branchId = e.target.value;
+      
+      // Reset dependent states when branch changes
+      setSelectedBranch(branchId);
+      setAuditPeriod("");           // Reset period
+      setCompliancePeriods([]);     // Clear previous periods
+      setChecklist([]);             // Clear checklist if any
 
-        if (selectedPE && selectedVendor && branchId) {
-          loadMappingDetails(selectedPE, selectedVendor, branchId);
-        }
-      }}
-      className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
-    >
-      <option value="">Select Branch</option>
-      {branches.map((b) => (
-        <option key={b.id} value={b.id}>
-          {b.name}
-        </option>
-      ))}
-    </select>
+      if (selectedPE && selectedVendor && branchId) {
+        loadMappingDetails(selectedPE, selectedVendor, branchId);
+      }
+    }}
+    className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
+  >
+    <option value="">Select Branch</option>
+    {branches.map((b) => (
+      <option key={b.id} value={b.id}>
+        {b.name}
+      </option>
+    ))}
+  </select>
 
-    {selectedBranch && (
-      <span className="text-xs text-green-700 mt-1">
-        Selected: {branches.find(b => b.id == selectedBranch)?.name}
-      </span>
-    )}
-  </div>
+  {selectedBranch && (
+    <span className="text-xs text-green-700 mt-1">
+      Selected: {branches.find(b => b.id == selectedBranch)?.name}
+    </span>
+  )}
+</div>
 
   {/* Audit Period */}
   <div className="flex flex-col min-w-[180px]">
@@ -673,7 +692,7 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
     >
       <option value="">Select Compliance Period</option>
 
-      {getPeriodOptions().map((p) => (
+      {compliancePeriods.map((p) => (
         <option key={p} value={p}>
           {p}
         </option>

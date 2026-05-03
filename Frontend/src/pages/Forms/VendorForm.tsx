@@ -23,6 +23,7 @@ import {
 } from "../../components/ui/table";
 
 import Badge from "../../components/ui/badge/Badge";
+import api from "../../utils/api";
 
 /* =========================
    HELPERS
@@ -31,18 +32,6 @@ const emailRegex =
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function VendorForm() {
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("access_token");
-
-  if (!token || token === "null") {
-    window.location.href = "/login";
-    return {};
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-};
 
   /* =========================
      FORM STATE
@@ -75,7 +64,8 @@ const getAuthHeaders = () => {
   const formRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState("");
 
-const filteredVendors = vendors.filter((v) => {
+const filteredVendors = Array.isArray(vendors)
+  ? vendors.filter((v) => {
   const searchText = search.toLowerCase();
 
   return (
@@ -84,26 +74,35 @@ const filteredVendors = vendors.filter((v) => {
     v.email?.toLowerCase().includes(searchText) ||
     v.contact_person?.toLowerCase().includes(searchText)
   );
-});
-
+})
+: [];
   /* =========================
      FETCH
   ========================= */
-  const fetchVendors = async () => {
-    try {
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/vendor/list/",
-        { headers: getAuthHeaders() }
-      );
+const fetchVendors = async () => {
 
-      if (!res.ok) return;
+  try {
 
-      const result = await res.json();
-      setVendors(result);
-    } catch (error) {
-      console.error("Vendor fetch failed", error);
-    }
-  };
+    const res = await api.get(
+      "/api/vendor/list/"
+    );
+
+    setVendors(
+      Array.isArray(res.data)
+        ? res.data
+        : []
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Vendor fetch failed",
+      error
+    );
+
+    setVendors([]);
+  }
+};
 
   useEffect(() => {
     fetchVendors();
@@ -178,23 +177,10 @@ const filteredVendors = vendors.filter((v) => {
         payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
       });
 
-      const res = await fetch(
-        `http://127.0.0.1:8000/api/vendor/${editingId}/update/`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeader,
-          },
-          body: JSON.stringify(payload),
-        }
+      await api.put(
+        `/api/vendor/${editingId}/update/`,
+        payload
       );
-
-      if (!res.ok) {
-        alert("Update failed");
-        setLoading(false);
-        return;
-      }
 
       alert("Vendor updated successfully");
       setIsEditMode(false);
@@ -212,34 +198,29 @@ const filteredVendors = vendors.filter((v) => {
 
     documents.forEach((d) => payload.append("document", d));
 
-    const res = await fetch(
-      "http://127.0.0.1:8000/api/vendor/create/",
-      {
-        method: "POST",
-        headers: authHeader,
-        body: payload,
-      }
-    );
+    try {
 
-if (!res.ok) {
-  const errorData = await res.json().catch(() => null);
+      await api.post(
+        "/api/vendor/create/",
+        payload
+      );
 
-  console.error("Backend Error:", errorData);
+    } catch (error: any) {
 
-  if (errorData) {
-    if (errorData.error) {
-      alert(errorData.error);
-    } else {
-      const firstKey = Object.keys(errorData)[0];
-      alert(`${firstKey}: ${errorData[firstKey]}`);
+      console.error(
+        "Backend Error:",
+        error.response?.data
+      );
+
+      alert(
+        error.response?.data?.error ||
+        "Vendor creation failed"
+      );
+
+      setLoading(false);
+
+      return;
     }
-  } else {
-    alert("Unknown server error");
-  }
-
-  setLoading(false);
-  return;
-}
 
     alert("Vendor created successfully");
 
@@ -297,10 +278,9 @@ if (!res.ok) {
 
     await Promise.all(
       selectedRows.map((id) =>
-        fetch(`http://127.0.0.1:8000/api/vendor/${id}/delete/`, {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        })
+        api.delete(
+          `/api/vendor/${id}/delete/`
+        )
       )
     );
 

@@ -1,22 +1,30 @@
-import { Navigate } from "react-router";
+import { Navigate } from "react-router-dom";
+import { isAuthenticated } from "../utils/auth";
 
 interface Props {
   children: JSX.Element;
   allowedRoles?: string[];
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: Props) {
-  const token = localStorage.getItem("access_token");
+export default function ProtectedRoute({
+  children,
+  allowedRoles,
+}: Props) {
+  const token = isAuthenticated();
   const role = localStorage.getItem("role");
 
-  // Not logged in
+  // NOT LOGGED IN
   if (!token) {
     return <Navigate to="/signin" replace />;
   }
 
-  // Role restriction
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    return <Navigate to="/TailAdmin/" replace />;
+  // ROLE CHECK
+  if (
+    allowedRoles &&
+    role &&
+    !allowedRoles.includes(role)
+  ) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

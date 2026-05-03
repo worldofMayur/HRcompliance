@@ -14,6 +14,7 @@ import { Checkbox } from "antd";
 import "antd/dist/reset.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import api from "../../utils/api";
 
 import {
   Table,
@@ -120,12 +121,26 @@ const formatForAPI = (date: Date | null) => {
       status: "active",   // default active
     });
 
-    useEffect(() => {
-  fetch("http://127.0.0.1:8000/api/checklist/states/")
-    .then(res => res.json())
-    .then(data => setStates(data))
-    .catch(err => console.log("State fetch error", err));
-}, []);
+  useEffect(() => {
+
+    api.get("/api/checklist/states/")
+      .then((res) => {
+
+        setStates(
+          Array.isArray(res.data)
+            ? res.data
+            : []
+        );
+
+      })
+      .catch((err) => {
+        console.log(
+          "State fetch error",
+          err
+        );
+      });
+
+  }, []);
 
 const openBranchModal = async (peId) => {
   const pe = tableData.find((x) => x.id === peId);
@@ -134,11 +149,15 @@ const openBranchModal = async (peId) => {
   setSelectedPEObject(pe);   // ✅ store full object
   setBranchModalOpen(true);
 
-  const res = await fetch(
-    `http://127.0.0.1:8000/api/principal-employer/${peId}/branches/`
-  );
-  const data = await res.json();
-  setBranchList(data);
+const res = await api.get(
+  `/api/principal-employer/${peId}/branches/`
+);
+
+setBranchList(
+  Array.isArray(res.data)
+    ? res.data
+    : []
+);
 };
 
 const startEditing = (branch) => {
@@ -166,20 +185,12 @@ const handleBranchUpdate = async (branchId: number) => {
     formData.append("document", branchData.document);
   }
 
-  const res = await fetch(
-    `http://127.0.0.1:8000/api/principal-employer/branch/${branchId}/update/`,
-    {
-      method: "PUT",
-      body: formData,
-    }
+  const res = await api.put(
+    `/api/principal-employer/branch/${branchId}/update/`,
+    formData
   );
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(JSON.stringify(data));
-    return;
-  }
+  const data = res.data;
 
   // ✅ Update table instantly
   setBranchList((prev) =>
@@ -217,19 +228,12 @@ const handleBranchSubmit = async () => {
     formData.append("document", branchData.document);
   }
 
-  const res = await fetch("http://127.0.0.1:8000/api/principal-employer/branch/create/", {
-      method: "POST",
-      body: formData,
-    }
+  const res = await api.post(
+    "/api/principal-employer/branch/create/",
+    formData
   );
 
-  if (!res.ok) {
-    const err = await res.json();
-    console.log(err);
-    return;
-  }
-
-  const newBranch = await res.json();
+  const newBranch = res.data;
 
   // ✅ Immediately update UI
   setBranchList((prev) => [newBranch, ...prev]);
@@ -247,20 +251,17 @@ const handleBranchSubmit = async () => {
     autoForm.append("status", "active");
 
     try {
-      const autoRes = await fetch(
-        "http://127.0.0.1:8000/api/principal-employer/branch/create/",
-        {
-          method: "POST",
-          body: autoForm,
-        }
-      );
+        const autoRes = await api.post(
+          "/api/principal-employer/branch/create/",
+          autoForm
+        );
 
-      if (autoRes.ok) {
-        const autoBranch = await autoRes.json();
+        const autoBranch = autoRes.data;
 
-        // add to UI
-        setBranchList((prev) => [autoBranch, ...prev]);
-      }
+        setBranchList((prev) => [
+          autoBranch,
+          ...prev,
+        ]);
     } catch (err) {
       console.log("Auto All Branch creation failed", err);
     }
@@ -314,17 +315,36 @@ const handleBranchSubmit = async () => {
   /* =========================
      FETCH LIST
   ========================= */
-  const fetchPEs = async () => {
-    const res = await fetch(
-      "http://127.0.0.1:8000/api/principal-employer/list/"
-    );
-    const data = await res.json();
-    setTableData(data);
-  };
+const fetchPEs = async () => {
 
-  useEffect(() => {
-    fetchPEs();
-  }, []);
+  try {
+
+    const res = await api.get(
+      "/api/principal-employer/list/"
+    );
+
+    setTableData(
+      Array.isArray(res.data)
+        ? res.data
+        : []
+    );
+
+  } catch (err) {
+
+    console.log(
+      "PE fetch error",
+      err
+    );
+
+    setTableData([]);
+
+  }
+};
+
+
+useEffect(() => {
+  fetchPEs();
+}, []);
 
   /* =========================
      FILTERED DATA
@@ -535,16 +555,11 @@ const handleSubmit = async () => {
         payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
       });
 
-      const res = await fetch(
-        `http://127.0.0.1:8000/api/principal-employer/${editingId}/update/`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
+      await api.put(
+        `/api/principal-employer/${editingId}/update/`,
+        payload
       );
 
-      if (!res.ok) throw new Error("Update failed");
 
       alert("Updated successfully");
 
@@ -558,17 +573,10 @@ const handleSubmit = async () => {
 
       documents.forEach((d) => payload.append("document", d));
 
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/principal-employer/create/",
-        { method: "POST", body: payload }
+      await api.post(
+        "/api/principal-employer/create/",
+        payload
       );
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.log("Backend Error:", errorData);
-        alert(JSON.stringify(errorData));
-        return;
-      }
 
       alert("Created successfully");
     }
@@ -678,9 +686,8 @@ const handleSubmit = async () => {
 
     await Promise.all(
       selectedRows.map((id) =>
-        fetch(
-          `http://127.0.0.1:8000/api/principal-employer/${id}/delete/`,
-          { method: "DELETE" }
+        api.delete(
+          `/api/principal-employer/${id}/delete/`
         )
       )
     );

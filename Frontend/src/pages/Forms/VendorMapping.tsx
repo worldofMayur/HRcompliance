@@ -1,8 +1,22 @@
-import { useState, useEffect, useRef } from "react";import axios from "axios";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
+
 import DatePicker from "react-datepicker";
+
 import "react-datepicker/dist/react-datepicker.css";
-import { Checkbox, Input } from "antd";
+
+import {
+  Checkbox,
+  Input,
+} from "antd";
+
 import "antd/dist/reset.css";
+
+import api from "../../utils/api";
 
 interface Vendor {
   id: number;
@@ -44,116 +58,263 @@ interface BranchType {
 
 export default function VendorMapping() {
 
-  const token = localStorage.getItem("access_token");
+  // =====================================================
+  // MASTER DATA
+  // =====================================================
 
-  const authHeader = {
-    headers: { Authorization: `Bearer ${token}` }
-  };
+  const [vendors, setVendors] =
+    useState<Vendor[]>([]);
 
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [auditors, setAuditors] = useState<Auditor[]>([]);
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [auditors, setAuditors] =
+    useState<Auditor[]>([]);
 
-  const [states, setStates] = useState<StateType[]>([]);
-  const [branches, setBranches] = useState<BranchType[]>([]);
-  const [allBranches, setAllBranches] = useState<BranchType[]>([]);
+  const [documents, setDocuments] =
+    useState<Document[]>([]);
 
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
-  const [startDate, endDate] = dateRange;
+  const [states, setStates] =
+    useState<StateType[]>([]);
 
-  const [startInput, setStartInput] = useState("");
-  const [endInput, setEndInput] = useState("");
+  const [allBranches, setAllBranches] =
+    useState<BranchType[]>([]);
 
-  const [startError, setStartError] = useState("");
-  const [endError, setEndError] = useState("");
+  // =====================================================
+  // DATE STATE
+  // =====================================================
 
-  const [selectedVendor, setSelectedVendor] = useState("");
-  const [selectedVendorObj, setSelectedVendorObj] = useState<Vendor | null>(null);
+  const [dateRange, setDateRange] =
+    useState<[Date | null, Date | null]>([
+      null,
+      null,
+    ]);
 
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedBranch, setSelectedBranch] = useState("");
-  const [selectedBranchObj, setSelectedBranchObj] = useState<BranchType | null>(null);
+  const [startDate, endDate] =
+    dateRange;
 
-  const [selectedAuditor, setSelectedAuditor] = useState("");
-  const [selectedAuditorObj, setSelectedAuditorObj] = useState<Auditor | null>(null);
+  const [startInput, setStartInput] =
+    useState("");
 
-  const [selectedRule, setSelectedRule] = useState("");
-  const [selectedFrequency, setSelectedFrequency] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState("");
+  const [endInput, setEndInput] =
+    useState("");
 
-  const [selectedShortName, setSelectedShortName] = useState("");
-  const [vendorSearch, setVendorSearch] = useState("");
-  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
-  const vendorDropdownRef = useRef<HTMLDivElement>(null);
+  const [startError, setStartError] =
+    useState("");
 
-  const [documentSearch, setDocumentSearch] = useState("");
-  const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
-  const [showDocumentDropdown, setShowDocumentDropdown] = useState(false);
-  const documentDropdownRef = useRef<HTMLDivElement>(null);
+  const [endError, setEndError] =
+    useState("");
+
+  // =====================================================
+  // SELECTED VALUES
+  // =====================================================
+
+  const [selectedVendor, setSelectedVendor] =
+    useState("");
+
+  const [selectedState, setSelectedState] =
+    useState("");
+
+  const [selectedBranch, setSelectedBranch] =
+    useState("");
+
+  const [selectedAuditor, setSelectedAuditor] =
+    useState("");
+
+  const [selectedRule, setSelectedRule] =
+    useState("");
+
+  const [selectedFrequency, setSelectedFrequency] =
+    useState("");
+
+  const [selectedShortName, setSelectedShortName] =
+    useState("");
+
+  // =====================================================
+  // SEARCH STATE
+  // =====================================================
+
+  const [vendorSearch, setVendorSearch] =
+    useState("");
+
+  const [documentSearch, setDocumentSearch] =
+    useState("");
+
+  // =====================================================
+  // DROPDOWN STATE
+  // =====================================================
+
+  const [showVendorDropdown,
+    setShowVendorDropdown] =
+      useState(false);
+
+  const [showDocumentDropdown,
+    setShowDocumentDropdown] =
+      useState(false);
+
+  // =====================================================
+  // DOCUMENTS
+  // =====================================================
+
+  const [selectedDocuments,
+    setSelectedDocuments] =
+      useState<number[]>([]);
+
+  // =====================================================
+  // REFS
+  // =====================================================
+
+  const vendorDropdownRef =
+    useRef<HTMLDivElement>(null);
+
+  const documentDropdownRef =
+    useRef<HTMLDivElement>(null);
+
+  // =====================================================
+  // DERIVED STATE (OPTIMIZED)
+  // =====================================================
+
+  const selectedVendorObj = useMemo(
+    () =>
+      vendors.find(
+        (v) =>
+          v.id === Number(selectedVendor)
+      ) || null,
+    [vendors, selectedVendor]
+  );
+
+  const branches = useMemo(() => {
+
+    if (!selectedState) {
+      return allBranches;
+    }
+
+    return allBranches.filter(
+      (b) => b.state === selectedState
+    );
+
+  }, [allBranches, selectedState]);
+
+  const selectedBranchObj = useMemo(
+    () =>
+      branches.find(
+        (b) =>
+          b.id === Number(selectedBranch)
+      ) || null,
+    [branches, selectedBranch]
+  );
+
+  const selectedAuditorObj = useMemo(
+    () =>
+      auditors.find(
+        (a) =>
+          a.id === Number(selectedAuditor)
+      ) || null,
+    [auditors, selectedAuditor]
+  );
+
+  const filteredVendors = useMemo(() => {
+
+    return vendors.filter((v) =>
+      v.short_name
+        .toLowerCase()
+        .includes(
+          vendorSearch.toLowerCase()
+        )
+    );
+
+  }, [vendors, vendorSearch]);
+
+  const filteredDocuments = useMemo(() => {
+
+    return documents.filter((doc) =>
+      doc.name
+        .toLowerCase()
+        .includes(
+          documentSearch.toLowerCase()
+        )
+    );
+
+  }, [documents, documentSearch]);
 
   useEffect(() => {
-    loadVendors();
-    loadAuditors();
-    loadDocuments();
-    loadPEBranches();
+
+    const loadInitialData = async () => {
+
+      try {
+
+        const [
+          vendorsRes,
+          auditorsRes,
+          documentsRes,
+          branchesRes,
+        ] = await Promise.all([
+
+          api.get("/api/vendor/list/"),
+
+          api.get("/api/auditor/list/"),
+
+          api.get("/api/document-master/list/"),
+
+          api.get("/api/vendor/pe/branches/"),
+        ]);
+
+        setVendors(
+          Array.isArray(vendorsRes.data)
+            ? vendorsRes.data
+            : []
+        );
+
+        setAuditors(
+          Array.isArray(auditorsRes.data)
+            ? auditorsRes.data
+            : []
+        );
+
+        setDocuments(
+          Array.isArray(documentsRes.data)
+            ? documentsRes.data
+            : []
+        );
+
+        const activeBranches =
+          Array.isArray(branchesRes.data)
+            ? branchesRes.data.filter(
+                (b: any) =>
+                  !b.status ||
+                  b.status === "active"
+              )
+            : [];
+
+        setAllBranches(activeBranches);
+
+        const uniqueStates = Array.from(
+          new Set(
+            activeBranches.map(
+              (b: any) => b.state
+            )
+          )
+        ).map((state, index) => ({
+          id: index,
+          name: state as string,
+        }));
+
+        setStates(uniqueStates);
+
+      } catch (error) {
+
+        console.error(
+          "Initial load failed",
+          error
+        );
+      }
+    };
+
+    loadInitialData();
+
   }, []);
 
-  const loadVendors = async () => {
-    const res = await axios.get("http://127.0.0.1:8000/api/vendor/list/", authHeader);
-    setVendors(res.data);
-  };
-
-  const loadAuditors = async () => {
-    const res = await axios.get("http://127.0.0.1:8000/api/auditor/list/", authHeader);
-    setAuditors(res.data);
-  };
-
-  const loadDocuments = async () => {
-    try {
-
-      const res = await axios.get(
-        "http://127.0.0.1:8000/api/document-master/list/",
-        authHeader
-      );
-
-      console.log("Documents from API:", res.data);
-
-      // Backend already filters documents for the logged-in PE
-      setDocuments(res.data);
-
-    } catch (error) {
-      console.error("Error loading documents:", error);
-    }
-  };
-
-  const loadPEBranches = async () => {
-    try {
-
-      const res = await axios.get(
-        "http://127.0.0.1:8000/api/vendor/pe/branches/",
-        authHeader
-      );
-
-      const activeBranches = res.data.filter(
-        (b: any) => !b.status || b.status === "active"
-      );
-
-      setAllBranches(activeBranches);
-      setBranches(activeBranches);
-
-      const uniqueStates = Array.from(
-        new Set(activeBranches.map((b: any) => b.state))
-      ).map((state, index) => ({
-        id: index,
-        name: state
-      }));
-
-      setStates(uniqueStates);
-
-    } catch (error: any) {
-      console.log("PE Branch Error:", error.response?.data);
-    }
-  };
+  const selectedDocumentSet = useMemo(
+  () => new Set(selectedDocuments),
+  [selectedDocuments]
+);
 
   const parseDate = (value: string) => {
     const regex = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -186,19 +347,45 @@ export default function VendorMapping() {
     return date.toISOString().split("T")[0];
   };
 
-useEffect(() => {
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      documentDropdownRef.current &&
-      !documentDropdownRef.current.contains(event.target as Node)
-    ) {
-      setShowDocumentDropdown(false);
-    }
-  };
+  useEffect(() => {
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
+    const handleClickOutside = (
+      event: MouseEvent
+    ) => {
+
+      if (
+        vendorDropdownRef.current &&
+        !vendorDropdownRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        setShowVendorDropdown(false);
+      }
+
+      if (
+        documentDropdownRef.current &&
+        !documentDropdownRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        setShowDocumentDropdown(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+
+  }, []);
 
 const toggleDocument = (id: number) => {
   setSelectedDocuments((prev) =>
@@ -208,75 +395,126 @@ const toggleDocument = (id: number) => {
 
 const handleSave = async () => {
 
-  if (!selectedVendor || !selectedBranch || !startDate || !endDate) {
-    alert("Please fill all required fields");
+  if (
+    !selectedVendor ||
+    !selectedBranch ||
+    !startDate ||
+    !endDate
+  ) {
+    alert(
+      "Please fill all required fields"
+    );
     return;
   }
 
-  // 🔥 FIX 1 — Normalize today's date
+  // Normalize today's date
   const today = new Date();
+
   today.setHours(0, 0, 0, 0);
 
-  // 🔥 FIX 2 — Prevent invalid range
+  // Prevent invalid range
   if (startDate > endDate) {
-    alert("Start date cannot be greater than End date");
+
+    alert(
+      "Start date cannot be greater than End date"
+    );
+
     return;
   }
 
-  // 🔥 FIX 3 — Prevent past end date (MAIN ISSUE)
+  // Prevent past end date
   if (endDate < today) {
-    alert("End date cannot be in the past");
+
+    alert(
+      "End date cannot be in the past"
+    );
+
     return;
   }
 
   try {
 
     const payload = {
+
       vendor: Number(selectedVendor),
+
       branch: Number(selectedBranch),
-      auditor: selectedAuditor ? Number(selectedAuditor) : null,
+
+      auditor: selectedAuditor
+        ? Number(selectedAuditor)
+        : null,
+
       documents: selectedDocuments,
-      start_date: formatForAPI(startDate),
-      end_date: formatForAPI(endDate),
+
+      start_date:
+        formatForAPI(startDate),
+
+      end_date:
+        formatForAPI(endDate),
+
       rule: selectedRule,
+
       frequency: selectedFrequency,
     };
 
-    // 🔥 DEBUG (VERY IMPORTANT)
-    console.log("🚀 FINAL PAYLOAD:", payload);
-
-    await axios.post(
-      "http://127.0.0.1:8000/api/vendor/mapping/create/",
-      payload,
-      authHeader
+    console.log(
+      "🚀 FINAL PAYLOAD:",
+      payload
     );
 
-    alert("Vendor Mapping Saved Successfully");
+    await api.post(
+      "/api/vendor/mapping/create/",
+      payload
+    );
 
-    // RESET
+    alert(
+      "Vendor Mapping Saved Successfully"
+    );
+
+    // RESET FORM
+
     setSelectedVendor("");
-    setSelectedVendorObj(null);
 
     setSelectedState("");
+
     setSelectedShortName("");
+
     setSelectedBranch("");
-    setSelectedBranchObj(null);
 
     setSelectedAuditor("");
-    setSelectedAuditorObj(null);
 
-    setSelectedDocument("");
+    setSelectedDocuments([]);
+
+    setDocumentSearch("");
+
+    setVendorSearch("");
 
     setSelectedRule("");
+
     setSelectedFrequency("");
 
     setDateRange([null, null]);
+
     setStartInput("");
+
     setEndInput("");
 
+    setStartError("");
+
+    setEndError("");
+
   } catch (error: any) {
-    console.log("❌ ERROR:", error.response?.data);
-    alert(JSON.stringify(error.response?.data));
+
+    console.log(
+      "❌ ERROR:",
+      error.response?.data
+    );
+
+    alert(
+      JSON.stringify(
+        error.response?.data
+      )
+    );
   }
 };
 
@@ -315,16 +553,11 @@ const handleSave = async () => {
       {showVendorDropdown && (
         <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg mt-1 max-h-52 overflow-y-auto shadow">
 
-          {vendors
-            .filter(v =>
-              v.short_name.toLowerCase().includes(vendorSearch.toLowerCase())
-            )
-            .map(v => (
+    {filteredVendors.map(v => (
               <div
                 key={v.id}
                 onClick={() => {
                   setSelectedVendor(String(v.id));
-                  setSelectedVendorObj(v);
                   setVendorSearch(v.short_name);
                   setShowVendorDropdown(false);
                 }}
@@ -348,10 +581,6 @@ const handleSave = async () => {
         setSelectedState(state);
         setSelectedShortName("");
         setSelectedBranch("");
-        setSelectedBranchObj(null);
-
-        const filtered = allBranches.filter(b => b.state === state);
-        setBranches(filtered);
       }}
     >
       <option value="">Select State</option>
@@ -374,10 +603,8 @@ const handleSave = async () => {
         const branch = branches.find(b => String(b.id) === branchId);
 
         if (branch) {
-          setSelectedBranchObj(branch);
           setSelectedShortName(branch.short_name);
         } else {
-          setSelectedBranchObj(null);
           setSelectedShortName("");
         }
       }}
@@ -574,8 +801,6 @@ const handleSave = async () => {
       value={selectedAuditor}
       onChange={(e) => {
         setSelectedAuditor(e.target.value);
-        const auditor = auditors.find(a => a.id === Number(e.target.value));
-        setSelectedAuditorObj(auditor || null);
       }}
     >
       <option value="">Select Auditor</option>
@@ -618,17 +843,13 @@ const handleSave = async () => {
     {showDocumentDropdown && (
       <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg mt-1 max-h-60 overflow-y-auto shadow">
 
-        {documents
-          .filter((doc) =>
-            doc.name.toLowerCase().includes(documentSearch.toLowerCase())
-          )
-          .map((doc) => (
+        {filteredDocuments.map((doc) => (
             <div
               key={doc.id}
               className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
             >
               <Checkbox
-                checked={selectedDocuments.includes(doc.id)}
+                checked={selectedDocumentSet.has(doc.id)}
                 onChange={() => toggleDocument(doc.id)}
               >
                 {doc.name}
@@ -636,9 +857,7 @@ const handleSave = async () => {
             </div>
           ))}
 
-        {documents.filter((doc) =>
-          doc.name.toLowerCase().includes(documentSearch.toLowerCase())
-        ).length === 0 && (
+      {filteredDocuments.length === 0 && (
           <div className="px-3 py-2 text-gray-400 text-sm">
             No documents found
           </div>
@@ -648,29 +867,38 @@ const handleSave = async () => {
   </div>
 
   {/* SELECTED DOCUMENT TAGS */}
-  {selectedDocuments.length > 0 && (
-    <div className="mt-3 flex flex-wrap gap-2">
+{/* SELECTED DOCUMENT TAGS */}
+{selectedDocuments.length > 0 && (
 
-      {documents
-        .filter((doc) => selectedDocuments.includes(doc.id))
-        .map((doc) => (
-          <span
-            key={doc.id}
-            className="flex items-center gap-2 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full"
+  <div className="mt-3 flex flex-wrap gap-2">
+
+    {documents
+      .filter((doc) =>
+        selectedDocumentSet.has(doc.id)
+      )
+      .map((doc) => (
+
+        <span
+          key={doc.id}
+          className="flex items-center gap-2 bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full"
+        >
+          {doc.name}
+
+          {/* REMOVE BUTTON */}
+          <button
+            onClick={() =>
+              toggleDocument(doc.id)
+            }
+            className="text-blue-700 hover:text-red-500 font-bold"
           >
-            {doc.name}
+            ×
+          </button>
 
-            {/* REMOVE BUTTON */}
-            <button
-              onClick={() => toggleDocument(doc.id)}
-              className="text-blue-700 hover:text-red-500 font-bold"
-            >
-              ×
-            </button>
-          </span>
-        ))}
-    </div>
-  )}
+        </span>
+      ))}
+
+  </div>
+)}
 </div>
 
 </div>

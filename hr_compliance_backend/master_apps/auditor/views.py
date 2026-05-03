@@ -19,9 +19,16 @@ from django.shortcuts import get_object_or_404
 from master_apps.checklist.models import AuditChecklist
 from master_apps.vendor.models import VendorCCEmail
 from master_apps.vendor.models import SystemNotification
+from master_apps.vendor.utils import (
+    apply_mapping_for_period,
+    audit_period_to_date,
+)
+
+from master_apps.documents.models import DocumentMaster
+
+
 from .models import Auditor, AuditorDocument
 from .serializers import AuditorSerializer
-from master_apps.vendor.utils import apply_mapping_for_period
 from datetime import datetime
 import calendar
 
@@ -118,22 +125,18 @@ class AuditorCreateAPIView(APIView):
                     "year": now().year,
                 })
 
-                # ... after creating html_content ...
-
                 def send_email():
                     try:
-                        email = EmailMultiAlternatives(
+                        email_obj = EmailMultiAlternatives(
                             subject="Activate Your HR Compliance Account",
-                            body="Please activate your account",
+                            body="Please activate your HR Compliance account.",
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             to=[auditor.email],
                         )
-
-                        email.attach_alternative(html_content, "text/html")
-                        email.send(print("EMAIL SENT SUCCESSFULLY"))
-                        logger.info(f"✅ Activation email sent to {auditor.email}")
+                        email_obj.attach_alternative(html_content, "text/html")
+                        email_obj.send()
                     except Exception as e:
-                        logger.error(f"❌ EMAIL ERROR to {auditor.email}: {str(e)}", exc_info=True)
+                        print("EMAIL ERROR:", str(e))
 
                 transaction.on_commit(send_email)
 
@@ -152,6 +155,9 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
         vendor_id = request.GET.get("vendor_id")
         audit_period = request.GET.get("audit_period")
+        selected_date = audit_period_to_date(
+            audit_period
+        )
 
         submissions = VendorComplianceSubmission.objects.filter(
             branch_id=branch_id,
@@ -383,29 +389,25 @@ class SaveAuditAPIView(APIView):
 
         if all_valid:
             try:
-                logger.info(f"📨 Sending compliance email to {vendor.email}")
+                logger.info(f"📨 Sending → {vendor.email} | CC: {cc_emails}")
 
-                resend.api_key = settings.RESEND_API_KEY
+                email = EmailMultiAlternatives(
+                    subject=subject,
+                    body="Compliance Certificate Issued",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[vendor.email],
+                    cc=cc_emails
+                )
 
-                r = resend.Emails.send({
-                    "from": f"HR Compliance <{settings.DEFAULT_FROM_EMAIL}>",
-                    "to": vendor.email,
-                    "cc": cc_emails,
-                    "subject": subject,
-                    "html": html_content,
-                })
-
-                logger.info("✅ Compliance email sent successfully")
-
-                return Response({
-                    "message": "Audit saved & email sent successfully"
-                })
+                email.attach_alternative(html_content, "text/html")
+                email.send(fail_silently=False)
 
             except Exception as e:
-                logger.error(f"❌ Email sending failed: {str(e)}", exc_info=True)
-                return Response({
-                    "message": "Audit saved successfully (email sending failed)"
-                })
+                logger.error(f"❌ Email failed: {str(e)}")
+
+            return Response({
+                "message": "Audit saved & email sent successfully"
+            })
 
 # Inside SaveAuditAPIView.post() — replace the notification block
 
@@ -499,15 +501,65 @@ class AuditorMappedPEAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        mappings = VendorBranchMapping.objects.filter(
-            auditor__user=request.user
+
+        today = now().date()
+
+        mappings = VendorBranchMapping.objects.all()
+
+        valid_pe_ids = set()
+
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
         )
 
-        pe_ids = mappings.values_list("principal_employer_id", flat=True).distinct()
-        pes = PrincipalEmployer.objects.filter(id__in=pe_ids)
+        if not auditor:
+            return Response([])
 
-        return Response([{"id": pe.id, "short_name": pe.short_name} for pe in pes])
+        for mapping in mappings:
 
+            virtual_mapping = apply_mapping_for_period(
+                mapping,
+                target_date=today
+            )
+
+            # ✅ EFFECTIVE AUDITOR CHECK
+            if (
+                virtual_mapping._virtual_auditor_id
+                != auditor.id
+            ):
+                continue
+
+            # ✅ STATUS CHECK
+            if (
+                getattr(
+                    virtual_mapping,
+                    "_virtual_status",
+                    "Active"
+                )
+                != "Active"
+            ):
+                continue
+
+            valid_pe_ids.add(
+                mapping.principal_employer_id
+            )
+
+        pes = PrincipalEmployer.objects.filter(
+            id__in=valid_pe_ids
+        )
+
+        unique_pes = {}
+
+        for pe in pes:
+            unique_pes[pe.id] = {
+                "id": pe.id,
+                "short_name": pe.short_name
+            }
+
+        return Response(list(unique_pes.values()))
+        
 class AuditorMappedStatesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -551,8 +603,15 @@ class AuditorMappedVendorAPIView(APIView):
         vendor_ids = mappings.values_list("vendor_id", flat=True).distinct()
         vendors = Vendor.objects.filter(id__in=vendor_ids)
 
-        return Response([{"id": v.id, "name": v.name} for v in vendors])
+        unique_vendors = {}
 
+        for v in vendors:
+            unique_vendors[v.id] = {
+                "id": v.id,
+                "name": v.name
+            }
+
+        return Response(list(unique_vendors.values()))
 
 class AuditorMappedBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -571,13 +630,19 @@ class AuditorMappedBranchesAPIView(APIView):
         if state:
             mappings = mappings.filter(branch__state__iexact=state)
 
-        return Response([
-            {
+        unique_branches = {}
+
+        for m in mappings:
+
+            if not m.branch:
+                continue
+
+            unique_branches[m.branch.id] = {
                 "id": m.branch.id,
                 "name": f"{m.branch.short_name} - {m.branch.address}"
             }
-            for m in mappings
-        ])
+
+        return Response(list(unique_branches.values()))
 
 
 # ================= CHECKLIST =================
@@ -617,31 +682,9 @@ class AuditChecklistAPIView(APIView):
 
         mapping = mappings.first()
 
-        target_date = now().date()
-
-        try:
-            if audit_period and "–" in audit_period:
-
-                # Example: Jan–Mar 2026
-                end_part = audit_period.split("–")[1].strip()
-
-                month_name, year = end_part.split()
-
-                month_number = datetime.strptime(month_name, "%b").month
-
-                last_day = calendar.monthrange(
-                    int(year),
-                    month_number
-                )[1]
-
-                target_date = datetime(
-                    int(year),
-                    month_number,
-                    last_day
-                ).date()
-
-        except Exception as e:
-            print("PERIOD PARSE ERROR:", str(e))
+        target_date = audit_period_to_date(
+            audit_period
+        )
 
         # ✅ APPLY VIRTUAL MAPPING
         virtual_mapping = apply_mapping_for_period(
@@ -779,8 +822,18 @@ class AuditorCompliancePeriodAPIView(APIView):
         vendor_id = request.GET.get("vendor_id")
         branch_id = request.GET.get("branch_id")
 
+        today = now().date()
+
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        if not auditor:
+            return Response([])
+
         mappings = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
             principal_employer_id=pe_id,
             vendor_id=vendor_id,
             branch_id=branch_id
@@ -788,12 +841,44 @@ class AuditorCompliancePeriodAPIView(APIView):
 
         data = []
 
-        for m in mappings:
+        for mapping in mappings:
+
+            # ✅ APPLY EFFECTIVE HISTORY
+            virtual_mapping = apply_mapping_for_period(
+                mapping,
+                target_date=today
+            )
+
+            # ✅ EFFECTIVE AUDITOR CHECK
+            if (
+                virtual_mapping._virtual_auditor_id
+                != auditor.id
+            ):
+                continue
+
+            # ✅ STATUS CHECK
+            if (
+                getattr(
+                    virtual_mapping,
+                    "_virtual_status",
+                    "Active"
+                )
+                != "Active"
+            ):
+                continue
+
             data.append({
-                "frequency": m.frequency,
-                "start_date": m.start_date,
-                "end_date": m.end_date,
-                "label": f"{m.frequency} ({m.start_date} - {m.end_date})"
+                "frequency": virtual_mapping._virtual_frequency,
+
+                "start_date": virtual_mapping._virtual_start_date,
+
+                "end_date": virtual_mapping._virtual_end_date,
+
+                "label": (
+                    f"{virtual_mapping._virtual_frequency} "
+                    f"({virtual_mapping._virtual_start_date} - "
+                    f"{virtual_mapping._virtual_end_date})"
+                )
             })
 
         return Response(data)
@@ -807,21 +892,45 @@ class AuditorMappingDetailsAPIView(APIView):
         vendor_id = request.GET.get("vendor_id")
         branch_id = request.GET.get("branch_id")
 
-        mapping = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
+        today = now().date()
+
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        if not auditor:
+            return Response({})
+
+        mappings = VendorBranchMapping.objects.filter(
             principal_employer_id=pe_id,
             vendor_id=vendor_id,
             branch_id=branch_id
-        ).first()
+        )
 
-        if not mapping:
-            return Response({})
+        for mapping in mappings:
 
-        return Response({
-            "frequency": mapping.frequency,
-            "start_date": mapping.start_date,
-            "end_date": mapping.end_date
-        })
+            virtual_mapping = apply_mapping_for_period(
+                mapping,
+                target_date=today
+            )
+
+            if (
+                virtual_mapping._virtual_auditor_id
+                != auditor.id
+            ):
+                continue
+
+            return Response({
+                "frequency": virtual_mapping._virtual_frequency,
+
+                "start_date": virtual_mapping._virtual_start_date,
+
+                "end_date": virtual_mapping._virtual_end_date
+            })
+
+        return Response({})
 
 
 # ================= NOTIFICATIONS =================

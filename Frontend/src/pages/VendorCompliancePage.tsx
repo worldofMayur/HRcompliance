@@ -75,6 +75,7 @@ export default function VendorCompliancePage() {
   };
 
   /* ================= PREFILL ================= */
+    /* ================= PREFILL ================= */
   useEffect(() => {
     if (prefillData) {
       console.log("🔄 Prefill Data Received:", prefillData);
@@ -85,67 +86,61 @@ export default function VendorCompliancePage() {
   }, [prefillData]);
 
   /* ================= LOAD CHAIN ================= */
-  useEffect(() => { loadMappedPE(); }, []);
+  useEffect(() => { 
+    loadMappedPE(); 
+  }, []);
 
-  useEffect(() => { if (selectedPE) loadStates(selectedPE); }, [selectedPE]);
+  // Load States when PE changes
+  useEffect(() => { 
+    if (selectedPE) loadStates(selectedPE); 
+  }, [selectedPE]);
 
-  useEffect(() => { if (selectedPE && selectedState) loadBranches(selectedPE, selectedState); }, [selectedPE, selectedState]);
-
-  useEffect(() => { if (selectedPE && selectedBranch) loadMappingMeta(selectedPE, selectedBranch); }, [selectedPE, selectedBranch]);
-
-useEffect(() => {
-  if (
-    selectedBranch &&
-    mappingStartDate &&
-    mappingEndDate &&
-    frequencyBase
-  ) {
-    const periods = getPeriodOptions();
-
-    if (periods.length > 0) {
-
-      const currentDate = new Date();
-
-      const currentMonth = currentDate.toLocaleString(
-        "default",
-        { month: "short" }
-      );
-
-      const currentYear = currentDate.getFullYear();
-
-      // Try to find current active period
-      let matchedPeriod = periods.find((p) =>
-        p.includes(currentMonth) &&
-        p.includes(String(currentYear))
-      );
-
-      // Fallback to first available period with docs
-      if (!matchedPeriod) {
-        matchedPeriod = periods[0];
-      }
-
-      console.log(
-        "📅 Auto selected audit period:",
-        matchedPeriod
-      );
-
-      setSelectedPeriod(matchedPeriod);
+  // Load Branches when PE + State changes
+  useEffect(() => { 
+    if (selectedPE && selectedState) {
+      loadBranches(selectedPE, selectedState); 
     }
-  }
-}, [
-  selectedBranch,
-  mappingStartDate,
-  mappingEndDate,
-  frequencyBase,
-]);
+  }, [selectedPE, selectedState]);
 
+  // Load Mapping Meta when PE + Branch changes
+  useEffect(() => { 
+    if (selectedPE && selectedBranch) {
+      loadMappingMeta(selectedPE, selectedBranch); 
+    }
+  }, [selectedPE, selectedBranch]);
+
+  // 🔥 Strong Reset when Branch is cleared
+  useEffect(() => {
+    if (!selectedBranch) {
+      setSelectedPeriod("");
+      setTableData([]);
+      setDocuments([]);
+    }
+  }, [selectedBranch]);
+
+  // 🔥 Load & Auto-select Period when mapping data is ready
+  useEffect(() => {
+    if (selectedBranch && mappingStartDate && mappingEndDate && frequencyBase) {
+      const periods = getPeriodOptions();
+
+      if (periods.length > 0) {
+        // Auto-select the latest valid period
+        const latestPeriod = periods[periods.length - 1];
+        console.log("📅 Auto selected audit period:", latestPeriod);
+        setSelectedPeriod(latestPeriod);
+      } else {
+        setSelectedPeriod("");
+      }
+    }
+  }, [selectedBranch, mappingStartDate, mappingEndDate, frequencyBase]);
+
+  // Load Documents when all required fields are selected
   useEffect(() => {
     if (selectedPE && selectedBranch && selectedPeriod) {
       console.log("📄 Loading documents for period:", selectedPeriod);
       loadDocuments(selectedPE, selectedBranch);
     }
   }, [selectedPE, selectedBranch, selectedPeriod]);
-
   const loadMappedPE = async () => {
     try {
       const res = await axios.get("http://127.0.0.1:8000/api/vendor/mapped-pe/", authHeader);
@@ -229,52 +224,88 @@ useEffect(() => {
 };
 
   /* ================= PERIOD OPTIONS ================= */
-  const getPeriodOptions = () => {
-    if (!mappingStartDate || !mappingEndDate || !frequencyBase) return [];
+const getPeriodOptions = () => {
+  if (!mappingStartDate || !mappingEndDate || !frequencyBase) {
+    return [];
+  }
 
-    const startBoundary = new Date(mappingStartDate);
-    const endBoundary = new Date(mappingEndDate);
+  const startBoundary = new Date(mappingStartDate);
+  const endBoundary = new Date(mappingEndDate);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
 
-    const format = (start: Date, end: Date) => {
-      const opt = { month: "short" };
-      const startMonth = start.toLocaleString("default", opt);
-      const endMonth = end.toLocaleString("default", opt);
-      const year = start.getFullYear();
+  const periods: string[] = [];
 
-      if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
-        return `${startMonth} ${year}`;
-      }
-      return `${startMonth}–${endMonth} ${year}`;
-    };
+  const formatPeriod = (start: Date, end: Date): string => {
+    const monthOpt: Intl.DateTimeFormatOptions = { month: "short" };
+    const startMonth = start.toLocaleString("default", monthOpt);
+    const endMonth = end.toLocaleString("default", monthOpt);
+    const year = start.getFullYear();
 
-    const periods: string[] = [];
-
-    if (frequencyBase === "MONTHLY") {
-      const current = new Date(startBoundary);
-      current.setDate(1);
-      while (current <= endBoundary) {
-        const start = new Date(current);
-        const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
-        periods.push(format(start, end));
-        current.setMonth(current.getMonth() + 1);
-      }
-    } else if (frequencyBase === "QUARTERLY") {
-      // Add similar logic for other frequencies if needed
-      const current = new Date(startBoundary);
-      const qStartMonth = Math.floor(current.getMonth() / 3) * 3;
-      current.setMonth(qStartMonth);
-      current.setDate(1);
-      while (current <= endBoundary) {
-        const start = new Date(current);
-        const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
-        periods.push(format(start, end));
-        current.setMonth(current.getMonth() + 3);
-      }
-    }
-
-    return Array.from(new Set(periods));
+    return start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+      ? `${startMonth} ${year}`
+      : `${startMonth}–${endMonth} ${year}`;
   };
 
+  const isValidPeriod = (start: Date, end: Date): boolean => {
+    return (
+      start.getTime() <= endBoundary.getTime() &&
+      end.getTime() >= startBoundary.getTime() &&
+      start.getTime() <= today.getTime()   // Only show started periods
+    );
+  };
+
+  const normalizedFrequency = String(frequencyBase).trim().toUpperCase();
+
+  let current = new Date(startBoundary.getTime());
+
+  if (normalizedFrequency === "MONTHLY") {
+    current.setDate(1);
+    while (current <= endBoundary) {
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+      if (isValidPeriod(start, end)) periods.push(formatPeriod(start, end));
+      current.setMonth(current.getMonth() + 1);
+    }
+  } 
+  else if (normalizedFrequency === "QUARTERLY") {
+    const qStartMonth = Math.floor(current.getMonth() / 3) * 3;
+    current.setMonth(qStartMonth);
+    current.setDate(1);
+
+    while (current <= endBoundary) {
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), current.getMonth() + 3, 0);
+      if (isValidPeriod(start, end)) periods.push(formatPeriod(start, end));
+      current.setMonth(current.getMonth() + 3);
+    }
+  } 
+  else if (normalizedFrequency === "HALF_YEARLY") {
+    const halfStartMonth = current.getMonth() < 6 ? 0 : 6;
+    current.setMonth(halfStartMonth);
+    current.setDate(1);
+
+    while (current <= endBoundary) {
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), current.getMonth() + 6, 0);
+      if (isValidPeriod(start, end)) periods.push(formatPeriod(start, end));
+      current.setMonth(current.getMonth() + 6);
+    }
+  } 
+  else if (normalizedFrequency === "ANNUALLY") {
+    current.setMonth(0);
+    current.setDate(1);
+
+    while (current <= endBoundary) {
+      const start = new Date(current);
+      const end = new Date(current.getFullYear(), 11, 31);
+      if (isValidPeriod(start, end)) periods.push(formatPeriod(start, end));
+      current.setFullYear(current.getFullYear() + 1);
+    }
+  }
+
+  return Array.from(new Set(periods));
+};
   const updateRow = (key: string, updated: Partial<DocumentRow>) => {
     setTableData(prev => prev.map(row => row.key === key ? { ...row, ...updated } : row));
   };
@@ -369,7 +400,19 @@ useEffect(() => {
 
           <div className="flex flex-col">
             <label className="text-xs font-semibold text-gray-500 mb-1">State</label>
-            <select value={selectedState} onChange={(e) => setSelectedState(e.target.value)} disabled={!selectedPE} className="border rounded-xl px-3 py-2 text-sm">
+            <select 
+              value={selectedState} 
+              onChange={(e) => {
+                const stateName = e.target.value;
+                setSelectedState(stateName);
+                setSelectedBranch("");
+                setSelectedPeriod("");
+                setTableData([]);
+                setDocuments([]);
+              }} 
+              disabled={!selectedPE} 
+              className="border rounded-xl px-3 py-2 text-sm"
+            >
               <option value="">Select State</option>
               {states.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
@@ -380,9 +423,15 @@ useEffect(() => {
             <select
               value={selectedBranch}
               onChange={(e) => {
-                setSelectedBranch(e.target.value);
+                const branchId = e.target.value;
+                setSelectedBranch(branchId);
                 setSelectedPeriod("");
                 setTableData([]);
+                setDocuments([]);
+
+                if (selectedPE && branchId) {
+                  loadMappingMeta(selectedPE, branchId);
+                }
               }}
               disabled={!selectedState}
               className="border rounded-xl px-3 py-2 text-sm"
