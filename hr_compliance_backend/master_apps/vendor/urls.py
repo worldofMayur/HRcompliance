@@ -13,9 +13,10 @@ from .mapping_views import (
     VendorMappedBranchesAPIView,
     VendorMappedDocumentsAPIView,
     PEBranchDropdownAPIView,
-    VendorBranchMappingUpdateAPIView,  # ✅ already here
+    VendorBranchMappingUpdateAPIView, 
+    AuditorMappingDetailsAPIView, # ✅ already here
 )
-from .compliance_views import VendorSubmitComplianceAPIView
+from .compliance_views import VendorSubmitComplianceAPIView, FrozenAuditPeriodsAPIView
 from .views import VendorCCEmailAPIView
 from .mapping_views import VendorMappingMetaAPIView
 
@@ -30,12 +31,17 @@ urlpatterns = [
     path("<int:pk>/update/", VendorUpdateAPIView.as_view()),
     path("<int:pk>/delete/", VendorDeleteAPIView.as_view()),
     path("mapping-meta/", VendorMappingMetaAPIView.as_view()),
+    path(
+    "frozen-periods/",
+    FrozenAuditPeriodsAPIView.as_view()
+    ),
 
     # =========================
     # MAPPING (PE SIDE)
     # =========================
     path("mapping/create/", VendorBranchMappingCreateAPIView.as_view()),
     path("mapping/list/", VendorBranchMappingListAPIView.as_view()),
+    path("auditor/mapping-details/", AuditorMappingDetailsAPIView.as_view()),
 
     # ✅ UPDATE API (FIXED URL)
     path("vendor-mapping/<int:pk>/", VendorBranchMappingUpdateAPIView.as_view()),

@@ -99,6 +99,8 @@ class VendorComplianceSubmission(models.Model):
         blank=True,
         help_text="List of CC email recipients"
     )
+    is_cc_issued = models.BooleanField(default=False)
+    cc_issued_at = models.DateTimeField(null=True, blank=True)
 
     submitted_at = models.DateTimeField(auto_now_add=True)
 

@@ -187,3 +187,39 @@ class VendorSubmitComplianceAPIView(APIView):
             {"message": "Compliance submitted successfully"},
             status=201
         )
+
+
+class FrozenAuditPeriodsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        vendor_id = request.GET.get("vendor_id")
+        branch_id = request.GET.get("branch_id")
+
+        if not branch_id:
+            return Response([])
+
+        qs = VendorComplianceSubmission.objects.filter(
+            branch_id=branch_id,
+            is_cc_issued=True
+        )
+
+        # ✅ Auditor side
+        if vendor_id:
+            qs = qs.filter(vendor_id=vendor_id)
+
+        # ✅ Vendor side
+        elif request.user.role == "VENDOR":
+            qs = qs.filter(
+                vendor=request.user.vendor_profile
+            )
+
+        periods = list(
+            qs.values_list(
+                "audit_period",
+                flat=True
+            ).distinct()
+        )
+
+        return Response(periods)

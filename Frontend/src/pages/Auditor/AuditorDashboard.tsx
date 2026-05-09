@@ -29,6 +29,7 @@ export default function AuditorDashboard() {
 const [mappingStartDate, setMappingStartDate] = useState<any>(null);
 const [mappingEndDate, setMappingEndDate] = useState<any>(null);
 const [compliancePeriods, setCompliancePeriods] = useState<any[]>([]);
+const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
   const [minimizedPopups, setMinimizedPopups] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
@@ -259,7 +260,11 @@ const getPeriodOptions = () => {
     }
   }
 
-  return Array.from(new Set(periods));
+  return Array.from(
+    new Set(periods)
+  ).filter(
+    (p) => !frozenPeriods.includes(p)
+  );
 };
 
 const loadMappingDetails = async (peId: string, vendorId: string, branchId: string) => {
@@ -280,6 +285,25 @@ const loadMappingDetails = async (peId: string, vendorId: string, branchId: stri
   } catch (err) {
     console.error(err);
     message.error("Failed to load mapping details");
+  }
+};
+
+const loadFrozenPeriods = async (
+  vendorId: string,
+  branchId: string
+) => {
+
+  try {
+
+    const res = await axios.get(
+      `http://127.0.0.1:8000/api/vendor/frozen-periods/?vendor_id=${vendorId}&branch_id=${branchId}`,
+      authHeader
+    );
+
+    setFrozenPeriods(res.data || []);
+
+  } catch (err) {
+    console.error(err);
   }
 };
 
@@ -406,6 +430,7 @@ const handleSubmit = async () => {
     const payload = {
       branch_id: selectedBranch,
       audit_period: auditPeriod,
+      freeze_report: canFreezeReport,
       entries: groupedChecklist.map((row) => ({
         checklist_id: row.id,
         observation: row.observation?.trim(),
@@ -541,9 +566,11 @@ const handleSubmit = async () => {
 },
   ];
 
-  const groupedChecklist = Object.values(
+const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
-const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
+
+    const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
+
     if (!acc[key]) {
       acc[key] = {
         ...item,
@@ -558,8 +585,22 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
     }
 
     return acc;
+
   }, {})
 );
+
+const allowedFreezeStatuses = [
+  "Complied",
+  "Exceptional Approval - Delayed Complied",
+  "Not Applicable For Audit Period"
+];
+
+const canFreezeReport =
+  groupedChecklist.length > 0 &&
+  groupedChecklist.every(
+    (row: any) =>
+      allowedFreezeStatuses.includes(row.status)
+  );
 
   /* ================= UI ================= */
 
@@ -664,6 +705,7 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
 
       if (selectedPE && selectedVendor && branchId) {
         loadMappingDetails(selectedPE, selectedVendor, branchId);
+        loadFrozenPeriods(selectedVendor, branchId);
       }
     }}
     className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
@@ -907,13 +949,15 @@ const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
     {/* 🔹 BOTTOM BUTTONS */}
     <div className="flex justify-end gap-3 p-4 border-t bg-white">
 
-      <Button disabled className="bg-gray-300 text-gray-600 cursor-not-allowed">
-        Freeze Audit Report
-      </Button>
-
-      <Button type="primary" loading={loading} onClick={handleSubmit}>
-        Save & Submit
-      </Button>
+    <Button
+      type="primary"
+      loading={loading}
+      onClick={handleSubmit}
+    >
+      {canFreezeReport
+        ? "Freeze Report & Issue CC"
+        : "Save & Submit"}
+    </Button>
 
     </div>
 

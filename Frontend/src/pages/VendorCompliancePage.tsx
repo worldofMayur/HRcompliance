@@ -60,6 +60,7 @@ export default function VendorCompliancePage() {
   const [selectedState, setSelectedState] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("");
+  const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
 
   const [mappingStartDate, setMappingStartDate] = useState<any>(null);
   const [mappingEndDate, setMappingEndDate] = useState<any>(null);
@@ -176,6 +177,24 @@ export default function VendorCompliancePage() {
       console.error(err);
     }
   };
+
+  const loadFrozenPeriods = async (
+  branchId: string
+) => {
+
+  try {
+
+    const res = await axios.get(
+      `http://127.0.0.1:8000/api/vendor/frozen-periods/?branch_id=${branchId}`,
+      authHeader
+    );
+
+    setFrozenPeriods(res.data || []);
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const loadDocuments = async (
   peId: string,
@@ -304,7 +323,11 @@ const getPeriodOptions = () => {
     }
   }
 
-  return Array.from(new Set(periods));
+  return Array.from(
+  new Set(periods)
+).filter(
+  (p) => !frozenPeriods.includes(p)
+);
 };
   const updateRow = (key: string, updated: Partial<DocumentRow>) => {
     setTableData(prev => prev.map(row => row.key === key ? { ...row, ...updated } : row));
@@ -431,6 +454,7 @@ const getPeriodOptions = () => {
 
                 if (selectedPE && branchId) {
                   loadMappingMeta(selectedPE, branchId);
+                  loadFrozenPeriods(branchId);
                 }
               }}
               disabled={!selectedState}

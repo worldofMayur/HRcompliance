@@ -29,7 +29,7 @@ from master_apps.documents.models import DocumentMaster
 
 from .models import Auditor, AuditorDocument
 from .serializers import AuditorSerializer
-from datetime import datetime
+from datetime import datetime, date
 import calendar
 
 # ================= NEW IMPORTS =================
@@ -241,6 +241,7 @@ class SaveAuditAPIView(APIView):
         branch_id = request.data.get("branch_id")
         audit_period = request.data.get("audit_period")
         entries = request.data.get("entries", [])
+        freeze_report = request.data.get("freeze_report", False)
 
         logger.info("🔄 Audit API called")
 
@@ -250,13 +251,49 @@ class SaveAuditAPIView(APIView):
         if not branch_id or not entries:
             return Response({"error": "Missing required data"}, status=400)
 
-        mapping = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
+        selected_date = audit_period_to_date(
+            audit_period
+        )
+
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        all_mappings = VendorBranchMapping.objects.filter(
             branch_id=branch_id
-        ).select_related("vendor", "principal_employer", "branch").first()
+        ).select_related(
+            "vendor",
+            "principal_employer",
+            "branch"
+        )
+
+        mapping = None
+
+        for m in all_mappings:
+
+            virtual_mapping = apply_mapping_for_period(
+                m,
+                target_date=selected_date
+            )
+
+            # ✅ EFFECTIVE AUDITOR CHECK
+            if (
+                getattr(
+                    virtual_mapping,
+                    "_virtual_auditor_id",
+                    None
+                ) == auditor.id
+            ):
+                mapping = virtual_mapping
+                break
 
         if not mapping:
-            return Response({"error": "Unauthorized mapping"}, status=403)
+            return Response(
+                {"error": "Unauthorized mapping"},
+                status=403
+            )
 
         vendor = mapping.vendor
         pe = mapping.principal_employer
@@ -301,15 +338,23 @@ class SaveAuditAPIView(APIView):
         # =========================
         # FETCH CC EMAIL FROM DB (FINAL FIX)
         # =========================
-        cc_qs = VendorCCEmail.objects.filter(vendor_id=vendor.id)
+        cc_qs = VendorCCEmail.objects.filter(
+            vendor_id=vendor.id
+        )
 
         cc_emails = []
+
+        # ✅ Vendor CC emails
         for obj in cc_qs:
             if obj.email:
                 cc_emails.append(obj.email.strip())
 
-        # remove duplicates + limit to 2
-        cc_emails = list(set(cc_emails))[:2]
+        # ✅ PE Email
+        if pe.email:
+            cc_emails.append(pe.email.strip())
+
+        # ✅ Remove duplicates
+        cc_emails = list(set(cc_emails))
 
         print("📧 CC FROM DB:", cc_emails)
 
@@ -388,6 +433,15 @@ class SaveAuditAPIView(APIView):
         # =========================
 
         if all_valid:
+            if freeze_report:
+                VendorComplianceSubmission.objects.filter(
+                    branch_id=branch_id,
+                    vendor_id=vendor.id,
+                    audit_period=audit_period
+                ).update(
+                    is_cc_issued=True,
+                    cc_issued_at=now()
+                )
             try:
                 logger.info(f"📨 Sending → {vendor.email} | CC: {cc_emails}")
 
@@ -401,6 +455,22 @@ class SaveAuditAPIView(APIView):
 
                 email.attach_alternative(html_content, "text/html")
                 email.send(fail_silently=False)
+
+                SystemNotification.objects.create(
+                    user=vendor.user,
+                    title="Compliance Clearance Certificate Issued",
+                    type="VENDOR",
+                    branch_id=branch_id,
+                    audit_period=audit_period,
+                    data={
+                        "vendor": vendor.name,
+                        "vendor_id": vendor.id,
+                        "branch": branch.short_name,
+                        "state": branch.state,
+                        "audit_period": audit_period,
+                        "status": "CC_ISSUED"
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"❌ Email failed: {str(e)}")
@@ -559,7 +629,7 @@ class AuditorMappedPEAPIView(APIView):
             }
 
         return Response(list(unique_pes.values()))
-        
+
 class AuditorMappedStatesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -568,23 +638,39 @@ class AuditorMappedStatesAPIView(APIView):
         pe_id = request.GET.get("pe_id")
         vendor_id = request.GET.get("vendor_id")
 
-        if request.user.role != "AUDITOR":
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        if not auditor:
             return Response([])
 
+        today = now().date()
+
         mappings = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
             principal_employer_id=pe_id,
             vendor_id=vendor_id
         ).select_related("branch")
 
         states = set()
 
-        for m in mappings:
-            if m.branch and m.branch.state:
-                states.add(m.branch.state)
+        for mapping in mappings:
+
+            virtual = apply_mapping_for_period(
+                mapping,
+                today
+            )
+
+            if virtual.branch and virtual.branch.state:
+                states.add(virtual.branch.state)
 
         return Response([
-            {"id": state, "name": state}
+            {
+                "id": state,
+                "name": state
+            }
             for state in states
         ])
 
@@ -593,56 +679,154 @@ class AuditorMappedVendorAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
         pe_id = request.GET.get("pe_id")
 
-        mappings = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
-            principal_employer_id=pe_id
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
         )
 
-        vendor_ids = mappings.values_list("vendor_id", flat=True).distinct()
-        vendors = Vendor.objects.filter(id__in=vendor_ids)
+        if not auditor:
+            return Response([])
 
-        unique_vendors = {}
+        today = now().date()
 
-        for v in vendors:
-            unique_vendors[v.id] = {
+        mappings = VendorBranchMapping.objects.filter(
+            principal_employer_id=pe_id
+        ).select_related("vendor")
+
+        vendor_ids = set()
+
+        for mapping in mappings:
+
+            virtual = apply_mapping_for_period(
+                mapping,
+                today
+            )
+
+            vendor_ids.add(mapping.vendor_id)
+
+        vendors = Vendor.objects.filter(
+            id__in=vendor_ids
+        )
+
+        return Response([
+            {
                 "id": v.id,
                 "name": v.name
             }
-
-        return Response(list(unique_vendors.values()))
+            for v in vendors
+        ])
 
 class AuditorMappedBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
         pe_id = request.GET.get("pe_id")
         vendor_id = request.GET.get("vendor_id")
         state = request.GET.get("state")
 
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        if not auditor:
+            return Response([])
+
+        today = now().date()
+
         mappings = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
             principal_employer_id=pe_id,
             vendor_id=vendor_id
         ).select_related("branch")
 
         if state:
-            mappings = mappings.filter(branch__state__iexact=state)
+            mappings = mappings.filter(
+                branch__state__iexact=state
+            )
 
         unique_branches = {}
 
-        for m in mappings:
+        for mapping in mappings:
 
-            if not m.branch:
+            # ✅ CURRENT OWNER
+            current_virtual = apply_mapping_for_period(
+                mapping,
+                target_date=today
+            )
+
+            current_auditor_id = getattr(
+                current_virtual,
+                "_virtual_auditor_id",
+                None
+            )
+
+            # =========================
+            # OLD AUDITOR
+            # =========================
+            if current_auditor_id != auditor.id:
+
+                # Show only if auditor owned BEFORE
+                had_old_access = False
+
+                current = mapping.start_date
+
+                while current and current < today:
+
+                    virtual_old = apply_mapping_for_period(
+                        mapping,
+                        target_date=current
+                    )
+
+                    if (
+                        getattr(
+                            virtual_old,
+                            "_virtual_auditor_id",
+                            None
+                        ) == auditor.id
+                    ):
+                        had_old_access = True
+                        break
+
+                    # NEXT MONTH
+                    if current.month == 12:
+                        current = date(
+                            current.year + 1,
+                            1,
+                            1
+                        )
+                    else:
+                        current = date(
+                            current.year,
+                            current.month + 1,
+                            1
+                        )
+
+                if not had_old_access:
+                    continue
+
+            # =========================
+            # VALID BRANCH
+            # =========================
+            if not mapping.branch:
                 continue
 
-            unique_branches[m.branch.id] = {
-                "id": m.branch.id,
-                "name": f"{m.branch.short_name} - {m.branch.address}"
+            unique_branches[mapping.branch.id] = {
+                "id": mapping.branch.id,
+                "name": (
+                    f"{mapping.branch.short_name} - "
+                    f"{mapping.branch.address}"
+                )
             }
 
-        return Response(list(unique_branches.values()))
+        return Response(
+            list(unique_branches.values())
+        )
 
 
 # ================= CHECKLIST =================
@@ -654,15 +838,47 @@ class AuditChecklistAPIView(APIView):
         vendor_id = request.GET.get("vendor_id")
         audit_period = request.GET.get("audit_period")
 
-        mappings = VendorBranchMapping.objects.filter(
-            auditor__user=request.user,
+        target_date = audit_period_to_date(
+            audit_period
+        )
+
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        if not auditor:
+            return Response([])
+
+        all_mappings = VendorBranchMapping.objects.filter(
             branch_id=branch_id
         ).select_related("branch")
 
-        if not mappings.exists():
+        valid_mapping = None
+
+        for mapping in all_mappings:
+
+            virtual_mapping = apply_mapping_for_period(
+                mapping,
+                target_date=target_date
+            )
+
+            # ✅ HISTORICAL AUDITOR CHECK
+            if (
+                getattr(
+                    virtual_mapping,
+                    "_virtual_auditor_id",
+                    None
+                ) == auditor.id
+            ):
+                valid_mapping = virtual_mapping
+                break
+
+        if not valid_mapping:
             return Response([])
 
-        branch = mappings.first().branch
+        branch = valid_mapping.branch
         state = branch.state
 
         submissions = VendorComplianceSubmission.objects.filter(
@@ -680,20 +896,9 @@ class AuditChecklistAPIView(APIView):
 
         # ✅ PERIOD-BASED DOCUMENT FILTERING
 
-        mapping = mappings.first()
-
-        target_date = audit_period_to_date(
-            audit_period
-        )
-
-        # ✅ APPLY VIRTUAL MAPPING
-        virtual_mapping = apply_mapping_for_period(
-            mapping,
-            target_date=target_date
-        )
-
+        # ✅ PERIOD-BASED DOCUMENT FILTERING
         doc_ids = getattr(
-            virtual_mapping,
+            valid_mapping,
             "_documents_cache",
             []
         )
@@ -843,45 +1048,108 @@ class AuditorCompliancePeriodAPIView(APIView):
 
         for mapping in mappings:
 
-            # ✅ APPLY EFFECTIVE HISTORY
-            virtual_mapping = apply_mapping_for_period(
-                mapping,
-                target_date=today
-            )
+            start_date = mapping.start_date
+            end_date = mapping.end_date
 
-            # ✅ EFFECTIVE AUDITOR CHECK
-            if (
-                virtual_mapping._virtual_auditor_id
-                != auditor.id
-            ):
+            if not start_date or not end_date:
                 continue
 
-            # ✅ STATUS CHECK
+            current = date(
+                start_date.year,
+                start_date.month,
+                1
+            )
+
+            while current <= end_date:
+
+                # ✅ GET LAST DAY OF MONTH
+                last_day = calendar.monthrange(
+                    current.year,
+                    current.month
+                )[1]
+
+                period_end = date(
+                    current.year,
+                    current.month,
+                    last_day
+                )
+
+                # ✅ APPLY HISTORY FOR THIS PERIOD
+                virtual_mapping = apply_mapping_for_period(
+                    mapping,
+                    target_date=period_end
+                )
+                print(
+                    "PERIOD:",
+                    label,
+                    "AUDITOR:",
+                    getattr(
+                        virtual_mapping,
+                        "_virtual_auditor_id",
+                        None
+                    ),
+                    "CURRENT:",
+                    auditor.id
+                )
+
             if (
                 getattr(
                     virtual_mapping,
-                    "_virtual_status",
-                    "Active"
-                )
-                != "Active"
+                    "_virtual_auditor_id",
+                    None
+                ) == auditor.id
             ):
-                continue
 
-            data.append({
-                "frequency": virtual_mapping._virtual_frequency,
+                label = current.strftime("%b %Y")
 
-                "start_date": virtual_mapping._virtual_start_date,
+                already_completed = VendorComplianceSubmission.objects.filter(
+                    branch_id=branch_id,
+                    vendor_id=vendor_id,
+                    audit_period=label,
+                    is_cc_issued=True
+                ).exists()
 
-                "end_date": virtual_mapping._virtual_end_date,
+                if already_completed:
+                    continue
 
-                "label": (
-                    f"{virtual_mapping._virtual_frequency} "
-                    f"({virtual_mapping._virtual_start_date} - "
-                    f"{virtual_mapping._virtual_end_date})"
-                )
-            })
+                data.append({
+                    "value": label,
+                    "label": label
+                })
 
-        return Response(data)
+                # NEXT MONTH
+                if current.month == 12:
+
+                    current = date(
+                        current.year + 1,
+                        1,
+                        1
+                    )
+
+                else:
+
+                    current = date(
+                        current.year,
+                        current.month + 1,
+                        1
+                    )
+
+        # REMOVE DUPLICATES
+        unique = {
+            item["value"]: item
+            for item in data
+        }
+
+        # SORT
+        sorted_data = sorted(
+            unique.values(),
+            key=lambda x: datetime.strptime(
+                x["value"],
+                "%b %Y"
+            )
+        )
+
+        return Response(sorted_data)
 
 class AuditorMappingDetailsAPIView(APIView):
     permission_classes = [IsAuthenticated]

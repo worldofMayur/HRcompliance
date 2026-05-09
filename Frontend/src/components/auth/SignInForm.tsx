@@ -96,21 +96,39 @@ export default function SignInForm() {
   return (
     <div className="flex flex-col flex-1">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+  <div className="rounded-2xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(15,23,42,0.08)] p-8 md:p-10">
         <div>
           <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+            <h1 className="mb-2 text-[32px] font-semibold tracking-tight text-gray-900 dark:text-white">
               Sign In
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm leading-6 text-slate-500 dark:text-gray-400">
               Enter your email and password to sign in!
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="space-y-6">
+            <div className="space-y-7">
               <div>
                 <Label>Email *</Label>
                 <Input
+                  className="
+                  h-12
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-white
+                  px-4
+                  text-sm
+                  text-slate-900
+                  placeholder:text-slate-400
+                  transition-all
+                  duration-200
+                  focus:border-blue-500
+                  focus:ring-4
+                  focus:ring-blue-100
+                  outline-none
+                  "
                   type="email"
                   placeholder="info@gmail.com"
                   value={email}
@@ -122,6 +140,23 @@ export default function SignInForm() {
                 <Label>Password *</Label>
                 <div className="relative">
                   <Input
+                    className="
+                    h-12
+                    rounded-xl
+                    border
+                    border-slate-200
+                    bg-white
+                    px-4
+                    text-sm
+                    text-slate-900
+                    placeholder:text-slate-400
+                    transition-all
+                    duration-200
+                    focus:border-blue-500
+                    focus:ring-4
+                    focus:ring-blue-100
+                    outline-none
+                    "
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={password}
@@ -136,9 +171,9 @@ export default function SignInForm() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2">
                 <Checkbox checked={isChecked} onChange={setIsChecked} />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-slate-500">
                   Keep me logged in
                 </span>
               </div>
@@ -149,11 +184,12 @@ export default function SignInForm() {
                 </div>
               )}
 
-              <Button className="w-full" size="sm" type="submit" disabled={loading}>
+              <Button className="w-full rounded-2xl bg-[#2563EB] hover:bg-[#1D4ED8] shadow-lg hover:shadow-xl hover:-translate-y-[1px] transition-all duration-200" size="sm" type="submit" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
             </div>
           </form>
+        </div>
         </div>
       </div>
     </div>
