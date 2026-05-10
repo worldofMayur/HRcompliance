@@ -14,6 +14,12 @@ from .compliance_models import (
 from .models import Vendor
 from .mapping_models import VendorBranchMapping
 from .utils import apply_pending_updates
+from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from accounts.models import User
+from .models import SystemNotification
 
 
 class VendorSubmitComplianceAPIView(APIView):
@@ -188,6 +194,230 @@ class VendorSubmitComplianceAPIView(APIView):
             status=201
         )
 
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def reupload_compliance(request):
+
+    try:
+
+        # ===============================
+        # 🔐 ROLE CHECK
+        # ===============================
+
+        if request.user.role != "VENDOR":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403
+            )
+
+        # ===============================
+        # 🔍 GET VENDOR
+        # ===============================
+
+        try:
+
+            vendor = Vendor.objects.get(
+                email=request.user.email
+            )
+
+        except Vendor.DoesNotExist:
+
+            return Response(
+                {"error": "Vendor profile not found"},
+                status=404
+            )
+
+        # ===============================
+        # 📥 REQUEST DATA
+        # ===============================
+
+        branch_id = request.data.get("branch_id")
+
+        selected_period = request.data.get(
+            "selected_period"
+        )
+
+        general_remark = request.data.get(
+            "general_remark",
+            ""
+        )
+
+        uploaded_count = 0
+        reuploaded_documents = []
+
+        # ===============================
+        # 🔁 LOOP FILES
+        # ===============================
+
+        for key in request.FILES:
+
+            if not key.endswith("_file"):
+                continue
+
+            try:
+
+                index = key.split("_")[1]
+
+                document_id = request.data.get(
+                    f"document_{index}_id"
+                )
+
+                uploaded_file = request.FILES[key]
+
+                if not document_id:
+                    continue
+
+                # ===============================
+                # 🔍 FIND EXISTING SUBMISSION
+                # ===============================
+
+                submission = (
+                    VendorComplianceSubmission.objects
+                    .filter(
+                        vendor=vendor,
+                        document_id=document_id,
+                        audit_period=selected_period,
+                        branch_id=branch_id
+                    )
+                    .order_by("-submitted_at")
+                    .first()
+                )
+
+                if not submission:
+                    continue
+
+                # ===============================
+                # 💾 STORE OLD FILE
+                # ===============================
+
+                if submission.main_file:
+                    submission.previous_file = (
+                        submission.main_file
+                    )
+
+                # ===============================
+                # 📄 UPDATE FILE
+                # ===============================
+
+                submission.main_file = uploaded_file
+
+                # ===============================
+                # 🔁 REUPLOAD FLAGS
+                # ===============================
+
+                submission.is_reuploaded = True
+
+                submission.reuploaded_at = timezone.now()
+
+                submission.reupload_remark = (
+                    general_remark
+                )
+
+                # optional overwrite latest remark
+                submission.general_remark = (
+                    general_remark
+                )
+
+                submission.save()
+
+                uploaded_count += 1
+                reuploaded_documents.append(
+                    submission.document.name
+                )
+
+            except Exception as inner_error:
+
+                print(
+                    "INNER REUPLOAD ERROR:",
+                    str(inner_error)
+                )
+
+        # ===============================
+        # 🔔 SEND NOTIFICATION TO AUDITOR
+        # ===============================
+
+        auditor_users = User.objects.filter(
+            role="AUDITOR"
+        )
+
+        for auditor in auditor_users:
+
+            SystemNotification.objects.create(
+                user=auditor,
+
+                title=(
+                    "Vendor Reuploaded "
+                    "Compliance Documents"
+                ),
+
+                message=(
+                    f"{vendor.short_name} has "
+                    f"reuploaded compliance "
+                    f"documents."
+                ),
+
+                type="AUDITOR",
+
+                branch_id=branch_id,
+
+                audit_period=selected_period,
+
+                data={
+
+                    "pe_id": submission.principal_employer.id,
+
+                    "vendor_id": vendor.id,
+
+                    "branch_id": submission.branch.id,
+
+                    "state": submission.state,
+
+                    "vendor": vendor.short_name,
+
+                    "branch": str(submission.branch),
+
+                    "audit_period": selected_period,
+
+                    "reuploaded": True,
+
+                    "reuploaded_documents": reuploaded_documents,
+
+                    "document_id": submission.document.id,
+
+                    "submission_id": submission.id,
+
+                    "vendor_remark": submission.general_remark or "",
+                }
+            )
+
+        # ===============================
+        # ✅ SUCCESS RESPONSE
+        # ===============================
+
+        return Response({
+
+            "message": (
+                "Documents reuploaded "
+                "successfully"
+            ),
+
+            "uploaded_count": uploaded_count
+
+        }, status=200)
+
+    except Exception as e:
+
+        print(
+            "REUPLOAD API ERROR:",
+            str(e)
+        )
+
+        return Response({
+
+            "error": str(e)
+
+        }, status=500)
 
 class FrozenAuditPeriodsAPIView(APIView):
     permission_classes = [IsAuthenticated]

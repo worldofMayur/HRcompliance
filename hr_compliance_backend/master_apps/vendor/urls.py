@@ -19,6 +19,9 @@ from .mapping_views import (
 from .compliance_views import VendorSubmitComplianceAPIView, FrozenAuditPeriodsAPIView
 from .views import VendorCCEmailAPIView
 from .mapping_views import VendorMappingMetaAPIView
+from django.urls import path
+from . import views
+from . import compliance_views
 
 
 urlpatterns = [
@@ -64,4 +67,9 @@ urlpatterns = [
     # =========================
     path("submit-compliance/", VendorSubmitComplianceAPIView.as_view()),
     path("cc-emails/", VendorCCEmailAPIView.as_view()),
+    path(
+        "reupload-compliance/",
+        compliance_views.reupload_compliance,
+        name="reupload-compliance",
+    ),
 ]

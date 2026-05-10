@@ -20,6 +20,7 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import AuditorDashboard from "./pages/Auditor/AuditorDashboard";
+import AuditorNotifications from "./pages/Auditor/AuditorNotifications";
 import Home from "./pages/Dashboard/Home";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
@@ -107,6 +108,15 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["AUDITOR"]}>
                 <AuditorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="auditor-notifications"
+            element={
+              <ProtectedRoute allowedRoles={["AUDITOR"]}>
+                <AuditorNotifications />
               </ProtectedRoute>
             }
           />

@@ -104,6 +104,30 @@ class VendorComplianceSubmission(models.Model):
 
     submitted_at = models.DateTimeField(auto_now_add=True)
 
+        # ===============================
+    # 🔁 REUPLOAD TRACKING
+    # ===============================
+
+    previous_file = models.FileField(
+        upload_to=compliance_main_upload_path,
+        null=True,
+        blank=True
+    )
+
+    is_reuploaded = models.BooleanField(
+        default=False
+    )
+
+    reuploaded_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    reupload_remark = models.TextField(
+        null=True,
+        blank=True
+    )
+
     def __str__(self):
         return f"{self.vendor.short_name} - {self.document.name} - {self.audit_period}"
 

@@ -399,11 +399,11 @@ const AppSidebar: React.FC = () => {
     {/* OPTIONAL - Future ready */}
     <li>
       <Link
-        to="audit-history"
+        to="auditor-notifications"
         onClick={handleNavigation}
         className={`menu-item group flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 hover:translate-x-[2px]
           ${
-            isActive("/audit-history")
+            isActive("/auditor-notifications")
               ? "bg-brand-50 text-brand-600 dark:bg-white/85 backdrop-blur-xl/[0.08]"
               : "text-gray-700 hover:bg-white hover:shadow-sm hover:border hover:border-gray-200 dark:text-gray-300 dark:hover:bg-white/85 backdrop-blur-xl/[0.05]"
           }`}

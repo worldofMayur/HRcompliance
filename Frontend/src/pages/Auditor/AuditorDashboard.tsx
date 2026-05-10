@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { Table, Input, Button, message, Modal } from "antd";
 import { Upload } from "antd";
 import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
 export default function AuditorDashboard() {
   const token = localStorage.getItem("access_token");
+  const location = useLocation();
 
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` },
@@ -17,6 +19,7 @@ export default function AuditorDashboard() {
   const [stateList, setStateList] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
+  const [notificationDocs, setNotificationDocs] = useState<string[]>([]);
   const [downloading, setDownloading] = useState(false);
 
   const [selectedPE, setSelectedPE] = useState("");
@@ -41,6 +44,181 @@ const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
   loadPE();
 }, []);
 
+useEffect(() => {
+
+  const notificationData =
+    location.state?.notificationData;
+
+  if (!notificationData) return;
+
+  const d = notificationData.data || {};
+
+  console.log(
+    "NOTIFICATION DATA:",
+    d
+  );
+
+  // ======================================
+  // SUPPORT BOTH NOTIFICATION TYPES
+  // ======================================
+
+  const docs =
+    d.reuploaded_documents ||
+
+    d.entries?.map(
+      (e: any) => e.document_name
+    ) ||
+
+    [];
+
+  console.log(
+    "FILTER DOCS:",
+    docs
+  );
+
+  setNotificationDocs(docs);
+
+  // ======================================
+  // DIRECT OPEN FROM NOTIFICATION
+  // ======================================
+
+  const openDirectAudit = async () => {
+
+    try {
+
+      if (
+        !d.branch_id ||
+        !d.audit_period
+      ) {
+
+        message.error(
+          "Invalid notification data"
+        );
+
+        return;
+      }
+
+      // ======================================
+      // STEP 1 — PE
+      // ======================================
+
+      if (d.pe_id) {
+
+        setSelectedPE(
+          d.pe_id?.toString()
+        );
+
+        await loadVendors(
+          d.pe_id?.toString()
+        );
+      }
+
+      // ======================================
+      // STEP 2 — VENDOR
+      // ======================================
+
+      if (
+        d.pe_id &&
+        d.vendor_id
+      ) {
+
+        setSelectedVendor(
+          d.vendor_id.toString()
+        );
+
+        await loadStates(
+          d.pe_id.toString(),
+          d.vendor_id.toString()
+        );
+      }
+
+      // ======================================
+      // STEP 3 — STATE
+      // ======================================
+
+      if (
+        d.pe_id &&
+        d.vendor_id &&
+        d.state
+      ) {
+
+        setSelectedState(
+          d.state
+        );
+
+        await loadBranches(
+          d.pe_id?.toString(),
+          d.vendor_id?.toString(),
+          d.state
+        );
+      }
+
+      // ======================================
+      // STEP 4 — BRANCH
+      // ======================================
+
+      if (
+          d.pe_id &&
+          d.vendor_id &&
+          d.branch_id
+        ) {
+
+        setSelectedBranch(
+          d.branch_id?.toString()
+        );
+
+        await loadMappingDetails(
+          d.pe_id?.toString(),
+          d.vendor_id?.toString(),
+          d.branch_id?.toString()
+        );
+
+        await loadFrozenPeriods(
+          d.vendor_id?.toString(),
+          d.branch_id?.toString()
+        );
+      }
+
+      // ======================================
+      // STEP 5 — PERIOD
+      // ======================================
+
+      if (d.audit_period) {
+
+        setAuditPeriod(
+          d.audit_period
+        );
+      }
+
+      // ======================================
+      // LOAD CHECKLIST
+      // ======================================
+
+    setTimeout(async () => {
+
+      await loadChecklist(
+        d.branch_id?.toString(),
+        d.vendor_id?.toString(),
+        d.audit_period,
+        docs
+      );
+
+    }, 300);
+
+    } catch (err) {
+
+      console.error(err);
+
+      message.error(
+        "Failed to open audit"
+      );
+    }
+  };
+
+  openDirectAudit();
+
+}, []);
+
 /* 🔥 ADD THIS RIGHT BELOW */
 useEffect(() => {
 
@@ -49,19 +227,29 @@ useEffect(() => {
     !mappingEndDate ||
     !frequencyBase
   ) {
+
     setCompliancePeriods([]);
+
     return;
   }
 
-  const options = getPeriodOptions();
+  const options =
+    getPeriodOptions();
 
   setCompliancePeriods(options);
 
-  if (options.length > 0) {
-    setAuditPeriod(options[options.length - 1]);
-  } else {
-    setAuditPeriod("");
-  }
+  // ======================================
+  // DON'T OVERRIDE NOTIFICATION PERIOD
+  // ======================================
+
+  setAuditPeriod((prev) => {
+
+    if (prev) return prev;
+
+    return options.length > 0
+      ? options[options.length - 1]
+      : "";
+  });
 
 }, [
   mappingStartDate,
@@ -142,7 +330,7 @@ const downloadZip = async () => {
     setDownloading(true);
 
     const response = await axios.get(
-      `http://127.0.0.1:8000/api/auditor/audit/documents-zip/${selectedBranch}/?vendor_id=${selectedVendor}&audit_period=${auditPeriod}`,
+      `http://127.0.0.1:8000/api/auditor/audit/documents-zip/${selectedBranch}/?audit_period=${auditPeriod}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -323,35 +511,138 @@ const loadFrozenPeriods = async (
     setBranches(res.data);
   };
 
-const loadChecklist = async () => {
+const loadChecklist = async (
+  branchId?: string,
+  vendorId?: string,
+  period?: string,
+  filterDocs: string[] = []
+) => {
+
   try {
+
     setLoading(true);
 
-    const [checklistRes, remarksRes] = await Promise.all([
-      axios.get(
-        `http://127.0.0.1:8000/api/auditor/audit/checklist/${selectedBranch}/?vendor_id=${selectedVendor}&audit_period=${auditPeriod}`,
-        authHeader
-      ),
-      axios.get(
-        `http://127.0.0.1:8000/api/auditor/compliance-remarks/?branch_id=${selectedBranch}&vendor_id=${selectedVendor}`,
-        authHeader
-      )
-    ]);
+    const finalBranch =
+      branchId || selectedBranch;
 
-    const rows = checklistRes.data.map((item: any) => ({
-      ...item,
-      observation: "",
-      recommendation: "",
-    }));
+    const finalVendor =
+      vendorId || selectedVendor;
+
+    const finalPeriod =
+      period || auditPeriod;
+
+  if (
+    !finalBranch ||
+    !finalPeriod
+  ) {
+
+      console.error(
+        "Checklist values missing",
+        {
+          finalBranch,
+          finalVendor,
+          finalPeriod,
+        }
+      );
+
+      return;
+    }
+
+    // ======================================
+    // REUPLOADED DOC QUERY
+    // ======================================
+
+    const docsQuery =
+      filterDocs
+        .map(
+          (doc) =>
+            `reuploaded_documents=${encodeURIComponent(doc)}`
+        )
+        .join("&");
+
+    const checklistUrl =
+      `http://127.0.0.1:8000/api/auditor/audit/checklist/${finalBranch}/?audit_period=${finalPeriod}${docsQuery ? `&${docsQuery}` : ""}`;
+
+    const [checklistRes, remarksRes] =
+      await Promise.all([
+
+        axios.get(
+          checklistUrl,
+          authHeader
+        ),
+
+        axios.get(
+          `http://127.0.0.1:8000/api/auditor/compliance-remarks/?branch_id=${finalBranch}`,
+          authHeader
+        ),
+      ]);
+
+    let rows = checklistRes.data.map(
+      (item: any) => ({
+        ...item,
+        observation: "",
+        recommendation: "",
+      })
+    );
+
+    // ======================================
+    // ONLY SHOW REUPLOADED DOCS
+    // ======================================
+
+    if (
+        filterDocs.length > 0
+    ) {
+
+      rows = rows.filter(
+        (r: any) =>
+          filterDocs.includes(
+            r.document_name
+          )
+      );
+    }
+        // ======================================
+    // FINAL SAFETY FILTER
+    // ======================================
+
+    if (notificationDocs.length > 0) {
+
+      rows = rows.filter((row: any) => {
+
+        const docName =
+          row.document_name
+            ?.trim()
+            ?.toLowerCase();
+
+        return filterDocs.some(
+          (doc: string) =>
+            doc?.trim()?.toLowerCase() === docName
+        );
+      });
+    }
+
+    console.log(
+      "FINAL FILTERED ROWS:",
+      rows
+    );
 
     setChecklist(rows);
-    setRemarksData(remarksRes.data); // 🔥 IMPORTANT
+
+    setRemarksData(
+      remarksRes.data
+    );
+
     setIsModalOpen(true);
 
   } catch (err) {
+
     console.error(err);
-    message.error("Failed to load data");
+
+    message.error(
+      "Failed to load audit checklist"
+    );
+
   } finally {
+
     setLoading(false);
   }
 };
@@ -382,17 +673,57 @@ const loadChecklist = async () => {
       setChecklist(updated);
     };
 
-    const handleRestore = (popup: any) => {
-      setChecklist(popup.checklist);
-      setSelectedState(popup.state);
-      setSelectedBranch(popup.branch);
-      setSelectedPE(popup.pe);
-      setSelectedVendor(popup.vendor);
-      setAuditPeriod(popup.auditPeriod);
+    const handleRestore = async (popup: any) => {
 
-      setIsModalOpen(true);
+      try {
 
-      setMinimizedPopups(prev => prev.filter(p => p.id !== popup.id));
+        // ======================================
+        // RESTORE VALUES
+        // ======================================
+
+        setSelectedPE(popup.pe);
+        setSelectedVendor(popup.vendor);
+        setSelectedState(popup.state);
+        setSelectedBranch(popup.branch);
+        setAuditPeriod(popup.auditPeriod);
+
+        // ======================================
+        // RELOAD DROPDOWNS
+        // ======================================
+
+        await loadVendors(popup.pe);
+
+        await loadStates(
+          popup.pe,
+          popup.vendor
+        );
+
+        await loadBranches(
+          popup.pe,
+          popup.vendor,
+          popup.state
+        );
+
+        // ======================================
+        // RESTORE CHECKLIST
+        // ======================================
+
+        setChecklist(popup.checklist);
+
+        setIsModalOpen(true);
+
+        setMinimizedPopups((prev) =>
+          prev.filter((p) => p.id !== popup.id)
+        );
+
+      } catch (err) {
+
+        console.error(err);
+
+        message.error(
+          "Failed to restore audit popup"
+        );
+      }
     };
 
   /* ================= SUBMIT ================= */
@@ -569,7 +900,11 @@ const handleSubmit = async () => {
 const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
 
-    const key = `${item.audit_particulars}_${item.act_name}_${item.section_rule}`;
+    const key =
+      `${item.audit_particulars}_` +
+      `${item.act_name}_` +
+      `${item.section_rule}_` +
+      `${item.document_name}`;
 
     if (!acc[key]) {
       acc[key] = {
@@ -773,7 +1108,17 @@ const canFreezeReport =
   style={{ top: 20 }}
   title={
     <div className="flex justify-between items-center">
-      <span className="font-semibold">Audit Checklist</span>
+      <div className="flex flex-col">
+        <span className="font-semibold">
+          Reuploaded Compliance Review
+        </span>
+
+        {notificationDocs.length > 0 && (
+          <span className="text-xs text-orange-500 mt-1">
+            Reviewing {notificationDocs.length} reuploaded document(s)
+          </span>
+        )}
+      </div>
 
       <Button
         size="small"
@@ -976,9 +1321,15 @@ const canFreezeReport =
       >
 
         {/* TAB TEXT */}
-        <span>
+      <div className="flex flex-col leading-tight">
+        <span className="font-medium">
+          {popup.auditPeriod}
+        </span>
+
+        <span className="text-[10px] text-gray-600">
           {(popup.branchName || popup.branch || "Audit").split(",")[0]}
         </span>
+      </div>
 
         {/* ❌ CLOSE BUTTON */}
         <span

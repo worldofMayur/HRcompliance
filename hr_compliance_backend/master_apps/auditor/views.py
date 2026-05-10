@@ -159,10 +159,18 @@ class DownloadAuditDocumentsZipAPIView(APIView):
             audit_period
         )
 
+        filters = {
+            "branch_id": branch_id,
+        }
+
+        if audit_period:
+            filters["audit_period"] = audit_period
+
+        if vendor_id:
+            filters["vendor_id"] = vendor_id
+
         submissions = VendorComplianceSubmission.objects.filter(
-            branch_id=branch_id,
-            vendor_id=vendor_id,
-            audit_period=audit_period
+            **filters
         ).select_related("branch", "vendor")
 
         # ✅ NEW: HANDLE EMPTY CASE
@@ -195,9 +203,25 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                         if os.path.exists(file_path):
                             file_name = os.path.basename(file_path)
 
+                            # ======================================
+                            # REUPLOADED DOC SUPPORT
+                            # ======================================
+
+                            reuploaded_document_names = request.GET.getlist(
+                                "reuploaded_documents"
+                            )
+
+                            folder_name = "main_documents"
+
+                            if (
+                                sub.document and
+                                sub.document.name in reuploaded_document_names
+                            ):
+                                folder_name = "reuploaded_documents"
+
                             zip_file.write(
                                 file_path,
-                                arcname=f"main_documents/{sub.id}_{file_name}"
+                                arcname=f"{folder_name}/{sub.id}_{file_name}"
                             )
 
                     for supp in sub.supporting_files.all():
@@ -433,7 +457,9 @@ class SaveAuditAPIView(APIView):
         # =========================
 
         if all_valid:
+
             if freeze_report:
+
                 VendorComplianceSubmission.objects.filter(
                     branch_id=branch_id,
                     vendor_id=vendor.id,
@@ -442,8 +468,30 @@ class SaveAuditAPIView(APIView):
                     is_cc_issued=True,
                     cc_issued_at=now()
                 )
+
+                # ======================================
+                # AUTO MARK RELATED AUDITOR NOTIFICATIONS
+                # ======================================
+
+                SystemNotification.objects.filter(
+
+                    branch_id=branch_id,
+
+                    audit_period=audit_period,
+
+                    type="AUDITOR",
+
+                    is_read=False,
+
+                ).update(
+                    is_read=True
+                )
+
             try:
-                logger.info(f"📨 Sending → {vendor.email} | CC: {cc_emails}")
+
+                logger.info(
+                    f"📨 Sending → {vendor.email} | CC: {cc_emails}"
+                )
 
                 email = EmailMultiAlternatives(
                     subject=subject,
@@ -453,7 +501,11 @@ class SaveAuditAPIView(APIView):
                     cc=cc_emails
                 )
 
-                email.attach_alternative(html_content, "text/html")
+                email.attach_alternative(
+                    html_content,
+                    "text/html"
+                )
+
                 email.send(fail_silently=False)
 
                 SystemNotification.objects.create(
@@ -473,6 +525,7 @@ class SaveAuditAPIView(APIView):
                 )
 
             except Exception as e:
+
                 logger.error(f"❌ Email failed: {str(e)}")
 
             return Response({
@@ -925,8 +978,35 @@ class AuditChecklistAPIView(APIView):
 
         response = []
 
+        # ======================================
+        # REUPLOAD FILTER SUPPORT
+        # ======================================
+
+        reuploaded_document_names = request.GET.getlist(
+            "reuploaded_documents"
+        )
+
+        if reuploaded_document_names:
+
+            reuploaded_document_names = [
+                x.strip().lower()
+                for x in reuploaded_document_names
+            ]
+
         for item in checklist_qs:
             sub = submission_map.get(item.document_id)
+
+            document_name = (
+                item.document.name.strip().lower()
+                if item.document and item.document.name
+                else ""
+            )
+
+            if (
+                reuploaded_document_names
+                and document_name not in reuploaded_document_names
+            ):
+                continue
 
             response.append({
                 "id": item.id,
@@ -1207,20 +1287,35 @@ class VendorNotificationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
         from master_apps.vendor.models import SystemNotification
+
+        # =====================================
+        # ROLE BASED NOTIFICATION TYPE
+        # =====================================
+
+        notification_type = (
+            "AUDITOR"
+            if request.user.role == "AUDITOR"
+            else "VENDOR"
+        )
 
         data = SystemNotification.objects.filter(
             user=request.user,
-            type="VENDOR"
+            type=notification_type
         ).order_by("-created_at")
 
         return Response([
             {
                 "id": n.id,
                 "title": n.title,
+                "message": n.message,
                 "data": n.data,
                 "created_at": n.created_at,
-                "is_read": n.is_read
+                "is_read": n.is_read,
+                "type": n.type,
+                "audit_period": n.audit_period,
+                "branch_id": n.branch_id,
             }
             for n in data
         ])

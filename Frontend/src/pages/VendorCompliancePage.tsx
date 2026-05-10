@@ -35,6 +35,8 @@ interface DocumentRow {
   audit_period?: string;
   fileList: UploadFile[];
   isAdditional?: boolean;
+  canReupload?: boolean;
+
 }
 
 export default function VendorCompliancePage() {
@@ -61,11 +63,15 @@ export default function VendorCompliancePage() {
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("");
   const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
+  const [reuploadMode, setReuploadMode] = useState(false);
+  const [failedEntries, setFailedEntries] = useState<any[]>([]);
+  const [complianceId, setComplianceId] = useState<number | null>(null);
 
   const [mappingStartDate, setMappingStartDate] = useState<any>(null);
   const [mappingEndDate, setMappingEndDate] = useState<any>(null);
   const [frequencyBase, setFrequencyBase] = useState("");
 
+  
   const docRef = useRef<any>(null);
 
   /* ================= FORMAT DATE ================= */
@@ -79,10 +85,36 @@ export default function VendorCompliancePage() {
     /* ================= PREFILL ================= */
   useEffect(() => {
     if (prefillData) {
-      console.log("🔄 Prefill Data Received:", prefillData);
-      if (prefillData.pe_id) setSelectedPE(String(prefillData.pe_id));
-      if (prefillData.branch_id) setSelectedBranch(String(prefillData.branch_id));
-      if (prefillData.selected_period) setSelectedPeriod(prefillData.selected_period);
+
+      console.log("🔄 Notification Prefill:", prefillData);
+
+      if (prefillData.pe_id) {
+        setSelectedPE(String(prefillData.pe_id));
+      }
+
+      if (prefillData.state) {
+        setSelectedState(prefillData.state);
+      }
+
+      if (prefillData.branch_id) {
+        setSelectedBranch(String(prefillData.branch_id));
+      }
+
+      if (prefillData.selected_period) {
+        setSelectedPeriod(prefillData.selected_period);
+      }
+
+      if (prefillData.entries) {
+        setFailedEntries(prefillData.entries);
+      }
+
+      if (prefillData.compliance_id) {
+        setComplianceId(prefillData.compliance_id);
+      }
+
+      if (prefillData.reupload_mode) {
+        setReuploadMode(true);
+      }
     }
   }, [prefillData]);
 
@@ -222,14 +254,58 @@ export default function VendorCompliancePage() {
 
     setDocuments(data);
 
+    console.log("❌ Failed Entries:", failedEntries);
+
+    const failedDocNames = failedEntries.map(
+      (e: any) =>
+        String(
+          e.audit_particular || ""
+        )
+          .trim()
+          .toLowerCase()
+    );
+
+    console.log(
+      "📄 Failed Document Names:",
+      failedDocNames
+    );
+
     const rows: DocumentRow[] = data.map(
       (doc: DocumentType) => ({
+
         key: `doc-${doc.id}`,
+
         document_id: doc.id,
+
         document_name: doc.name,
+
         audit_period: doc.audit_period,
+
         fileList: [],
+
+        // ✅ IMPORTANT
+        // ONLY failed docs reuploadable
+
+      canReupload: Boolean(
+        reuploadMode
+          ? failedDocNames.some(
+              (name: string) =>
+                name.includes(
+                  doc.name?.trim().toLowerCase()
+                ) ||
+                doc.name
+                  ?.trim()
+                  .toLowerCase()
+                  .includes(name)
+            )
+          : true
+      )
       })
+    );
+
+    console.log(
+      "✅ Final Document Rows:",
+      rows
     );
 
     setTableData(rows);
@@ -348,58 +424,183 @@ const getPeriodOptions = () => {
     }]);
   };
 
-  const handleSubmit = async () => {
-    if (!selectedPE || !selectedState || !selectedBranch || !selectedPeriod) {
-      message.error("Complete all selections.");
-      return;
+const handleSubmit = async () => {
+
+  // ================= VALIDATIONS =================
+
+  if (
+    !selectedPE ||
+    !selectedState ||
+    !selectedBranch ||
+    !selectedPeriod
+  ) {
+    message.error("Complete all selections.");
+    return;
+  }
+
+  const hasFile = tableData.some(
+    (r) => r.fileList.length > 0
+  );
+
+  if (!hasFile) {
+    message.error("Upload at least one document.");
+    return;
+  }
+
+  if (!generalRemark.trim()) {
+    message.error("Please enter general remark.");
+    return;
+  }
+
+  try {
+
+    setLoading(true);
+
+    // ================= FORM DATA =================
+
+    const formData = new FormData();
+
+    formData.append("pe_id", selectedPE);
+    formData.append("branch_id", selectedBranch);
+    formData.append("state_id", selectedState);
+    formData.append("selected_period", selectedPeriod);
+    formData.append("general_remark", generalRemark);
+
+    formData.append(
+      "cc_emails",
+      JSON.stringify(ccEmails || [])
+    );
+
+    // ================= REUPLOAD MODE =================
+
+    if (reuploadMode && complianceId) {
+
+      formData.append(
+        "compliance_id",
+        String(complianceId)
+      );
+
+      formData.append(
+        "reupload_mode",
+        "true"
+      );
     }
 
-    const hasFile = tableData.some(r => r.fileList.length > 0);
-    if (!hasFile) {
-      message.error("Upload at least one document.");
-      return;
-    }
+    // ================= FILES =================
 
-    if (!generalRemark.trim()) {
-      message.error("Please enter general remark.");
-      return;
-    }
+    let fileIndex = 0;
 
-    try {
-      setLoading(true);
-      const formData = new FormData();
-      formData.append("pe_id", selectedPE);
-      formData.append("branch_id", selectedBranch);
-      formData.append("state_id", selectedState);
-      formData.append("selected_period", selectedPeriod);
-      formData.append("general_remark", generalRemark);
-      formData.append("cc_emails", JSON.stringify(ccEmails || []));
+    tableData.forEach((row) => {
 
-      let fileIndex = 0;
-      tableData.forEach((row) => {
-        if (row.fileList.length > 0) {
-          formData.append(`document_${fileIndex}_file`, row.fileList[0].originFileObj as File);
-          if (row.document_id) formData.append(`document_${fileIndex}_id`, row.document_id.toString());
-          fileIndex++;
+      if (row.fileList.length > 0) {
+
+        const file =
+          row.fileList[0].originFileObj as File;
+
+        formData.append(
+          `document_${fileIndex}_file`,
+          file
+        );
+
+        // Existing document mapping
+        if (row.document_id) {
+
+          formData.append(
+            `document_${fileIndex}_id`,
+            row.document_id.toString()
+          );
         }
-      });
 
-      await axios.post("http://127.0.0.1:8000/api/vendor/submit-compliance/", formData, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
-      });
+        // Document name
+        formData.append(
+          `document_${fileIndex}_name`,
+          row.document_name
+        );
 
-      message.success("Compliance submitted successfully");
-      setTableData([]);
-      setGeneralRemark("");
-      setCcEmails([]);
+        // Additional document flag
+        formData.append(
+          `document_${fileIndex}_is_additional`,
+          String(row.isAdditional || false)
+        );
 
-    } catch (err: any) {
-      console.error(err);
-      message.error(err?.response?.data?.error || "Submission failed");
-    } finally {
-      setLoading(false);
+        fileIndex++;
+      }
+    });
+
+    // ================= API ENDPOINT =================
+
+    const endpoint = reuploadMode
+      ? "http://127.0.0.1:8000/api/vendor/reupload-compliance/"
+      : "http://127.0.0.1:8000/api/vendor/submit-compliance/";
+
+    // ================= API CALL =================
+
+    const response = await axios.post(
+      endpoint,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log(
+      "✅ Compliance submit response:",
+      response.data
+    );
+
+    // ================= SUCCESS MESSAGE =================
+
+    if (reuploadMode) {
+
+      message.success(
+        "Documents reuploaded successfully"
+      );
+
+    } else {
+
+      message.success(
+        "Compliance submitted successfully"
+      );
     }
-  };
+
+    // ================= RESET FORM =================
+
+    setTableData([]);
+
+    setGeneralRemark("");
+
+    setCcEmails([]);
+
+    // Optional cleanup
+    setReuploadMode(false);
+
+    setFailedEntries([]);
+
+    setComplianceId(null);
+
+  } catch (err: any) {
+
+    console.error(
+      "❌ Compliance submission failed:",
+      err
+    );
+
+    const backendError =
+      err?.response?.data?.error ||
+      err?.response?.data?.message;
+
+    message.error(
+      backendError || "Submission failed"
+    );
+
+  } finally {
+
+    setLoading(false);
+  }
+};
 
   const uploadedCount = tableData.filter(r => r.fileList.length > 0).length;
   const totalDocs = tableData.length;
@@ -516,23 +717,74 @@ const getPeriodOptions = () => {
             )}
 
             {tableData.map((record) => (
-              <div key={record.key} className="border rounded-2xl p-4 bg-white shadow-sm hover:shadow-md transition h-32 flex flex-col justify-between">
+              <div key={record.key} className={`
+  border
+  rounded-2xl
+  p-4
+  shadow-sm
+  transition
+  h-32
+  flex
+  flex-col
+  justify-between
+
+  ${
+    record.canReupload
+      ? "bg-white hover:shadow-md"
+      : "bg-gray-50 opacity-80"
+  }
+`} >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-gray-800 truncate">{record.document_name}</span>
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Required</span>
+                  <span
+                    className={`
+                      text-[10px]
+                      font-medium
+                      px-2.5
+                      py-1
+                      rounded-full
+                      whitespace-nowrap
+                      shadow-sm
+
+                      ${
+                        record.canReupload
+                          ? "bg-red-50 text-red-600 border border-red-200"
+                          : "bg-green-50 text-green-600 border border-green-200"
+                      }
+                    `}
+                  >
+                    {record.canReupload
+                      ? "Reupload Required"
+                      : "Complied"}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <Upload
+                    disabled={!record.canReupload}
                     beforeUpload={() => false}
                     fileList={record.fileList}
                     maxCount={1}
                     showUploadList={false}
-                    onChange={({ fileList }) => updateRow(record.key, { fileList })}
+                    onChange={({ fileList }) =>
+                      updateRow(record.key, { fileList })
+                    }
                   >
-                    <Button size="small" className="rounded-lg bg-blue-600 text-white hover:bg-blue-700 border-none">
-                      Upload
-                    </Button>
+                  <Button
+                    size="small"
+                    disabled={!record.canReupload}
+                    className={`
+                      rounded-lg border-none
+
+                      ${
+                        record.canReupload
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      }
+                    `}
+                  >
+                    Upload
+                  </Button>
                   </Upload>
 
                   {record.isAdditional && (
