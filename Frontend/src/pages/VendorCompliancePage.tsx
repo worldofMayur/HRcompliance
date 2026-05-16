@@ -26,6 +26,9 @@ interface DocumentType {
   id: number;
   name: string;
   audit_period?: string;
+  workflow_status?: string;
+  reupload_remark?: string;
+  is_reuploaded?: boolean;
 }
 
 interface DocumentRow {
@@ -36,7 +39,11 @@ interface DocumentRow {
   fileList: UploadFile[];
   isAdditional?: boolean;
   canReupload?: boolean;
-
+  workflow_status?: string;
+  reupload_remark?: string;
+  is_reuploaded?: boolean;
+  isFrozen?: boolean;
+  submission_id?: number;
 }
 
 export default function VendorCompliancePage() {
@@ -256,66 +263,72 @@ export default function VendorCompliancePage() {
 
     console.log("❌ Failed Entries:", failedEntries);
 
-    const failedDocNames = failedEntries.map(
-      (e: any) =>
-        String(
-          e.audit_particular || ""
-        )
-          .trim()
-          .toLowerCase()
-    );
+const failedDocIds = failedEntries.map(
+  (e: any) => e.document_id
+);
 
-    console.log(
-      "📄 Failed Document Names:",
-      failedDocNames
-    );
+console.log(
+  "📄 Failed Document IDs:",
+  failedDocIds
+);
 
-    const rows: DocumentRow[] = data.map(
-      (doc: DocumentType) => ({
+const rows: DocumentRow[] = data.map(
+  (doc: DocumentType) => ({
 
-        key: `doc-${doc.id}`,
+    key: `doc-${doc.id}`,
 
-        document_id: doc.id,
+    document_id: doc.id,
 
-        document_name: doc.name,
+    submission_id: (doc as any).submission_id,
 
-        audit_period: doc.audit_period,
+    document_name: doc.name,
 
-        fileList: [],
+    audit_period: doc.audit_period,
 
-        // ✅ IMPORTANT
-        // ONLY failed docs reuploadable
+    workflow_status:
+      doc.workflow_status || "",
 
-      canReupload: Boolean(
-        reuploadMode
-          ? failedDocNames.some(
-              (name: string) =>
-                name.includes(
-                  doc.name?.trim().toLowerCase()
-                ) ||
-                doc.name
-                  ?.trim()
-                  .toLowerCase()
-                  .includes(name)
-            )
-          : true
-      )
-      })
-    );
+    // ✅ Show remarks ONLY in reupload flow
+    reupload_remark:
+      reuploadMode
+        ? doc.reupload_remark || ""
+        : "",
 
-    console.log(
-      "✅ Final Document Rows:",
-      rows
-    );
+    is_reuploaded:
+      doc.is_reuploaded || false,
 
-    setTableData(rows);
-  } catch (error) {
-    console.error("Failed to load documents:", error);
+    fileList: [],
 
-    message.error("Failed to load documents");
-  } finally {
-    setDocumentsLoading(false);
-  }
+    // ✅ ONLY failed documents reuploadable
+    canReupload: reuploadMode
+      ? failedDocIds.includes(doc.id)
+      : true,
+  })
+);
+
+console.log(
+  "✅ Final Document Rows:",
+  rows
+);
+
+setTableData(rows);
+
+} catch (error) {
+
+  console.error(
+    "Failed to load documents:",
+    error
+  );
+
+  message.error(
+    "Failed to load documents"
+  );
+
+} finally {
+
+  setDocumentsLoading(false);
+}
+
 };
 
   /* ================= PERIOD OPTIONS ================= */
@@ -339,7 +352,7 @@ const getPeriodOptions = () => {
 
     return start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
       ? `${startMonth} ${year}`
-      : `${startMonth}–${endMonth} ${year}`;
+      : `${startMonth}-${endMonth} ${year}`;
   };
 
   const isValidPeriod = (start: Date, end: Date): boolean => {
@@ -420,7 +433,8 @@ const getPeriodOptions = () => {
       document_name: "Additional Document",
       audit_period: selectedPeriod,
       fileList: [],
-      isAdditional: true
+      isAdditional: true,
+      canReupload: true
     }]);
   };
 
@@ -462,7 +476,7 @@ const handleSubmit = async () => {
 
     formData.append("pe_id", selectedPE);
     formData.append("branch_id", selectedBranch);
-    formData.append("state_id", selectedState);
+    formData.append("state", selectedState);
     formData.append("selected_period", selectedPeriod);
     formData.append("general_remark", generalRemark);
 
@@ -488,21 +502,37 @@ const handleSubmit = async () => {
 
     // ================= FILES =================
 
-    let fileIndex = 0;
+// ================= FILES =================
 
-    tableData.forEach((row) => {
+let fileIndex = 0;
 
-      if (row.fileList.length > 0) {
+tableData.forEach((row) => {
 
-        const file =
-          row.fileList[0].originFileObj as File;
+  if (
+    row.fileList &&
+    row.fileList.length > 0
+  ) {
 
-        formData.append(
-          `document_${fileIndex}_file`,
-          file
-        );
+    row.fileList.forEach((fileObj: any) => {
 
-        // Existing document mapping
+      const file =
+        fileObj.originFileObj as File;
+
+      // =========================
+      // FILE
+      // =========================
+
+      formData.append(
+        `document_${fileIndex}_file`,
+        file
+      );
+
+      // =========================
+      // MAIN DOCUMENT
+      // =========================
+
+      if (!row.isAdditional) {
+
         if (row.document_id) {
 
           formData.append(
@@ -511,21 +541,62 @@ const handleSubmit = async () => {
           );
         }
 
-        // Document name
-        formData.append(
-          `document_${fileIndex}_name`,
-          row.document_name
-        );
+        // ✅ REUPLOAD SUPPORT
+        if (row.submission_id) {
 
-        // Additional document flag
-        formData.append(
-          `document_${fileIndex}_is_additional`,
-          String(row.isAdditional || false)
-        );
-
-        fileIndex++;
+          formData.append(
+            `document_${fileIndex}_submission_id`,
+            row.submission_id.toString()
+          );
+        }
       }
+
+      // =========================
+      // SUPPORTING FILE
+      // =========================
+
+      else {
+
+        formData.append(
+          `document_${fileIndex}_parent_id`,
+          row.document_id?.toString() || ""
+        );
+      }
+
+      // =========================
+      // DOCUMENT NAME
+      // =========================
+
+      formData.append(
+        `document_${fileIndex}_name`,
+        row.document_name || ""
+      );
+
+      // =========================
+      // ADDITIONAL FLAG
+      // =========================
+
+      formData.append(
+        `document_${fileIndex}_is_additional`,
+        String(row.isAdditional || false)
+      );
+
+      fileIndex++;
+
     });
+
+  }
+
+});
+
+// =========================
+// TOTAL COUNT
+// =========================
+
+formData.append(
+  "document_count",
+  String(fileIndex)
+);
 
     // ================= API ENDPOINT =================
 
@@ -612,13 +683,23 @@ const handleSubmit = async () => {
         <p className="text-sm text-gray-500">Upload compliance documents for the selected branch and period.</p>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border">
-        <div className="grid md:grid-cols-4 gap-6">
+      <div className="
+        rounded-2xl
+        border border-gray-200
+        bg-white
+        p-6
+        shadow-sm
+      ">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
           <div className="flex flex-col">
             <label className="text-xs font-semibold text-gray-500 mb-1">Principal Employer</label>
             <select value={selectedPE} onChange={(e) => setSelectedPE(e.target.value)} className="border rounded-xl px-3 py-2 text-sm">
               <option value="">Select PE</option>
-              {peList.map(pe => <option key={pe.id} value={pe.id}>{pe.short_name}</option>)}
+              {[...peList]
+              .sort((a, b) =>
+                a.short_name.localeCompare(b.short_name)
+              )
+              .map(pe => <option key={pe.id} value={pe.id}>{pe.short_name}</option>)}
             </select>
           </div>
 
@@ -638,7 +719,11 @@ const handleSubmit = async () => {
               className="border rounded-xl px-3 py-2 text-sm"
             >
               <option value="">Select State</option>
-              {states.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+             {[...states]
+              .sort((a, b) =>
+                a.name.localeCompare(b.name)
+              )
+              .map(s =><option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
 
@@ -662,7 +747,11 @@ const handleSubmit = async () => {
               className="border rounded-xl px-3 py-2 text-sm"
             >
               <option value="">Select Branch</option>
-              {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+             {[...branches]
+              .sort((a, b) =>
+                a.name.localeCompare(b.name)
+              )
+              .map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
 
@@ -688,17 +777,103 @@ const handleSubmit = async () => {
 
       {selectedPeriod && (
         <div ref={docRef} className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-gray-800">Compliance Documents</h2>
-              <span className="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded-full">{selectedPeriod}</span>
-            </div>
-            <Button type="primary" ghost onClick={addAdditionalDocument}>
-              + Add Additional Document
-            </Button>
-          </div>
+      <div className="space-y-5 mb-5">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+  {/* TOP BAR */}
+  <div className="
+    flex flex-col gap-4
+    lg:flex-row
+    lg:items-center
+    lg:justify-between
+  ">
+
+    {/* LEFT */}
+    <div className="space-y-3">
+
+      {/* TITLE */}
+      <div className="flex items-center gap-2">
+        <h2 className="text-base font-semibold text-gray-900">
+          Compliance Documents
+        </h2>
+
+        <span className="
+          rounded-full
+          bg-blue-50
+          px-2.5 py-1
+          text-xs
+          font-medium
+          text-blue-700
+        ">
+          {selectedPeriod}
+        </span>
+      </div>
+
+      {/* STATS */}
+      <div className="flex items-center gap-2 flex-wrap">
+
+        <div className="
+          rounded-full
+          border border-gray-200
+          bg-gray-50
+          px-3 py-1
+        ">
+          <span className="text-xs font-medium text-gray-700">
+            Total: {totalDocs}
+          </span>
+        </div>
+
+        <div className="
+          rounded-full
+          border border-emerald-100
+          bg-emerald-50
+          px-3 py-1
+        ">
+          <span className="text-xs font-medium text-emerald-700">
+            Uploaded: {uploadedCount}
+          </span>
+        </div>
+
+        <div className="
+          rounded-full
+          border border-amber-100
+          bg-amber-50
+          px-3 py-1
+        ">
+          <span className="text-xs font-medium text-amber-700">
+            Remaining: {totalDocs - uploadedCount}
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+    {/* RIGHT */}
+    <Button
+      type="primary"
+      ghost
+      disabled={frozenPeriods.includes(selectedPeriod)}
+      onClick={addAdditionalDocument}
+      className="
+        h-9
+        rounded-xl
+        px-4
+        text-sm
+        font-medium
+      "
+    >
+      + Add Document
+    </Button>
+
+  </div>
+</div>
+
+          <div className="
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            xl:grid-cols-3
+            gap-4
+          ">
             {documentsLoading && (
               <div className="col-span-full flex flex-col items-center justify-center py-12">
 
@@ -712,57 +887,112 @@ const handleSubmit = async () => {
 
             {!documentsLoading && tableData.length === 0 && (
               <div className="col-span-full text-center py-10 text-gray-400">
-                No documents available for selected period
+                <div className="py-14 text-center">
+                  <p className="text-sm font-medium text-gray-500">
+                    No compliance documents available
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-400">
+                    Try selecting another audit period
+                  </p>
+                </div>
               </div>
             )}
 
             {tableData.map((record) => (
               <div key={record.key} className={`
-  border
-  rounded-2xl
-  p-4
-  shadow-sm
-  transition
-  h-32
-  flex
-  flex-col
-  justify-between
+                  border
+                  rounded-2xl
+                  p-3.5
+                  shadow-sm
+                  transition
+                  min-h-[132px]
+                  flex
+                  flex-col
+                  gap-3
 
-  ${
-    record.canReupload
-      ? "bg-white hover:shadow-md"
-      : "bg-gray-50 opacity-80"
-  }
-`} >
-                <div className="flex items-center justify-between">
+                  ${
+                    reuploadMode
+                      ? (
+                          record.canReupload
+                            ? "bg-white hover:shadow-md"
+                            : "bg-gray-50 opacity-70 border-gray-200"
+                        )
+                      : "bg-white hover:shadow-md"
+                  }
+                `} >
+                <div className="flex items-start justify-between gap-3">
                   <span className="font-semibold text-gray-800 truncate">{record.document_name}</span>
                   <span
                     className={`
                       text-[10px]
                       font-medium
-                      px-2.5
-                      py-1
+                      px-2
+                      py-0.5
                       rounded-full
                       whitespace-nowrap
-                      shadow-sm
+                      border
 
                       ${
-                        record.canReupload
-                          ? "bg-red-50 text-red-600 border border-red-200"
-                          : "bg-green-50 text-green-600 border border-green-200"
+                      reuploadMode
+                        ? (
+                            record.canReupload
+                              ? "bg-red-50 text-red-600 border border-red-200"
+                              : "bg-green-50 text-green-600 border border-green-200"
+                          )
+                        : "bg-blue-50 text-blue-600 border border-blue-200"
                       }
                     `}
                   >
-                    {record.canReupload
-                      ? "Reupload Required"
-                      : "Complied"}
+                  {record.fileList.length > 0 ? (
+                    "Uploaded"
+                  ) : reuploadMode ? (
+
+                    record.canReupload ? (
+                      "Reupload Required"
+                    ) : (
+                      "Already Complied"
+                    )
+
+                  ) : (
+                    "Pending Upload"
+                  )}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="
+                  flex items-center
+                  justify-between
+                  gap-3
+                ">
                   <Upload
-                    disabled={!record.canReupload}
-                    beforeUpload={() => false}
+                    disabled={
+                      frozenPeriods.includes(selectedPeriod) ||
+
+                      (
+                        reuploadMode &&
+                        !record.isAdditional &&
+                        !record.canReupload
+                      )
+                    }
+                    beforeUpload={(file) => {
+                      const alreadyExists =
+                        tableData.some(
+                          (row) =>
+                            row.fileList[0]?.name === file.name
+                        );
+
+                      if (alreadyExists) {
+
+                        message.warning(
+                          "Same file already selected."
+                        );
+
+                        return Upload.LIST_IGNORE;
+                      }
+
+                      return false;
+                    }}
                     fileList={record.fileList}
                     maxCount={1}
                     showUploadList={false}
@@ -772,13 +1002,21 @@ const handleSubmit = async () => {
                   >
                   <Button
                     size="small"
-                    disabled={!record.canReupload}
+                    disabled={
+                      frozenPeriods.includes(selectedPeriod) ||
+
+                      (
+                        reuploadMode &&
+                        !record.isAdditional &&
+                        !record.canReupload
+                      )
+                    }
                     className={`
                       rounded-lg border-none
 
                       ${
                         record.canReupload
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          ? "bg-blue-500 text-white hover:bg-blue-600"
                           : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       }
                     `}
@@ -795,41 +1033,154 @@ const handleSubmit = async () => {
                 </div>
 
                 <div className="text-xs truncate">
+
+                {reuploadMode &&
+                  record.canReupload &&
+                  record.reupload_remark && (
+
+                    <div className="
+                      mt-2
+                      text-[11px]
+                      text-red-600
+                      bg-red-50
+                      border border-red-200
+                      rounded-lg
+                      px-2 py-1
+                      leading-relaxed
+                    ">
+                      <span className="font-semibold">
+                        Auditor Remark:
+                      </span>{" "}
+                      {record.reupload_remark}
+                    </div>
+                  )}
+
                   {record.fileList.length > 0 ? (
-                    <span className="text-green-600 font-medium">✔ Uploaded: {record.fileList[0].name}</span>
+                  <div className="
+                    mt-2
+                    flex items-center gap-2
+                    rounded-lg
+                    border border-emerald-100
+                    bg-emerald-50/40
+                    px-2.5 py-2
+                  ">
+
+                    <span className="text-[11px] text-emerald-600">
+                      ✓
+                    </span>
+
+                    <p className="
+                      text-[11px]
+                      font-medium
+                      text-emerald-700
+                      truncate
+                    ">
+                      {record.fileList[0].name}
+                    </p>
+
+                  </div>
                   ) : (
-                    <span className="text-gray-400 italic">No file uploaded</span>
+                    <p className="
+                      text-xs
+                      text-gray-400
+                    ">Upload PDF, JPG or PNG</p>
                   )}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-8">
-            <label className="block text-sm font-semibold mb-2">General Remarks</label>
+          <div className="
+            mt-7
+            border-t border-gray-100
+            pt-6
+          ">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">General Remarks</label>
             <TextArea
-              rows={4}
+              rows={3}
               className="rounded-xl"
               value={generalRemark}
               onChange={(e) => setGeneralRemark(e.target.value)}
             />
+
+            <div className="
+  mt-5
+  flex items-center
+  justify-between
+">
+
+  {/* LEFT MESSAGE */}
+  <div>
+
+    {frozenPeriods.includes(selectedPeriod) ? (
+
+      <div className="
+        inline-flex
+        items-center
+        gap-2
+        rounded-lg
+        border border-amber-200
+        bg-amber-50
+        px-3 py-2
+      ">
+        <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+
+        <p className="text-xs font-medium text-amber-700">
+          This compliance period is frozen.
+        </p>
+      </div>
+
+    ) : (
+
+      <p className="text-xs text-gray-500">
+        Ensure all required documents are uploaded before submission.
+      </p>
+
+    )}
+
+  </div>
+
+  {/* SUBMIT BUTTON */}
+  <Button
+    type="primary"
+    size="large"
+    loading={loading}
+    disabled={
+      frozenPeriods.includes(selectedPeriod) ||
+
+      !selectedPE ||
+
+      !selectedState ||
+
+      !selectedBranch ||
+
+      !selectedPeriod ||
+
+      tableData.every(
+        r => r.fileList.length === 0
+      ) ||
+
+      !generalRemark.trim()
+    }
+    onClick={handleSubmit}
+    className="
+      h-9
+      rounded-lg
+      px-4
+      text-sm
+      font-medium
+      shadow-sm
+    "
+  >
+    Submit Compliance Record
+  </Button>
+
+</div>
           </div>
         </div>
       )}
 
-      {selectedPeriod && (
-        <div className="flex justify-end">
-          <Button
-            type="primary"
-            size="medium"
-            loading={loading}
-            disabled={!selectedPE || !selectedState || !selectedBranch || !selectedPeriod || tableData.every(r => r.fileList.length === 0) || !generalRemark.trim()}
-            onClick={handleSubmit}
-          >
-            Submit Compliance Record
-          </Button>
-        </div>
-      )}
+    
     </div>
   );
 }

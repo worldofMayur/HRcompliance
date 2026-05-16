@@ -210,9 +210,19 @@ export default function VendorMapping() {
     [auditors, selectedAuditor]
   );
 
-  const filteredVendors = useMemo(() => {
+const filteredVendors = useMemo(() => {
 
-    return vendors.filter((v) =>
+  return [...vendors]
+
+    .sort((a, b) =>
+      a.short_name.localeCompare(
+        b.short_name,
+        undefined,
+        { sensitivity: "base" }
+      )
+    )
+
+    .filter((v) =>
       v.short_name
         .toLowerCase()
         .includes(
@@ -220,7 +230,7 @@ export default function VendorMapping() {
         )
     );
 
-  }, [vendors, vendorSearch]);
+}, [vendors, vendorSearch]);
 
   const filteredDocuments = useMemo(() => {
 
@@ -296,8 +306,17 @@ export default function VendorMapping() {
           name: state as string,
         }));
 
-        setStates(uniqueStates);
+        setStates(
 
+          uniqueStates.sort((a, b) =>
+
+            a.name.localeCompare(
+              b.name,
+              undefined,
+              { sensitivity: "base" }
+            )
+          )
+        );
       } catch (error) {
 
         console.error(
@@ -584,8 +603,16 @@ const handleSave = async () => {
       }}
     >
       <option value="">Select State</option>
-      {states.map(s => (
-        <option key={s.id} value={s.name}>
+      {[...states]
+        .sort((a, b) =>
+          a.name.localeCompare(
+            b.name,
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+        .map(s => (
+            <option key={s.id} value={s.name}>
           {s.name}
         </option>
       ))}
@@ -610,8 +637,16 @@ const handleSave = async () => {
       }}
     >
       <option value="">Select Short Name</option>
-      {branches.map((b) => (
-        <option key={b.id} value={b.id}>
+      {[...branches]
+        .sort((a, b) =>
+          a.short_name.localeCompare(
+            b.short_name,
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+        .map((b) => (
+            <option key={b.id} value={b.id}>
           {b.short_name}
         </option>
       ))}
@@ -768,9 +803,31 @@ const handleSave = async () => {
       className="rounded-lg border border-gray-300 p-2.5 text-sm"
       onChange={(e) => setSelectedRule(e.target.value)}
     >
-      <option value="">Rule</option>
-      <option value="STATE">State</option>
-      <option value="CENTRAL">Central</option>
+    <option value="">Rule</option>
+
+    {[
+      { label: "Central", value: "CENTRAL" },
+      { label: "State", value: "STATE" },
+    ]
+
+    .sort((a, b) =>
+      a.label.localeCompare(
+        b.label,
+        undefined,
+        { sensitivity: "base" }
+      )
+    )
+
+    .map((rule) => (
+
+      <option
+        key={rule.value}
+        value={rule.value}
+      >
+        {rule.label}
+      </option>
+
+    ))}
     </select>
 
     {/* FREQUENCY */}
@@ -778,11 +835,11 @@ const handleSave = async () => {
       className="rounded-lg border border-gray-300 p-2.5 text-sm"
       onChange={(e) => setSelectedFrequency(e.target.value)}
     >
-      <option value="">Audit Frequency</option>
-      <option value="MONTHLY">Monthly</option>
-      <option value="QUARTERLY">Quarterly</option>
-      <option value="HALF_YEARLY">Half-Yearly</option>
-      <option value="ANNUALLY">Annually</option>
+<option value="">Audit Frequency</option>
+<option value="MONTHLY">Monthly</option>
+<option value="QUARTERLY">Quarterly</option>
+<option value="HALF_YEARLY">Half-Yearly</option>
+<option value="ANNUALLY">Annually</option>
     </select>
 
   </div>
@@ -804,8 +861,16 @@ const handleSave = async () => {
       }}
     >
       <option value="">Select Auditor</option>
-      {auditors.map(a => (
-        <option key={a.id} value={a.id}>
+      {[...auditors]
+        .sort((a, b) =>
+          a.name.localeCompare(
+            b.name,
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+        .map(a => (
+            <option key={a.id} value={a.id}>
           {a.name}
         </option>
       ))}
@@ -843,7 +908,15 @@ const handleSave = async () => {
     {showDocumentDropdown && (
       <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg mt-1 max-h-60 overflow-y-auto shadow">
 
-        {filteredDocuments.map((doc) => (
+      {[...filteredDocuments]
+        .sort((a, b) =>
+          a.name.localeCompare(
+            b.name,
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+        .map((doc) => (     
             <div
               key={doc.id}
               className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"

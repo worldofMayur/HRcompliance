@@ -24,16 +24,57 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-<header className="sticky top-0 z-99999 flex w-full border-b border-gray-200/70 bg-white/80 backdrop-blur-xl dark:border-gray-800 dark:bg-gray-900/80">
-      <div className="flex flex-col items-center justify-between flex-grow lg:flex-row lg:px-6">
+    <header
+      className="
+        sticky top-0 z-99999 flex w-full
+        border-b border-gray-200/50
+        bg-white/75
+        shadow-[0_1px_2px_rgba(15,23,42,0.03)]
+        backdrop-blur-2xl
+        dark:border-white/[0.04]
+        dark:bg-gray-900/75
+      "
+    >
+      <div
+        className="
+          flex flex-col items-center justify-between
+          flex-grow
+          lg:flex-row
+          lg:px-5
+          xl:px-6
+        "
+      >
         {/* LEFT SECTION */}
-        <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:border-b-0 lg:px-0 lg:py-4">
+        <div
+          className="
+            flex items-center justify-between
+            w-full gap-2
+            px-3 py-3
+            border-b border-gray-200/60
+            dark:border-white/[0.04]
+            sm:gap-4
+            lg:border-b-0
+            lg:px-0
+            lg:py-4
+          "
+        >
           {/* MOBILE SIDEBAR TOGGLE */}
           <button
             type="button"
             onClick={onToggle}
             aria-label="Toggle Sidebar"
-            className="block w-10 h-10 text-gray-500 lg:hidden dark:text-gray-400"
+            className="
+              flex lg:hidden
+              items-center justify-center
+              h-10 w-10
+              rounded-2xl
+              text-gray-600
+              transition-all duration-200
+              hover:bg-blue-50
+              hover:text-blue-600
+              dark:text-gray-400
+              dark:hover:bg-white/[0.05]
+            "
           >
             <svg
               width="16"
@@ -56,7 +97,25 @@ const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={onClick}
             aria-label="Collapse Sidebar"
-            className="hidden lg:flex items-center justify-center w-11 h-11 rounded-lg border border-gray-200 text-gray-500 dark:border-gray-800 dark:text-gray-400"
+            className="
+              hidden lg:flex
+              items-center justify-center
+              h-11 w-11
+              rounded-2xl
+              border border-gray-200/70
+              bg-white/70
+              text-gray-500
+              shadow-sm
+              transition-all duration-200
+              hover:-translate-y-[1px]
+              hover:border-blue-200
+              hover:bg-blue-50/60
+              hover:text-blue-600
+              dark:border-white/[0.05]
+              dark:bg-white/[0.03]
+              dark:text-gray-400
+              dark:hover:bg-white/[0.05]
+            "
           >
             <svg
               className="fill-current"
@@ -75,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({
             </svg>
           </button>
 
-          {/* LOGO */}
+          {/* MOBILE LOGO */}
           <Link to="/" className="lg:hidden">
             <img
               className="dark:hidden"
@@ -90,12 +149,23 @@ const Header: React.FC<HeaderProps> = ({
             />
           </Link>
 
-          {/* MOBILE RIGHT MENU TOGGLE */}
+          {/* MOBILE MENU TOGGLE */}
           <button
             type="button"
             onClick={toggleApplicationMenu}
             aria-label="Toggle Menu"
-            className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
+            className="
+              flex lg:hidden
+              items-center justify-center
+              h-10 w-10
+              rounded-2xl
+              text-gray-600
+              transition-all duration-200
+              hover:bg-blue-50
+              hover:text-blue-600
+              dark:text-gray-400
+              dark:hover:bg-white/[0.05]
+            "
           >
             <svg
               width="24"
@@ -112,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({
             </svg>
           </button>
 
-          {/* SEARCH BAR */}
+          {/* SEARCH */}
           <div className="hidden lg:block">
             <div className="relative">
               <button
@@ -120,7 +190,7 @@ const Header: React.FC<HeaderProps> = ({
                 className="absolute left-4 top-1/2 -translate-y-1/2"
               >
                 <svg
-                  className="fill-gray-500 dark:fill-gray-400"
+                  className="fill-gray-400 dark:fill-gray-500"
                   width="20"
                   height="20"
                   viewBox="0 0 20 20"
@@ -137,13 +207,53 @@ const Header: React.FC<HeaderProps> = ({
 
               <input
                 type="text"
-                placeholder="Search or type command..."
-                className="h-11 xl:w-[430px] rounded-2xl border border-gray-200/70 bg-white/70 backdrop-blur-md bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                placeholder="Search vendors, branches, audit period..."
+                className="
+                  h-11
+                  xl:w-[340px]
+                  rounded-2xl
+                  border border-gray-200/70
+                  bg-white/80
+                  py-2.5
+                  pl-12
+                  pr-14
+                  text-sm
+                  text-gray-700
+                  shadow-sm
+                  transition-all
+                  duration-200
+                  placeholder:text-gray-400
+                  focus:border-blue-300
+                  focus:bg-white
+                  focus:outline-none
+                  focus:ring-4
+                  focus:ring-blue-500/10
+                  focus:shadow-[0_4px_18px_rgba(59,130,246,0.08)]
+                  dark:border-white/[0.05]
+                  dark:bg-white/[0.03]
+                  dark:text-white
+                  dark:placeholder:text-gray-500
+                  dark:focus:border-blue-500/30
+                "
               />
 
               <button
                 type="button"
-                className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400"
+                className="
+                  absolute right-2.5 top-1/2
+                  inline-flex items-center gap-0.5
+                  -translate-y-1/2
+                  rounded-xl
+                  border border-gray-200/70
+                  bg-white/80
+                  px-[7px]
+                  py-[4.5px]
+                  text-xs text-gray-500
+                  backdrop-blur-sm
+                  dark:border-white/[0.05]
+                  dark:bg-white/[0.03]
+                  dark:text-gray-400
+                "
               >
                 <span>⌘</span>
                 <span>K</span>
@@ -153,11 +263,11 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* RIGHT SECTION */}
-<div
-  className={`${
-    isApplicationMenuOpen ? "flex" : "hidden"
-  } items-center justify-between w-full gap-4 px-5 py-4 lg:flex lg:justify-end lg:px-0 lg:py-0`}
->
+        <div
+          className={`${
+            isApplicationMenuOpen ? "flex" : "hidden"
+          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex lg:justify-end lg:px-0 lg:py-0`}
+        >
           <div className="flex items-center gap-2 2xsm:gap-3">
             <ThemeToggleButton />
             <NotificationDropdown />

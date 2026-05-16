@@ -294,3 +294,120 @@ def audit_period_to_date(audit_period):
 
     except Exception:
         return now().date()
+
+
+# =========================
+# 📁 DOCUMENT UPLOAD PATH
+# =========================
+
+def vendor_document_upload_path(instance, filename):
+
+    import os
+    from uuid import uuid4
+    from django.utils.timezone import now
+    from django.utils.text import slugify
+
+    ext = filename.split(".")[-1]
+
+    unique_name = f"{uuid4().hex}.{ext}"
+
+    today = now().strftime("%Y-%m-%d")
+
+    pe_name = slugify(
+        instance.principal_employer.short_name
+    )
+
+    vendor_name = slugify(
+        instance.vendor.short_name
+    )
+
+    audit_period = slugify(
+        instance.audit_period or "general"
+    )
+
+    return os.path.join(
+
+        "compliance",
+
+        pe_name,
+
+        vendor_name,
+
+        audit_period,
+
+        today,
+
+        "vendor_uploaded_documents",
+
+        unique_name
+    )
+
+
+
+from django.utils.text import slugify
+from django.utils.timezone import now
+
+import os
+
+
+# =========================================
+# 📁 CENTRAL AUDIT FOLDER STRUCTURE
+# =========================================
+
+def build_audit_folder_path(
+    vendor,
+    pe,
+    branch,
+    audit_period,
+):
+
+    vendor_name = slugify(
+        vendor.short_name
+    )
+
+    pe_name = slugify(
+        pe.short_name
+    )
+
+    branch_name = slugify(
+
+        getattr(
+            branch,
+            "branch_name",
+
+            getattr(
+                branch,
+                "name",
+
+                getattr(
+                    branch,
+                    "short_name",
+
+                    f"branch-{branch.id}"
+                )
+            )
+        )
+    )
+
+    period = slugify(
+        audit_period or "general"
+    )
+
+    upload_date = now().strftime(
+        "%Y_%m_%d"
+    )
+
+    return os.path.join(
+
+        "vendor",
+
+        vendor_name,
+
+        pe_name,
+
+        branch_name,
+
+        period,
+
+        f"Uploaded_On_{upload_date}",
+    )

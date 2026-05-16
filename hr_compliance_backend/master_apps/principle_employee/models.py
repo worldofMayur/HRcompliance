@@ -3,7 +3,7 @@ from django.utils.timezone import now
 from .validators import validate_document_file
 import os
 from accounts.models import User
-
+from django.db import models
 
 # =========================
 # PRINCIPAL EMPLOYER MODEL

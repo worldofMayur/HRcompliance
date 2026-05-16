@@ -21,6 +21,7 @@ export default function AuditorDashboard() {
   const [checklist, setChecklist] = useState<any[]>([]);
   const [notificationDocs, setNotificationDocs] = useState<string[]>([]);
   const [downloading, setDownloading] = useState(false);
+  const [exceptionalFiles, setExceptionalFiles] = useState<any>({});
 
   const [selectedPE, setSelectedPE] = useState("");
   const [selectedVendor, setSelectedVendor] = useState("");
@@ -38,7 +39,59 @@ const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [auditSessionStatus, setAuditSessionStatus] =
+    useState("");
+
+  const [isFrozen, setIsFrozen] =
+    useState(false);
+
+const isAuditLocked =
+  auditSessionStatus === "FROZEN";
+
   /* ================= LOAD ================= */
+
+
+
+const fetchAuditSessionStatus = async (
+  branchId: string,
+  period: string
+) => {
+
+  try {
+
+    const response = await axios.get(
+
+      "http://127.0.0.1:8000/api/auditor/audit-session-status/",
+
+      {
+        params: {
+          branch_id: branchId,
+          audit_period: period,
+        },
+
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const status =
+      response.data?.status || "";
+
+    setAuditSessionStatus(status);
+
+    setIsFrozen(
+      status === "FROZEN"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "SESSION STATUS ERROR:",
+      error
+    );
+  }
+};
 
   useEffect(() => {
   loadPE();
@@ -194,7 +247,7 @@ useEffect(() => {
       // LOAD CHECKLIST
       // ======================================
 
-    setTimeout(async () => {
+await Promise.resolve();
 
       await loadChecklist(
         d.branch_id?.toString(),
@@ -203,7 +256,11 @@ useEffect(() => {
         docs
       );
 
-    }, 300);
+      await fetchAuditSessionStatus(
+        d.branch_id?.toString(),
+        d.audit_period
+      );
+
 
     } catch (err) {
 
@@ -265,38 +322,6 @@ useEffect(() => {
     setPeList(res.data);
   };
 
-    const uploadProps = {
-      name: "file",
-      multiple: false,
-      accept: ".pdf,.doc,.docx,.zip,.jpg,.png",
-
-      customRequest: async ({ file, onSuccess, onError }: any) => {
-        try {
-          const formData = new FormData();
-          formData.append("file", file);
-
-          // 🔥 Replace with your Django API
-          const res = await axios.post(
-            "http://127.0.0.1:8000/api/upload/",
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          onSuccess(res.data);
-          message.success(`${file.name} uploaded successfully`);
-        } catch (err) {
-          console.error(err);
-          onError(err);
-          message.error(`${file.name} upload failed`);
-        }
-      },
-    };
-
     const handleMinimize = () => {
       const popupData = {
         id: Date.now(),
@@ -326,31 +351,59 @@ useEffect(() => {
 };
 
 const downloadZip = async () => {
+
   try {
+
     setDownloading(true);
 
     const response = await axios.get(
+
       `http://127.0.0.1:8000/api/auditor/audit/documents-zip/${selectedBranch}/?audit_period=${auditPeriod}`,
+
       {
+
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+
+          Authorization:
+            `Bearer ${localStorage.getItem("access_token")}`,
         },
+
         responseType: "blob",
       }
     );
 
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
+    const url =
+      window.URL.createObjectURL(
+
+        new Blob([response.data])
+      );
+
+    const link =
+      document.createElement("a");
+
     link.href = url;
-    link.setAttribute("download", "audit_documents.zip");
+
+    link.setAttribute(
+      "download",
+      "audit_documents.zip"
+    );
+
     document.body.appendChild(link);
+
     link.click();
+
     link.remove();
 
   } catch (err) {
+
     console.error(err);
-    message.error("Download failed");
+
+    message.error(
+      "Download failed"
+    );
+
   } finally {
+
     setDownloading(false);
   }
 };
@@ -375,7 +428,7 @@ const getPeriodOptions = () => {
 
     return start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
       ? `${startMonth} ${year}`
-      : `${startMonth}–${endMonth} ${year}`;
+      : `${startMonth}-${endMonth} ${year}`;
   };
 
   const isValidPeriod = (start: Date, end: Date): boolean => {
@@ -579,9 +632,17 @@ const loadChecklist = async (
 
     let rows = checklistRes.data.map(
       (item: any) => ({
+
         ...item,
-        observation: "",
-        recommendation: "",
+
+        observation:
+          item.observation || "",
+
+        recommendation:
+          item.recommendation || "",
+
+        status:
+          item.status || "",
       })
     );
 
@@ -649,20 +710,30 @@ const loadChecklist = async (
 
   /* ================= VALIDATION ================= */
 
-  const handleShowAuditor = () => {
-    if (
-      !selectedPE ||
-      !selectedVendor ||
-      !selectedState ||
-      !selectedBranch ||
-      !auditPeriod
-    ) {
-      message.warning("Please select all fields first");
-      return;
-    }
+const handleShowAuditor = async () => {
 
-    loadChecklist();
-  };
+  if (
+    !selectedPE ||
+    !selectedVendor ||
+    !selectedState ||
+    !selectedBranch ||
+    !auditPeriod
+  ) {
+
+    message.warning(
+      "Please select all fields"
+    );
+
+    return;
+  }
+
+  await loadChecklist();
+
+  await fetchAuditSessionStatus(
+    selectedBranch,
+    auditPeriod
+  );
+};
 
   /* ================= UPDATE ================= */
 
@@ -729,82 +800,241 @@ const loadChecklist = async (
   /* ================= SUBMIT ================= */
 
 const handleSubmit = async () => {
+
   try {
+
     setLoading(true);
 
     // =========================
-    // ✅ VALIDATION (STRICT)
+    // ✅ BASIC VALIDATION
     // =========================
-// =========================
-// ✅ VALIDATION (UPDATED)
-// =========================
+
     const invalidRow = groupedChecklist.find(
+
       (row) =>
+
         !row.status ||
+
         !row.observation ||
+
         !row.recommendation ||
+
         !row.observation.trim() ||
+
         !row.recommendation.trim()
     );
 
     if (invalidRow) {
+
       message.error(
-        "All rows must have status + Observation & Recommendation"
+
+        "All rows must have Status, Observation & Recommendation"
+
       );
+
       setLoading(false);
+
       return;
     }
 
     // =========================
-    // ✅ PAYLOAD (FIXED SOURCE)
+    // ✅ EXCEPTIONAL APPROVAL VALIDATION
     // =========================
-    const payload = {
-      branch_id: selectedBranch,
-      audit_period: auditPeriod,
-      freeze_report: canFreezeReport,
-      entries: groupedChecklist.map((row) => ({
-        checklist_id: row.id,
-        observation: row.observation?.trim(),
-        recommendation: row.recommendation?.trim(),
-        status: row.status,
-      })),
-    };
 
-    console.log("📤 FINAL PAYLOAD:", payload);
+    const exceptionalRow = groupedChecklist.find(
+
+      (row) =>
+
+        row.status?.includes(
+          "Exceptional Approval"
+        ) &&
+
+        !exceptionalFiles[row.id]
+    );
+
+    if (exceptionalRow) {
+
+      message.error(
+
+        "Supporting document mandatory for Exceptional Approval"
+
+      );
+
+      setLoading(false);
+
+      return;
+    }
+
+    // =========================
+    // ✅ FORMDATA
+    // =========================
+
+    const formData = new FormData();
+
+    formData.append(
+      "branch_id",
+      selectedBranch
+    );
+
+    formData.append(
+      "audit_period",
+      auditPeriod
+    );
+
+    formData.append(
+      "freeze_report",
+      String(canFreezeReport)
+    );
+
+    // =========================
+    // ✅ ENTRIES PAYLOAD
+    // =========================
+
+    formData.append(
+
+      "entries",
+
+      JSON.stringify(
+
+        groupedChecklist.map((row) => ({
+
+          checklist_id: row.id,
+
+          observation:
+            row.observation?.trim(),
+
+          recommendation:
+            row.recommendation?.trim(),
+
+          status: row.status,
+
+          document_id:
+            row.document_id || null,
+        }))
+      )
+    );
+
+
+
+    // =========================
+    // ✅ APPEND EXCEPTION FILES
+    // =========================
+
+groupedChecklist.forEach((row: any) => {
+
+  if (
+    row.status?.includes(
+      "Exceptional Approval"
+    )
+  ) {
+
+    const file =
+      exceptionalFiles[row.id];
+
+    if (file) {
+
+      formData.append(
+
+        `exceptional_file_${row.id}`,
+
+        file
+      );
+    }
+  }
+});
+
+    console.log(
+      "📤 FINAL SUBMIT DATA"
+    );
 
     // =========================
     // ✅ API CALL
     // =========================
+
     const res = await axios.post(
+
       "http://127.0.0.1:8000/api/auditor/save-audit/",
-      payload,
-      authHeader
+
+      formData,
+
+      {
+
+        headers: {
+
+          Authorization:
+            `Bearer ${token}`,
+
+          "Content-Type":
+            "multipart/form-data",
+        },
+      }
     );
 
-    console.log("✅ RESPONSE:", res.data);
+    console.log(
+      "✅ RESPONSE:",
+      res.data
+    );
 
-    message.success(res.data.message || "Audit submitted successfully");
+    // =========================
+    // ✅ SUCCESS
+    // =========================
+
+    message.success(
+
+      res.data.message ||
+      "Audit submitted successfully"
+    );
+
+    // =========================
+    // ✅ REFRESH SESSION STATUS
+    // =========================
+
+    await fetchAuditSessionStatus(
+      selectedBranch,
+      auditPeriod
+    );
+
+    // =========================
+    // ✅ CLOSE MODAL
+    // =========================
 
     setIsModalOpen(false);
 
   } catch (err: any) {
-    console.error("❌ ERROR:", err);
 
-    const details = err?.response?.data?.details;
+    console.error(
+      "❌ ERROR:",
+      err
+    );
+
+    const details =
+      err?.response?.data?.details;
 
     if (details) {
+
       const msg = details
-        .map((d: any) => `Row ${d.row}: ${d.error}`)
+
+        .map(
+          (d: any) =>
+            `Row ${d.row}: ${d.error}`
+        )
+
         .join("\n");
 
       alert(msg);
+
     } else {
+
       message.error(
-        err?.response?.data?.error || "Submission failed"
+
+        err?.response?.data?.error ||
+
+        "Submission failed"
       );
     }
 
   } finally {
+
     setLoading(false);
   }
 };
@@ -820,6 +1050,32 @@ const handleSubmit = async () => {
     {
       title: "Document Name",
       dataIndex: "document_name",
+    },
+    {
+      title: "Reupload Remark",
+
+      render: (_: any, record: any) => {
+
+        if (
+          !record.reupload_remark
+        ) {
+
+          return (
+            <span className="text-gray-300">
+              —
+            </span>
+          );
+        }
+
+        return (
+
+          <div className="text-red-600 text-xs font-medium">
+
+            {record.reupload_remark}
+
+          </div>
+        );
+      },
     },
     {
       title: "Guidelines For Auditor",
@@ -838,6 +1094,7 @@ const handleSubmit = async () => {
       render: (_: any, record: any, index: number) => (
         <select
           value={record.status || ""}
+          disabled={isAuditLocked}
           onChange={(e) =>
           updateField(record.id, "status", e.target.value)
           }
@@ -846,7 +1103,7 @@ const handleSubmit = async () => {
           <option value="">Select</option>
           <option value="Complied">Complied</option>
           <option value="Not Complied">Not Complied</option>
-          <option value="Exceptional Approval- Not Complied">Exceptional Approval- Not Complied</option>
+          <option value="Exceptional Approval - Not Complied">Exceptional Approval- Not Complied</option>
           <option value="Exceptional Approval - Delayed Complied">Exceptional Approval - Delayed Complied</option>
           <option value="Delayed Complied">Delayed Complied</option>
           <option value="Incorrect Document Submitted">Incorrect Document Submitted</option>
@@ -862,6 +1119,7 @@ const handleSubmit = async () => {
       render: (_: any, record: any) => (
         <Input
           value={record.observation}
+          disabled={isAuditLocked}
           onChange={(e) =>
             updateField(record.id, "observation", e.target.value)
           }
@@ -882,6 +1140,7 @@ const handleSubmit = async () => {
   render: (_: any, record: any) => (
     <Input
       value={record.recommendation}
+      disabled={isAuditLocked}
       onChange={(e) =>
         updateField(record.id, "recommendation", e.target.value)
       }
@@ -926,7 +1185,11 @@ const groupedChecklist = Object.values(
 
 const allowedFreezeStatuses = [
   "Complied",
+
   "Exceptional Approval - Delayed Complied",
+
+  "Exceptional Approval - Not Complied",
+
   "Not Applicable For Audit Period"
 ];
 
@@ -940,8 +1203,8 @@ const canFreezeReport =
   /* ================= UI ================= */
 
   return (
-<div className="space-y-6 w-full px-8 max-w-[1600px] mx-auto">
-        <h1 className="text-2xl font-semibold">Auditor Panel</h1>
+<div className="space-y-6 w-full px-8 max-w-[1600px] mx-auto pb-28">
+          <h1 className="text-2xl font-semibold">Auditor Panel</h1>
 
       {/* FILTER + BUTTON */}
 <div className="bg-white p-6 rounded-xl border flex flex-row gap-4 w-full max-w-[1600px] mx-auto">   
@@ -958,7 +1221,15 @@ const canFreezeReport =
       className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
     >
       <option value="">Select PE</option>
-      {peList.map((pe) => (
+      {[...peList]
+      .sort((a, b) =>
+        a.short_name.localeCompare(
+          b.short_name,
+          undefined,
+          { sensitivity: "base" }
+        )
+      )
+      .map((pe) => (
         <option key={pe.id} value={pe.id}>
           {pe.short_name}
         </option>
@@ -985,8 +1256,16 @@ const canFreezeReport =
       className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
     >
       <option value="">Select Vendor</option>
-      {vendorList.map((v) => (
-        <option key={v.id} value={v.id}>
+      {[...vendorList]
+        .sort((a, b) =>
+          a.name.localeCompare(
+            b.name,
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+        .map((v) => (
+            <option key={v.id} value={v.id}>
           {v.name}
         </option>
       ))}
@@ -1010,8 +1289,16 @@ const canFreezeReport =
       className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
     >
       <option value="">Select State</option>
-      {stateList.map((s) => (
-        <option key={s.id} value={s.name}>
+      {[...stateList]
+        .sort((a, b) =>
+          a.name.localeCompare(
+            b.name,
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+        .map((s) => (
+            <option key={s.id} value={s.name}>
           {s.name}
         </option>
       ))}
@@ -1046,8 +1333,16 @@ const canFreezeReport =
     className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
   >
     <option value="">Select Branch</option>
-    {branches.map((b) => (
-      <option key={b.id} value={b.id}>
+    {[...branches]
+      .sort((a, b) =>
+        a.name.localeCompare(
+          b.name,
+          undefined,
+          { sensitivity: "base" }
+        )
+      )
+      .map((b) => (
+          <option key={b.id} value={b.id}>
         {b.name}
       </option>
     ))}
@@ -1119,6 +1414,56 @@ const canFreezeReport =
           </span>
         )}
       </div>
+
+      {
+        auditSessionStatus && (
+
+          <div
+            style={{
+              marginBottom: 12,
+            }}
+          >
+
+            <span
+              style={{
+
+                padding: "6px 12px",
+
+                borderRadius: 6,
+
+                fontSize: 12,
+
+                fontWeight: 600,
+
+                background:
+                  auditSessionStatus === "FROZEN"
+                    ? "#fee2e2"
+                    : auditSessionStatus === "SUBMITTED"
+                    ? "#dbeafe"
+                    : "#fef3c7",
+
+                color:
+                  auditSessionStatus === "FROZEN"
+                    ? "#b91c1c"
+                    : auditSessionStatus === "SUBMITTED"
+                    ? "#1d4ed8"
+                    : "#92400e",
+              }}
+            >
+
+              {
+                notificationDocs.length > 0
+
+                  ? "REUPLOAD REVIEW"
+
+                  : auditSessionStatus
+              }
+
+            </span>
+
+          </div>
+        )
+      }
 
       <Button
         size="small"
@@ -1263,6 +1608,15 @@ const canFreezeReport =
     {/* 🔥 SCROLL AREA */}
     <div className="flex-1 overflow-y-auto p-4">
 
+      {isAuditLocked && (
+
+        <div className="mb-4 p-3 rounded-lg border border-green-300 bg-green-50 text-green-700 font-medium">
+
+          This audit report has been frozen,
+          finalized, and locked from further modifications.
+        </div>
+      )}
+
       <Table
         columns={columns}
         dataSource={groupedChecklist}
@@ -1278,10 +1632,49 @@ const canFreezeReport =
           For Exceptional Approval, Upload Supporting Evidance
         </span>
 
-        <Upload {...uploadProps}>
+        <Upload
+          multiple={false}
+          beforeUpload={(file) => {
+
+            const exceptionalRows =
+              groupedChecklist.filter(
+                (row: any) =>
+                  row.status ===
+                  "Exceptional Approval - Delayed Complied"
+              );
+
+            if (exceptionalRows.length === 0) {
+
+              message.warning(
+                "Select Exceptional Approval status first"
+              );
+
+              return Upload.LIST_IGNORE;
+            }
+
+            const updatedFiles: any = {
+              ...exceptionalFiles
+            };
+
+            exceptionalRows.forEach((row: any) => {
+
+            updatedFiles[row.id] = file;
+            });
+
+            setExceptionalFiles(updatedFiles);
+
+            message.success(
+              `${file.name} attached`
+            );
+
+            return false;
+          }}
+        >
+
           <Button icon={<UploadOutlined />}>
             Upload Document
           </Button>
+
         </Upload>
 
         <span className="font-semibold">
@@ -1296,12 +1689,28 @@ const canFreezeReport =
 
     <Button
       type="primary"
+      className={`
+      ${
+        canFreezeReport
+          ? "!bg-green-600"
+          : "!bg-blue-600"
+      }
+    `}
       loading={loading}
+      disabled={isAuditLocked}
       onClick={handleSubmit}
     >
-      {canFreezeReport
-        ? "Freeze Report & Issue CC"
-        : "Save & Submit"}
+      {
+        notificationDocs.length > 0
+
+          ? "Review & Re-Issue CC"
+
+          : canFreezeReport
+
+          ? "Freeze Report & Issue CC"
+
+          : "Save & Submit"
+      }
     </Button>
 
     </div>
@@ -1311,7 +1720,7 @@ const canFreezeReport =
 </Modal>
 
 {minimizedPopups.length > 0 && (
-  <div className="fixed bottom-0 left-0 w-full bg-gray-50 border-t px-2 py-1 flex gap-2 overflow-x-auto z-50">
+  <div className="fixed bottom-0 left-0 w-full bg-gray-50 border-t px-2 py-2 flex gap-2 overflow-x-auto z-50">
 
     {minimizedPopups.map((popup) => (
       <div

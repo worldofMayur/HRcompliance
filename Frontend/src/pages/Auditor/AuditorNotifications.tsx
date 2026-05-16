@@ -22,14 +22,13 @@ interface Notification {
 export default function AuditorNotifications() {
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-
   const [loading, setLoading] = useState(false);
-
+  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
-
   const [filter, setFilter] = useState("all");
-
   const [sortBy, setSortBy] = useState("latest");
+  const [refreshCountdown, setRefreshCountdown] = useState(10);
+  const [lastUpdated, setLastUpdated] = useState("");
 
   const navigate = useNavigate();
 
@@ -37,24 +36,34 @@ export default function AuditorNotifications() {
   // FETCH
   // ==========================================
 
-  useEffect(() => {
+useEffect(() => {
 
-    fetchNotifications();
+  fetchNotifications();
 
-    const interval = setInterval(
-      fetchNotifications,
-      30000
-    );
+  const interval = setInterval(() => {
 
-    return () => clearInterval(interval);
+    fetchNotifications(true);
 
-  }, []);
+  }, 10000);
 
-  const fetchNotifications = async () => {
+  return () => clearInterval(interval);
+
+}, []);
+
+const fetchNotifications = async (
+  silent = false
+) => {
 
     try {
 
-      setLoading(true);
+      if (silent) {
+
+        setRefreshing(true);
+
+      } else {
+
+        setLoading(true);
+      }
 
       const token =
         localStorage.getItem("access_token");
@@ -88,6 +97,13 @@ export default function AuditorNotifications() {
       // ✅ BACKEND ALREADY FILTERS
       setNotifications(data || []);
 
+      setLastUpdated(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
+
     } catch (err) {
 
       console.error(
@@ -97,8 +113,19 @@ export default function AuditorNotifications() {
 
     } finally {
 
-      setLoading(false);
-    }
+  if (silent) {
+
+    setTimeout(() => {
+
+      setRefreshing(false);
+
+    }, 800);
+
+  } else {
+
+    setLoading(false);
+  }
+}
   };
 
   // ==========================================
@@ -212,9 +239,46 @@ export default function AuditorNotifications() {
             search.toLowerCase()
           );
 
+        if (filter === "all") {
+          return matchesSearch;
+        }
+
         if (
           filter === "unread" &&
           n.is_read
+        ) {
+          return false;
+        }
+
+        // ======================================
+        // REUPLOAD FILTER
+        // ======================================
+
+        if (
+          filter === "reupload" &&
+          !n.title
+            ?.toLowerCase()
+            .includes("reupload")
+        ) {
+          return false;
+        }
+
+        if (
+          filter === "frozen" &&
+          !(
+            n.title?.toLowerCase()
+              .includes("frozen") ||
+
+            n.title?.toLowerCase()
+              .includes("cc")
+          )
+        ) {
+          return false;
+        }
+
+        if (
+          filter === "completed" &&
+          !n.data?.cc_issued
         ) {
           return false;
         }
@@ -266,6 +330,23 @@ export default function AuditorNotifications() {
       (n) => !n.is_read
     ).length;
 
+    const actionRequiredNotifications =
+  notifications.filter((n) => {
+
+    const title =
+      n.title?.toLowerCase() || "";
+
+    return (
+
+      title.includes("reupload") ||
+
+      title.includes("review") ||
+
+      title.includes("pending")
+    );
+  });
+
+
   // ==========================================
   // UI
   // ==========================================
@@ -274,11 +355,191 @@ export default function AuditorNotifications() {
 
     <ComponentCard title="Auditor Notifications">
 
+      {/* PAGE TOP BAR */}
+
+<div className="mb-4 flex items-center justify-between">
+
+  {/* LEFT */}
+  <div>
+
+    <h2 className="text-lg font-semibold text-gray-900">
+      Notifications Center
+    </h2>
+
+    <p className="text-xs text-gray-500 mt-1">
+      Monitor vendor compliance reuploads & review activity
+    </p>
+  </div>
+
+  {/* RIGHT */}
+  <div className="flex flex-col items-end">
+
+    {refreshing ? (
+
+      <div
+        className="
+          flex items-center gap-2
+          rounded-full
+          bg-blue-50
+          px-2.5 py-1.5
+          text-xs font-medium
+          text-blue-700
+        "
+      >
+
+        <div
+          className="
+            h-3 w-3
+            rounded-full
+            border-2 border-blue-500
+            border-t-transparent
+            animate-spin
+          "
+        />
+
+        Refreshing...
+
+      </div>
+
+    ) : (
+
+      <div className="flex items-center gap-2 text-xs text-green-600">
+
+        <span className="h-2 w-2 rounded-full bg-green-500" />
+
+        Live Updates
+
+      </div>
+
+    )}
+
+    <span className="mt-1 text-[10px] text-gray-300">
+      Auto refresh every 10s
+    </span>
+
+  </div>
+</div>
+
+
+{/* ACTION REQUIRED */}
+{/* ACTION REQUIRED */}
+
+{actionRequiredNotifications.length > 0 && (
+
+  <div
+    className="
+      mb-4
+      rounded-2xl
+      border border-blue-100
+      bg-white
+      px-4 py-3
+      shadow-sm
+    "
+  >
+
+    <div
+      className="
+        flex items-center
+        justify-between
+        gap-4
+      "
+    >
+
+      {/* LEFT */}
+
+      <div className="flex items-center gap-3">
+
+        {/* ICON */}
+
+        <div
+          className="
+            flex h-10 w-10 shrink-0
+            items-center justify-center
+            rounded-xl
+            bg-blue-50
+            text-blue-600
+          "
+        >
+          <BellOutlined className="text-base" />
+        </div>
+
+        {/* TEXT */}
+
+        <div>
+
+          <h3
+            className="
+              text-sm
+              font-semibold
+              text-gray-900
+            "
+          >
+            Action Required
+          </h3>
+
+          <p
+            className="
+              text-xs
+              text-gray-500
+            "
+          >
+            {
+              actionRequiredNotifications.length
+            } workflow items pending review
+          </p>
+
+        </div>
+      </div>
+
+      {/* RIGHT */}
+
+      <div className="flex items-center gap-2">
+
+        <div
+          className="
+            rounded-xl
+            bg-blue-50
+            px-3 py-1.5
+            text-xs
+            font-medium
+            text-blue-700
+          "
+        >
+          {
+            actionRequiredNotifications.length
+          } Pending
+        </div>
+
+        <button
+          onClick={() =>
+            setFilter("reupload")
+          }
+          className="
+            rounded-xl
+            bg-blue-600
+            px-4 py-2
+            text-xs
+            font-medium
+            text-white
+            transition
+            hover:bg-blue-700
+          "
+        >
+          Review
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
+
+
+
       {/* TOOLBAR */}
 
-      <div className="mb-5 rounded-2xl border border-gray-200 bg-white p-4">
+      <div className="mb-4 rounded-2xl border border-gray-200 bg-gradient-to-b from-white to-gray-50/50 px-4 py-3 shadow-sm">
 
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
 
           {/* LEFT */}
 
@@ -311,7 +572,7 @@ export default function AuditorNotifications() {
               <SearchOutlined
                 className="
                   absolute left-3 top-3
-                  text-gray-400
+                  text-gray-300
                 "
               />
             </div>
@@ -320,16 +581,28 @@ export default function AuditorNotifications() {
 
             <div className="flex flex-wrap gap-2">
 
-              {[
-                {
-                  key: "all",
-                  label: "All"
-                },
-                {
-                  key: "unread",
-                  label: "Unread"
-                },
-              ].map((item) => (
+            {[
+              {
+                key: "all",
+                label: "All"
+              },
+              {
+                key: "unread",
+                label: "Unread"
+              },
+              {
+                key: "reupload",
+                label: "Reupload"
+              },
+              {
+                key: "frozen",
+                label: "Frozen"
+              },
+              {
+                key: "completed",
+                label: "Completed"
+              },
+            ].map((item) => (
 
                 <button
                   key={item.key}
@@ -337,11 +610,25 @@ export default function AuditorNotifications() {
                     setFilter(item.key)
                   }
                   className={`
-                    rounded-lg px-4 py-2 text-xs font-medium transition
+                    h-9 rounded-xl px-4 text-xs font-medium transition
 
                     ${
                       filter === item.key
-                        ? "bg-blue-600 text-white"
+
+                        ? item.key === "reupload"
+
+                          ? "bg-orange-500 text-white"
+
+                          : item.key === "frozen"
+
+                          ? "bg-purple-600 text-white"
+
+                          : item.key === "completed"
+
+                          ? "bg-green-600 text-white"
+
+                          : "bg-blue-600 text-white"
+
                         : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                     }
                   `}
@@ -356,11 +643,7 @@ export default function AuditorNotifications() {
 
           <div className="flex flex-wrap items-center gap-2">
 
-            <div className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-700">
-              Total: {notifications.length}
-            </div>
-
-            <div className="rounded-lg bg-blue-100 px-3 py-2 text-xs font-medium text-blue-700">
+            <div className="rounded-lg bg-blue-100 px-2.5 py-1.5 text-xs font-medium text-blue-700">
               Unread: {unreadCount}
             </div>
 
@@ -374,7 +657,7 @@ export default function AuditorNotifications() {
               className="
                 rounded-lg border border-gray-200
                 bg-white
-                px-3 py-2
+                px-2.5 py-1.5
                 text-xs
                 outline-none
                 focus:border-blue-400
@@ -389,21 +672,7 @@ export default function AuditorNotifications() {
               </option>
             </select>
 
-            {/* REFRESH */}
-
-            <button
-              onClick={fetchNotifications}
-              className="
-                rounded-lg border border-gray-200
-                bg-white
-                p-2.5
-                hover:bg-gray-50
-                transition
-              "
-            >
-              <ReloadOutlined />
-            </button>
-
+        
             {/* MARK ALL */}
 
             {unreadCount > 0 && (
@@ -451,11 +720,11 @@ export default function AuditorNotifications() {
         {!loading &&
           filteredNotifications.length === 0 && (
 
-            <div className="rounded-2xl border border-gray-200 bg-white px-6 py-10 text-center">
+            <div className="rounded-2xl border border-gray-200 bg-gradient-to-b from-white to-gray-50/50 px-6 py-10 text-center">
 
               <BellOutlined className="text-3xl text-gray-300" />
 
-              <p className="mt-3 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500">
                 No notifications available
               </p>
             </div>
@@ -484,214 +753,279 @@ export default function AuditorNotifications() {
                 className={`
                   cursor-pointer
                   relative overflow-hidden rounded-2xl border
-                  transition-all duration-200
+                  transition-all duration-300 ease-out
 
                   ${
                     n.is_read
                       ? "border-gray-200 bg-white"
-                      : "border-blue-200 bg-blue-50/30"
+                      : "border-blue-200 bg-blue-50/30 border-l-[3px]"
                   }
 
-                  hover:border-blue-300 hover:shadow-md
+                  hover:-translate-y-[1px]
+                  hover:border-blue-300
+                  hover:shadow-lg
                 `}
               >
 
-                <div className="px-5 py-4">
+                <div className="px-4 py-3 space-y-1">
 
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
 
                     {/* ICON */}
 
                     <div
                       className="
-                        flex h-10 w-10 shrink-0
+                        flex h-8 w-8 shrink-0
                         items-center justify-center
                         rounded-xl
-                        bg-orange-50
-                        text-orange-500
+                        bg-grey-50
+                        text-grey-600
                       "
                     >
-                      <FileSyncOutlined className="text-base" />
                     </div>
 
                     {/* CENTER */}
 
                     <div className="min-w-0 flex-1">
 
-                      {/* HEADER */}
+{/* HEADER */}
 
-                      <div className="flex flex-wrap items-center gap-2">
+<div
+  className="
+    flex flex-wrap items-center
+    gap-3
+    border-b border-gray-100
+    pb-3
+  "
+>
 
-                        <div className="flex items-center gap-2">
+  {/* TITLE */}
+  <div className="flex items-center gap-3">
 
-                          <span className="h-2 w-2 rounded-full bg-blue-500" />
+    {!n.is_read && (
+      <span className="h-2 w-2 rounded-full bg-blue-500" />
+    )}
 
-                          <h3 className="text-[15px] font-semibold text-gray-900">
-                            Vendor Reuploaded Compliance Documents
-                          </h3>
-                        </div>
+    <h3 className="text-[16px] font-semibold text-gray-900">
 
-                        {n.data?.cc_issued ? (
+      {n.title}
 
-                          <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-[10px] font-semibold text-green-700">
-                            ● COMPLIANCE COMPLETED
-                          </span>
+    </h3>
 
-                        ) : n.data?.reupload_count > 1 ? (
+  </div>
 
-                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700">
-                            ● RESUBMITTED AGAIN
-                          </span>
+{n.data?.cc_issued ? (
 
-                        ) : (
+  <span
+    className="
+      rounded-full
+      border border-green-200
+      bg-green-50
+      px-3 py-1
+      text-[10px]
+      font-semibold
+      text-green-700
+    "
+  >
+    COMPLETED
+  </span>
 
-                          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700">
-                            ● AWAITING REVIEW
-                          </span>
-                        )}
+) : (
+  n.title?.toLowerCase().includes("frozen") ||
 
-                        <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
-                          {n.data?.reuploaded_documents?.length || 0} document(s)
-                        </span>
+  n.title?.toLowerCase().includes("cc")
+) ? (
 
-                        <span className="ml-auto text-[11px] text-gray-400">
-                          {new Date(
-                            n.created_at
-                          ).toLocaleDateString()}
-                        </span>
-                      </div>
+  <span
+    className="
+      rounded-full
+      border border-purple-200
+      bg-purple-50
+      px-3 py-1
+      text-[10px]
+      font-semibold
+      text-purple-700
+    "
+  >
+    FROZEN
+  </span>
 
-                      {/* MESSAGE */}
+) : (
 
-                      <p className="mt-2 text-sm leading-relaxed text-gray-600">
+  <span
+    className="
+      rounded-full
+      border border-blue-200
+      bg-blue-50
+      px-3 py-1
+      text-[10px]
+      font-semibold
+      text-blue-700
+    "
+  >
+    • AWAITING REVIEW
+  </span>
 
-                        <span className="font-medium text-gray-800">
-                          {n.data?.vendor || "Vendor"}
-                        </span>{" "}
+)}
 
-                        has reuploaded compliance documents for auditor review.
-                      </p>
+  {/* DATE */}
+  <div className="flex items-center gap-3 text-gray-300">
+
+    <span className="h-5 w-px bg-gray-200" />
+
+    <span className="text-[11px] text-gray-500 font-medium">
+      {new Date(
+        n.created_at
+      ).toLocaleDateString()}
+    </span>
+
+  </div>
+
+  {/* ACTIONS */}
+  <div className="ml-auto flex items-center gap-2">
+
+    {!n.is_read && (
+
+      <button
+        onClick={(e) => {
+
+          e.stopPropagation();
+
+          markAsRead(n.id);
+        }}
+        className="
+          rounded-lg
+          border border-gray-200
+          bg-white
+          px-2.5 py-1
+          text-[10px]
+          font-medium
+          text-gray-600
+          transition
+          hover:bg-gray-50
+        "
+      >
+        Mark Read
+      </button>
+    )}
+
+    <button
+      onClick={(e) => {
+
+        e.stopPropagation();
+
+        navigate(
+          "/auditor-dashboard",
+          {
+            state: {
+              notificationData: n,
+            },
+          }
+        );
+      }}
+                className="
+                  rounded-lg
+                  bg-blue-600
+                  px-4 py-2
+                  text-xs font-medium
+                  text-white
+                  hover:bg-blue-700
+                  transition
+                "
+    >
+      Review
+    </button>
+
+  </div>
+
+</div>
+
+            
 
                       {/* REMARKS */}
 
                       {n.data?.vendor_remark && (
 
-                        <div className="mt-3 rounded-xl border border-orange-100 bg-orange-50 px-3 py-2.5">
-
-                          <div className="mb-1 flex items-center gap-2">
-
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-orange-700">
-                              Vendor Remarks
-                            </span>
-                          </div>
-
-                          <p className="line-clamp-2 text-xs text-orange-900">
-                            {n.data.vendor_remark}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* META */}
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-
-                        <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-700">
-                          {n.data?.vendor}
-                        </span>
-
-                        <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-700">
-                          {n.data?.branch}
-                        </span>
-
-                        <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
-                          {n.data?.audit_period}
-                        </span>
-                      </div>
-
-                      {/* DOC TAGS */}
-
-                      {n.data?.reuploaded_documents?.length > 0 && (
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-
-                          {n.data.reuploaded_documents.map(
-                            (doc: string, idx: number) => (
-
-                              <span
-                                key={idx}
-                                className="
-                                  rounded-lg border border-blue-100
-                                  bg-blue-50
-                                  px-2.5 py-1
-                                  text-[11px]
-                                  font-medium
-                                  text-blue-700
-                                "
-                              >
-                                {doc}
-                              </span>
-                            )
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* RIGHT */}
-
-                    <div className="ml-auto flex shrink-0 flex-col items-end gap-2">
-
-                      {!n.is_read && (
-
-                        <button
-                          onClick={(e) => {
-
-                            e.stopPropagation();
-
-                            markAsRead(n.id);
-                          }}
+                        <div
                           className="
-                            rounded-xl
-                            bg-gray-100
-                            px-3 py-1.5
-                            text-[11px]
-                            font-medium
-                            text-gray-700
-                            transition hover:bg-gray-200
+                            mt-2
+                            flex items-center gap-2
+                            rounded-lg
+                            bg-grey-50
+                            px-2.5 py-1.5
+                            text-[13px]
+                            text-grey-700
                           "
                         >
-                          Mark Read
-                        </button>
+
+
+                          <span className="truncate">
+                            {n.data.vendor_remark}
+                          </span>
+
+                        </div>
                       )}
 
-                      <button
-                        onClick={(e) => {
+                        {/* INFO BAR */}
 
-                          e.stopPropagation();
+                        <div
+                          className="
+                            mt-2
+                            flex flex-wrap items-center gap-2
+                            rounded-xl
+                            border border-gray-200
+                            bg-gray-50
+                            px-3 py-2
+                            text-[13px]
+                            text-gray-600
+                          "
+                        >
 
-                          navigate(
-                            "/auditor-dashboard",
-                            {
-                              state: {
-                                notificationData: n,
-                              },
-                            }
-                          );
-                        }}
-                        className="
-                          rounded-xl
-                          bg-blue-600
-                          px-4 py-2
-                          text-xs
-                          font-semibold
-                          text-white
-                          transition hover:bg-blue-700
-                        "
-                      >
-                        Review Compliance
-                      </button>
-                    </div>
+                          <span className="font-medium text-gray-800">
+                            {n.data?.vendor}
+                          </span>
+
+                          <span className="text-gray-300">
+                            •
+                          </span>
+
+                          <span>
+                            {n.data?.branch}
+                          </span>
+
+                          <span className="text-gray-300">
+                            •
+                          </span>
+
+                          <span className="font-medium">
+                            {n.data?.audit_period}
+                          </span>
+
+                          {n.data?.reuploaded_documents?.map(
+                            (doc: string, idx: number) => (
+
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2"
+                              >
+
+                                <span className="text-gray-300">
+                                  •
+                                </span>
+
+                                <span>
+                                  {doc}
+                                </span>
+
+                              </div>
+                            )
+                          )}
+
+                        </div>
+
                   </div>
                 </div>
+              </div>
               </div>
             );
           })}

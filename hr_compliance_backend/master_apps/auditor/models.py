@@ -116,3 +116,53 @@ class AuditEntry(models.Model):
 
     def __str__(self):
         return f"{self.auditor.short_name} - {self.audit_period}"
+
+
+
+class AuditSession(models.Model):
+
+    STATUS_CHOICES = [
+        ("DRAFT", "Draft"),
+        ("SUBMITTED", "Submitted"),
+        ("FROZEN", "Frozen"),
+    ]
+
+    auditor = models.ForeignKey(
+        Auditor,
+        on_delete=models.CASCADE
+    )
+
+    branch_id = models.IntegerField()
+
+    audit_period = models.CharField(
+        max_length=100
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="DRAFT"
+    )
+
+    last_saved_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+
+        unique_together = (
+            "auditor",
+            "branch_id",
+            "audit_period"
+        )
+
+    def __str__(self):
+
+        return (
+            f"{self.audit_period} - "
+            f"{self.status}"
+        )

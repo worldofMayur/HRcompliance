@@ -9,8 +9,11 @@ import json
 
 from .compliance_models import (
     VendorComplianceSubmission,
-    VendorComplianceSupportingFile
+    VendorComplianceSupportingFile,
+    VendorComplianceFileVersion,
+    ExceptionalApprovalDocument
 )
+
 from .models import Vendor
 from .mapping_models import VendorBranchMapping
 from .utils import apply_pending_updates
@@ -20,6 +23,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from accounts.models import User
 from .models import SystemNotification
+from .constants import WorkflowStatus
+from master_apps.auditor.models import AuditSession
 
 
 class VendorSubmitComplianceAPIView(APIView):
@@ -45,6 +50,16 @@ class VendorSubmitComplianceAPIView(APIView):
         pe_id = request.data.get("pe_id")
         branch_id = request.data.get("branch_id")
         selected_period = request.data.get("selected_period")
+        if selected_period:
+            selected_period = (
+                selected_period
+                .replace("–", "-")
+                .strip()
+            )
+        workflow_status = request.data.get(
+            "workflow_status",
+            WorkflowStatus.SUBMITTED
+        )
         general_remark = request.data.get("general_remark")
 
         # ✅ NEW: CC EMAILS
@@ -91,24 +106,39 @@ class VendorSubmitComplianceAPIView(APIView):
                 {"error": "Cannot submit. Contract expired."},
                 status=400
             )
-            
-        active_mapping_exists = mapping is not None
 
-        if not active_mapping_exists:
-            return Response(
-                {"error": "Cannot submit. Contract expired."},
-                status=400
-            )
+        document_count = int(
+            request.data.get("document_count", 0)
+        )
 
-        index = 0
         latest_submission = None
-        remark_saved = False  # ✅ ensures remark saved only once
 
-        # 🔁 Loop through uploaded documents
-        while True:
+        remark_saved = False
+
+        for index in range(document_count):
 
             file = request.FILES.get(f"document_{index}_file")
-            document_id = request.data.get(f"document_{index}_id")
+            document_id = request.data.get(
+                f"document_{index}_id"
+            )
+
+            is_additional = (
+                request.data.get(
+                    f"document_{index}_is_additional"
+                ) == "true"
+            )
+
+            if document_id and not is_additional:
+
+                try:
+
+                    document_id = int(
+                        str(document_id).strip()
+                    )
+
+                except Exception:
+
+                    continue
 
             # 🛑 Stop loop when no more files
             if not file:
@@ -147,12 +177,31 @@ class VendorSubmitComplianceAPIView(APIView):
                         status=400
                     )
 
-                # 🚨 HARD BLOCK (extra safety)
-                if not mapping:
-                    return Response(
-                        {"error": "Contract expired or invalid mapping"},
-                        status=400
+                # 🚫 PREVENT DUPLICATE SUBMISSION
+                existing_submission = (
+                    VendorComplianceSubmission.objects.filter(
+                        vendor=vendor,
+                        principal_employer_id=pe_id,
+                        branch_id=branch_id,
+                        document_id=document_id,
+                        audit_period__iexact=selected_period
                     )
+                    .exclude(
+                        workflow_status=WorkflowStatus.REUPLOAD_REQUESTED
+                    )
+                    .first()
+                )
+
+                if existing_submission:
+
+                    return Response({
+
+                        "error": (
+                            f"{existing_submission.document.name} "
+                            f"already submitted for this period."
+                        )
+
+                    }, status=400)
 
                 latest_submission = VendorComplianceSubmission.objects.create(
                     vendor=vendor,
@@ -162,23 +211,87 @@ class VendorSubmitComplianceAPIView(APIView):
                     state=mapping.branch.state,
                     audit_period=selected_period,
                     main_file=file,
+                    workflow_status=workflow_status,
+                    original_filename=file.name,
                     general_remark=general_remark if not remark_saved else None,
-                    cc_emails=cc_emails if not remark_saved else None  # ✅ NEW
+                    cc_emails=cc_emails if not remark_saved else None
+                )
+
+                VendorComplianceFileVersion.objects.create(
+
+                    submission=latest_submission,
+
+                    file=latest_submission.main_file,
+
+                    version=latest_submission.version,
+
+                    is_reupload=False
                 )
 
                 remark_saved = True  # ✅ mark as saved
 
+                # ===============================
+                # 📁 AUTO CREATE CC ISSUE FOLDER
+                # ===============================
+
+                from pathlib import Path
+                from django.conf import settings
+
+                from master_apps.vendor.utils import (
+                    build_audit_folder_path
+                )
+
+                base_path = build_audit_folder_path(
+
+                    vendor=latest_submission.vendor,
+
+                    pe=latest_submission.principal_employer,
+
+                    branch=latest_submission.branch,
+
+                    audit_period=latest_submission.audit_period,
+                )
+
+                cc_folder = (
+                    Path(settings.MEDIA_ROOT)
+                    / base_path
+                    / "cc_issue"
+                )
+
+                cc_folder.mkdir(
+                    parents=True,
+                    exist_ok=True
+                )
+
             # ===============================
             # 📎 ADDITIONAL FILES
             # ===============================
-            else:
+            elif is_additional:
 
-                existing_submission = VendorComplianceSubmission.objects.filter(
-                    vendor=vendor,
-                    principal_employer_id=pe_id,
-                    branch_id=branch_id,
-                    audit_period=selected_period
-                ).order_by("-submitted_at").first()
+                parent_document_id = request.data.get(
+                    f"document_{index}_parent_id"
+                )
+
+                if not parent_document_id:
+                    continue
+
+                existing_submission = (
+                    VendorComplianceSubmission.objects.filter(
+
+                        vendor=vendor,
+
+                        principal_employer_id=pe_id,
+
+                        branch_id=branch_id,
+
+                        audit_period__iexact=selected_period,
+
+                        document_id=parent_document_id
+
+                    )
+                    .order_by("-submitted_at")
+                    .first()
+                )
 
                 if existing_submission:
 
@@ -186,8 +299,6 @@ class VendorSubmitComplianceAPIView(APIView):
                         submission=existing_submission,
                         file=file
                     )
-
-            index += 1
 
         return Response(
             {"message": "Compliance submitted successfully"},
@@ -234,9 +345,21 @@ def reupload_compliance(request):
 
         branch_id = request.data.get("branch_id")
 
+        if branch_id:
+
+            branch_id = int(
+                str(branch_id).strip()
+            )
+
         selected_period = request.data.get(
             "selected_period"
         )
+        if selected_period:
+            selected_period = (
+                selected_period
+                .replace("–", "-")
+                .strip()
+            )
 
         general_remark = request.data.get(
             "general_remark",
@@ -263,6 +386,18 @@ def reupload_compliance(request):
                     f"document_{index}_id"
                 )
 
+                if document_id and not is_additional:
+
+                    try:
+
+                        document_id = int(
+                            str(document_id).strip()
+                        )
+
+                    except Exception:
+
+                        continue
+
                 uploaded_file = request.FILES[key]
 
                 if not document_id:
@@ -272,26 +407,109 @@ def reupload_compliance(request):
                 # 🔍 FIND EXISTING SUBMISSION
                 # ===============================
 
+                print("REUPLOAD QUERY VALUES")
+
+                print({
+                    "vendor": vendor.id,
+                    "branch": branch_id,
+                    "document": document_id,
+                    "period": selected_period,
+                })
+
                 submission = (
                     VendorComplianceSubmission.objects
                     .filter(
                         vendor=vendor,
+                        branch_id=branch_id,
                         document_id=document_id,
-                        audit_period=selected_period,
-                        branch_id=branch_id
+                        audit_period__iexact=selected_period,
                     )
-                    .order_by("-submitted_at")
+                    .order_by("-id")
                     .first()
                 )
+                print("AVAILABLE SUBMISSIONS")
+                print("NORMALIZED PERIOD:", selected_period)
+
+                all_submissions = VendorComplianceSubmission.objects.all()
+
+                print("===== ALL DB SUBMISSIONS =====")
+
+                for s in all_submissions:
+
+                    print({
+                        "id": s.id,
+                        "vendor": s.vendor_id,
+                        "branch": s.branch_id,
+                        "document": s.document_id,
+                        "period": s.audit_period,
+                        "workflow": s.workflow_status,
+                    })
+
+                print("===== END =====")
+
+                for s in all_submissions:
+
+                    print({
+                        "id": s.id,
+                        "doc": s.document_id,
+                        "period": s.audit_period,
+                        "workflow": s.workflow_status,
+                    })
 
                 if not submission:
+
+                    print(
+                        "REUPLOAD SUBMISSION NOT FOUND"
+                    )
+
+                    print(
+                        "PERIOD:",
+                        selected_period
+                    )
+
+                    print(
+                        "DOCUMENT:",
+                        document_id
+                    )
+
                     continue
+
+                # ===============================
+                # ❄️ BLOCK FROZEN AUDITS
+                # ===============================
+
+                if submission.is_frozen:
+
+                    return Response({
+
+                        "error": (
+                            "This audit period is frozen. "
+                            "Reupload not allowed."
+                        )
+
+                    }, status=400)
 
                 # ===============================
                 # 💾 STORE OLD FILE
                 # ===============================
 
+                # ===============================
+                # 📚 STORE VERSION HISTORY
+                # ===============================
+
                 if submission.main_file:
+
+                    VendorComplianceFileVersion.objects.create(
+
+                        submission=submission,
+
+                        file=submission.main_file,
+
+                        version=submission.version,
+
+                        is_reupload=True
+                    )
+
                     submission.previous_file = (
                         submission.main_file
                     )
@@ -301,12 +519,42 @@ def reupload_compliance(request):
                 # ===============================
 
                 submission.main_file = uploaded_file
+                submission.original_filename = uploaded_file.name
+                submission.version += 1
 
                 # ===============================
                 # 🔁 REUPLOAD FLAGS
                 # ===============================
 
                 submission.is_reuploaded = True
+                submission.workflow_status = (
+                    WorkflowStatus.REUPLOADED
+                )
+
+                submission.has_exceptional_approval = False
+
+                ExceptionalApprovalDocument.objects.filter(
+                    submission=submission
+                ).delete()
+
+                submission.is_cc_issued = False
+
+                submission.cc_issued_at = None
+
+                submission.clearance_email_sent = False
+
+                submission.clearance_email_sent_at = None
+
+                # =========================
+                # RESET AUDIT SESSION
+                # =========================
+
+                AuditSession.objects.filter(
+                    branch_id=branch_id,
+                    audit_period=selected_period
+                ).update(
+                    status="DRAFT"
+                )
 
                 submission.reuploaded_at = timezone.now()
 
@@ -333,13 +581,55 @@ def reupload_compliance(request):
                     str(inner_error)
                 )
 
+        if uploaded_count == 0:
+            return Response({
+
+                "error": (
+                    "No matching compliance "
+                    "submission found for reupload."
+                )
+
+            }, status=404)
+
         # ===============================
         # 🔔 SEND NOTIFICATION TO AUDITOR
         # ===============================
 
-        auditor_users = User.objects.filter(
-            role="AUDITOR"
-        )
+        mapping = None
+
+        mapping_qs = VendorBranchMapping.objects.filter(
+            vendor=vendor,
+            branch_id=branch_id
+        ).select_related("auditor")
+
+        for m in mapping_qs:
+
+            apply_pending_updates(m)
+
+            new_status = m.update_status()
+
+            if m.status != new_status:
+
+                m.status = new_status
+                m.save()
+
+            if (
+                m.status == "Active"
+                and (
+                    not m.end_date
+                    or m.end_date >= now().date()
+                )
+            ):
+                mapping = m
+                break
+
+        auditor_users = []
+
+        if mapping and mapping.auditor and mapping.auditor.user:
+
+            auditor_users = [
+                mapping.auditor.user
+            ]
 
         for auditor in auditor_users:
 
@@ -347,19 +637,18 @@ def reupload_compliance(request):
                 user=auditor,
 
                 title=(
-                    "Vendor Reuploaded "
-                    "Compliance Documents"
+                    "Compliance Reupload Submitted"
                 ),
 
                 message=(
-                    f"{vendor.short_name} has "
-                    f"reuploaded compliance "
-                    f"documents."
+                    f"{vendor.short_name} has submitted "
+                    f"reuploaded compliance documents "
+                    f"for {selected_period} review."
                 ),
 
                 type="AUDITOR",
 
-                branch_id=branch_id,
+                branch_id=submission.branch_id,
 
                 audit_period=selected_period,
 
@@ -375,7 +664,7 @@ def reupload_compliance(request):
 
                     "vendor": vendor.short_name,
 
-                    "branch": str(submission.branch),
+                    "branch": submission.branch.short_name,
 
                     "audit_period": selected_period,
 
@@ -432,7 +721,7 @@ class FrozenAuditPeriodsAPIView(APIView):
 
         qs = VendorComplianceSubmission.objects.filter(
             branch_id=branch_id,
-            is_cc_issued=True
+            workflow_status=WorkflowStatus.FROZEN
         )
 
         # ✅ Auditor side

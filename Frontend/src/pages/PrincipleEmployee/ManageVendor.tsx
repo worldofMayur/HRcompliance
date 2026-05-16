@@ -200,9 +200,25 @@ const formatForAPI = (date: Date | null) => {
   return date.toISOString().split("T")[0];
 };
 
-  const getUniqueValues = (key) => {
-    return [...new Set(vendors.map((v) => v[key]).filter(Boolean))];
-  };
+const getUniqueValues = (key) => {
+
+  return [...new Set(
+
+    vendors
+      .map((v) => v[key])
+      .filter(Boolean)
+
+  )]
+
+  .sort((a, b) =>
+
+    String(a).localeCompare(
+      String(b),
+      undefined,
+      { sensitivity: "base" }
+    )
+  );
+};
 
   // ✅ OPEN MODAL
 const handleEdit = (vendor) => {
@@ -365,10 +381,27 @@ const handleChange = (field, value) => {
       });
     }
 
-      return result.sort((a, b) => {
-    if (a.status === b.status) return 0;
-    return a.status === "Active" ? -1 : 1;
-  });
+    return result.sort((a, b) => {
+
+      // Active first
+      if (a.status !== b.status) {
+
+        return a.status === "Active"
+          ? -1
+          : 1;
+      }
+
+      // Then alphabetical
+      return (a.vendor_short_name || "")
+        .localeCompare(
+
+          b.vendor_short_name || "",
+
+          undefined,
+
+          { sensitivity: "base" }
+        );
+    });
 
   }, [vendors, search, filters, dateFrom, dateTo]);
 
@@ -666,8 +699,19 @@ className={`border-t hover:bg-gray-50 transition ${
     >
       <option value="">Select Auditor</option>
 
-      {auditors.map((auditor) => (
-        <option key={auditor.id} value={auditor.id}>
+    {[...auditors]
+
+      .sort((a, b) =>
+
+        a.name.localeCompare(
+          b.name,
+          undefined,
+          { sensitivity: "base" }
+        )
+      )
+
+      .map((auditor) => (
+            <option key={auditor.id} value={auditor.id}>
           {auditor.name}
         </option>
       ))}
@@ -679,7 +723,17 @@ className={`border-t hover:bg-gray-50 transition ${
     <div>
       <div className="flex flex-wrap gap-2 mb-2">
         {selectedDocuments.length > 0 ? (
-          selectedDocuments.map((doc) => (
+          [...selectedDocuments]
+          .sort((a, b) =>
+
+            a.name.localeCompare(
+              b.name,
+              undefined,
+              { sensitivity: "base" }
+            )
+          )
+
+          .map((doc) => (
             <span
               key={doc.id}
               className="bg-blue-50 text-blue-700 text-xs px-3 py-1 rounded-full border border-blue-200 flex items-center gap-1"
@@ -710,8 +764,19 @@ className={`border-t hover:bg-gray-50 transition ${
           focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
         >
           <option value="">Add Document</option>
-          {documents.map((doc) => (
-            <option key={doc.id} value={doc.id}>
+          {[...documents]
+
+            .sort((a, b) =>
+
+              a.name.localeCompare(
+                b.name,
+                undefined,
+                { sensitivity: "base" }
+              )
+            )
+
+            .map((doc) => (
+                <option key={doc.id} value={doc.id}>
               {doc.name}
             </option>
           ))}

@@ -77,25 +77,36 @@ export default function Auditor() {
   ========================= */
 
   const [tableData, setTableData] = useState([]);
-  const filteredAuditors =
-    Array.isArray(tableData)
-      ? !search.trim()
-        ? tableData
-        : tableData.filter((a) => {
+const filteredAuditors =
+  Array.isArray(tableData)
+    ? tableData
+        .filter((a) => {
 
-            const searchText =
-              search.trim().toLowerCase();
+          if (!search.trim()) return true;
 
-            return (
-              a.name?.toLowerCase().includes(searchText) ||
-              a.short_name?.toLowerCase().includes(searchText) ||
-              a.company?.toLowerCase().includes(searchText) ||
-              a.email?.toLowerCase().includes(searchText) ||
-              a.mobile?.toString().includes(searchText)
-            );
+          const searchText =
+            search.trim().toLowerCase();
 
-          })
-      : [];
+          return (
+            a.name?.toLowerCase().includes(searchText) ||
+            a.short_name?.toLowerCase().includes(searchText) ||
+            a.company?.toLowerCase().includes(searchText) ||
+            a.email?.toLowerCase().includes(searchText) ||
+            a.mobile?.toString().includes(searchText)
+          );
+
+        })
+
+        // ✅ Alphabetical Order
+        .sort((a, b) =>
+          (a.name || "").localeCompare(
+            b.name || "",
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+
+    : [];
 
   
 

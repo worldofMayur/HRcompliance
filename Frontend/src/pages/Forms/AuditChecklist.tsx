@@ -82,20 +82,32 @@ const [formData, setFormData] = useState({
 
     api.get("/api/checklist/states/")
       .then((res) => {
-        setStates(
-          Array.isArray(res.data)
-            ? res.data
-            : []
-        );
+setStates(
+  Array.isArray(res.data)
+    ? [...res.data].sort((a, b) =>
+        (a.name || "").localeCompare(
+          b.name || "",
+          undefined,
+          { sensitivity: "base" }
+        )
+      )
+    : []
+);
       });
 
     api.get("/api/document-master/list/")
       .then((res) => {
-        setDocuments(
-          Array.isArray(res.data)
-            ? res.data
-            : []
-        );
+      setDocuments(
+        Array.isArray(res.data)
+          ? [...res.data].sort((a, b) =>
+              (a.name || "").localeCompare(
+                b.name || "",
+                undefined,
+                { sensitivity: "base" }
+              )
+            )
+          : []
+      );
       });
 
     fetchList();
@@ -236,7 +248,13 @@ useEffect(() => {
   .then((res) => {
     setActs(
       Array.isArray(res.data)
-        ? res.data
+        ? [...res.data].sort((a, b) =>
+            (a.name || "").localeCompare(
+              b.name || "",
+              undefined,
+              { sensitivity: "base" }
+            )
+          )
         : []
     );
   });
@@ -266,9 +284,18 @@ setFormData(p => ({ ...p, section: "" }));
   const filteredActs = useMemo(() => {
   if (!actSearch) return acts;
 
-  return acts.filter((a) =>
+return acts
+  .filter((a) =>
     a.name.toLowerCase().includes(actSearch.toLowerCase())
+  )
+  .sort((a, b) =>
+    (a.name || "").localeCompare(
+      b.name || "",
+      undefined,
+      { sensitivity: "base" }
+    )
   );
+
 }, [acts, actSearch]);
 
   /* =========================
@@ -277,16 +304,34 @@ setFormData(p => ({ ...p, section: "" }));
   const filteredDocuments = useMemo(() => {
     if (!documentSearch) return documents;
 
-    return (Array.isArray(documents) ? documents : []).filter(d =>
-      d.name.toLowerCase().includes(documentSearch.toLowerCase())
-    );
+return (Array.isArray(documents) ? documents : [])
+  .filter((d) =>
+    d.name.toLowerCase().includes(
+      documentSearch.toLowerCase()
+    )
+  )
+  .sort((a, b) =>
+    (a.name || "").localeCompare(
+      b.name || "",
+      undefined,
+      { sensitivity: "base" }
+    )
+  );
   }, [documents, documentSearch]);
 
   const filteredStates = useMemo(() => {
   if (!stateSearch) return states;
 
-  return states.filter((s) =>
+return states
+  .filter((s) =>
     s.name.toLowerCase().includes(stateSearch.toLowerCase())
+  )
+  .sort((a, b) =>
+    (a.name || "").localeCompare(
+      b.name || "",
+      undefined,
+      { sensitivity: "base" }
+    )
   );
 }, [states, stateSearch]);
 
@@ -488,13 +533,21 @@ const filteredChecklists = useMemo(() => {
   return filtered.sort((a, b) => {
     // 1. Sort by state
     if (a.state !== b.state) {
-      return a.state.localeCompare(b.state);
+      return a.state.localeCompare(
+        b.state,
+        undefined,
+        { sensitivity: "base" }
+      );
     }
 
     // 2. Then by act
-    if (a.act !== b.act) {
-      return a.act.localeCompare(b.act);
-    }
+if (a.act !== b.act) {
+  return a.act.localeCompare(
+    b.act,
+    undefined,
+    { sensitivity: "base" }
+  );
+}
 
     // 3. Then by section (numeric-safe)
     return (a.section || "").localeCompare(b.section || "", undefined, {
@@ -939,7 +992,15 @@ const data = filteredChecklists.map(c => ({
     className="h-10 rounded-lg border border-gray-200 px-3 text-sm"
   >
     <option value="">All States</option>
-    {states.map((s) => (
+    {[...states]
+    .sort((a, b) =>
+      (a.name || "").localeCompare(
+        b.name || "",
+        undefined,
+        { sensitivity: "base" }
+      )
+    )
+    .map((s) => (
       <option key={s.id} value={s.name}>
         {s.name}
       </option>

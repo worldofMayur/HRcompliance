@@ -64,18 +64,29 @@ export default function VendorForm() {
   const formRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState("");
 
-const filteredVendors = Array.isArray(vendors)
-  ? vendors.filter((v) => {
-  const searchText = search.toLowerCase();
+  const filteredVendors = Array.isArray(vendors)
+    ? vendors
+        .filter((v) => {
+          const searchText = search.toLowerCase();
 
-  return (
-    v.name?.toLowerCase().includes(searchText) ||
-    v.short_name?.toLowerCase().includes(searchText) ||   // ✅ ADDED
-    v.email?.toLowerCase().includes(searchText) ||
-    v.contact_person?.toLowerCase().includes(searchText)
-  );
-})
-: [];
+          return (
+            v.name?.toLowerCase().includes(searchText) ||
+            v.short_name?.toLowerCase().includes(searchText) ||
+            v.email?.toLowerCase().includes(searchText) ||
+            v.contact_person?.toLowerCase().includes(searchText)
+          );
+        })
+
+        // ✅ ALPHABETICAL SORT
+        .sort((a, b) =>
+          (a.name || "").localeCompare(
+            b.name || "",
+            undefined,
+            { sensitivity: "base" }
+          )
+        )
+
+    : [];
   /* =========================
      FETCH
   ========================= */
@@ -343,6 +354,7 @@ const fetchVendors = async () => {
       <PageMeta title="Vendor | HR Compliance" />
       <PageBreadcrumb pageTitle="Manage Vendor" />
 
+ 
 <div
   ref={formRef}
   className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]"
@@ -515,19 +527,31 @@ const fetchVendors = async () => {
   </div>
 
   {/* RIGHT SIDE SEARCH (NEW) */}
-  <input
-    type="text"
-    placeholder="Search Vendor..."
-    className="h-9 px-3 border border-gray-300 rounded-lg text-sm w-52"
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-  />
+<input
+  type="text"
+  placeholder="Search by vendor, email, contact..."
+  className="
+    h-10
+    px-4
+    border
+    border-gray-300
+    rounded-xl
+    text-sm
+    w-72
+    focus:outline-none
+    focus:ring-2
+    focus:ring-indigo-500
+    transition
+  "
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+/>
 
 </div>
 
-          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 bg-gray-50">
                 <TableRow className="bg-gray-50">
                   <TableCell isHeader className="w-12 px-6 py-4" />
                   {[
@@ -539,16 +563,45 @@ const fetchVendors = async () => {
                     "Nature of Services",
                     "Status",
                   ].map((h) => (
-                    <TableCell key={h} isHeader className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    <TableCell
+                      key={h}
+                      isHeader
+                      className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500"
+                    >                    
                       {h}
                     </TableCell>
                   ))}
                 </TableRow>
               </TableHeader>
 
-              <TableBody>
-                {filteredVendors.map((v) => (
-                    <TableRow key={v.id} className="border-t hover:bg-gray-50">
+        <TableBody>
+
+          {filteredVendors.length === 0 ? (
+
+            <TableRow>
+              <TableCell
+                colSpan={8}
+                className="py-10 text-center text-gray-500"
+              >
+                No vendors found
+              </TableCell>
+            </TableRow>
+
+          ) : (
+
+            filteredVendors.map((v) => (
+
+                  <TableRow
+                    key={v.id}
+                    className="
+                      border-t
+                      transition-all
+                      duration-200
+                      odd:bg-white
+                      even:bg-gray-50/40
+                      hover:bg-indigo-50
+                    "
+                  >
                     <TableCell className="px-6 py-5">
                       <Checkbox
                         checked={selectedRows.includes(v.id)}
@@ -562,18 +615,38 @@ const fetchVendors = async () => {
                       />
                     </TableCell>
 
-                    <TableCell className="px-6 py-5 font-medium">{v.name}</TableCell>
-                    <TableCell className="px-6 py-5">{v.short_name}</TableCell>
-                    <TableCell className="px-6 py-5">{v.contact_person}</TableCell>
-                    <TableCell className="px-6 py-5">{v.email}</TableCell>
-                    <TableCell className="px-6 py-5">{v.mobile}</TableCell>
-                    <TableCell className="px-6 py-5">{v.nature_of_services}</TableCell>
-                    <TableCell className="px-6 py-5">
+                    <TableCell className="px-6 py-5 font-semibold text-gray-800">
+                      {v.name}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                      {v.short_name}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                      {v.contact_person}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-md text-indigo-600">
+                      {v.email}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                      {v.mobile}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                      {v.nature_of_services}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-sm">
                       <Badge color="success">Active</Badge>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
+                ))
+              )}
+
+            </TableBody>
             </Table>
           </div>
         </ComponentCard>

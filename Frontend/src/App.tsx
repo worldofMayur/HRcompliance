@@ -44,6 +44,7 @@ import VendorCompliancePage from "./pages/VendorCompliancePage";
 
 import ManageVendor from "./pages/PrincipleEmployee/ManageVendor";
 import Notifications from "./pages/PrincipleEmployee/Notifications";
+import FreezeAuditReports from "./pages/Auditor/FreezeAuditReports";
 
 export default function App() {
   useEffect(() => {
@@ -117,6 +118,15 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["AUDITOR"]}>
                 <AuditorNotifications />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="freeze-audit-reports"
+            element={
+              <ProtectedRoute allowedRoles={["AUDITOR"]}>
+                <FreezeAuditReports />
               </ProtectedRoute>
             }
           />

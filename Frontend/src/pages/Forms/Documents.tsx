@@ -122,7 +122,8 @@ const filteredDocs = useMemo(() => {
       return [];
     }
 
-    return documents.filter((d) => {
+return documents
+  .filter((d) => {
     const matchesFrequency =
     frequencyFilter === "all" || d.frequency === frequencyFilter;
 
@@ -135,8 +136,21 @@ const filteredDocs = useMemo(() => {
     d.name?.toLowerCase().includes(searchText) ||
     d.principal_employer_name?.toLowerCase().includes(searchText);
 
-  return matchesFrequency && matchesSearch && matchesCompany;
-});
+    return (
+      matchesFrequency &&
+      matchesSearch &&
+      matchesCompany
+    );
+  })
+
+  // ✅ Alphabetical Order
+  .sort((a, b) =>
+    (a.name || "").localeCompare(
+      b.name || "",
+      undefined,
+      { sensitivity: "base" }
+    )
+  );
 }, [documents, frequencyFilter, search, companyFilter]);
   /* =========================
      PAGINATION
@@ -341,10 +355,18 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
             <option value="all">All Companies</option>
             <option value="common">Common</option>
 
-            {peList.map((pe) => (
-              <option key={pe.id} value={pe.name}>
-                {pe.name}
-              </option>
+            {[...peList]
+              .sort((a, b) =>
+                (a.name || "").localeCompare(
+                  b.name || "",
+                  undefined,
+                  { sensitivity: "base" }
+                )
+              )
+              .map((pe) => (
+                <option key={pe.id} value={pe.name}>
+                  {pe.name}
+                </option>
             ))}
           </select>
 
@@ -559,10 +581,18 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
               >
                 <option value="">Common</option>
 
-                {peList.map((pe) => (
-                  <option key={pe.id} value={pe.id}>
-                    {pe.name}
-                  </option>
+                {[...peList]
+                  .sort((a, b) =>
+                    (a.name || "").localeCompare(
+                      b.name || "",
+                      undefined,
+                      { sensitivity: "base" }
+                    )
+                  )
+                  .map((pe) => (
+                    <option key={pe.id} value={pe.id}>
+                      {pe.name}
+                    </option>
                 ))}
               </select>
 

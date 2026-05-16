@@ -14,6 +14,7 @@ interface Notification {
 export default function VendorNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // FILTERS
   const [search, setSearch] = useState("");
@@ -25,40 +26,62 @@ export default function VendorNotifications() {
   useEffect(() => {
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => {
+      fetchNotifications(true);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const fetchNotifications = async () => {
-    try {
+const fetchNotifications = async (silent = false) => {
+
+  try {
+
+    if (silent) {
+      setRefreshing(true);
+    } else {
       setLoading(true);
+    }
 
-      const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token");
 
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/auditor/vendor/notifications/",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        console.error("API ERROR:", res.status);
-        return;
+    const res = await fetch(
+      "http://127.0.0.1:8000/api/auditor/vendor/notifications/",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
+    );
 
-      const data = await res.json();
+    if (!res.ok) {
+      console.error("API ERROR:", res.status);
+      return;
+    }
 
-      setNotifications(data);
-    } catch (err) {
-      console.error("Error fetching notifications", err);
-    } finally {
+    const data = await res.json();
+
+    setNotifications(data);
+
+  } catch (err) {
+
+    console.error("Error fetching notifications", err);
+
+  } finally {
+
+    if (silent) {
+
+      // makes indicator visible for UX
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 800);
+
+    } else {
+
       setLoading(false);
     }
-  };
+  }
+};
 
   const markAsRead = async (id: number) => {
     try {
@@ -83,6 +106,26 @@ export default function VendorNotifications() {
       console.error("Error updating notification", err);
     }
   };
+
+
+const [currentTime, setCurrentTime] = useState(
+  new Date().toLocaleTimeString()
+);
+
+useEffect(() => {
+
+  const timer = setInterval(() => {
+    setCurrentTime(
+      new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
+  }, 1000);
+
+  return () => clearInterval(timer);
+
+}, []);
 
   const markAllAsRead = async () => {
     const unread = notifications.filter((n) => !n.is_read);
@@ -115,13 +158,44 @@ export default function VendorNotifications() {
     );
   };
 
-  const getStatusStyles = (status: string) => {
-    if (status === "Not Complied") {
-      return "bg-red-100 text-red-700";
-    }
+const getStatusStyles = (
+  status: string
+) => {
 
-    return "bg-yellow-100 text-yellow-700";
-  };
+  if (
+    status === "Not Complied"
+  ) {
+
+    return (
+      "bg-red-100 text-red-700"
+    );
+  }
+
+  if (
+    status.includes(
+      "Exceptional Approval"
+    )
+  ) {
+
+    return (
+      "bg-orange-100 text-orange-700"
+    );
+  }
+
+  if (
+    status ===
+    "Complied"
+  ) {
+
+    return (
+      "bg-green-100 text-green-700"
+    );
+  }
+
+  return (
+    "bg-yellow-100 text-yellow-700"
+  );
+};
 
   // FILTERED + SORTED
   const filteredNotifications = useMemo(() => {
@@ -132,10 +206,11 @@ export default function VendorNotifications() {
         d.entries?.filter(
           (e: any) =>
             ![
-              "Complied",
-              "Exceptional Approval - Delayed Complied",
-              "Not Applicable For Audit Period",
-            ].includes(e.status)
+            "Complied",
+            "Exceptional Approval - Delayed Complied",
+            "Exceptional Approval - Not Complied",
+            "Not Applicable For Audit Period",
+          ].includes(e.status)
         ) || [];
 
       const searchText = `
@@ -187,157 +262,368 @@ export default function VendorNotifications() {
     return filtered;
   }, [notifications, search, filter, sortBy]);
 
+const handleDownloadPDF = async (
+  url: string
+) => {
+
+  try {
+
+    const token =
+      localStorage.getItem(
+        "access_token"
+      );
+
+    const response =
+      await fetch(
+        url,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error("Failed to download PDF");
+    }
+
+    const blob =
+      await response.blob();
+
+    const blobUrl =
+      window.URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = blobUrl;
+
+    link.download =
+      "Compliance_Certificate.pdf";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(
+      blobUrl
+    );
+
+  } catch (err) {
+
+    console.error(err);
+  }
+};
+
+
+const getRelativeTime = (date: string) => {
+
+  const now = new Date().getTime();
+
+  const past = new Date(date).getTime();
+
+  const diff = Math.floor((now - past) / 1000);
+
+  if (diff < 60) {
+    return "Just now";
+  }
+
+  if (diff < 3600) {
+    return `${Math.floor(diff / 60)}m ago`;
+  }
+
+  if (diff < 86400) {
+    return `${Math.floor(diff / 3600)}h ago`;
+  }
+
+  return `${Math.floor(diff / 86400)}d ago`;
+};
+
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const actionRequiredCount = notifications.filter((n) => {
     const d = n.data || {};
 
+    if (
+      d.status === "CC_ISSUED"
+    ) {
+
+      return false;
+    }
+
     const entries =
       d.entries?.filter(
         (e: any) =>
           ![
-            "Complied",
-            "Exceptional Approval - Delayed Complied",
-            "Not Applicable For Audit Period",
-          ].includes(e.status)
+          "Complied",
+          "Exceptional Approval - Delayed Complied",
+          "Exceptional Approval - Not Complied",
+          "Not Applicable For Audit Period",
+        ].includes(e.status)
       ) || [];
 
     return entries.length > 0;
   }).length;
 
   return (
-    <ComponentCard title="Notifications">
+      <ComponentCard>
 
-      {/* HEADER TOOLBAR */}
-      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3">
+    {/* PAGE HEADER */}
+<div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
 
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+  {/* LEFT */}
+  <div>
 
-          {/* LEFT */}
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center flex-1">
+    <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+      Notifications Center
+    </h1>
 
-            {/* SEARCH */}
-            <div className="relative w-full lg:w-72">
+    <p className="mt-1 text-sm text-gray-500">
+      Monitor compliance updates, audit actions, and certificate activity.
+    </p>
+  </div>
 
-              <input
-                type="text"
-                placeholder="Search notifications..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="
-                  w-full rounded-lg border border-gray-200
-                  bg-gray-50
-                  py-2 pl-9 pr-3
-                  text-sm
-                  outline-none
-                  transition
-                  focus:border-blue-400
-                  focus:bg-white
-                  focus:ring-2 focus:ring-blue-100
-                "
-              />
+{/* RIGHT */}
+<div className="flex flex-col items-end">
 
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="absolute left-3 top-2.5 h-4 w-4 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
+  {refreshing ? (
 
-            {/* FILTERS */}
-            <div className="flex flex-wrap gap-2">
+    <div
+      className="
+        flex items-center gap-2
+        rounded-full
+        bg-blue-50
+        px-3 py-1.5
+        text-xs font-medium
+        text-blue-700
+      "
+    >
 
-              {[
-                { key: "all", label: "All" },
-                { key: "unread", label: "Unread" },
-                { key: "action-required", label: "Action" },
-                { key: "complied", label: "Complied" },
-              ].map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => setFilter(item.key)}
-                  className={`
-                    rounded-md px-3 py-2 text-xs font-medium transition
-                    ${
-                      filter === item.key
-                        ? "bg-blue-600 text-white"
-                        : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                    }
-                  `}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* SPINNER */}
+      <div
+        className="
+          h-3 w-3
+          rounded-full
+          border-2 border-blue-500
+          border-t-transparent
+          animate-spin
+        "
+      />
 
-          {/* RIGHT */}
-          <div className="flex items-center justify-between gap-2 flex-wrap">
+      Refreshing...
+    </div>
 
-            {/* STATS */}
-            <div className="flex items-center gap-2 flex-wrap">
+  ) : (
 
-              <div className="rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700">
-                Total: {notifications.length}
-              </div>
+    <div className="flex items-center gap-2 text-xs text-green-600">
 
-              <div className="rounded-md bg-blue-100 px-2.5 py-1.5 text-xs font-medium text-blue-700">
-                Unread: {unreadCount}
-              </div>
+      <span className="h-2 w-2 rounded-full bg-green-500" />
 
-              <div className="rounded-md bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700">
-                Action: {actionRequiredCount}
-              </div>
-            </div>
+      Live Updates
+    </div>
+  )}
 
-            {/* SORT */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="
-                rounded-md border border-gray-200
-                bg-white
-                px-2 py-2
-                text-xs
-                outline-none
-                focus:border-blue-400
-              "
-            >
-              <option value="latest">Latest</option>
-              <option value="oldest">Oldest</option>
-              <option value="unread">Unread</option>
-            </select>
+  <span className="mt-1 text-[11px] text-gray-400">
+    Auto refresh every 10s
+  </span>
+</div>
+</div>
 
-            {/* MARK ALL */}
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="
-                  rounded-md
-                  bg-blue-600
-                  px-3 py-2
-                  text-xs font-medium
-                  text-white
-                  hover:bg-blue-700
-                  transition
-                  whitespace-nowrap
-                "
-              >
-                Mark all
-              </button>
-            )}
-          </div>
+{/* HEADER TOOLBAR */}
+<div
+  className="
+    sticky top-0 z-20
+    mb-5
+    rounded-2xl
+    border border-gray-200
+    bg-white/90
+    p-4
+    backdrop-blur-sm
+    shadow-sm
+  "
+>
+
+  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+
+    {/* LEFT SIDE */}
+    <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
+
+      {/* SEARCH */}
+      <div className="relative w-full lg:w-[320px]">
+
+        <input
+          type="text"
+          placeholder="Search vendor, branch, audit period..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="
+            w-full rounded-xl
+            border border-gray-200
+            bg-gray-50/80
+            py-2.5 pl-10 pr-4
+            text-sm text-gray-700
+            transition-all duration-200
+            outline-none
+            placeholder:text-gray-400
+            focus:border-blue-300
+            focus:bg-white
+            focus:ring-4
+            focus:ring-blue-100
+          "
+        />
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="
+            absolute left-3 top-1/2
+            h-4 w-4
+            -translate-y-1/2
+            text-gray-400
+          "
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+
+      {/* FILTER PILLS */}
+      <div className="flex flex-wrap items-center gap-2">
+
+        {[
+          { key: "all", label: "All" },
+          { key: "unread", label: "Unread" },
+          { key: "action-required", label: "Action Required" },
+          { key: "complied", label: "Complied" },
+        ].map((item) => (
+
+          <button
+            key={item.key}
+            onClick={() => setFilter(item.key)}
+            className={`
+              rounded-xl
+              px-4 py-2
+              text-xs font-medium
+              transition-all duration-200
+              ${
+                filter === item.key
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : `
+                    border border-gray-200
+                    bg-white text-gray-600
+                    hover:border-blue-200
+                    hover:bg-blue-50
+                    hover:text-blue-700
+                  `
+              }
+            `}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="flex flex-wrap items-center gap-3">
+
+      {/* STATS */}
+      <div className="flex items-center gap-2">
+
+        <div
+          className="
+            rounded-xl
+            bg-gray-100
+            px-3 py-2
+            text-xs font-semibold
+            text-gray-700
+          "
+        >
+          {notifications.length} Total
+        </div>
+
+        <div
+          className="
+            rounded-xl
+            bg-blue-50
+            px-3 py-2
+            text-xs font-semibold
+            text-blue-700
+          "
+        >
+          {unreadCount} Unread
+        </div>
+
+        <div
+          className="
+            rounded-xl
+            bg-red-50
+            px-3 py-2
+            text-xs font-semibold
+            text-red-700
+          "
+        >
+          {actionRequiredCount} Action
         </div>
       </div>
+
+      {/* SORT */}
+      <div className="relative">
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="
+            rounded-xl
+            border border-gray-200
+            bg-white
+            px-3 py-2
+            pr-8
+            text-xs font-medium
+            text-gray-700
+            outline-none
+            transition
+            focus:border-blue-300
+            focus:ring-2
+            focus:ring-blue-100
+          "
+        >
+          <option value="latest">Latest</option>
+          <option value="oldest">Oldest</option>
+          <option value="unread">Unread</option>
+        </select>
+      </div>
+
+      {/* MARK ALL */}
+      {unreadCount > 0 && (
+        <button
+          onClick={markAllAsRead}
+          className="
+            rounded-xl
+            bg-blue-600
+            px-4 py-2
+            text-xs font-semibold
+            text-white
+            transition-all duration-200
+            hover:bg-blue-700
+            hover:shadow-md
+          "
+        >
+          Mark all read
+        </button>
+      )}
+    </div>
+  </div>
+</div>
 
       {/* LIST */}
       <div className="space-y-2">
@@ -357,9 +643,17 @@ export default function VendorNotifications() {
         {/* EMPTY */}
         {!loading && filteredNotifications.length === 0 && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 py-10 text-center">
+          <div className="flex flex-col items-center">
+
+            <div className="text-4xl mb-2">
+              🔔
+            </div>
+
             <p className="text-sm text-gray-500">
               No notifications found
             </p>
+
+          </div>
           </div>
         )}
 
@@ -372,41 +666,80 @@ export default function VendorNotifications() {
               d.entries?.filter(
                 (e: any) =>
                   ![
-                    "Complied",
-                    "Exceptional Approval - Delayed Complied",
-                    "Not Applicable For Audit Period",
-                  ].includes(e.status)
+                "Complied",
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval - Not Complied",
+                "Not Applicable For Audit Period",
+              ].includes(e.status)
               ) || [];
 
             return (
               <div
                 key={n.id}
                 onClick={() => {
+
+                  // ======================================
+                  // CC PDF DOWNLOAD FLOW
+                  // ======================================
+
+                  if (
+                    d.status === "CC_ISSUED" &&
+                    d.pdf_download_url
+                  ) {
+
+                    if (!n.is_read) {
+
+                      markAsRead(n.id);
+                    }
+
+                    handleDownloadPDF(
+                      d.pdf_download_url
+                    );
+
+                    return;
+                  }
+
+                  // ======================================
+                  // REUPLOAD FLOW
+                  // ======================================
+
                   if (d.entries) {
-                  navigate("/vendor-compliance", {
-                    state: {
-                      prefill: {
-                        pe_id: d.pe_id,
-                        state: d.state,
-                        branch_id: d.branch_id,
-                        selected_period: d.audit_period,
-                        notification_id: n.id,
 
-                        // ✅ ONLY FAILED DOCS
-                        entries: filteredEntries || [],
+                    navigate("/vendor-compliance", {
 
-                        compliance_id: d.compliance_id,
-                        reupload_mode: true,
+                      state: {
+
+                        prefill: {
+
+                          pe_id: d.pe_id,
+
+                          state: d.state,
+
+                          branch_id: d.branch_id,
+
+                          selected_period: d.audit_period,
+
+                          notification_id: n.id,
+
+                          entries:
+                            filteredEntries || [],
+
+                          compliance_id:
+                            d.compliance_id,
+
+                          reupload_mode: true,
+                        },
                       },
-                    },
-                  });
+                    });
                   }
                 }}
                 className={`
-                  relative rounded-lg border
+                  relative rounded-lg border border-l-4
                   px-4 py-3
                   cursor-pointer
                   transition-all duration-200
+                  transition-all duration-200
+                  hover:shadow-md hover:-translate-y-[1px]
                   hover:border-blue-300 hover:bg-blue-50/40
                   ${
                     n.is_read
@@ -508,6 +841,35 @@ export default function VendorNotifications() {
                   {/* RIGHT */}
                   <div className="flex flex-col items-end gap-2 flex-shrink-0">
 
+                    {d.status === "CC_ISSUED" &&
+                      d.pdf_download_url && (
+
+                      <button
+
+                        onClick={(e) => {
+
+                          e.stopPropagation();
+
+                          handleDownloadPDF(
+                            d.pdf_download_url
+                          );
+                        }}
+
+                        className="
+                          text-[10px]
+                          px-2 py-1
+                          rounded-md
+                          bg-green-100
+                          text-green-700
+                          hover:bg-green-200
+                          transition
+                          whitespace-nowrap
+                        "
+                      >
+                        Open CC PDF
+                      </button>
+                    )}
+
                     {!n.is_read && (
                       <button
                         onClick={(e) => {
@@ -528,7 +890,7 @@ export default function VendorNotifications() {
                     )}
 
                     <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                      {new Date(n.created_at).toLocaleDateString()}
+                      {getRelativeTime(n.created_at)}
                     </span>
                   </div>
                 </div>

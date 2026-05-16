@@ -103,13 +103,24 @@ class PrincipalEmployerBranchSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate(self, data):
-        required = ["principal_employer", "state", "short_name", "address"]
+        required = [
+            "principal_employer",
+            "state",
+            "short_name",
+            "address"
+        ]
 
-        missing = [field for field in required if not data.get(field)]
+        missing = [
+            field for field in required
+            if not data.get(field)
+        ]
 
         if missing:
             raise serializers.ValidationError(
-                {field: "This field is required" for field in missing}
+                {
+                    field: "This field is required"
+                    for field in missing
+                }
             )
 
         return data

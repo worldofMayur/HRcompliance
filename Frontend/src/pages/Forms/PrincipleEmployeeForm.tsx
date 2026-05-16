@@ -31,10 +31,10 @@ const emailRegex =
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 const normalSelectClass =
-  "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
+  "w-full h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
 
 const dateInputClass =
-  "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
+  "w-full h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
 
 /* =========================
    COMPONENT
@@ -64,6 +64,7 @@ export default function PrincipleEmployeeForm() {
 
   const [startError, setStartError] = useState("");
   const [endError, setEndError] = useState("");
+  const [branchSearch, setBranchSearch] = useState("");
 
   const parseDate = (value: string) => {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -126,11 +127,17 @@ const formatForAPI = (date: Date | null) => {
     api.get("/api/checklist/states/")
       .then((res) => {
 
-        setStates(
-          Array.isArray(res.data)
-            ? res.data
-            : []
-        );
+    setStates(
+      Array.isArray(res.data)
+        ? [...res.data].sort((a, b) =>
+            (a.name || "").localeCompare(
+              b.name || "",
+              undefined,
+              { sensitivity: "base" }
+            )
+          )
+        : []
+    );
 
       })
       .catch((err) => {
@@ -155,7 +162,13 @@ const res = await api.get(
 
 setBranchList(
   Array.isArray(res.data)
-    ? res.data
+    ? [...res.data].sort((a, b) =>
+        (a.short_name || "").localeCompare(
+          b.short_name || "",
+          undefined,
+          { sensitivity: "base" }
+        )
+      )
     : []
 );
 };
@@ -236,8 +249,15 @@ const handleBranchSubmit = async () => {
   const newBranch = res.data;
 
   // ✅ Immediately update UI
-  setBranchList((prev) => [newBranch, ...prev]);
-
+  setBranchList((prev) =>
+    [...prev, newBranch].sort((a, b) =>
+      (a.short_name || "").localeCompare(
+        b.short_name || "",
+        undefined,
+        { sensitivity: "base" }
+      )
+    )
+  );
     // =========================
   // AUTO CREATE "ALL BRANCHES"
   // =========================
@@ -258,10 +278,15 @@ const handleBranchSubmit = async () => {
 
         const autoBranch = autoRes.data;
 
-        setBranchList((prev) => [
-          autoBranch,
-          ...prev,
-        ]);
+    setBranchList((prev) =>
+      [...prev, autoBranch].sort((a, b) =>
+        (a.short_name || "").localeCompare(
+          b.short_name || "",
+          undefined,
+          { sensitivity: "base" }
+        )
+      )
+    );
     } catch (err) {
       console.log("Auto All Branch creation failed", err);
     }
@@ -349,8 +374,11 @@ useEffect(() => {
   /* =========================
      FILTERED DATA
   ========================= */
-  const filteredData = useMemo(() => {
-    return tableData.filter((pe) => {
+const filteredData = useMemo(() => {
+
+  return tableData
+
+    .filter((pe) => {
     const matchesSearch =
       pe.name?.toLowerCase().includes(search.toLowerCase()) ||
       pe.short_name?.toLowerCase().includes(search.toLowerCase()) ||   // ✅ ADD THIS
@@ -361,8 +389,18 @@ useEffect(() => {
         ruleFilter === "all" || pe.rules_applicable === ruleFilter;
 
       return matchesSearch && matchesRule;
-    });
-  }, [tableData, search, ruleFilter]);
+    })
+
+    // ✅ Alphabetical Order
+    .sort((a, b) =>
+      (a.name || "").localeCompare(
+        b.name || "",
+        undefined,
+        { sensitivity: "base" }
+      )
+    );
+
+}, [tableData, search, ruleFilter]);
 
   /* =========================
      INPUT HANDLER
@@ -615,9 +653,20 @@ const handleSubmit = async () => {
 
     fetchPEs();
 
-  } catch (e: any) {
-    alert(e.message);
-  } finally {
+} catch (e: any) {
+
+  console.log(
+    "FULL BACKEND ERROR",
+    e.response?.data
+  );
+
+  alert(
+    e.response?.data?.error ||
+    JSON.stringify(e.response?.data) ||
+    "Something went wrong"
+  );
+}
+finally {
     setSubmitting(false);
   }
 };
@@ -708,7 +757,7 @@ const handleSubmit = async () => {
 <div ref={formRef} className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
   <ComponentCard title="Principle Employee Details">
     {isEditMode && (
-      <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800">
+      <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm text-blue-800">
         Editing existing Principal Employer
       </div>
     )}
@@ -939,7 +988,7 @@ const handleSubmit = async () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableCell isHeader className="w-12 px-6 py-4" />
+                  <TableCell isHeader className="w-12 px-5 py-3" />
                   {[
                     "Principal Employer",
                     "Short Name",
@@ -953,7 +1002,7 @@ const handleSubmit = async () => {
                     "Rules",
                     "Status",
                   ].map((h) => (
-                    <TableCell key={h} isHeader className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    <TableCell key={h} isHeader className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">
                       {h}
                     </TableCell>
                   ))}
@@ -1007,35 +1056,195 @@ const handleSubmit = async () => {
 {/* ================= ENHANCED BRANCH MODAL ================= */}
 {/* ================= PREMIUM BRANCH MODAL ================= */}
 {branchModalOpen && (
-  <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 pb-10 bg-black/40 backdrop-blur-sm px-4">
-    <div className="w-full max-w-6xl rounded-2xl bg-white shadow-2xl overflow-hidden">
+<div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+<div className="w-full max-w-[1200px] rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-200">
+        {/* ================= HEADER ================= */}
+<div className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
 
-      {/* ================= HEADER ================= */}
-      <div className="flex items-center justify-between px-8 py-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-800">
-            {selectedPEObject?.name}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Managing mapped branches
-          </p>
-        </div>
+  <div className="min-w-0">
 
-        <button
-          onClick={() => setBranchModalOpen(false)}
-          className="text-gray-500 hover:text-gray-700 text-xl"
-        >
-          ✕
-        </button>
-      </div>
+    <h2 className="truncate text-xl font-semibold tracking-tight text-gray-800">
+      {selectedPEObject?.name}
+    </h2>
+
+    <p className="mt-1 text-sm text-gray-500">
+      Managing mapped branches
+    </p>
+
+  </div>
+
+  <button
+    onClick={() => setBranchModalOpen(false)}
+    className="
+      flex
+      h-9
+      w-9
+      items-center
+      justify-center
+      rounded-lg
+      border
+      border-gray-200
+      text-gray-500
+      transition-all
+      hover:bg-gray-50
+      hover:text-gray-700
+    "
+  >
+    ✕
+  </button>
+
+</div>
 
       {/* ================= BODY ================= */}
-      <div className="p-8 space-y-10 max-h-[70vh] overflow-y-auto">
+<div className="p-6 space-y-6 h-[78vh] overflow-y-auto custom-scrollbar bg-gray-50/40">
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
 
+  {/* TOTAL */}
+  <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+
+    <div className="flex items-center justify-between">
+
+      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+        Total Branches
+      </span>
+
+      <span className="text-[10px] text-gray-400">
+        Live
+      </span>
+
+    </div>
+
+    <div className="mt-2 flex items-end justify-between">
+
+      <div className="text-2xl font-semibold text-gray-800">
+        {branchList.length}
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Branches mapped
+      </div>
+
+    </div>
+
+  </div>
+
+  {/* ACTIVE */}
+  <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+
+    <div className="flex items-center justify-between">
+
+      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+        Active
+      </span>
+
+      <span className="text-[10px] text-green-600 font-medium">
+        Running
+      </span>
+
+    </div>
+
+    <div className="mt-2 flex items-end justify-between">
+
+      <div className="text-2xl font-semibold text-gray-800">
+        {
+          branchList.filter(
+            (b) => b.status === "active"
+          ).length
+        }
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Operational
+      </div>
+
+    </div>
+
+  </div>
+
+  {/* CLOSED */}
+  <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+
+    <div className="flex items-center justify-between">
+
+      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+        Closed
+      </span>
+
+      <span className="text-[10px] text-red-500 font-medium">
+        Disabled
+      </span>
+
+    </div>
+
+    <div className="mt-2 flex items-end justify-between">
+
+      <div className="text-2xl font-semibold text-gray-800">
+        {
+          branchList.filter(
+            (b) => b.status === "closed"
+          ).length
+        }
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Non-operational
+      </div>
+
+    </div>
+
+  </div>
+
+  {/* STATES */}
+  <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+
+    <div className="flex items-center justify-between">
+
+      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+        States Covered
+      </span>
+
+      <span className="text-[10px] text-indigo-500 font-medium">
+        Coverage
+      </span>
+
+    </div>
+
+    <div className="mt-2 flex items-end justify-between">
+
+      <div className="text-2xl font-semibold text-gray-800">
+        {
+          new Set(
+            branchList.map((b) => b.state)
+          ).size
+        }
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Unique states
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
         {/* ================= ADD / EDIT FORM ================= */}
-        <div id="branch-form" className="bg-gray-50 border rounded-2xl p-8 space-y-8">
+        <div
+          id="branch-form"
+          className="
+            bg-white
+            border
+            border-gray-200
+            rounded-2xl
+            p-6
+            space-y-6
+            shadow-sm
+          "
+        >
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+
+
             <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
               {editingBranchId ? "Edit Branch" : "Add New Branch"}
             </h3>
@@ -1053,7 +1262,7 @@ const handleSubmit = async () => {
             <div>
               <Label>State</Label>
               <select
-                className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm"
+                className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm"
                 value={branchData.state}
                 onChange={(e) =>
                   setBranchData({ ...branchData, state: e.target.value })
@@ -1061,7 +1270,15 @@ const handleSubmit = async () => {
               >
                 <option value="">Select State</option>
 
-                {states.map((s) => (
+                {[...states]
+                .sort((a, b) =>
+                  (a.name || "").localeCompare(
+                    b.name || "",
+                    undefined,
+                    { sensitivity: "base" }
+                  )
+                )
+                .map((s) => (
                   <option key={s.id} value={s.name}>
                     {s.name}
                   </option>
@@ -1073,6 +1290,8 @@ const handleSubmit = async () => {
             <div>
               <Label>Branch Short Name</Label>
               <Input
+                className="h-10"
+                placeholder="Ex: Pune HO, Mumbai Branch"
                 value={branchData.short_name}
                 onChange={(e) =>
                   setBranchData({
@@ -1087,7 +1306,7 @@ const handleSubmit = async () => {
             <div>
               <Label>Status</Label>
               <select
-                className="w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm"
+                className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm"
                 value={branchData.status}
                 onChange={(e) =>
                   setBranchData({
@@ -1104,8 +1323,10 @@ const handleSubmit = async () => {
             {/* ADDRESS */}
             <div className="md:col-span-2">
               <Label>Address</Label>
-              <Input
-                value={branchData.address}
+            <Input
+              className="h-10"
+              placeholder="Enter complete branch address"
+              value={branchData.address}
                 onChange={(e) =>
                   setBranchData({
                     ...branchData,
@@ -1123,7 +1344,7 @@ const handleSubmit = async () => {
 
                 {/* EXISTING DOCUMENT */}
                 {branchData.existingDocument && !branchData.document && (
-                  <div className="flex items-center justify-between text-sm bg-white px-4 py-2 rounded-lg border">
+                  <div className="flex items-center justify-between text-sm bg-white px-4 py-1.5 rounded-lg border">
                     <a
                       href={`http://127.0.0.1:8000${branchData.existingDocument}`}
                       target="_blank"
@@ -1149,9 +1370,7 @@ const handleSubmit = async () => {
                 )}
 
                 {/* UPLOAD BOX */}
-                <label className="flex items-center justify-between w-full px-4 py-3 border border-gray-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition">
-
-                  <span className="text-sm text-gray-600 truncate">
+<label className="flex items-center justify-between h-10 w-full px-4 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 bg-white transition">                  <span className="text-sm text-gray-600 truncate">
                     {branchData.document
                       ? branchData.document.name
                       : "Click to upload document"}
@@ -1180,6 +1399,8 @@ const handleSubmit = async () => {
           {/* FORM BUTTONS */}
           <div className="flex justify-end gap-4">
           <Button
+            size="sm"
+            className="h-9 min-w-[90px] px-4 text-sm"
             variant="outline"
             onClick={() => {
               setEditingBranchId(null);
@@ -1195,22 +1416,23 @@ const handleSubmit = async () => {
             Cancel
           </Button>
 
-        <Button
-          onClick={() =>
-            editingBranchId
-              ? handleBranchUpdate(editingBranchId)
-              : handleBranchSubmit()
-          }
-        >
-          {editingBranchId ? "Update Branch" : "Save Branch"}
-        </Button>
+<Button
+  size="sm"
+  className="h-9 min-w-[116px] px-4 text-sm"
+  onClick={() =>
+    editingBranchId
+      ? handleBranchUpdate(editingBranchId)
+      : handleBranchSubmit()
+  }
+>
+  {editingBranchId ? "Update Branch" : "Save Branch"}
+</Button>
           </div>
 
         </div>
 
         {/* ================= TABLE ================= */}
-        <div className="space-y-6">
-
+<div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
@@ -1221,22 +1443,57 @@ const handleSubmit = async () => {
               </p>
             </div>
 
-            <Button size="sm" onClick={handleExportBranches}>
-              Export
-            </Button>
+<div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search branch..."
+                  value={branchSearch}
+                  onChange={(e) =>
+                    setBranchSearch(e.target.value)
+                  }
+                  className="
+                    h-9
+                    w-60
+                    rounded-lg
+                    border
+                    border-gray-300
+                    bg-white
+                    px-3
+                    text-sm
+                  "
+                />
+
+                <Button
+                  size="sm"
+                  className="h-9 px-4 text-sm"
+                  onClick={handleExportBranches}
+                >
+                    Export
+                </Button>
+
+              </div>
           </div>
 
           {branchList.length === 0 ? (
-            <div className="text-center text-sm text-gray-400 py-16 border rounded-xl">
+          <div className="text-center py-14 border border-dashed rounded-xl bg-white">
+
+            <div className="text-sm font-medium text-gray-600">
               No branches mapped yet
             </div>
-          ) : (
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
 
+            <div className="text-xs text-gray-400 mt-1">
+              Add your first branch using the form above
+            </div>
+
+          </div>
+          ) : (
+
+            
+<div className="rounded-xl border border-gray-200 overflow-hidden overflow-x-auto custom-scrollbar">
               <table className="w-full text-sm">
 
-                <thead className="bg-gray-50 text-xs uppercase text-gray-400 tracking-wide">
-                  <tr>
+<thead className="sticky top-0 z-10 bg-gray-50 text-xs uppercase text-gray-400 tracking-wide">
+                    <tr>
                     <th className="px-6 py-3 text-left">Principal Employer</th>
                     <th className="px-6 py-3 text-left">Short Name</th>
                     <th className="px-6 py-3 text-left">State</th>
@@ -1249,26 +1506,73 @@ const handleSubmit = async () => {
 
                 <tbody className="divide-y divide-gray-100">
 
-                  {branchList.map((branch) => (
-                    <tr key={branch.id} className="hover:bg-gray-50 transition">
+{branchList
 
-                      <td className="px-6 py-4 font-medium text-gray-700">
+  .filter((branch) => {
+
+    const q =
+      branchSearch.toLowerCase();
+
+    return (
+      branch.short_name
+        ?.toLowerCase()
+        .includes(q) ||
+
+      branch.state
+        ?.toLowerCase()
+        .includes(q) ||
+
+      branch.address
+        ?.toLowerCase()
+        .includes(q)
+    );
+  })
+
+  // ✅ Alphabetical Order
+.sort((a, b) => {
+
+  // ✅ First sort by State
+  const stateCompare =
+    (a.state || "").localeCompare(
+      b.state || "",
+      undefined,
+      { sensitivity: "base" }
+    );
+
+  if (stateCompare !== 0) {
+    return stateCompare;
+  }
+
+  // ✅ Then sort by Branch Name
+  return (a.short_name || "").localeCompare(
+    b.short_name || "",
+    undefined,
+    { sensitivity: "base" }
+  );
+
+})
+
+  .map((branch) => (
+
+                        <tr key={branch.id} className="hover:bg-gray-50 transition">
+
+                      <td className="px-5 py-3 font-medium text-gray-700">
                         {selectedPEObject?.name}
                       </td>
 
-                      <td className="px-6 py-4 text-gray-700">
+                      <td className="px-5 py-3 text-gray-700">
                         {branch.short_name}
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="px-5 py-3 text-gray-600">
                         {branch.state}
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="px-5 py-3 text-gray-600">
                         {branch.address}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-3">
                         <span
                           className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
                             branch.status === "active"
@@ -1280,7 +1584,7 @@ const handleSubmit = async () => {
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-5 py-3 text-sm">
                         {branch.document ? (
                           <a
                             href={`http://127.0.0.1:8000${branch.document}`}
@@ -1295,10 +1599,11 @@ const handleSubmit = async () => {
                         )}
                       </td>
 
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-5 py-3 text-right">
                         <Button
                           size="sm"
                           variant="outline"
+                          className="h-9 px-4 text-sm"
                           onClick={() => {
                             setEditingBranchId(branch.id);
                             setBranchData({

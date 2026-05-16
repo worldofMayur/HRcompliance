@@ -1,15 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-
 import { Link } from "react-router";
+
 import { useSidebar } from "../context/SidebarContext";
+
 import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
 
 const AppHeader: React.FC = () => {
-  const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [isApplicationMenuOpen, setApplicationMenuOpen] =
+    useState(false);
 
-  const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const {
+    isMobileOpen,
+    toggleSidebar,
+    toggleMobileSidebar,
+  } = useSidebar();
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // SIDEBAR TOGGLE
   const handleToggle = () => {
     if (window.innerWidth >= 991) {
       toggleSidebar();
@@ -18,12 +27,12 @@ const AppHeader: React.FC = () => {
     }
   };
 
+  // MOBILE ACTION MENU
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
   };
 
-  const inputRef = useRef<HTMLInputElement>(null);
-
+  // CMD + K SEARCH FOCUS
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
@@ -40,33 +49,222 @@ const AppHeader: React.FC = () => {
   }, []);
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-40 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
-      <div className="flex flex-col items-center justify-between flex-grow lg:flex-row lg:px-6">
-        <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 lg:py-4">
-          
-          <Link to="/" className="lg:hidden">
-            <img
-              className="dark:hidden"
-              src="images/logo/logo.svg"
-              alt="Logo"
-            />
-            <img
-              className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
-              alt="Logo"
-            />
+    <header
+      className="
+        sticky
+        top-0
+        z-40
+        flex
+        w-full
+        border-b
+        border-gray-200/70
+        bg-white/75
+        backdrop-blur-2xl
+        transition-all
+        duration-300
+        dark:border-gray-800/80
+        dark:bg-gray-900/75
+      "
+    >
+      {/* BACKGROUND GLOW */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="
+            absolute
+            right-[-80px]
+            top-[-80px]
+            h-[180px]
+            w-[180px]
+            rounded-full
+            bg-blue-500/10
+            blur-3xl
+          "
+        />
+
+        <div
+          className="
+            absolute
+            left-[20%]
+            top-[-100px]
+            h-[180px]
+            w-[180px]
+            rounded-full
+            bg-indigo-500/10
+            blur-3xl
+          "
+        />
+      </div>
+
+      {/* INNER WRAPPER */}
+      <div
+        className="
+          relative
+          flex
+          flex-grow
+          flex-col
+          items-center
+          justify-between
+          lg:flex-row
+          lg:px-6
+        "
+      >
+        {/* LEFT SECTION */}
+        <div
+          className="
+            flex
+            w-full
+            items-center
+            justify-between
+            gap-3
+            px-3
+            py-3
+            sm:gap-4
+            lg:justify-normal
+            lg:px-0
+            lg:py-4
+          "
+        >
+          {/* MOBILE LOGO */}
+          <Link
+            to="/"
+            className="
+              flex
+              items-center
+              gap-2
+              transition-transform
+              duration-300
+              hover:scale-[1.02]
+              lg:hidden
+            "
+          >
+            <div
+              className="
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-2xl
+                bg-gradient-to-br
+                from-brand-500
+                to-blue-600
+                text-white
+                shadow-lg
+              "
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M12 2L4 5V11C4 16.25 7.4 21.05 12 22C16.6 21.05 20 16.25 20 11V5L12 2Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-gray-800 dark:text-white">
+                HR Compliance
+              </span>
+
+              <span className="text-[11px] text-gray-400">
+                Portal
+              </span>
+            </div>
           </Link>
 
+          {/* DESKTOP SIDEBAR TOGGLE */}
           <button
-            onClick={toggleApplicationMenu}
-            className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
+            onClick={handleToggle}
+            className="
+              hidden
+              lg:flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-2xl
+              border
+              border-gray-200
+              bg-white/70
+              text-gray-600
+              shadow-sm
+              backdrop-blur-xl
+              transition-all
+              duration-300
+              hover:-translate-y-[1px]
+              hover:border-brand-200
+              hover:bg-brand-50
+              hover:text-brand-600
+              hover:shadow-md
+              dark:border-gray-800
+              dark:bg-white/[0.03]
+              dark:text-gray-300
+              dark:hover:border-white/[0.06]
+              dark:hover:bg-white/[0.05]
+            "
           >
             <svg
-              width="24"
-              height="24"
+              width="22"
+              height="22"
               viewBox="0 0 24 24"
               fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 6H20"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M4 12H20"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M4 18H14"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+
+          {/* MOBILE MENU BUTTON */}
+          <button
+            onClick={toggleApplicationMenu}
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-2xl
+              border
+              border-gray-200
+              bg-white/70
+              text-gray-700
+              shadow-sm
+              transition-all
+              duration-300
+              hover:bg-gray-50
+              hover:shadow-md
+              dark:border-gray-800
+              dark:bg-white/[0.03]
+              dark:text-gray-300
+              dark:hover:bg-white/[0.05]
+              lg:hidden
+            "
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
             >
               <path
                 fillRule="evenodd"
@@ -77,17 +275,39 @@ const AppHeader: React.FC = () => {
             </svg>
           </button>
 
+          {/* SEARCH */}
           <div className="hidden lg:block">
             <form>
-              <div className="relative">
-                <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
+              <div
+                className="
+                  group
+                  relative
+                  transition-all
+                  duration-300
+                "
+              >
+                {/* SEARCH ICON */}
+                <span
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-4
+                    top-1/2
+                    -translate-y-1/2
+                  "
+                >
                   <svg
-                    className="fill-gray-500 dark:fill-gray-400"
+                    className="
+                      fill-gray-400
+                      transition-colors
+                      duration-300
+                      group-focus-within:fill-brand-500
+                      dark:fill-gray-500
+                    "
                     width="20"
                     height="20"
                     viewBox="0 0 20 20"
                     fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
                       fillRule="evenodd"
@@ -97,26 +317,101 @@ const AppHeader: React.FC = () => {
                     />
                   </svg>
                 </span>
+
+                {/* INPUT */}
                 <input
                   ref={inputRef}
                   type="text"
-                  placeholder="Search or type command..."
-                  className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
-                />
+                  placeholder="Search vendors, branches, audit periods..."
+                  className="
+                    h-12
+                    rounded-2xl
+                    border
+                    border-gray-200
+                    bg-white/70
+                    py-2.5
+                    pl-12
+                    pr-24
+                    text-sm
+                    text-gray-800
+                    shadow-sm
+                    backdrop-blur-xl
+                    placeholder:text-gray-400
+                    transition-all
+                    duration-300
 
-              
+                    focus:w-[460px]
+                    focus:border-brand-300
+                    focus:bg-white
+                    focus:outline-none
+                    focus:ring-4
+                    focus:ring-brand-500/10
+                    focus:shadow-lg
+
+                    dark:border-gray-800
+                    dark:bg-white/[0.03]
+                    dark:text-white/90
+                    dark:placeholder:text-white/30
+
+                    xl:w-[390px]
+                  "
+                />
               </div>
             </form>
           </div>
         </div>
+
+        {/* RIGHT SECTION */}
         <div
-          className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          className={`
+            ${
+              isApplicationMenuOpen
+                ? "flex"
+                : "hidden"
+            }
+
+            w-full
+            items-center
+            justify-between
+            gap-4
+            px-5
+            py-4
+
+            lg:flex
+            lg:w-auto
+            lg:justify-end
+            lg:px-0
+            lg:py-0
+          `}
         >
-          
-          {/* <!-- User Area --> */}
-          <UserDropdown />
+          {/* RIGHT ACTIONS */}
+          <div className="flex items-center gap-3">
+            {/* NOTIFICATIONS */}
+            <div
+              className="
+                transition-all
+                duration-300
+                hover:-translate-y-[1px]
+              "
+            >
+              <NotificationDropdown />
+            </div>
+
+            {/* USER */}
+            <div
+              className="
+                rounded-2xl
+                transition-all
+                duration-300
+                hover:-translate-y-[1px]
+                hover:bg-gray-50
+                hover:shadow-sm
+                dark:hover:bg-white/[0.03]
+              "
+            >
+              <UserDropdown />
+            </div>
+          </div>
         </div>
       </div>
     </header>

@@ -24,8 +24,10 @@ from master_apps.vendor.utils import (
     audit_period_to_date,
 )
 
-from master_apps.documents.models import DocumentMaster
-
+from master_apps.documents.models import (
+    DocumentMaster,
+    ComplianceAuditArchive
+)
 
 from .models import Auditor, AuditorDocument
 from .serializers import AuditorSerializer
@@ -42,12 +44,535 @@ User = get_user_model()
 
 import zipfile
 import os
-from django.http import HttpResponse
 from io import BytesIO
-from .models import AuditEntry
+from .models import AuditEntry, AuditSession
+from django.core.files.base import ContentFile
+
+from master_apps.vendor.constants import (
+    WorkflowStatus
+)
+
+from master_apps.vendor.compliance_models import (
+    ExceptionalApprovalDocument
+)
+
 import logging
 
 logger = logging.getLogger(__name__)
+
+from io import BytesIO
+
+from django.http import HttpResponse, FileResponse
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Spacer,
+    Paragraph,
+    Table,
+    TableStyle,
+)
+
+from reportlab.lib import colors
+
+from reportlab.lib.styles import getSampleStyleSheet
+
+from reportlab.lib.pagesizes import A4
+
+from reportlab.platypus.flowables import HRFlowable
+
+from reportlab.lib.enums import TA_LEFT
+
+from reportlab.lib.styles import ParagraphStyle
+
+from master_apps.auditor.models import AuditEntry
+
+
+class DownloadCCPDFAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, audit_id):
+
+        entry = get_object_or_404(
+            AuditEntry.objects.select_related(
+                "checklist"
+            ),
+            id=audit_id
+        )
+
+        buffer = BytesIO()
+
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=35,
+            leftMargin=35,
+            topMargin=30,
+            bottomMargin=30,
+        )
+
+        styles = getSampleStyleSheet()
+
+        elements = []
+
+        # ==========================================
+        # DATA
+        # ==========================================
+
+        vendor_name = getattr(
+            entry,
+            "vendor_name",
+            "Vendor"
+        )
+
+        pe_name = getattr(
+            entry,
+            "pe_name",
+            "PE"
+        )
+
+        state_name = (
+            entry.checklist.state.name
+            if entry.checklist
+            and entry.checklist.state
+            else "-"
+        )
+
+        mapping = (
+            VendorBranchMapping.objects.filter(
+                branch_id=entry.branch_id
+            )
+            .select_related("branch")
+            .first()
+        )
+
+        branch_name = (
+            mapping.branch.short_name
+            if mapping and mapping.branch
+            else "-"
+        )
+
+        audit_period = entry.audit_period or "-"
+
+        generated_on = now().strftime(
+            "%d %b %Y %I:%M %p"
+        )
+
+        all_entries = AuditEntry.objects.filter(
+            branch_id=entry.branch_id,
+            audit_period=entry.audit_period
+        )
+
+        total_entries = all_entries.count()
+
+        complied_entries = all_entries.filter(
+            status__in=[
+                "Complied",
+                "Not Applicable For Audit Period",
+                "Exceptional Approval - Delayed Complied",
+            ]
+        ).count()
+
+
+        # ==========================================
+        # CUSTOM STYLES
+        # ==========================================
+
+        title_style = ParagraphStyle(
+            "title_style",
+            parent=styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=20,
+            textColor=colors.white,
+            leading=28,
+        )
+
+        normal_style = ParagraphStyle(
+            "normal_style",
+            parent=styles["Normal"],
+            fontName="Helvetica",
+            fontSize=11,
+            leading=20,
+            textColor=colors.HexColor("#111827"),
+        )
+
+        bold_style = ParagraphStyle(
+            "bold_style",
+            parent=styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=11,
+            leading=20,
+            textColor=colors.HexColor("#111827"),
+        )
+
+        # ==========================================
+        # HEADER BOX
+        # ==========================================
+
+        header_table = Table(
+            [[
+                Paragraph(
+                    "Compliance Clearance Certificate",
+                    title_style
+                ),
+            ]],
+            colWidths=[520]
+        )
+
+        header_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#243B8A")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 20),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 20),
+            ("TOPPADDING", (0, 0), (-1, -1), 22),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 22),
+        ]))
+
+        elements.append(header_table)
+
+        # ==========================================
+        # AUDIT PERIOD STRIP
+        # ==========================================
+
+        audit_strip = Table(
+            [[
+                Paragraph(
+                    f"<b>Audit Period:</b> {audit_period}",
+                    ParagraphStyle(
+                        "strip_style",
+                        parent=styles["Normal"],
+                        textColor=colors.white,
+                        fontSize=11,
+                        leading=18,
+                    )
+                )
+            ]],
+            colWidths=[520]
+        )
+
+        audit_strip.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#2F4AA0")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 20),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+            ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ]))
+
+        elements.append(audit_strip)
+
+        elements.append(Spacer(1, 18))
+
+        status_table = Table(
+            [[
+
+                Paragraph(
+                    "<b>FINAL STATUS:</b> COMPLIED",
+                    ParagraphStyle(
+                        "status_style",
+                        parent=styles["Normal"],
+                        textColor=colors.HexColor("#166534"),
+                        fontSize=10,
+                    )
+                ),
+
+                Paragraph(
+                    f"<b>Generated On:</b> {generated_on}",
+                    ParagraphStyle(
+                        "generated_style",
+                        parent=styles["Normal"],
+                        textColor=colors.HexColor("#374151"),
+                        fontSize=10,
+                        alignment=2,
+                    )
+                )
+
+            ]],
+            colWidths=[260, 260]
+        )
+
+        status_table.setStyle(TableStyle([
+
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#ECFDF5")),
+
+            ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#BBF7D0")),
+
+            ("LEFTPADDING", (0, 0), (-1, -1), 14),
+
+            ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+
+            ("TOPPADDING", (0, 0), (-1, -1), 10),
+
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+
+        ]))
+
+        elements.append(status_table)
+
+        elements.append(Spacer(1, 26))
+        # ==========================================
+        # GREETING
+        # ==========================================
+
+        elements.append(
+            Paragraph(
+                f"Dear <b>{vendor_name}</b>,",
+                normal_style
+            )
+        )
+
+        elements.append(Spacer(1, 10))
+
+        elements.append(
+            Paragraph(
+                "We are pleased to inform you that the compliance audit has been successfully completed.",
+                normal_style
+            )
+        )
+
+        elements.append(Spacer(1, 6))
+
+        elements.append(
+            Paragraph(
+                "Accordingly, the <b>Compliance Clearance Certificate (CC)</b> has been issued.",
+                normal_style
+            )
+        )
+
+        elements.append(Spacer(1, 25))
+
+        highlights_title = Paragraph(
+            "<b>Compliance Highlights</b>",
+            bold_style
+        )
+
+        elements.append(highlights_title)
+
+        elements.append(Spacer(1, 10))
+
+        highlights = [
+
+            "• Compliance audit successfully completed",
+
+            "• Vendor documents verified by auditor",
+
+            "• Compliance Clearance Certificate approved",
+
+            "• Audit finalized and frozen in system",
+        ]
+
+        for item in highlights:
+
+            elements.append(
+                Paragraph(
+                    item,
+                    normal_style
+                )
+            )
+
+            elements.append(Spacer(1, 5))
+
+        elements.append(Spacer(1, 20))
+
+        # ==========================================
+        # DETAILS TABLE
+        # ==========================================
+
+        details_data = [
+
+            [
+                Paragraph("<b>Particular</b>", bold_style),
+                Paragraph("<b>Details</b>", bold_style),
+            ],
+
+            [
+                "Principal Employer",
+                pe_name,
+            ],
+
+            [
+                "State",
+                state_name,
+            ],
+
+            [
+                "Branch",
+                branch_name,
+            ],
+
+            [
+                "Audit Period",
+                audit_period,
+            ],
+
+            [
+                "Generated On",
+                generated_on,
+            ],
+        ]
+
+        details_table = Table(
+            details_data,
+            colWidths=[260, 260]
+        )
+
+        details_table.setStyle(TableStyle([
+
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
+
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+
+            ("FONTSIZE", (0, 0), (-1, -1), 10.5),
+
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+
+            ("TOPPADDING", (0, 0), (-1, 0), 12),
+
+            ("GRID", (0, 0), (-1, -1), 0.8, colors.HexColor("#D1D5DB")),
+
+            ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+
+            ("LEFTPADDING", (0, 0), (-1, -1), 14),
+
+            ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+
+            ("TOPPADDING", (0, 1), (-1, -1), 12),
+
+            ("BOTTOMPADDING", (0, 1), (-1, -1), 12),
+
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+
+        ]))
+
+        elements.append(details_table)
+
+        has_exceptional = all_entries.filter(
+            status__icontains="Exceptional Approval"
+        ).exists()
+
+        if has_exceptional:
+
+            elements.append(Spacer(1, 18))
+
+            exceptional_note = Table(
+                [[
+                    Paragraph(
+                        (
+                            "<b>Exceptional Approval Note:</b> "
+                            "This certificate contains "
+                            "auditor approved exceptional "
+                            "compliance observations."
+                        ),
+                        ParagraphStyle(
+                            "exception_style",
+                            parent=styles["Normal"],
+                            textColor=colors.HexColor("#92400E"),
+                            fontSize=10,
+                            leading=18,
+                        )
+                    )
+                ]],
+                colWidths=[520]
+            )
+
+            exceptional_note.setStyle(TableStyle([
+
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEF3C7")),
+
+                ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#F59E0B")),
+
+                ("LEFTPADDING", (0, 0), (-1, -1), 14),
+
+                ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+
+                ("TOPPADDING", (0, 0), (-1, -1), 12),
+
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+
+            ]))
+
+            elements.append(exceptional_note)
+
+        elements.append(Spacer(1, 28))
+
+        elements.append(
+            Paragraph(
+                "We appreciate your cooperation.",
+                normal_style
+            )
+        )
+
+        elements.append(Spacer(1, 18))
+
+        elements.append(
+            Paragraph(
+                "Regards,<br/><b>Vendor Compliance Audit Team</b>",
+                normal_style
+            )
+        )
+
+        elements.append(Spacer(1, 30))
+
+        elements.append(
+            HRFlowable(
+                width="100%",
+                color=colors.HexColor("#D1D5DB")
+            )
+        )
+
+        elements.append(Spacer(1, 12))
+
+        elements.append(
+            Paragraph(
+                (
+                    "This digitally generated certificate is "
+                    "issued through HR Compliance Portal.<br/><br/>"
+
+                    f"<b>Generated On:</b> {generated_on}<br/>"
+
+                    "<b>Generated By:</b> Vendor Compliance Audit Team<br/><br/>"
+
+                    "This is a system generated document "
+                    "and does not require physical signature."
+                ),
+                ParagraphStyle(
+                    "footer_style",
+                    parent=styles["Normal"],
+                    fontSize=9,
+                    textColor=colors.HexColor("#6B7280"),
+                    alignment=TA_LEFT,
+                )
+            )
+        )
+
+        # ==========================================
+        # BUILD PDF
+        # ==========================================
+
+        doc.build(elements)
+
+        pdf = buffer.getvalue()
+
+        buffer.close()
+
+        response = HttpResponse(
+            content_type="application/pdf"
+        )
+
+        safe_vendor = vendor_name.replace(" ", "_")
+        safe_period = audit_period.replace(" ", "_")
+
+        response[
+            "Content-Disposition"
+        ] = (
+            f'inline; filename="'
+            f'{safe_vendor}_{safe_period}_CC.pdf"'
+        )
+
+        response.write(pdf)
+
+        return response
 
 
 class AuditorCreateAPIView(APIView):
@@ -239,6 +764,35 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                         except Exception as e:
                             print("SUPPORTING FILE ERROR:", str(e))
 
+                    for exceptional in sub.exceptional_documents.all():
+
+                        try:
+
+                            exceptional_path = exceptional.file.path
+
+                            if os.path.exists(exceptional_path):
+
+                                exceptional_name = os.path.basename(
+                                    exceptional_path
+                                )
+
+                                zip_file.write(
+
+                                    exceptional_path,
+
+                                    arcname=(
+                                        "exceptional_approval_documents/"
+                                        f"{sub.id}_{exceptional_name}"
+                                    )
+                                )
+
+                        except Exception as e:
+
+                            print(
+                                "EXCEPTION FILE ERROR:",
+                                str(e)
+                            )
+
                 except Exception as e:
                     print("ZIP ERROR:", str(e))
 
@@ -264,7 +818,29 @@ class SaveAuditAPIView(APIView):
 
         branch_id = request.data.get("branch_id")
         audit_period = request.data.get("audit_period")
-        entries = request.data.get("entries", [])
+        if audit_period:
+            audit_period = (
+                audit_period
+                .replace("–", "-")
+                .strip()
+            )
+        import json
+
+        entries = request.data.get("entries", "[]")
+
+        if isinstance(entries, str):
+
+            try:
+
+                entries = json.loads(entries)
+
+            except Exception:
+
+                return Response({
+
+                    "error": "Invalid entries payload"
+
+                }, status=400)
         freeze_report = request.data.get("freeze_report", False)
 
         logger.info("🔄 Audit API called")
@@ -323,21 +899,80 @@ class SaveAuditAPIView(APIView):
         pe = mapping.principal_employer
         branch = mapping.branch
 
-        # =========================
-        # STRICT VALIDATION (NO SAVE IF FAIL)
-        # =========================
-        allowed_status = [
+        already_frozen = (
+            VendorComplianceSubmission.objects.filter(
+                branch_id=branch_id,
+                vendor_id=vendor.id,
+                audit_period=audit_period,
+                is_frozen=True
+            ).exists()
+        )
+
+        if already_frozen:
+
+            return Response({
+
+                "error": (
+                    "This audit period is frozen "
+                    "and cannot be modified."
+                )
+
+            }, status=400)
+
+
+        # ======================================
+        # FREEZE ELIGIBLE STATUSES
+        # ======================================
+
+        FREEZE_ALLOWED_STATUSES = [
+
             "Complied",
+
+            "Not Applicable For Audit Period",
+
             "Exceptional Approval - Delayed Complied",
-            "Not Applicable For Audit Period"
         ]
 
-        all_valid = True
+
+        # ======================================
+        # CHECK FREEZE ELIGIBILITY
+        # ======================================
+
+        all_valid = all(
+
+            entry.get("status")
+            in FREEZE_ALLOWED_STATUSES
+
+            for entry in entries
+        )
 
         for entry in entries:
-            if entry.get("status") not in allowed_status:
-                all_valid = False
-                break
+
+            status_value = entry.get("status")
+
+            if status_value in [
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied"
+            ]:
+
+                checklist_id = entry.get(
+                    "checklist_id"
+                )
+
+                support_file = request.FILES.get(
+                    f"exceptional_file_{checklist_id}"
+                )
+
+                if not support_file:
+
+                    return Response({
+
+                        "error": (
+                            "Supporting document mandatory "
+                            "for Exceptional Approval."
+                        )
+
+                    }, status=400)
 
         logger.info("✅ Validation checked")
         # =========================
@@ -357,7 +992,80 @@ class SaveAuditAPIView(APIView):
                 }
             )
 
+                        # ======================================
+            # 📎 SAVE EXCEPTIONAL APPROVAL FILE
+            # ======================================
+
+            status_value = entry.get("status")
+
+            if status_value in [
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied"
+            ]:
+
+                checklist_id = entry.get(
+                    "checklist_id"
+                )
+
+                support_file = request.FILES.get(
+                    f"exceptional_file_{checklist_id}"
+                )
+
+                if support_file:
+
+                    related_submission = (
+                        VendorComplianceSubmission.objects.filter(
+                            branch_id=branch_id,
+                            vendor_id=vendor.id,
+                            audit_period=audit_period,
+                            document_id=entry.get("document_id")
+                        ).first()
+                    )
+
+                    if related_submission:
+
+                        ExceptionalApprovalDocument.objects.filter(
+                            submission=related_submission
+                        ).delete()
+
+                        ExceptionalApprovalDocument.objects.create(
+                            submission=related_submission,
+                            file=support_file,
+                            remark=entry.get("observation", "")
+                        )
+
+                        related_submission.has_exceptional_approval = True
+
+                        related_submission.workflow_status = (
+                            WorkflowStatus.EXCEPTIONAL_APPROVAL
+                        )
+
+                        related_submission.save()
+
         logger.info("✅ Audit entries saved")
+
+        AuditSession.objects.update_or_create(
+
+            auditor=request.user.auditor_profile,
+
+            branch_id=branch_id,
+
+            audit_period=audit_period,
+
+            defaults={
+
+                "status": (
+                    "FROZEN"
+                    if freeze_report and all_valid
+                    else "SUBMITTED"
+                )
+            }
+        )
+
+        saved_entry = AuditEntry.objects.filter(
+            branch_id=branch_id,
+            audit_period=audit_period
+        ).first()
 
         # =========================
         # FETCH CC EMAIL FROM DB (FINAL FIX)
@@ -435,6 +1143,34 @@ class SaveAuditAPIView(APIView):
                     </tr>
                 </table>
 
+                {
+                    '''
+                    <div style="
+                        margin-top:20px;
+                        padding:14px;
+                        background:#FEF3C7;
+                        border:1px solid #F59E0B;
+                        border-radius:6px;
+                        color:#92400E;
+                    ">
+                        <b>Note:</b>
+                        This audit contains Exceptional Approval observations.
+                    </div>
+                    '''
+                    if any(
+
+                        entry.get("status") in [
+
+                            "Exceptional Approval - Delayed Complied",
+
+                            "Exceptional Approval- Not Complied"
+                        ]
+
+                        for entry in entries
+                    )
+                    else ""
+                }
+
                 <p style="margin-top:20px;">
                 We appreciate your cooperation.
                 </p>
@@ -450,6 +1186,11 @@ class SaveAuditAPIView(APIView):
         """
 
         # =========================
+        # GENERATE PDF BYTES
+        # =========================
+
+        pdf_bytes = html_content.encode("utf-8")
+        # =========================
         # SEND EMAIL
         # =========================
         # =========================
@@ -458,16 +1199,95 @@ class SaveAuditAPIView(APIView):
 
         if all_valid:
 
-            if freeze_report:
+            if freeze_report and all_valid:
 
                 VendorComplianceSubmission.objects.filter(
+
                     branch_id=branch_id,
+
                     vendor_id=vendor.id,
+
                     audit_period=audit_period
+
                 ).update(
+
                     is_cc_issued=True,
-                    cc_issued_at=now()
+
+                    cc_issued_at=now(),
+
+                    workflow_status=WorkflowStatus.FROZEN,
+
+                    is_frozen=True,
+
+                    frozen_at=now(),
+
+                    clearance_email_sent=True,
+
+                    clearance_email_sent_at=now()
                 )
+
+                # ======================================
+                # 📦 SAVE CC PDF ARCHIVE
+                # ======================================
+
+                try:
+
+                    archive_filename = (
+                        f"{vendor.short_name}_"
+                        f"{audit_period}_CC.pdf"
+                    ).replace(" ", "_")
+
+                    all_submissions = VendorComplianceSubmission.objects.filter(
+
+                        branch_id=branch_id,
+
+                        vendor_id=vendor.id,
+
+                        audit_period=audit_period
+                    )
+
+                    for submission in all_submissions:
+
+                        try:
+
+                            archive = ComplianceAuditArchive.objects.create(
+
+                                vendor_submission=submission,
+
+                                archive_type="CC_PDF",
+
+                                uploaded_by=request.user,
+
+                                remarks="Auto archived CC PDF"
+                            )
+
+                            print(
+                                "SAVING CC ARCHIVE TO:",
+                                archive.file.name
+                            )
+
+                            archive.file.save(
+
+                                archive_filename,
+
+                                ContentFile(
+                                    pdf_bytes
+                                ),
+
+                                save=True
+                            )
+
+                        except Exception as e:
+
+                            logger.error(
+                                f"CC ARCHIVE SAVE ERROR: {str(e)}"
+                            )
+
+                except Exception as archive_error:
+
+                    logger.error(
+                        f"ARCHIVE ERROR: {str(archive_error)}"
+                    )
 
                 # ======================================
                 # AUTO MARK RELATED AUDITOR NOTIFICATIONS
@@ -508,20 +1328,90 @@ class SaveAuditAPIView(APIView):
 
                 email.send(fail_silently=False)
 
+                try:
+                    all_submissions = VendorComplianceSubmission.objects.filter(
+
+                        branch_id=branch_id,
+
+                        vendor_id=vendor.id,
+
+                        audit_period=audit_period
+                    )
+
+                    for submission in all_submissions:
+
+                        try:
+
+                            archive = ComplianceAuditArchive.objects.create(
+
+                                vendor_submission=submission,
+
+                                archive_type="CLEARANCE_EMAIL",
+
+                                uploaded_by=request.user,
+
+                                remarks="Clearance email archived"
+                            )
+
+                            print(
+                                "SAVING EMAIL ARCHIVE TO:",
+                                archive.file.name
+                            )
+
+                            archive.file.save(
+
+                                (
+                                    f"{vendor.short_name}_"
+                                    f"{audit_period}_"
+                                    f"clearance_email.html"
+                                ).replace(" ", "_"),
+
+                                ContentFile(
+                                    pdf_bytes
+                                ),
+
+                                save=True
+                            )
+
+                        except Exception as e:
+
+                            logger.error(
+                                f"EMAIL ARCHIVE ERROR: {str(e)}"
+                            )
+
+                except Exception as archive_error:
+
+                    logger.error(
+                        f"EMAIL ARCHIVE ERROR: {str(archive_error)}"
+                    )
+
                 SystemNotification.objects.create(
                     user=vendor.user,
                     title="Compliance Clearance Certificate Issued",
                     type="VENDOR",
                     branch_id=branch_id,
                     audit_period=audit_period,
+
                     data={
+
                         "vendor": vendor.name,
+
                         "vendor_id": vendor.id,
+
                         "branch": branch.short_name,
+
                         "state": branch.state,
+
                         "audit_period": audit_period,
-                        "status": "CC_ISSUED"
-                    }
+
+                        "status": "CC_ISSUED",
+
+                        "pdf_download_url": (
+                            request.build_absolute_uri(
+                                f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
+                            )
+                        ),
+                    },
                 )
 
             except Exception as e:
@@ -1008,6 +1898,12 @@ class AuditChecklistAPIView(APIView):
             ):
                 continue
 
+            existing_entry = AuditEntry.objects.filter(
+                checklist_id=item.id,
+                branch_id=branch_id,
+                audit_period=audit_period
+            ).first()
+
             response.append({
                 "id": item.id,
                 "state": item.state.name if item.state else "",
@@ -1049,6 +1945,38 @@ class AuditChecklistAPIView(APIView):
                 # ✅ UI SUPPORT FLAGS
                 "document_available": bool(sub),
                 "has_checkpoints": True,
+
+                "is_reuploaded": (
+                    sub.is_reuploaded
+                    if sub
+                    else False
+                ),
+
+                "reupload_remark": (
+                    sub.reupload_remark
+                    if sub
+                    else ""
+                ),
+
+                "workflow_status": (
+                    sub.workflow_status
+                    if sub
+                    else None
+                ),
+                "status": (
+                    existing_entry.status
+                    if existing_entry else ""
+                ),
+
+                "observation": (
+                    existing_entry.observation
+                    if existing_entry else ""
+                ),
+
+                "recommendation": (
+                    existing_entry.recommendation
+                    if existing_entry else ""
+                ),
             })
 
         return Response(response)
@@ -1099,6 +2027,7 @@ class AuditorComplianceRemarksAPIView(APIView):
 
 
 class AuditorCompliancePeriodAPIView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -1106,8 +2035,6 @@ class AuditorCompliancePeriodAPIView(APIView):
         pe_id = request.GET.get("pe_id")
         vendor_id = request.GET.get("vendor_id")
         branch_id = request.GET.get("branch_id")
-
-        today = now().date()
 
         auditor = getattr(
             request.user,
@@ -1142,7 +2069,10 @@ class AuditorCompliancePeriodAPIView(APIView):
 
             while current <= end_date:
 
-                # ✅ GET LAST DAY OF MONTH
+                # ======================================
+                # 📅 LAST DAY OF CURRENT MONTH
+                # ======================================
+
                 last_day = calendar.monthrange(
                     current.year,
                     current.month
@@ -1154,50 +2084,53 @@ class AuditorCompliancePeriodAPIView(APIView):
                     last_day
                 )
 
-                # ✅ APPLY HISTORY FOR THIS PERIOD
+                # ======================================
+                # 🔄 APPLY MAPPING HISTORY
+                # ======================================
+
                 virtual_mapping = apply_mapping_for_period(
                     mapping,
                     target_date=period_end
                 )
-                print(
-                    "PERIOD:",
-                    label,
-                    "AUDITOR:",
+
+                # ======================================
+                # 👤 VALID AUDITOR CHECK
+                # ======================================
+
+                if (
                     getattr(
                         virtual_mapping,
                         "_virtual_auditor_id",
                         None
-                    ),
-                    "CURRENT:",
-                    auditor.id
-                )
+                    ) == auditor.id
+                ):
 
-            if (
-                getattr(
-                    virtual_mapping,
-                    "_virtual_auditor_id",
-                    None
-                ) == auditor.id
-            ):
+                    label = current.strftime("%b %Y")
 
-                label = current.strftime("%b %Y")
+                    # ======================================
+                    # ❄️ SKIP FROZEN / COMPLETED PERIODS
+                    # ======================================
 
-                already_completed = VendorComplianceSubmission.objects.filter(
-                    branch_id=branch_id,
-                    vendor_id=vendor_id,
-                    audit_period=label,
-                    is_cc_issued=True
-                ).exists()
+                    already_completed = (
+                        VendorComplianceSubmission.objects.filter(
+                            branch_id=branch_id,
+                            vendor_id=vendor_id,
+                            audit_period=label,
+                            is_frozen=True
+                        ).exists()
+                    )
 
-                if already_completed:
-                    continue
+                    if not already_completed:
 
-                data.append({
-                    "value": label,
-                    "label": label
-                })
+                        data.append({
+                            "value": label,
+                            "label": label
+                        })
 
-                # NEXT MONTH
+                # ======================================
+                # ➡️ NEXT MONTH
+                # ======================================
+
                 if current.month == 12:
 
                     current = date(
@@ -1214,13 +2147,19 @@ class AuditorCompliancePeriodAPIView(APIView):
                         1
                     )
 
-        # REMOVE DUPLICATES
+        # ======================================
+        # 🧹 REMOVE DUPLICATES
+        # ======================================
+
         unique = {
             item["value"]: item
             for item in data
         }
 
-        # SORT
+        # ======================================
+        # 📊 SORT PERIODS
+        # ======================================
+
         sorted_data = sorted(
             unique.values(),
             key=lambda x: datetime.strptime(
@@ -1339,3 +2278,322 @@ class MarkNotificationReadAPIView(APIView):
         notif.save()
 
         return Response({"message": "Marked as read"})
+
+
+class FreezeAuditReportsAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        from master_apps.vendor.mapping_models import VendorBranchMapping
+
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        frozen_sessions = AuditSession.objects.filter(
+            auditor=auditor,
+            status="FROZEN"
+        )
+
+        entries = AuditEntry.objects.filter(
+            auditor=auditor,
+
+            branch_id__in=frozen_sessions.values_list(
+                "branch_id",
+                flat=True
+            ),
+
+            audit_period__in=frozen_sessions.values_list(
+                "audit_period",
+                flat=True
+            )
+        ).select_related(
+            "checklist"
+        ).order_by("-id")
+
+        grouped = {}
+
+        for entry in entries:
+
+            checklist = entry.checklist
+
+            if not checklist:
+                continue
+
+            audit_period = entry.audit_period
+
+            # ======================================
+            # FIND RELATED MAPPING
+            # ======================================
+
+            mapping = (
+                VendorBranchMapping.objects.filter(
+                    branch_id=entry.branch_id
+                )
+                .select_related(
+                    "vendor",
+                    "principal_employer",
+                    "branch"
+                )
+                .first()
+            )
+
+            vendor_name = (
+                mapping.vendor.name
+                if mapping and mapping.vendor
+                else "-"
+            )
+
+            pe_name = (
+                mapping.principal_employer.short_name
+                if mapping and mapping.principal_employer
+                else "-"
+            )
+
+            branch_name = (
+                mapping.branch.short_name
+                if mapping and mapping.branch
+                else "-"
+            )
+
+            state_name = (
+                checklist.state.name
+                if checklist.state
+                else "-"
+            )
+
+            key = (
+                f"{vendor_name}_"
+                f"{branch_name}_"
+                f"{audit_period}"
+            )
+
+            if key not in grouped:
+
+                grouped[key] = {
+
+                    "id": entry.id,
+
+                    "vendor_name": vendor_name,
+
+                    "pe_name": pe_name,
+
+                    "state": state_name,
+
+                    "branch_name": branch_name,
+
+                    "audit_period": audit_period,
+
+                    "entries": [],
+                }
+
+            grouped[key]["entries"].append({
+
+                "id": entry.id,
+                "audit_entry_id": entry.id,
+
+                "audit_particular": (
+                    checklist.audit_particulars
+                ),
+
+                "status": entry.status,
+
+                "observation": entry.observation,
+
+                "recommendation": entry.recommendation,
+            })
+
+        return Response(
+            list(grouped.values())
+        )
+
+
+# ======================================
+# 📦 COMPLIANCE ARCHIVE LIST
+# ======================================
+
+class ComplianceArchiveListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        vendor_id = request.GET.get("vendor_id")
+        audit_period = request.GET.get("audit_period")
+
+        archives = ComplianceAuditArchive.objects.select_related(
+            "vendor_submission"
+        )
+
+        if vendor_id:
+
+            archives = archives.filter(
+                vendor_submission__vendor_id=vendor_id
+            )
+
+        if audit_period:
+
+            archives = archives.filter(
+                vendor_submission__audit_period=audit_period
+            )
+
+        data = []
+
+        for archive in archives.order_by("-created_at"):
+
+            submission = archive.vendor_submission
+
+            data.append({
+
+                "id": archive.id,
+
+                "archive_type": archive.archive_type,
+
+                "vendor": (
+                    submission.vendor.name
+                    if submission.vendor
+                    else "-"
+                ),
+
+                "audit_period": (
+                    submission.audit_period
+                ),
+
+                "document": (
+                    submission.document.name
+                    if submission.document
+                    else "-"
+                ),
+
+                "created_at": archive.created_at,
+
+                "download_url": (
+                    f"/auditor/compliance-archives/"
+                    f"download/{archive.id}/"
+                )
+            })
+
+        return Response(data)
+
+
+# ======================================
+# 📥 DOWNLOAD ARCHIVE FILE
+# ======================================
+
+class ComplianceArchiveDownloadAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, archive_id):
+
+        archive = get_object_or_404(
+            ComplianceAuditArchive,
+            id=archive_id
+        )
+
+        if not archive.file:
+
+            return Response({
+
+                "error": "Archive file missing"
+
+            }, status=404)
+
+        return FileResponse(
+
+            archive.file.open("rb"),
+
+            as_attachment=True,
+
+            filename=os.path.basename(
+                archive.file.name
+            )
+        )
+
+
+# ======================================
+# 📎 EXCEPTIONAL APPROVAL FILES
+# ======================================
+
+class ExceptionalApprovalFilesAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, submission_id):
+
+        submission = get_object_or_404(
+            VendorComplianceSubmission,
+            id=submission_id
+        )
+
+        files = submission.exceptional_documents.all()
+
+        data = []
+
+        for item in files:
+
+            data.append({
+
+                "id": item.id,
+
+                "file": (
+                    request.build_absolute_uri(
+                        item.file.url
+                    )
+                    if item.file
+                    else None
+                ),
+
+                "remark": item.remark,
+
+                "uploaded_at": item.uploaded_at
+            })
+
+        return Response(data)
+
+
+
+class AuditSessionStatusAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        branch_id = request.GET.get("branch_id")
+        audit_period = request.GET.get("audit_period")
+
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
+
+        if not auditor:
+            return Response({
+                "status": None
+            })
+
+        session = AuditSession.objects.filter(
+            auditor=auditor,
+            branch_id=branch_id,
+            audit_period=audit_period
+        ).first()
+
+        if not session:
+
+            return Response({
+                "status": None
+            })
+
+        return Response({
+
+            "status": session.status,
+
+            "last_saved_at": session.last_saved_at,
+
+            "created_at": session.created_at
+        })
