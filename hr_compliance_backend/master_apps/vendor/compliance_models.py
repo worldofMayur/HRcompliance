@@ -12,107 +12,97 @@ from master_apps.principle_employee.models import (
 )
 from master_apps.documents.models import DocumentMaster
 
-from master_apps.vendor.utils import (
-    vendor_document_upload_path
-)
-
 from master_apps.vendor.constants import (
     WorkflowStatus,
     WORKFLOW_STATUS_CHOICES
 )
+from master_apps.vendor.storage import OverwriteStorage
+
+# ==================== UPDATED IMPORTS ====================
+from master_apps.vendor.path_manager import (
+    build_submission_subfolder,
+    generate_unique_filename,
+    normalize_audit_period,     # ← Added
+)
+# ========================================================
 
 
-from django.utils.timezone import now
-import os
+def compliance_upload_path(instance, filename):
+    """Main + Reuploaded Documents"""
+    submission = instance
+    folder = "reuploaded_documents" if getattr(instance, 'is_reuploaded', False) else "main_documents"
+    filename = generate_unique_filename(filename)
+    return os.path.join(
+        build_submission_subfolder(submission, folder),
+        filename
+    )
 
-def compliance_upload_path(
+
+def supporting_file_upload_path(instance, filename):
+    """Supporting Files"""
+    filename = generate_unique_filename(filename)
+    return os.path.join(
+        build_submission_subfolder(instance.submission, "supporting_files"),
+        filename
+    )
+
+def version_file_upload_path(instance, filename):
+    """Reuploaded Version Files"""
+
+    filename = generate_unique_filename(filename)
+
+    return os.path.join(
+
+        build_submission_subfolder(
+            instance.submission,
+            "reuploaded_documents"
+        ),
+
+        filename
+    )
+
+
+def compliance_clearance_certificate_path(instance, filename):
+    """Compliance Clearance Certificate"""
+
+    filename = generate_unique_filename(filename)
+
+    return os.path.join(
+        build_submission_subfolder(
+            instance,
+            "compliance_clearance_certificate"
+        ),
+        filename
+    )
+
+
+# ==========================================
+# ⚠️ MIGRATION COMPATIBILITY FUNCTION
+# ==========================================
+def compliance_main_upload_path(
     instance,
     filename
 ):
 
-    import os
-
-    from master_apps.vendor.utils import (
-        build_audit_folder_path
-    )
-
-    base_path = build_audit_folder_path(
-
-        vendor=instance.vendor,
-
-        pe=instance.principal_employer,
-
-        branch=instance.branch,
-
-        audit_period=instance.audit_period,
-    )
-
-    filename = os.path.basename(
-        filename
-    )
-
-    folder = (
-        "reuploaded_documents"
-        if instance.is_reuploaded
-        else "main_documents"
-    )
-
-    return os.path.join(
-
-        base_path,
-
-        folder,
-
-        filename
-    )
-
-def compliance_main_upload_path(instance, filename):
-
-    return vendor_document_upload_path(
+    return compliance_upload_path(
         instance,
         filename
     )
 
-# ===============================
-# 📁 SUPPORTING FILE PATH
-# ===============================
+# ======================================
+# LEGACY SUPPORTING FILE PATH
+# (Required for old migrations)
+# ======================================
+
 def compliance_supporting_upload_path(
     instance,
     filename
 ):
 
-    import os
-
-    from master_apps.vendor.utils import (
-        build_audit_folder_path
-    )
-
-    submission = instance.submission
-
-    base_path = build_audit_folder_path(
-
-        vendor=submission.vendor,
-
-        pe=submission.principal_employer,
-
-        branch=submission.branch,
-
-        audit_period=submission.audit_period,
-    )
-
-    filename = os.path.basename(
+    return supporting_file_upload_path(
+        instance,
         filename
     )
-
-    return os.path.join(
-
-        base_path,
-
-        "supporting_files",
-
-        filename
-    )
-
 
 # ===============================
 # 📄 MAIN SUBMISSION MODEL
@@ -154,9 +144,10 @@ class VendorComplianceSubmission(models.Model):
     # 📄 MAIN FILE
     # ===============================
     main_file = models.FileField(
+        storage=OverwriteStorage(),
         upload_to=compliance_upload_path,
         max_length=500
-    )
+        )
 
     original_filename = models.CharField(
         max_length=255,
@@ -193,6 +184,24 @@ class VendorComplianceSubmission(models.Model):
     cc_issued_at = models.DateTimeField(
         null=True,
         blank=True
+    )
+
+    # ===============================
+    # 📄 CLEARANCE CERTIFICATE
+    # ===============================
+
+    clearance_certificate = models.FileField(
+        upload_to=compliance_clearance_certificate_path,
+        null=True,
+        blank=True,
+        max_length=500
+    )
+
+    audit_report_pdf = models.FileField(
+        upload_to=compliance_clearance_certificate_path,
+        null=True,
+        blank=True,
+        max_length=500
     )
 
     # ===============================
@@ -273,6 +282,47 @@ class VendorComplianceSubmission(models.Model):
             f"{self.audit_period}"
         )
 
+    def save(self, *args, **kwargs):
+
+        if self.pk:
+            old = VendorComplianceSubmission.objects.get(pk=self.pk)
+
+            self.vendor = old.vendor
+            self.principal_employer = old.principal_employer
+            self.branch = old.branch
+            self.audit_period = old.audit_period
+            self.document = old.document
+
+        is_new = self.pk is None
+
+        temp_file = self.main_file if is_new else None
+
+        if is_new:
+            self.main_file = None
+
+        super().save(*args, **kwargs)
+
+        if is_new and temp_file:
+            self.main_file = temp_file
+            super().save(update_fields=["main_file"])
+
+        if self.main_file:
+            print(
+                "\n📁 MAIN FILE SAVED:",
+                self.main_file.name
+            )
+
+        if self.file:
+            print(
+                "\n📁 REUPLOAD FILE SAVED:",
+                self.file.name
+            )
+
+        if self.clearance_certificate:
+            print(
+                "\n📁 CC FILE SAVED:",
+                self.clearance_certificate.name
+            )
 
 # ===============================
 # 📎 SUPPORTING FILE MODEL
@@ -286,7 +336,7 @@ class VendorComplianceSupportingFile(models.Model):
     )
 
     file = models.FileField(
-        upload_to=compliance_supporting_upload_path,
+        upload_to=supporting_file_upload_path,
         max_length=500
     )
 
@@ -301,6 +351,17 @@ class VendorComplianceSupportingFile(models.Model):
             f"{self.submission.id}"
         )
 
+    def save(self, *args, **kwargs):
+
+        super().save(*args, **kwargs)
+
+        if self.file:
+
+            print(
+                "\n📁 SUPPORTING FILE SAVED:",
+                self.file.name
+            )
+
 
 # ===============================
 # 📚 FILE VERSION HISTORY
@@ -314,7 +375,7 @@ class VendorComplianceFileVersion(models.Model):
     )
 
     file = models.FileField(
-        upload_to=compliance_upload_path,
+        upload_to=version_file_upload_path,
         max_length=500
     )
 
@@ -337,79 +398,23 @@ class VendorComplianceFileVersion(models.Model):
             f"Version {self.version}"
         )
 
+    def save(self, *args, **kwargs):
 
-def exceptional_approval_upload_path(
-    instance,
-    filename
-):
+        super().save(*args, **kwargs)
 
-    import os
+        if self.file:
 
-    from master_apps.vendor.utils import (
-        build_audit_folder_path
-    )
+            print(
+                "\n📁 VERSION FILE SAVED:",
+                self.file.name
+            )
 
-    submission = instance.submission
 
-    base_path = build_audit_folder_path(
-
-        vendor=submission.vendor,
-
-        pe=submission.principal_employer,
-
-        branch=submission.branch,
-
-        audit_period=submission.audit_period,
-    )
-
-    filename = os.path.basename(
-        filename
-    )
-
+def exceptional_approval_upload_path(instance, filename):
+    """Exceptional Approval Documents (Auditor)"""
+    filename = generate_unique_filename(filename)
     return os.path.join(
-
-        base_path,
-
-        "exception_approval",
-
-        filename
-    )
-
-
-def exceptional_approval_upload_path(
-    instance,
-    filename
-):
-
-    import os
-
-    from master_apps.vendor.utils import (
-        build_audit_folder_path
-    )
-
-    submission = instance.submission
-
-    base_path = build_audit_folder_path(
-
-        vendor=submission.vendor,
-
-        pe=submission.principal_employer,
-
-        branch=submission.branch,
-
-        audit_period=submission.audit_period,
-    )
-
-    filename = os.path.basename(
-        filename
-    )
-
-    return os.path.join(
-
-        base_path,
-
-        "exception_approval",
-
+        build_submission_subfolder(instance.submission, "exceptional_approval"),
         filename
     )
 
@@ -445,3 +450,14 @@ class ExceptionalApprovalDocument(models.Model):
             f"Exceptional Approval - "
             f"{self.submission.id}"
         )
+
+    def save(self, *args, **kwargs):
+
+        super().save(*args, **kwargs)
+
+        if self.file:
+
+            print(
+                "\n📁 EXCEPTIONAL APPROVAL SAVED:",
+                self.file.name
+            )

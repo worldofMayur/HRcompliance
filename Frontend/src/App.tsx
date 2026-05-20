@@ -16,6 +16,7 @@ import BarChart from "./pages/Charts/BarChart";
 import Calendar from "./pages/Calendar";
 import BasicTables from "./pages/Tables/BasicTables";
 import FormElements from "./pages/Forms/FormElements";
+import PENotifications from "./pages/PrincipleEmployee/Notifications";
 import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
@@ -43,7 +44,6 @@ import VendorMapping from "./pages/Forms/VendorMapping";
 import VendorCompliancePage from "./pages/VendorCompliancePage";
 
 import ManageVendor from "./pages/PrincipleEmployee/ManageVendor";
-import Notifications from "./pages/PrincipleEmployee/Notifications";
 import FreezeAuditReports from "./pages/Auditor/FreezeAuditReports";
 
 export default function App() {
@@ -211,10 +211,10 @@ export default function App() {
           />
 
           <Route
-            path="vendor-notifications"
+            path="pe-notifications"
             element={
               <ProtectedRoute allowedRoles={["PE"]}>
-                <Notifications />
+                <PENotifications />
               </ProtectedRoute>
             }
           />

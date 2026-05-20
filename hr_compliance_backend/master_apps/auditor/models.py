@@ -1,6 +1,14 @@
 from django.db import models
 from accounts.models import User
 
+import os
+
+from django.utils.text import slugify
+
+from master_apps.vendor.path_manager import (
+    generate_unique_filename
+)
+
 
 class Auditor(models.Model):
 
@@ -34,8 +42,29 @@ class Auditor(models.Model):
 # ===============================
 # 📁 DOCUMENT UPLOAD PATH
 # ===============================
-def auditor_document_path(instance, filename):
-    return f"auditor/{instance.auditor.short_name}/{filename}"
+def auditor_document_path(
+    instance,
+    filename
+):
+
+    folder = slugify(
+        instance.auditor.short_name
+    )
+
+    filename = generate_unique_filename(
+        filename
+    )
+
+    return os.path.join(
+
+        "auditor",
+
+        folder,
+
+        "master_documents",
+
+        filename
+    )
 
 
 class AuditorDocument(models.Model):

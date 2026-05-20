@@ -1,6 +1,13 @@
 from django.db import models
 from master_apps.principle_employee.models import PrincipalEmployer
 
+import os
+
+from master_apps.vendor.path_manager import (
+    build_submission_subfolder,
+    generate_unique_filename,
+)
+
 class AuditSubmission(models.Model):
     id = models.BigAutoField(primary_key=True)
 
@@ -68,60 +75,37 @@ def compliance_archive_upload_path(
     filename
 ):
 
-    import os
-
-    from master_apps.vendor.utils import (
-        build_audit_folder_path
-    )
-
     submission = instance.vendor_submission
-
-    base_path = build_audit_folder_path(
-
-        vendor=submission.vendor,
-
-        pe=submission.principal_employer,
-
-        branch=submission.branch,
-
-        audit_period=submission.audit_period,
-    )
-
-    filename = os.path.basename(
-        filename
-    )
 
     archive_folder_map = {
 
         "CC_PDF":
-            "CC_Certificate",
-
-        "CLEARANCE_EMAIL":
-            "Clearance_Email",
+            "compliance_clearance_certificate",
 
         "FREEZE_REPORT":
-            "Audit_Archive",
+            "audit_logs",
 
         "EXCEPTIONAL_APPROVAL":
-            (
-                "Exceptional_Approval_"
-                "Supporting_Document_"
-                "Uploaded_By_Auditor"
-            ),
+            "exceptional_approval",
     }
 
     folder = archive_folder_map.get(
 
         instance.archive_type,
 
-        "Audit_Archive"
+        "audit_archive"
+    )
+
+    filename = generate_unique_filename(
+        filename
     )
 
     return os.path.join(
 
-        base_path,
-
-        folder,
+        build_submission_subfolder(
+            submission,
+            folder
+        ),
 
         filename
     )
@@ -136,8 +120,6 @@ class ComplianceAuditArchive(models.Model):
     ARCHIVE_TYPE_CHOICES = [
 
         ("CC_PDF", "CC PDF"),
-
-        ("CLEARANCE_EMAIL", "Clearance Email"),
 
         ("FREEZE_REPORT", "Freeze Report"),
 

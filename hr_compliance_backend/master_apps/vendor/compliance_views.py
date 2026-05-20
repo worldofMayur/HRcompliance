@@ -194,6 +194,17 @@ class VendorSubmitComplianceAPIView(APIView):
 
                 if existing_submission:
 
+                    if existing_submission.is_frozen:
+
+                        return Response({
+
+                            "error": (
+                                "This audit period is already finalized "
+                                "and frozen."
+                            )
+
+                        }, status=400)
+
                     return Response({
 
                         "error": (
@@ -237,30 +248,15 @@ class VendorSubmitComplianceAPIView(APIView):
                 from pathlib import Path
                 from django.conf import settings
 
-                from master_apps.vendor.utils import (
-                    build_audit_folder_path
+                from master_apps.vendor.path_manager import (
+                    build_submission_base_path
                 )
 
-                base_path = build_audit_folder_path(
-
+                base_path = build_submission_base_path(
                     vendor=latest_submission.vendor,
-
                     pe=latest_submission.principal_employer,
-
                     branch=latest_submission.branch,
-
                     audit_period=latest_submission.audit_period,
-                )
-
-                cc_folder = (
-                    Path(settings.MEDIA_ROOT)
-                    / base_path
-                    / "cc_issue"
-                )
-
-                cc_folder.mkdir(
-                    parents=True,
-                    exist_ok=True
                 )
 
             # ===============================
@@ -293,11 +289,34 @@ class VendorSubmitComplianceAPIView(APIView):
                     .first()
                 )
 
+                if (
+
+                    existing_submission
+
+                    and
+
+                    existing_submission.is_frozen
+                ):
+
+                    return Response({
+
+                        "error": (
+                            "Cannot upload additional documents "
+                            "for finalized audit."
+                        )
+
+                    }, status=400)
+
                 if existing_submission:
 
-                    VendorComplianceSupportingFile.objects.create(
+                    supporting = VendorComplianceSupportingFile.objects.create(
                         submission=existing_submission,
                         file=file
+                    )
+
+                    print(
+                        "\n✅ SUPPORTING MODEL CREATED:",
+                        supporting.file.name
                     )
 
         return Response(
@@ -367,7 +386,6 @@ def reupload_compliance(request):
         )
 
         uploaded_count = 0
-        reuploaded_documents = []
 
         # ===============================
         # 🔁 LOOP FILES
@@ -386,7 +404,7 @@ def reupload_compliance(request):
                     f"document_{index}_id"
                 )
 
-                if document_id and not is_additional:
+                if document_id:
 
                     try:
 
@@ -478,12 +496,20 @@ def reupload_compliance(request):
                 # ❄️ BLOCK FROZEN AUDITS
                 # ===============================
 
-                if submission.is_frozen:
+                if (
+
+                    submission.is_frozen
+
+                    or
+
+                    submission.is_cc_issued
+                ):
 
                     return Response({
 
                         "error": (
-                            "This audit period is frozen. "
+                            "This audit has already been finalized "
+                            "and CC issued. "
                             "Reupload not allowed."
                         )
 
@@ -510,17 +536,33 @@ def reupload_compliance(request):
                         is_reupload=True
                     )
 
-                    submission.previous_file = (
-                        submission.main_file
-                    )
 
                 # ===============================
                 # 📄 UPDATE FILE
                 # ===============================
 
-                submission.main_file = uploaded_file
-                submission.original_filename = uploaded_file.name
+                submission.is_reuploaded = True
+
+                # KEEP ORIGINAL MAIN FILE SAFE
+
                 submission.version += 1
+
+                # SAVE REUPLOAD ONLY IN VERSION TABLE
+                reupload_version = VendorComplianceFileVersion.objects.create(
+
+                    submission=submission,
+
+                    file=uploaded_file,
+
+                    version=submission.version,
+
+                    is_reupload=True
+                )
+
+                print(
+                    "\n🔁 REUPLOAD VERSION SAVED:",
+                    reupload_version.file.name
+                )
 
                 # ===============================
                 # 🔁 REUPLOAD FLAGS
@@ -544,6 +586,10 @@ def reupload_compliance(request):
                 submission.clearance_email_sent = False
 
                 submission.clearance_email_sent_at = None
+
+                submission.clearance_certificate = None
+
+                submission.audit_report_pdf = None
 
                 # =========================
                 # RESET AUDIT SESSION
@@ -569,10 +615,12 @@ def reupload_compliance(request):
 
                 submission.save()
 
-                uploaded_count += 1
-                reuploaded_documents.append(
-                    submission.document.name
+                print(
+                    "\n🔁 REUPLOAD COMPLETE:",
+                    submission.main_file.name
                 )
+
+                uploaded_count += 1
 
             except Exception as inner_error:
 
@@ -670,13 +718,13 @@ def reupload_compliance(request):
 
                     "reuploaded": True,
 
-                    "reuploaded_documents": reuploaded_documents,
-
                     "document_id": submission.document.id,
 
                     "submission_id": submission.id,
 
                     "vendor_remark": submission.general_remark or "",
+
+                    "status": "REUPLOAD_PENDING"
                 }
             )
 

@@ -146,6 +146,7 @@ export default function VendorCompliancePage() {
   useEffect(() => { 
     if (selectedPE && selectedBranch) {
       loadMappingMeta(selectedPE, selectedBranch); 
+      loadFrozenPeriods(selectedBranch);
     }
   }, [selectedPE, selectedBranch]);
 
@@ -164,11 +165,18 @@ export default function VendorCompliancePage() {
       const periods = getPeriodOptions();
 
       if (periods.length > 0) {
-        // Auto-select the latest valid period
-        const latestPeriod = periods[periods.length - 1];
-        console.log("📅 Auto selected audit period:", latestPeriod);
-        setSelectedPeriod(latestPeriod);
+
+        setSelectedPeriod((prev) => {
+
+          // KEEP NOTIFICATION PERIOD
+
+          if (prev) return prev;
+
+          return periods[periods.length - 1];
+        });
+
       } else {
+
         setSelectedPeriod("");
       }
     }
@@ -427,15 +435,25 @@ const getPeriodOptions = () => {
   };
 
   const addAdditionalDocument = () => {
-    setTableData(prev => [...prev, {
+  setTableData(prev => [...prev, {
       key: `additional-${Date.now()}`,
-      document_id: null,
+
+      // IMPORTANT
+      document_id:
+        prev.find(
+          x => !x.isAdditional
+        )?.document_id || null,
+
       document_name: "Additional Document",
+
       audit_period: selectedPeriod,
+
       fileList: [],
+
       isAdditional: true,
+
       canReupload: true
-    }]);
+  }]);
   };
 
 const handleSubmit = async () => {
@@ -796,6 +814,24 @@ formData.append(
           Compliance Documents
         </h2>
 
+        {
+          frozenPeriods.includes(selectedPeriod) && (
+
+            <span
+              className="
+                rounded-full
+                bg-green-100
+                px-2 py-1
+                text-[10px]
+                font-semibold
+                text-green-700
+              "
+            >
+              FINALIZED
+            </span>
+          )
+        }
+
         <span className="
           rounded-full
           bg-blue-50
@@ -1114,21 +1150,27 @@ formData.append(
 
     {frozenPeriods.includes(selectedPeriod) ? (
 
-      <div className="
+    <div
+      className="
         inline-flex
         items-center
         gap-2
         rounded-lg
-        border border-amber-200
-        bg-amber-50
+        border border-green-200
+        bg-green-50
         px-3 py-2
-      ">
-        <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+      "
+    >
 
-        <p className="text-xs font-medium text-amber-700">
-          This compliance period is frozen.
-        </p>
-      </div>
+      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+
+      <p className="text-xs font-medium text-green-700">
+
+        This compliance audit has been finalized and frozen.
+
+      </p>
+
+    </div>
 
     ) : (
 
@@ -1172,7 +1214,13 @@ formData.append(
       shadow-sm
     "
   >
-    Submit Compliance Record
+    {
+      reuploadMode
+
+        ? "Reupload Compliance Documents"
+
+        : "Submit Compliance Record"
+    }
   </Button>
 
 </div>

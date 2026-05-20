@@ -6,4 +6,6 @@ class VendorConfig(AppConfig):
     name = "master_apps.vendor"
 
     def ready(self):
+
         import master_apps.vendor.signals
+        import master_apps.vendor.file_cleanup

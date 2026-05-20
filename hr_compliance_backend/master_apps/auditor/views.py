@@ -23,6 +23,8 @@ from master_apps.vendor.utils import (
     apply_mapping_for_period,
     audit_period_to_date,
 )
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
 
 from master_apps.documents.models import (
     DocumentMaster,
@@ -44,7 +46,6 @@ User = get_user_model()
 
 import zipfile
 import os
-from io import BytesIO
 from .models import AuditEntry, AuditSession
 from django.core.files.base import ContentFile
 
@@ -89,491 +90,502 @@ from reportlab.lib.styles import ParagraphStyle
 from master_apps.auditor.models import AuditEntry
 
 
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Spacer,
+    Paragraph,
+    Table,
+    TableStyle,
+    PageBreak
+)
+
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import landscape, A4
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.styles import ParagraphStyle
+
+from io import BytesIO
+
+def generate_cc_pdf_from_html(html_content):
+
+    pdf_buffer = BytesIO()
+
+    pisa_status = pisa.CreatePDF(
+
+        src=html_content,
+
+        dest=pdf_buffer
+    )
+
+    if pisa_status.err:
+
+        raise Exception(
+            "Failed to generate CC PDF"
+        )
+
+    return pdf_buffer.getvalue()
+
+
+def generate_enterprise_audit_pdf(data):
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+
+        buffer,
+
+        pagesize=landscape(A4),
+
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+
+    styles = getSampleStyleSheet()
+
+    elements = []
+
+    # =========================================
+    # STYLES
+    # =========================================
+
+    title_style = ParagraphStyle(
+        "Title",
+        parent=styles["Heading1"],
+        fontSize=24,
+        leading=30,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#1e3a8a"),
+        spaceAfter=20,
+    )
+
+    section_style = ParagraphStyle(
+        "Section",
+        parent=styles["Heading2"],
+        fontSize=14,
+        leading=18,
+        textColor=colors.HexColor("#2563eb"),
+        spaceAfter=12,
+    )
+
+    normal_style = styles["BodyText"]
+
+    # =========================================
+    # HEADER
+    # =========================================
+
+    elements.append(
+        Paragraph(
+            "Final Compliance Audit Report",
+            title_style
+        )
+    )
+
+    elements.append(
+        Spacer(1, 12)
+    )
+
+    # =========================================
+    # SUMMARY TABLE
+    # =========================================
+
+    summary_data = [
+
+        [
+            "Principal Employer",
+            "Vendor",
+            "State",
+            "Branch",
+            "Audit Period"
+        ],
+
+        [
+            data.get("pe_name", "-"),
+            data.get("vendor_name", "-"),
+            data.get("state", "-"),
+            data.get("branch_name", "-"),
+            data.get("audit_period", "-"),
+        ]
+    ]
+
+    summary_table = Table(
+        summary_data,
+        colWidths=[150, 150, 120, 220, 120]
+    )
+
+    summary_table.setStyle(TableStyle([
+
+        (
+            "BACKGROUND",
+            (0, 0),
+            (-1, 0),
+            colors.HexColor("#2563eb")
+        ),
+
+        (
+            "TEXTCOLOR",
+            (0, 0),
+            (-1, 0),
+            colors.white
+        ),
+
+        (
+            "FONTNAME",
+            (0, 0),
+            (-1, 0),
+            "Helvetica-Bold"
+        ),
+
+        (
+            "FONTSIZE",
+            (0, 0),
+            (-1, -1),
+            10
+        ),
+
+        (
+            "BOTTOMPADDING",
+            (0, 0),
+            (-1, 0),
+            10
+        ),
+
+        (
+            "BACKGROUND",
+            (0, 1),
+            (-1, -1),
+            colors.whitesmoke
+        ),
+
+        (
+            "GRID",
+            (0, 0),
+            (-1, -1),
+            1,
+            colors.lightgrey
+        ),
+
+        (
+            "BOX",
+            (0, 0),
+            (-1, -1),
+            1,
+            colors.lightgrey
+        ),
+    ]))
+
+    elements.append(summary_table)
+
+    elements.append(
+        Spacer(1, 25)
+    )
+
+    # =========================================
+    # COMPLIANCE SECTION
+    # =========================================
+
+    elements.append(
+        Paragraph(
+            "Compliance Entries",
+            section_style
+        )
+    )
+
+    table_data = [[
+
+        "State",
+        "Act",
+        "Audit Particular",
+        "Section",
+        "Form",
+        "Document",
+        "Status",
+        "Observation",
+        "Recommendation"
+    ]]
+
+    for entry in data.get("entries", []):
+
+        table_data.append([
+
+            entry.get("state", "-"),
+
+            entry.get("act_name", "-"),
+
+            entry.get("audit_particular", "-"),
+
+            entry.get("section", "-"),
+
+            entry.get("form_number", "-"),
+
+            entry.get("document_name", "-"),
+
+            entry.get("status", "-"),
+
+            entry.get("observation", "-"),
+
+            entry.get("recommendation", "-"),
+        ])
+
+    table = Table(
+
+        table_data,
+
+        repeatRows=1,
+
+        colWidths=[
+            70,
+            90,
+            140,
+            60,
+            50,
+            90,
+            100,
+            120,
+            120
+        ]
+    )
+
+    table.setStyle(TableStyle([
+
+        (
+            "BACKGROUND",
+            (0, 0),
+            (-1, 0),
+            colors.HexColor("#0f172a")
+        ),
+
+        (
+            "TEXTCOLOR",
+            (0, 0),
+            (-1, 0),
+            colors.white
+        ),
+
+        (
+            "FONTNAME",
+            (0, 0),
+            (-1, 0),
+            "Helvetica-Bold"
+        ),
+
+        (
+            "FONTSIZE",
+            (0, 0),
+            (-1, -1),
+            8
+        ),
+
+        (
+            "BOTTOMPADDING",
+            (0, 0),
+            (-1, 0),
+            10
+        ),
+
+        (
+            "GRID",
+            (0, 0),
+            (-1, -1),
+            0.5,
+            colors.lightgrey
+        ),
+
+        (
+            "BACKGROUND",
+            (0, 1),
+            (-1, -1),
+            colors.white
+        ),
+
+        (
+            "ROWBACKGROUNDS",
+            (0, 1),
+            (-1, -1),
+            [
+                colors.white,
+                colors.HexColor("#f8fafc")
+            ]
+        ),
+
+        (
+            "VALIGN",
+            (0, 0),
+            (-1, -1),
+            "TOP"
+        ),
+
+    ]))
+
+    elements.append(table)
+
+    elements.append(
+        Spacer(1, 20)
+    )
+
+    # =========================================
+    # FOOTER
+    # =========================================
+
+    footer = Paragraph(
+
+        f"""
+        <para align=center>
+        <font size=9 color="#6b7280">
+        This is a system generated audit report.<br/>
+        Generated on:
+        {data.get("generated_at")}
+        </font>
+        </para>
+        """,
+
+        normal_style
+    )
+
+    elements.append(footer)
+
+    # =========================================
+    # BUILD PDF
+    # =========================================
+
+    doc.build(elements)
+
+    pdf = buffer.getvalue()
+
+    buffer.close()
+
+    return pdf
+
+
 class DownloadCCPDFAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request, audit_id):
 
+        import os
+
+        from django.http import FileResponse
+
+        # ==========================================
+        # FETCH AUDIT ENTRY
+        # ==========================================
+
         entry = get_object_or_404(
-            AuditEntry.objects.select_related(
-                "checklist"
-            ),
+            AuditEntry,
             id=audit_id
         )
 
-        buffer = BytesIO()
-
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=A4,
-            rightMargin=35,
-            leftMargin=35,
-            topMargin=30,
-            bottomMargin=30,
-        )
-
-        styles = getSampleStyleSheet()
-
-        elements = []
-
         # ==========================================
-        # DATA
+        # FETCH STORED CC PDF
         # ==========================================
 
-        vendor_name = getattr(
-            entry,
-            "vendor_name",
-            "Vendor"
-        )
-
-        pe_name = getattr(
-            entry,
-            "pe_name",
-            "PE"
-        )
-
-        state_name = (
-            entry.checklist.state.name
-            if entry.checklist
-            and entry.checklist.state
-            else "-"
-        )
-
-        mapping = (
-            VendorBranchMapping.objects.filter(
-                branch_id=entry.branch_id
+        submission = (
+            VendorComplianceSubmission.objects.filter(
+                branch_id=entry.branch_id,
+                audit_period=entry.audit_period,
+                clearance_certificate__isnull=False
             )
-            .select_related("branch")
+            .exclude(clearance_certificate="")
             .first()
         )
 
-        branch_name = (
-            mapping.branch.short_name
-            if mapping and mapping.branch
-            else "-"
-        )
-
-        audit_period = entry.audit_period or "-"
-
-        generated_on = now().strftime(
-            "%d %b %Y %I:%M %p"
-        )
-
-        all_entries = AuditEntry.objects.filter(
-            branch_id=entry.branch_id,
-            audit_period=entry.audit_period
-        )
-
-        total_entries = all_entries.count()
-
-        complied_entries = all_entries.filter(
-            status__in=[
-                "Complied",
-                "Not Applicable For Audit Period",
-                "Exceptional Approval - Delayed Complied",
-            ]
-        ).count()
-
-
         # ==========================================
-        # CUSTOM STYLES
+        # VALIDATION
         # ==========================================
 
-        title_style = ParagraphStyle(
-            "title_style",
-            parent=styles["Normal"],
-            fontName="Helvetica-Bold",
-            fontSize=20,
-            textColor=colors.white,
-            leading=28,
-        )
+        if not submission:
 
-        normal_style = ParagraphStyle(
-            "normal_style",
-            parent=styles["Normal"],
-            fontName="Helvetica",
-            fontSize=11,
-            leading=20,
-            textColor=colors.HexColor("#111827"),
-        )
-
-        bold_style = ParagraphStyle(
-            "bold_style",
-            parent=styles["Normal"],
-            fontName="Helvetica-Bold",
-            fontSize=11,
-            leading=20,
-            textColor=colors.HexColor("#111827"),
-        )
-
-        # ==========================================
-        # HEADER BOX
-        # ==========================================
-
-        header_table = Table(
-            [[
-                Paragraph(
-                    "Compliance Clearance Certificate",
-                    title_style
-                ),
-            ]],
-            colWidths=[520]
-        )
-
-        header_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#243B8A")),
-            ("LEFTPADDING", (0, 0), (-1, -1), 20),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 20),
-            ("TOPPADDING", (0, 0), (-1, -1), 22),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 22),
-        ]))
-
-        elements.append(header_table)
-
-        # ==========================================
-        # AUDIT PERIOD STRIP
-        # ==========================================
-
-        audit_strip = Table(
-            [[
-                Paragraph(
-                    f"<b>Audit Period:</b> {audit_period}",
-                    ParagraphStyle(
-                        "strip_style",
-                        parent=styles["Normal"],
-                        textColor=colors.white,
-                        fontSize=11,
-                        leading=18,
+            return Response(
+                {
+                    "error": (
+                        "Compliance Clearance "
+                        "Certificate not found"
                     )
-                )
-            ]],
-            colWidths=[520]
-        )
+                },
+                status=404
+            )
 
-        audit_strip.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#2F4AA0")),
-            ("LEFTPADDING", (0, 0), (-1, -1), 20),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-            ("TOPPADDING", (0, 0), (-1, -1), 10),
-        ]))
+        if not submission.clearance_certificate:
 
-        elements.append(audit_strip)
-
-        elements.append(Spacer(1, 18))
-
-        status_table = Table(
-            [[
-
-                Paragraph(
-                    "<b>FINAL STATUS:</b> COMPLIED",
-                    ParagraphStyle(
-                        "status_style",
-                        parent=styles["Normal"],
-                        textColor=colors.HexColor("#166534"),
-                        fontSize=10,
+            return Response(
+                {
+                    "error": (
+                        "CC PDF file missing"
                     )
-                ),
+                },
+                status=404
+            )
 
-                Paragraph(
-                    f"<b>Generated On:</b> {generated_on}",
-                    ParagraphStyle(
-                        "generated_style",
-                        parent=styles["Normal"],
-                        textColor=colors.HexColor("#374151"),
-                        fontSize=10,
-                        alignment=2,
+        if not os.path.exists(
+            submission.clearance_certificate.path
+        ):
+
+            return Response(
+                {
+                    "error": (
+                        "Stored CC PDF does not exist"
                     )
-                )
-
-            ]],
-            colWidths=[260, 260]
-        )
-
-        status_table.setStyle(TableStyle([
-
-            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#ECFDF5")),
-
-            ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#BBF7D0")),
-
-            ("LEFTPADDING", (0, 0), (-1, -1), 14),
-
-            ("RIGHTPADDING", (0, 0), (-1, -1), 14),
-
-            ("TOPPADDING", (0, 0), (-1, -1), 10),
-
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-
-        ]))
-
-        elements.append(status_table)
-
-        elements.append(Spacer(1, 26))
-        # ==========================================
-        # GREETING
-        # ==========================================
-
-        elements.append(
-            Paragraph(
-                f"Dear <b>{vendor_name}</b>,",
-                normal_style
+                },
+                status=404
             )
-        )
-
-        elements.append(Spacer(1, 10))
-
-        elements.append(
-            Paragraph(
-                "We are pleased to inform you that the compliance audit has been successfully completed.",
-                normal_style
-            )
-        )
-
-        elements.append(Spacer(1, 6))
-
-        elements.append(
-            Paragraph(
-                "Accordingly, the <b>Compliance Clearance Certificate (CC)</b> has been issued.",
-                normal_style
-            )
-        )
-
-        elements.append(Spacer(1, 25))
-
-        highlights_title = Paragraph(
-            "<b>Compliance Highlights</b>",
-            bold_style
-        )
-
-        elements.append(highlights_title)
-
-        elements.append(Spacer(1, 10))
-
-        highlights = [
-
-            "• Compliance audit successfully completed",
-
-            "• Vendor documents verified by auditor",
-
-            "• Compliance Clearance Certificate approved",
-
-            "• Audit finalized and frozen in system",
-        ]
-
-        for item in highlights:
-
-            elements.append(
-                Paragraph(
-                    item,
-                    normal_style
-                )
-            )
-
-            elements.append(Spacer(1, 5))
-
-        elements.append(Spacer(1, 20))
 
         # ==========================================
-        # DETAILS TABLE
+        # DEBUG LOG
         # ==========================================
 
-        details_data = [
-
-            [
-                Paragraph("<b>Particular</b>", bold_style),
-                Paragraph("<b>Details</b>", bold_style),
-            ],
-
-            [
-                "Principal Employer",
-                pe_name,
-            ],
-
-            [
-                "State",
-                state_name,
-            ],
-
-            [
-                "Branch",
-                branch_name,
-            ],
-
-            [
-                "Audit Period",
-                audit_period,
-            ],
-
-            [
-                "Generated On",
-                generated_on,
-            ],
-        ]
-
-        details_table = Table(
-            details_data,
-            colWidths=[260, 260]
-        )
-
-        details_table.setStyle(TableStyle([
-
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
-
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-
-            ("FONTSIZE", (0, 0), (-1, -1), 10.5),
-
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-
-            ("TOPPADDING", (0, 0), (-1, 0), 12),
-
-            ("GRID", (0, 0), (-1, -1), 0.8, colors.HexColor("#D1D5DB")),
-
-            ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-
-            ("LEFTPADDING", (0, 0), (-1, -1), 14),
-
-            ("RIGHTPADDING", (0, 0), (-1, -1), 14),
-
-            ("TOPPADDING", (0, 1), (-1, -1), 12),
-
-            ("BOTTOMPADDING", (0, 1), (-1, -1), 12),
-
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-
-        ]))
-
-        elements.append(details_table)
-
-        has_exceptional = all_entries.filter(
-            status__icontains="Exceptional Approval"
-        ).exists()
-
-        if has_exceptional:
-
-            elements.append(Spacer(1, 18))
-
-            exceptional_note = Table(
-                [[
-                    Paragraph(
-                        (
-                            "<b>Exceptional Approval Note:</b> "
-                            "This certificate contains "
-                            "auditor approved exceptional "
-                            "compliance observations."
-                        ),
-                        ParagraphStyle(
-                            "exception_style",
-                            parent=styles["Normal"],
-                            textColor=colors.HexColor("#92400E"),
-                            fontSize=10,
-                            leading=18,
-                        )
-                    )
-                ]],
-                colWidths=[520]
-            )
-
-            exceptional_note.setStyle(TableStyle([
-
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEF3C7")),
-
-                ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#F59E0B")),
-
-                ("LEFTPADDING", (0, 0), (-1, -1), 14),
-
-                ("RIGHTPADDING", (0, 0), (-1, -1), 14),
-
-                ("TOPPADDING", (0, 0), (-1, -1), 12),
-
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-
-            ]))
-
-            elements.append(exceptional_note)
-
-        elements.append(Spacer(1, 28))
-
-        elements.append(
-            Paragraph(
-                "We appreciate your cooperation.",
-                normal_style
-            )
-        )
-
-        elements.append(Spacer(1, 18))
-
-        elements.append(
-            Paragraph(
-                "Regards,<br/><b>Vendor Compliance Audit Team</b>",
-                normal_style
-            )
-        )
-
-        elements.append(Spacer(1, 30))
-
-        elements.append(
-            HRFlowable(
-                width="100%",
-                color=colors.HexColor("#D1D5DB")
-            )
-        )
-
-        elements.append(Spacer(1, 12))
-
-        elements.append(
-            Paragraph(
-                (
-                    "This digitally generated certificate is "
-                    "issued through HR Compliance Portal.<br/><br/>"
-
-                    f"<b>Generated On:</b> {generated_on}<br/>"
-
-                    "<b>Generated By:</b> Vendor Compliance Audit Team<br/><br/>"
-
-                    "This is a system generated document "
-                    "and does not require physical signature."
-                ),
-                ParagraphStyle(
-                    "footer_style",
-                    parent=styles["Normal"],
-                    fontSize=9,
-                    textColor=colors.HexColor("#6B7280"),
-                    alignment=TA_LEFT,
-                )
-            )
+        print(
+            "\n📄 USING STORED CC PDF:",
+            submission.clearance_certificate.name
         )
 
         # ==========================================
-        # BUILD PDF
+        # SAFE FILE NAME
         # ==========================================
 
-        doc.build(elements)
-
-        pdf = buffer.getvalue()
-
-        buffer.close()
-
-        response = HttpResponse(
-            content_type="application/pdf"
+        vendor_name = (
+            submission.vendor.short_name
+            if submission.vendor
+            else "Vendor"
         )
 
-        safe_vendor = vendor_name.replace(" ", "_")
-        safe_period = audit_period.replace(" ", "_")
-
-        response[
-            "Content-Disposition"
-        ] = (
-            f'inline; filename="'
-            f'{safe_vendor}_{safe_period}_CC.pdf"'
+        audit_period = (
+            submission.audit_period
+            or "Audit"
         )
 
-        response.write(pdf)
+        safe_vendor = (
+            vendor_name
+            .replace(" ", "_")
+            .replace("/", "_")
+        )
 
-        return response
+        safe_period = (
+            audit_period
+            .replace(" ", "_")
+            .replace("/", "_")
+        )
 
+        filename = (
+            f"{safe_vendor}_{safe_period}_CC.pdf"
+        )
+
+        # ==========================================
+        # RETURN SAME PDF
+        # ==========================================
+
+        return FileResponse(
+
+            submission.clearance_certificate.open("rb"),
+
+            content_type="application/pdf",
+
+            filename=filename,
+
+            as_attachment=False
+        )
 
 class AuditorCreateAPIView(APIView):
     def post(self, request):
@@ -670,139 +682,254 @@ class AuditorCreateAPIView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-# ================= ZIP DOWNLOAD =================
 class DownloadAuditDocumentsZipAPIView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, branch_id):
 
+        import os
         import re
+        import zipfile
+
+        from io import BytesIO
+        from django.http import HttpResponse
 
         vendor_id = request.GET.get("vendor_id")
         audit_period = request.GET.get("audit_period")
-        selected_date = audit_period_to_date(
-            audit_period
+
+        submissions = (
+            VendorComplianceSubmission.objects.filter(
+                branch_id=branch_id,
+                audit_period=audit_period
+            )
+            .select_related(
+                "vendor",
+                "branch",
+                "document"
+            )
+            .prefetch_related(
+                "supporting_files",
+                "file_versions",
+                "exceptional_documents"
+            )
         )
 
-        filters = {
-            "branch_id": branch_id,
-        }
-
-        if audit_period:
-            filters["audit_period"] = audit_period
-
         if vendor_id:
-            filters["vendor_id"] = vendor_id
+            submissions = submissions.filter(
+                vendor_id=vendor_id
+            )
 
-        submissions = VendorComplianceSubmission.objects.filter(
-            **filters
-        ).select_related("branch", "vendor")
-
-        # ✅ NEW: HANDLE EMPTY CASE
         if not submissions.exists():
-            return Response({"error": "No documents found"}, status=404)
+
+            return Response(
+                {"error": "No documents found"},
+                status=404
+            )
 
         buffer = BytesIO()
 
         def clean(text):
-            return re.sub(r'[^A-Za-z0-9_-]', '_', text or "")
 
-        first_sub = submissions.first()
+            return re.sub(
+                r"[^A-Za-z0-9_-]",
+                "_",
+                str(text or "unknown")
+            )
 
-        vendor_name = first_sub.vendor.short_name if first_sub and first_sub.vendor else "vendor"
-        branch_name = first_sub.branch.short_name if first_sub and first_sub.branch else "branch"
+        first = submissions.first()
 
-        safe_vendor = clean(vendor_name)
-        safe_branch = clean(branch_name)
-        safe_period = clean(audit_period or "period")
+        zip_filename = (
+            f"{clean(first.vendor.short_name)}_"
+            f"{clean(first.branch.short_name)}_"
+            f"{clean(audit_period)}.zip"
+        )
 
-        zip_filename = f"{safe_vendor}_{safe_branch}_{safe_period}.zip"
+        # Prevent duplicate files
+        added_cc_files = set()
+        added_files = set()
 
-        with zipfile.ZipFile(buffer, "w") as zip_file:
+        with zipfile.ZipFile(
+            buffer,
+            "w",
+            zipfile.ZIP_DEFLATED
+        ) as zip_file:
 
             for sub in submissions:
+
                 try:
-                    if sub.main_file:
-                        file_path = sub.main_file.path
 
-                        if os.path.exists(file_path):
-                            file_name = os.path.basename(file_path)
+                    # =====================================
+                    # ORIGINAL MAIN DOCUMENT
+                    # =====================================
 
-                            # ======================================
-                            # REUPLOADED DOC SUPPORT
-                            # ======================================
+                    if (
+                        sub.main_file
+                        and os.path.exists(sub.main_file.path)
+                    ):
 
-                            reuploaded_document_names = request.GET.getlist(
-                                "reuploaded_documents"
-                            )
-
-                            folder_name = "main_documents"
-
-                            if (
-                                sub.document and
-                                sub.document.name in reuploaded_document_names
-                            ):
-                                folder_name = "reuploaded_documents"
-
-                            zip_file.write(
-                                file_path,
-                                arcname=f"{folder_name}/{sub.id}_{file_name}"
-                            )
-
-                    for supp in sub.supporting_files.all():
-                        try:
-                            supp_path = supp.file.path
-
-                            if os.path.exists(supp_path):
-                                supp_name = os.path.basename(supp_path)
-
-                                zip_file.write(
-                                    supp_path,
-                                    arcname=f"additional_documents/{sub.id}_{supp_name}"
-                                )
-
-                        except Exception as e:
-                            print("SUPPORTING FILE ERROR:", str(e))
-
-                    for exceptional in sub.exceptional_documents.all():
-
-                        try:
-
-                            exceptional_path = exceptional.file.path
-
-                            if os.path.exists(exceptional_path):
-
-                                exceptional_name = os.path.basename(
-                                    exceptional_path
-                                )
-
-                                zip_file.write(
-
-                                    exceptional_path,
-
-                                    arcname=(
-                                        "exceptional_approval_documents/"
-                                        f"{sub.id}_{exceptional_name}"
-                                    )
-                                )
-
-                        except Exception as e:
+                        if sub.main_file.name not in added_files:
 
                             print(
-                                "EXCEPTION FILE ERROR:",
-                                str(e)
+                                "📦 ZIP MAIN:",
+                                sub.main_file.name
+                            )
+
+                            zip_file.write(
+                                sub.main_file.path,
+                                arcname=sub.main_file.name
+                            )
+
+                            added_files.add(
+                                sub.main_file.name
+                            )
+
+                    # =====================================
+                    # REUPLOADED DOCUMENTS
+                    # =====================================
+
+                    for version in sub.file_versions.filter(
+                        is_reupload=True
+                    ):
+
+                        if (
+                            version.file
+                            and os.path.exists(version.file.path)
+                        ):
+
+                            if version.file.name not in added_files:
+
+                                print(
+                                    "📦 ZIP REUPLOAD:",
+                                    version.file.name
+                                )
+
+                                zip_file.write(
+                                    version.file.path,
+                                    arcname=version.file.name
+                                )
+
+                                added_files.add(
+                                    version.file.name
+                                )
+
+                    # =====================================
+                    # SUPPORTING FILES
+                    # =====================================
+
+                    for supp in sub.supporting_files.all():
+
+                        if (
+                            supp.file
+                            and os.path.exists(supp.file.path)
+                        ):
+
+                            if supp.file.name not in added_files:
+
+                                print(
+                                    "📦 ZIP SUPPORTING:",
+                                    supp.file.name
+                                )
+
+                                zip_file.write(
+                                    supp.file.path,
+                                    arcname=supp.file.name
+                                )
+
+                                added_files.add(
+                                    supp.file.name
+                                )
+
+                    # =====================================
+                    # EXCEPTIONAL APPROVAL FILES
+                    # =====================================
+
+                    for exc in sub.exceptional_documents.all():
+
+                        if (
+                            exc.file
+                            and os.path.exists(exc.file.path)
+                        ):
+
+                            if exc.file.name not in added_files:
+
+                                print(
+                                    "📦 ZIP EXCEPTIONAL:",
+                                    exc.file.name
+                                )
+
+                                zip_file.write(
+                                    exc.file.path,
+                                    arcname=exc.file.name
+                                )
+
+                                added_files.add(
+                                    exc.file.name
+                                )
+
+                    # =====================================
+                    # COMPLIANCE CLEARANCE CERTIFICATE
+                    # =====================================
+
+                    if (
+                        getattr(
+                            sub,
+                            "clearance_certificate",
+                            None
+                        )
+                        and os.path.exists(
+                            sub.clearance_certificate.path
+                        )
+                    ):
+
+                        # ONLY KEEP FILE NAME
+                        cc_basename = os.path.basename(
+                            sub.clearance_certificate.name
+                        )
+
+                        # PREVENT DUPLICATE CC PDFs
+                        if cc_basename not in added_cc_files:
+
+                            print(
+                                "📦 ZIP FINAL CC:",
+                                sub.clearance_certificate.name
+                            )
+
+                            zip_file.write(
+
+                                sub.clearance_certificate.path,
+
+                                arcname=os.path.join(
+                                    "compliance_clearance_certificate",
+                                    cc_basename
+                                )
+                            )
+
+                            added_cc_files.add(
+                                cc_basename
                             )
 
                 except Exception as e:
-                    print("ZIP ERROR:", str(e))
+
+                    print(
+                        f"❌ ZIP ERROR "
+                        f"(Submission {sub.id}): {e}"
+                    )
 
         buffer.seek(0)
 
-        response = HttpResponse(buffer, content_type="application/zip")
-        response["Content-Disposition"] = f'attachment; filename="{zip_filename}"'
+        response = HttpResponse(
+            buffer,
+            content_type="application/zip"
+        )
+
+        response[
+            "Content-Disposition"
+        ] = (
+            f'attachment; filename="{zip_filename}"'
+        )
 
         return response
-
 
 # ================= SAVE AUDIT (UPDATED ONLY) =================
 
@@ -952,7 +1079,6 @@ class SaveAuditAPIView(APIView):
 
             if status_value in [
                 "Exceptional Approval - Delayed Complied",
-                "Exceptional Approval- Not Complied"
             ]:
 
                 checklist_id = entry.get(
@@ -1000,7 +1126,6 @@ class SaveAuditAPIView(APIView):
 
             if status_value in [
                 "Exceptional Approval - Delayed Complied",
-                "Exceptional Approval- Not Complied"
             ]:
 
                 checklist_id = entry.get(
@@ -1013,14 +1138,22 @@ class SaveAuditAPIView(APIView):
 
                 if support_file:
 
-                    related_submission = (
-                        VendorComplianceSubmission.objects.filter(
-                            branch_id=branch_id,
-                            vendor_id=vendor.id,
-                            audit_period=audit_period,
-                            document_id=entry.get("document_id")
-                        ).first()
-                    )
+                    checklist = AuditChecklist.objects.filter(
+                        id=checklist_id
+                    ).select_related("document").first()
+
+                    related_submission = None
+
+                    if checklist and checklist.document:
+
+                        related_submission = (
+                            VendorComplianceSubmission.objects.filter(
+                                branch_id=branch_id,
+                                vendor_id=vendor.id,
+                                audit_period=audit_period,
+                                document=checklist.document
+                            ).first()
+                        )
 
                     if related_submission:
 
@@ -1028,10 +1161,15 @@ class SaveAuditAPIView(APIView):
                             submission=related_submission
                         ).delete()
 
-                        ExceptionalApprovalDocument.objects.create(
+                        exceptional_doc = ExceptionalApprovalDocument.objects.create(
                             submission=related_submission,
                             file=support_file,
                             remark=entry.get("observation", "")
+                        )
+
+                        print(
+                            "\n✅ EXCEPTIONAL MODEL CREATED:",
+                            exceptional_doc.file.name
                         )
 
                         related_submission.has_exceptional_approval = True
@@ -1067,6 +1205,11 @@ class SaveAuditAPIView(APIView):
             audit_period=audit_period
         ).first()
 
+        if not saved_entry:
+            return Response({
+                "error": "No audit entries found"
+            }, status=400)
+
         # =========================
         # FETCH CC EMAIL FROM DB (FINAL FIX)
         # =========================
@@ -1091,105 +1234,8 @@ class SaveAuditAPIView(APIView):
         print("📧 CC FROM DB:", cc_emails)
 
         # =========================
-        # EMAIL CONTENT
-        # =========================
-        subject = f"Compliance Clearance Certificate – {audit_period} – {branch.state} – {pe.short_name}"
-
-        html_content = f"""
-        <html>
-        <body style="background:#f4f6f8; padding:20px; font-family:Arial;">
-
-        <table width="700" align="center" style="background:#fff; border-radius:8px;">
-        
-        <tr>
-            <td style="background:#1e3a8a; color:#fff; padding:20px;">
-                <h2>Compliance Clearance Certificate</h2>
-                <p>Audit Period: {audit_period}</p>
-            </td>
-        </tr>
-
-        <tr>
-            <td style="padding:25px;">
-                <p>Dear <b>{vendor.name}</b>,</p>
-
-                <p>
-                We are pleased to inform you that the compliance audit has been successfully completed.
-                </p>
-
-                <p>
-                Accordingly, the <b>Compliance Clearance Certificate (CC)</b> has been issued.
-                </p>
-
-                <table width="100%" style="border-collapse:collapse; margin-top:15px;">
-                    <tr style="background:#f1f5f9;">
-                        <th style="padding:10px; border:1px solid #ddd;">Particular</th>
-                        <th style="padding:10px; border:1px solid #ddd;">Details</th>
-                    </tr>
-                    <tr>
-                        <td style="padding:10px; border:1px solid #ddd;">Principal Employer</td>
-                        <td style="padding:10px; border:1px solid #ddd;">{pe.name}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:10px; border:1px solid #ddd;">State</td>
-                        <td style="padding:10px; border:1px solid #ddd;">{branch.state}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:10px; border:1px solid #ddd;">Branch</td>
-                        <td style="padding:10px; border:1px solid #ddd;">{branch.short_name}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:10px; border:1px solid #ddd;">Audit Period</td>
-                        <td style="padding:10px; border:1px solid #ddd;">{audit_period}</td>
-                    </tr>
-                </table>
-
-                {
-                    '''
-                    <div style="
-                        margin-top:20px;
-                        padding:14px;
-                        background:#FEF3C7;
-                        border:1px solid #F59E0B;
-                        border-radius:6px;
-                        color:#92400E;
-                    ">
-                        <b>Note:</b>
-                        This audit contains Exceptional Approval observations.
-                    </div>
-                    '''
-                    if any(
-
-                        entry.get("status") in [
-
-                            "Exceptional Approval - Delayed Complied",
-
-                            "Exceptional Approval- Not Complied"
-                        ]
-
-                        for entry in entries
-                    )
-                    else ""
-                }
-
-                <p style="margin-top:20px;">
-                We appreciate your cooperation.
-                </p>
-
-                <p>Regards,<br><b>Vendor Compliance Audit Team</b></p>
-            </td>
-        </tr>
-
-        </table>
-
-        </body>
-        </html>
-        """
-
-        # =========================
         # GENERATE PDF BYTES
         # =========================
-
-        pdf_bytes = html_content.encode("utf-8")
         # =========================
         # SEND EMAIL
         # =========================
@@ -1197,127 +1243,430 @@ class SaveAuditAPIView(APIView):
         # FINAL FLOW
         # =========================
 
-        if all_valid:
+        # ======================================
+        # VALID + FREEZE FLOW
+        # ======================================
 
-            if freeze_report and all_valid:
+        if all_valid and freeze_report:
 
+            VendorComplianceSubmission.objects.filter(
+
+                branch_id=branch_id,
+
+                vendor_id=vendor.id,
+
+                audit_period=audit_period
+
+            ).update(
+
+                is_cc_issued=True,
+
+                cc_issued_at=now(),
+
+                workflow_status=WorkflowStatus.FROZEN,
+
+                is_frozen=True,
+
+                frozen_at=now(),
+
+                clearance_email_sent=True,
+
+                clearance_email_sent_at=now()
+            )
+
+            # ======================================
+            # AUTO MARK RELATED AUDITOR NOTIFICATIONS
+            # ======================================
+
+            SystemNotification.objects.filter(
+
+                branch_id=branch_id,
+
+                audit_period=audit_period,
+
+                type="AUDITOR",
+
+                is_read=False,
+
+            ).update(
+                is_read=True
+            )
+
+                        # =========================
+            # EMAIL CONTENT
+            # =========================
+
+            subject = (
+                f"Compliance Clearance Certificate | "
+                f"{audit_period} | "
+                f"{branch.state} | "
+                f"{pe.short_name} | "
+                f"{vendor.short_name}"
+            )
+
+
+
+            # =========================
+            # FINAL AUDIT REPORT
+            # =========================
+
+            # =========================
+            # BUILD FULL PDF ENTRIES
+            # =========================
+
+            pdf_entries = []
+
+            for item in entries:
+
+                checklist = (
+                    AuditChecklist.objects.filter(
+                        id=item.get("checklist_id")
+                    )
+                    .select_related(
+                        "act",
+                        "section",
+                        "document",
+                        "state"
+                    )
+                    .first()
+                )
+
+                if not checklist:
+                    continue
+
+                guidelines_list = []
+
+                if checklist.auditor_guide:
+
+                    guidelines_list = [
+
+                        line.strip()
+
+                        for line in (
+                            checklist.auditor_guide.split("\n")
+                        )
+
+                        if line.strip()
+                    ]
+
+                pdf_entries.append({
+
+                    "state": (
+                        checklist.state.name
+                        if checklist.state
+                        else "-"
+                    ),
+
+                    "act_name": (
+                        checklist.act.name
+                        if checklist.act
+                        else "-"
+                    ),
+
+                    "audit_particular": (
+                        checklist.audit_particulars
+                        or "-"
+                    ),
+
+                    "section": (
+                        checklist.section.section_number
+                        if checklist.section
+                        else "-"
+                    ),
+
+                    "form_number": (
+                        checklist.form_number
+                        or "-"
+                    ),
+
+                    "document_name": (
+                        checklist.document.name
+                        if checklist.document
+                        else "-"
+                    ),
+
+                    "guidelines": guidelines_list,
+
+                    "status": (
+                        item.get("status")
+                        or "-"
+                    ),
+
+                    "observation": (
+                        item.get("observation")
+                        or "-"
+                    ),
+
+                    "recommendation": (
+                        item.get("recommendation")
+                        or "-"
+                    ),
+                })
+
+            html_content = render_to_string(
+
+                "auditor/compliance_clearance_email.html",
+
+                {
+                    "pe_name": pe.name,
+
+                    "vendor_name": vendor.name,
+
+                    "state": branch.state,
+
+                    "branch_name": branch.short_name,
+
+                    "audit_period": audit_period,
+
+                    "entries": entries,
+
+                    # ======================================
+                    # EXCEPTIONAL APPROVAL ENTRIES
+                    # ======================================
+
+                    "exceptional_entries": [
+
+                        e for e in pdf_entries
+
+                        if "Exceptional Approval"
+                        in str(e.get("status", ""))
+                    ],
+                }
+            )
+
+            pdf_bytes = generate_cc_pdf_from_html(
+                html_content
+            )
+
+            # =========================
+            # GENERATE FINAL AUDIT REPORT
+            # =========================
+
+            audit_report_html = render_to_string(
+
+                "auditor/final_audit_report.html",
+
+                {
+
+                    "pe_name": pe.name,
+
+                    "vendor_name": vendor.name,
+
+                    "state": str(branch.state),
+
+                    "branch_name": branch.short_name,
+
+                    "audit_period": audit_period,
+
+                    "entries": pdf_entries,
+
+                    "generated_at": now().strftime(
+                        "%d %B %Y %I:%M %p"
+                    ),
+
+                    "has_exceptional_approval": any(
+
+                        "Exceptional Approval"
+                        in str(e.get("status", ""))
+
+                        for e in pdf_entries
+                    ),
+                }
+            )
+
+            audit_report_pdf_bytes = generate_enterprise_audit_pdf({
+
+                "pe_name": pe.name,
+
+                "vendor_name": vendor.name,
+
+                "state": str(branch.state),
+
+                "branch_name": branch.short_name,
+
+                "audit_period": audit_period,
+
+                "entries": pdf_entries,
+
+                "generated_at": now().strftime(
+                    "%d %B %Y %I:%M %p"
+                )
+            })
+
+            print(
+                "\n✅ FINAL AUDIT REPORT GENERATED"
+            )
+
+            all_submissions = (
                 VendorComplianceSubmission.objects.filter(
-
                     branch_id=branch_id,
-
                     vendor_id=vendor.id,
-
                     audit_period=audit_period
+                )
+            )
 
-                ).update(
+            first_submission = all_submissions.first()
 
-                    is_cc_issued=True,
+            if first_submission:
 
-                    cc_issued_at=now(),
+                # =========================
+                # REMOVE OLD CC
+                # =========================
 
-                    workflow_status=WorkflowStatus.FROZEN,
+                if first_submission.clearance_certificate:
 
-                    is_frozen=True,
+                    try:
 
-                    frozen_at=now(),
+                        old_cc_path = (
+                            first_submission
+                            .clearance_certificate
+                            .path
+                        )
 
-                    clearance_email_sent=True,
+                        if os.path.exists(old_cc_path):
 
-                    clearance_email_sent_at=now()
+                            os.remove(old_cc_path)
+
+                    except Exception as e:
+
+                        print(
+                            "\n❌ OLD CC DELETE ERROR:",
+                            str(e)
+                        )
+
+                # =========================
+                # REMOVE OLD REPORT
+                # =========================
+
+                if first_submission.audit_report_pdf:
+
+                    try:
+
+                        old_report_path = (
+                            first_submission
+                            .audit_report_pdf
+                            .path
+                        )
+
+                        if os.path.exists(old_report_path):
+
+                            os.remove(old_report_path)
+
+                    except Exception as e:
+
+                        print(
+                            "\n❌ OLD REPORT DELETE ERROR:",
+                            str(e)
+                        )
+
+                cc_filename = (
+
+                    f"{vendor.short_name}_"
+                    f"{audit_period}_CC.pdf"
+
+                ).replace(" ", "_")
+
+                audit_report_filename = (
+
+                    f"{vendor.short_name}_"
+                    f"{audit_period}_Audit_Report.pdf"
+
+                ).replace(" ", "_")
+
+                # =========================
+                # SAVE CC
+                # =========================
+
+                first_submission.clearance_certificate.save(
+
+                    cc_filename,
+
+                    ContentFile(pdf_bytes),
+
+                    save=False
                 )
 
-                # ======================================
-                # 📦 SAVE CC PDF ARCHIVE
-                # ======================================
+                # =========================
+                # SAVE REPORT
+                # =========================
 
-                try:
+                first_submission.audit_report_pdf.save(
 
-                    archive_filename = (
-                        f"{vendor.short_name}_"
-                        f"{audit_period}_CC.pdf"
-                    ).replace(" ", "_")
+                    audit_report_filename,
 
-                    all_submissions = VendorComplianceSubmission.objects.filter(
+                    ContentFile(audit_report_pdf_bytes),
 
+                    save=False
+                )
+
+                first_submission.save()
+
+                                # =========================
+                # COPY SAME PDF PATHS
+                # =========================
+
+                other_submissions = (
+                    VendorComplianceSubmission.objects.filter(
                         branch_id=branch_id,
-
                         vendor_id=vendor.id,
-
                         audit_period=audit_period
+                    ).exclude(
+                        id=first_submission.id
                     )
-
-                    for submission in all_submissions:
-
-                        try:
-
-                            archive = ComplianceAuditArchive.objects.create(
-
-                                vendor_submission=submission,
-
-                                archive_type="CC_PDF",
-
-                                uploaded_by=request.user,
-
-                                remarks="Auto archived CC PDF"
-                            )
-
-                            print(
-                                "SAVING CC ARCHIVE TO:",
-                                archive.file.name
-                            )
-
-                            archive.file.save(
-
-                                archive_filename,
-
-                                ContentFile(
-                                    pdf_bytes
-                                ),
-
-                                save=True
-                            )
-
-                        except Exception as e:
-
-                            logger.error(
-                                f"CC ARCHIVE SAVE ERROR: {str(e)}"
-                            )
-
-                except Exception as archive_error:
-
-                    logger.error(
-                        f"ARCHIVE ERROR: {str(archive_error)}"
-                    )
-
-                # ======================================
-                # AUTO MARK RELATED AUDITOR NOTIFICATIONS
-                # ======================================
-
-                SystemNotification.objects.filter(
-
-                    branch_id=branch_id,
-
-                    audit_period=audit_period,
-
-                    type="AUDITOR",
-
-                    is_read=False,
-
-                ).update(
-                    is_read=True
                 )
+
+                for submission in other_submissions:
+
+                    submission.clearance_certificate = (
+                        first_submission.clearance_certificate.name
+                    )
+
+                    submission.audit_report_pdf = (
+                        first_submission.audit_report_pdf.name
+                    )
+
+                    submission.save(
+                        update_fields=[
+                            "clearance_certificate",
+                            "audit_report_pdf"
+                        ]
+                    )
+
+                print(
+                    "\n✅ FINAL CC SAVED:",
+                    first_submission.clearance_certificate.name
+                )
+
+                print(
+                    "\n✅ FINAL REPORT SAVED:",
+                    first_submission.audit_report_pdf.name
+                )
+
+            # =========================
+            # SEND EMAIL
+            # =========================
 
             try:
 
                 logger.info(
-                    f"📨 Sending → {vendor.email} | CC: {cc_emails}"
+                    f"📨 Sending → "
+                    f"{vendor.email} | "
+                    f"CC: {cc_emails}"
                 )
 
                 email = EmailMultiAlternatives(
+
                     subject=subject,
-                    body="Compliance Certificate Issued",
+
+                    body=(
+                        "Compliance Clearance Certificate "
+                        "has been issued successfully."
+                    ),
+
                     from_email=settings.DEFAULT_FROM_EMAIL,
+
                     to=[vendor.email],
+
                     cc=cc_emails
                 )
 
@@ -1326,72 +1675,30 @@ class SaveAuditAPIView(APIView):
                     "text/html"
                 )
 
-                email.send(fail_silently=False)
+                email.attach(
+                    cc_filename,
+                    pdf_bytes,
+                    "application/pdf"
+                )
 
-                try:
-                    all_submissions = VendorComplianceSubmission.objects.filter(
-
-                        branch_id=branch_id,
-
-                        vendor_id=vendor.id,
-
-                        audit_period=audit_period
-                    )
-
-                    for submission in all_submissions:
-
-                        try:
-
-                            archive = ComplianceAuditArchive.objects.create(
-
-                                vendor_submission=submission,
-
-                                archive_type="CLEARANCE_EMAIL",
-
-                                uploaded_by=request.user,
-
-                                remarks="Clearance email archived"
-                            )
-
-                            print(
-                                "SAVING EMAIL ARCHIVE TO:",
-                                archive.file.name
-                            )
-
-                            archive.file.save(
-
-                                (
-                                    f"{vendor.short_name}_"
-                                    f"{audit_period}_"
-                                    f"clearance_email.html"
-                                ).replace(" ", "_"),
-
-                                ContentFile(
-                                    pdf_bytes
-                                ),
-
-                                save=True
-                            )
-
-                        except Exception as e:
-
-                            logger.error(
-                                f"EMAIL ARCHIVE ERROR: {str(e)}"
-                            )
-
-                except Exception as archive_error:
-
-                    logger.error(
-                        f"EMAIL ARCHIVE ERROR: {str(archive_error)}"
-                    )
+                email.send(
+                    fail_silently=False
+                )
 
                 SystemNotification.objects.create(
-                    user=vendor.user,
-                    title="Compliance Clearance Certificate Issued",
-                    type="VENDOR",
-                    branch_id=branch_id,
-                    audit_period=audit_period,
 
+                    user=vendor.user,
+
+                    title=(
+                        "Compliance Clearance "
+                        "Certificate Issued"
+                    ),
+
+                    type="VENDOR",
+
+                    branch_id=branch_id,
+
+                    audit_period=audit_period,
                     data={
 
                         "vendor": vendor.name,
@@ -1399,6 +1706,8 @@ class SaveAuditAPIView(APIView):
                         "vendor_id": vendor.id,
 
                         "branch": branch.short_name,
+
+                        "branch_id": branch.id,
 
                         "state": branch.state,
 
@@ -1414,59 +1723,158 @@ class SaveAuditAPIView(APIView):
                     },
                 )
 
+
+                # =========================================
+                # PE NOTIFICATION
+                # =========================================
+
+                if pe.user:
+
+                    SystemNotification.objects.create(
+
+                        user=pe.user,
+
+                        title=(
+                            "Compliance Clearance "
+                            "Certificate Issued"
+                        ),
+
+                        type="VENDOR",
+
+                        branch_id=branch_id,
+
+                        audit_period=audit_period,
+
+                        data={
+
+                            "vendor": vendor.name,
+
+                            "vendor_id": vendor.id,
+
+                            "branch": branch.short_name,
+
+                            "branch_id": branch.id,
+
+                            "state": branch.state,
+
+                            "audit_period": audit_period,
+
+                            "status": "CC_ISSUED",
+
+                            "pdf_download_url": (
+                                request.build_absolute_uri(
+                                    f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
+                                )
+                            ),
+                        },
+                    )
+
             except Exception as e:
 
-                logger.error(f"❌ Email failed: {str(e)}")
+                logger.error(
+                    f"❌ Email failed: {str(e)}"
+                )
 
-            return Response({
-                "message": "Audit saved & email sent successfully"
-            })
+                return Response(
+                    {
+                        "error": (
+                            "Audit saved "
+                            "but email failed"
+                        )
+                    },
+                    status=500
+                )
 
-# Inside SaveAuditAPIView.post() — replace the notification block
+        # ======================================
+        # INVALID / REUPLOAD FLOW
+        # ======================================
 
-        else:
+        elif not all_valid:
+
             logger.info("❌ Invalid audit → creating notification")
 
             formatted_entries = []
 
             for entry in entries:
+
                 checklist = AuditChecklist.objects.filter(
                     id=entry.get("checklist_id")
                 ).select_related("document").first()
 
                 formatted_entries.append({
+
                     "checklist_id": entry.get("checklist_id"),
-                    "audit_particular": checklist.audit_particulars if checklist else "",
-                    "document_id": checklist.document_id if checklist and checklist.document else None,
-                    "document_name": checklist.document.name if checklist and checklist.document else "N/A",
+
+                    "audit_particular": (
+                        checklist.audit_particulars
+                        if checklist else ""
+                    ),
+
+                    "document_id": (
+                        checklist.document_id
+                        if checklist and checklist.document
+                        else None
+                    ),
+
+                    "document_name": (
+                        checklist.document.name
+                        if checklist and checklist.document
+                        else "N/A"
+                    ),
+
                     "status": entry.get("status"),
+
                     "observation": entry.get("observation"),
+
                     "recommendation": entry.get("recommendation"),
                 })
 
             SystemNotification.objects.create(
+
                 user=vendor.user,
+
                 title="Audit Requires Action - Re-upload Required",
+
                 type="VENDOR",
+
                 branch_id=branch_id,
+
                 audit_period=audit_period,
+
                 data={
+
                     "vendor": vendor.name,
+
                     "vendor_id": vendor.id,
-                    "pe_id": pe.id,                    # ← Important
+
+                    "pe_id": pe.id,
+
                     "pe_short_name": pe.short_name,
-                    "branch_id": branch_id,            # ← Important
+
+                    "branch_id": branch_id,
+
                     "branch_short_name": branch.short_name,
+
                     "state": branch.state,
+
                     "audit_period": audit_period,
+
                     "entries": formatted_entries,
+
                     "action": "reupload"
                 }
             )
 
             return Response({
-                "message": "Audit saved. Vendor notified to re-upload documents."
+                "message": (
+                    "Audit saved. Vendor notified "
+                    "to re-upload documents."
+                )
             })
+            
+        return Response({
+            "message": "Audit saved successfully"
+        })
 
 # ================= LIST =================
 class AuditorListAPIView(APIView):
@@ -1830,6 +2238,20 @@ class AuditChecklistAPIView(APIView):
             audit_period=audit_period
         )
 
+        # ======================================
+        # NO DOCUMENTS UPLOADED
+        # ======================================
+
+        if not submissions.exists():
+
+            return Response({
+
+                "has_documents": False,
+
+                "checklist": []
+
+            })
+
         # ✅ ALL vendor submissions map
         submission_map = {
             sub.document_id: sub
@@ -1868,35 +2290,9 @@ class AuditChecklistAPIView(APIView):
 
         response = []
 
-        # ======================================
-        # REUPLOAD FILTER SUPPORT
-        # ======================================
-
-        reuploaded_document_names = request.GET.getlist(
-            "reuploaded_documents"
-        )
-
-        if reuploaded_document_names:
-
-            reuploaded_document_names = [
-                x.strip().lower()
-                for x in reuploaded_document_names
-            ]
-
         for item in checklist_qs:
+
             sub = submission_map.get(item.document_id)
-
-            document_name = (
-                item.document.name.strip().lower()
-                if item.document and item.document.name
-                else ""
-            )
-
-            if (
-                reuploaded_document_names
-                and document_name not in reuploaded_document_names
-            ):
-                continue
 
             existing_entry = AuditEntry.objects.filter(
                 checklist_id=item.id,
@@ -1936,7 +2332,7 @@ class AuditChecklistAPIView(APIView):
                 "auditor_guide": item.auditor_guide,
 
                 # ✅ PROFESSIONAL STATUS
-                "status": (
+                "document_status": (
                     "Uploaded"
                     if sub
                     else "Document Pending"
@@ -1979,7 +2375,13 @@ class AuditChecklistAPIView(APIView):
                 ),
             })
 
-        return Response(response)
+        return Response({
+
+            "has_documents": True,
+
+            "checklist": response
+
+        })
 
 
 # ================= REMARKS =================

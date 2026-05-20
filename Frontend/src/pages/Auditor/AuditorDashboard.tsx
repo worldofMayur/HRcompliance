@@ -19,6 +19,8 @@ export default function AuditorDashboard() {
   const [stateList, setStateList] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
+  const [hasDocuments, setHasDocuments] =
+  useState(true);
   const [notificationDocs, setNotificationDocs] = useState<string[]>([]);
   const [downloading, setDownloading] = useState(false);
   const [exceptionalFiles, setExceptionalFiles] = useState<any>({});
@@ -45,8 +47,17 @@ const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
   const [isFrozen, setIsFrozen] =
     useState(false);
 
-const isAuditLocked =
-  auditSessionStatus === "FROZEN";
+  const [manualEditMode, setManualEditMode] =
+  useState(false);
+
+  const isAuditLocked =
+    (
+      auditSessionStatus === "FROZEN"
+      ||
+      isFrozen
+    )
+    &&
+    !manualEditMode;
 
   /* ================= LOAD ================= */
 
@@ -568,7 +579,6 @@ const loadChecklist = async (
   branchId?: string,
   vendorId?: string,
   period?: string,
-  filterDocs: string[] = []
 ) => {
 
   try {
@@ -584,10 +594,10 @@ const loadChecklist = async (
     const finalPeriod =
       period || auditPeriod;
 
-  if (
-    !finalBranch ||
-    !finalPeriod
-  ) {
+    if (
+      !finalBranch ||
+      !finalPeriod
+    ) {
 
       console.error(
         "Checklist values missing",
@@ -602,19 +612,11 @@ const loadChecklist = async (
     }
 
     // ======================================
-    // REUPLOADED DOC QUERY
+    // CHECKLIST API
     // ======================================
 
-    const docsQuery =
-      filterDocs
-        .map(
-          (doc) =>
-            `reuploaded_documents=${encodeURIComponent(doc)}`
-        )
-        .join("&");
-
     const checklistUrl =
-      `http://127.0.0.1:8000/api/auditor/audit/checklist/${finalBranch}/?audit_period=${finalPeriod}${docsQuery ? `&${docsQuery}` : ""}`;
+      `http://127.0.0.1:8000/api/auditor/audit/checklist/${finalBranch}/?audit_period=${finalPeriod}&vendor_id=${finalVendor}`;
 
     const [checklistRes, remarksRes] =
       await Promise.all([
@@ -630,7 +632,33 @@ const loadChecklist = async (
         ),
       ]);
 
-    let rows = checklistRes.data.map(
+    // ======================================
+    // NO DOCUMENTS CASE
+    // ======================================
+
+    if (
+      checklistRes.data?.has_documents === false
+    ) {
+
+      setChecklist([]);
+
+      setRemarksData([]);
+
+      setHasDocuments(false);
+
+      setIsModalOpen(true);
+
+      return;
+    }
+
+    // ======================================
+    // NORMAL FLOW
+    // ======================================
+
+    const apiData =
+      checklistRes.data?.checklist || [];
+
+    let rows = apiData.map(
       (item: any) => ({
 
         ...item,
@@ -646,41 +674,6 @@ const loadChecklist = async (
       })
     );
 
-    // ======================================
-    // ONLY SHOW REUPLOADED DOCS
-    // ======================================
-
-    if (
-        filterDocs.length > 0
-    ) {
-
-      rows = rows.filter(
-        (r: any) =>
-          filterDocs.includes(
-            r.document_name
-          )
-      );
-    }
-        // ======================================
-    // FINAL SAFETY FILTER
-    // ======================================
-
-    if (notificationDocs.length > 0) {
-
-      rows = rows.filter((row: any) => {
-
-        const docName =
-          row.document_name
-            ?.trim()
-            ?.toLowerCase();
-
-        return filterDocs.some(
-          (doc: string) =>
-            doc?.trim()?.toLowerCase() === docName
-        );
-      });
-    }
-
     console.log(
       "FINAL FILTERED ROWS:",
       rows
@@ -688,8 +681,10 @@ const loadChecklist = async (
 
     setChecklist(rows);
 
+    setHasDocuments(true);
+
     setRemarksData(
-      remarksRes.data
+      remarksRes.data || []
     );
 
     setIsModalOpen(true);
@@ -984,6 +979,7 @@ groupedChecklist.forEach((row: any) => {
       res.data.message ||
       "Audit submitted successfully"
     );
+    setManualEditMode(false);
 
     // =========================
     // ✅ REFRESH SESSION STATUS
@@ -1094,7 +1090,15 @@ groupedChecklist.forEach((row: any) => {
       render: (_: any, record: any, index: number) => (
         <select
           value={record.status || ""}
-          disabled={isAuditLocked}
+          disabled={
+            isAuditLocked
+            &&
+            [
+              "Complied",
+              "Exceptional Approval - Delayed Complied",
+              "Not Applicable For Audit Period"
+            ].includes(record.status)
+          }
           onChange={(e) =>
           updateField(record.id, "status", e.target.value)
           }
@@ -1105,7 +1109,6 @@ groupedChecklist.forEach((row: any) => {
           <option value="Not Complied">Not Complied</option>
           <option value="Exceptional Approval - Not Complied">Exceptional Approval- Not Complied</option>
           <option value="Exceptional Approval - Delayed Complied">Exceptional Approval - Delayed Complied</option>
-          <option value="Delayed Complied">Delayed Complied</option>
           <option value="Incorrect Document Submitted">Incorrect Document Submitted</option>
           <option value="Not Applicable For Audit Period">Not Applicable For Audit Period</option>
 
@@ -1119,7 +1122,15 @@ groupedChecklist.forEach((row: any) => {
       render: (_: any, record: any) => (
         <Input
           value={record.observation}
-          disabled={isAuditLocked}
+          disabled={
+            isAuditLocked
+            &&
+            [
+              "Complied",
+              "Exceptional Approval - Delayed Complied",
+              "Not Applicable For Audit Period"
+            ].includes(record.status)
+          }
           onChange={(e) =>
             updateField(record.id, "observation", e.target.value)
           }
@@ -1140,7 +1151,15 @@ groupedChecklist.forEach((row: any) => {
   render: (_: any, record: any) => (
     <Input
       value={record.recommendation}
-      disabled={isAuditLocked}
+      disabled={
+        isAuditLocked
+        &&
+        [
+          "Complied",
+          "Exceptional Approval - Delayed Complied",
+          "Not Applicable For Audit Period"
+        ].includes(record.status)
+      }
       onChange={(e) =>
         updateField(record.id, "recommendation", e.target.value)
       }
@@ -1187,8 +1206,6 @@ const allowedFreezeStatuses = [
   "Complied",
 
   "Exceptional Approval - Delayed Complied",
-
-  "Exceptional Approval - Not Complied",
 
   "Not Applicable For Audit Period"
 ];
@@ -1405,7 +1422,13 @@ const canFreezeReport =
     <div className="flex justify-between items-center">
       <div className="flex flex-col">
         <span className="font-semibold">
-          Reuploaded Compliance Review
+          {
+            notificationDocs.length > 0
+
+              ? "Compliance Reupload Review"
+
+              : "Final Audit Review"
+          }
         </span>
 
         {notificationDocs.length > 0 && (
@@ -1463,6 +1486,48 @@ const canFreezeReport =
 
           </div>
         )
+      }
+
+      {
+        (
+          auditSessionStatus === "FROZEN"
+          ||
+          isFrozen
+        )
+
+        &&
+
+        notificationDocs.length === 0
+
+        &&
+
+        !manualEditMode
+
+        && (
+
+          <Button
+
+            type="primary"
+
+            size="small"
+
+            icon={<SyncOutlined />}
+
+            onClick={() => {
+
+              setManualEditMode(true);
+
+              message.warning(
+                "Audit unlocked for editing"
+              );
+            }}
+
+          >
+
+            Edit Audit
+
+          </Button>
+      )
       }
 
       <Button
@@ -1529,29 +1594,42 @@ const canFreezeReport =
   </div>
 
   {/* 🔥 MOVE DOWNLOAD HERE */}
-  <div className="mt-4 flex justify-between items-center p-4 bg-blue-50 border border-blue-200 rounded-xl">
+{
+  hasDocuments && (
 
-    <div>
-      <div className="text-sm font-medium text-blue-900">
-        Audit Documents
+    <div className="mt-4 flex justify-between items-center p-4 bg-blue-50 border border-blue-200 rounded-xl">
+
+      <div>
+
+        <div className="text-sm font-medium text-blue-900">
+          Audit Documents
+        </div>
+
+        <div className="text-xs text-blue-700">
+          Download all supporting files for verification
+        </div>
+
       </div>
-      <div className="text-xs text-blue-700">
-        Download all supporting files for verification
-      </div>
+
+      <Button
+        type="primary"
+        icon={<DownloadOutlined />}
+        loading={downloading}
+        onClick={downloadZip}
+        disabled={!selectedBranch}
+        className="rounded-lg px-5 shadow-sm"
+      >
+        {
+          downloading
+            ? "Downloading..."
+            : "Download Audit Document"
+        }
+      </Button>
+
     </div>
 
-    <Button
-      type="primary"
-      icon={<DownloadOutlined />}
-      loading={downloading}
-      onClick={downloadZip}
-      disabled={!selectedBranch}
-      className="rounded-lg px-5 shadow-sm"
-    >
-      {downloading ? "Downloading..." : "Download Audit Document"}
-    </Button>
-
-  </div>
+  )
+}
 
 </div>
   {/* 🔥 RIGHT: SUMMARY */}
@@ -1617,75 +1695,131 @@ const canFreezeReport =
         </div>
       )}
 
-      <Table
-        columns={columns}
-        dataSource={groupedChecklist}
-        rowKey="id"
-        pagination={false}
-        bordered
-        size="small"
-      />
+      {
+        !hasDocuments ? (
+
+          <div
+            className="
+              flex
+              items-center
+              justify-center
+              h-[300px]
+              bg-gray-50
+              rounded-xl
+              border
+              border-dashed
+              border-gray-300
+            "
+          >
+
+            <div className="text-center">
+
+              <div className="text-lg font-semibold text-gray-700">
+
+                No documents uploaded for this audit period
+
+              </div>
+
+              <div className="text-sm text-gray-400 mt-2">
+
+                Vendor has not submitted any compliance documents yet.
+
+              </div>
+
+            </div>
+
+          </div>
+
+        ) : (
+
+          <Table
+            columns={columns}
+            dataSource={groupedChecklist}
+            rowKey="id"
+            pagination={false}
+            bordered
+            size="small"
+          />
+
+        )
+      }
 
       {/* UPLOAD */}
-      <div className="flex justify-start flex-col mt-4 gap-2">
-        <span className="font-semibold">
-          For Exceptional Approval, Upload Supporting Evidance
-        </span>
+{
+  hasDocuments && (
 
-        <Upload
-          multiple={false}
-          beforeUpload={(file) => {
+    <div className="flex justify-start flex-col mt-4 gap-2">
 
-            const exceptionalRows =
-              groupedChecklist.filter(
-                (row: any) =>
-                  row.status ===
-                  "Exceptional Approval - Delayed Complied"
-              );
+      <span className="font-semibold">
+        For Exceptional Approval, Upload Supporting Evidance
+      </span>
 
-            if (exceptionalRows.length === 0) {
+      <Upload
+        disabled={
+          isAuditLocked
+          &&
+          !manualEditMode
+        }
+        multiple={false}
+        beforeUpload={(file) => {
 
-              message.warning(
-                "Select Exceptional Approval status first"
-              );
-
-              return Upload.LIST_IGNORE;
-            }
-
-            const updatedFiles: any = {
-              ...exceptionalFiles
-            };
-
-            exceptionalRows.forEach((row: any) => {
-
-            updatedFiles[row.id] = file;
-            });
-
-            setExceptionalFiles(updatedFiles);
-
-            message.success(
-              `${file.name} attached`
+          const exceptionalRows =
+            groupedChecklist.filter(
+              (row: any) =>
+                row.status ===
+                "Exceptional Approval - Delayed Complied"
             );
 
-            return false;
-          }}
-        >
+          if (exceptionalRows.length === 0) {
 
-          <Button icon={<UploadOutlined />}>
-            Upload Document
-          </Button>
+            message.warning(
+              "Select Exceptional Approval status first"
+            );
 
-        </Upload>
+            return Upload.LIST_IGNORE;
+          }
 
-        <span className="font-semibold">
-          File Type - PDF/ JPG/ JPEG/ Email PDF/ Zip Folder
-        </span>
-      </div>
+          const updatedFiles: any = {
+            ...exceptionalFiles
+          };
+
+          exceptionalRows.forEach((row: any) => {
+
+            updatedFiles[row.id] = file;
+          });
+
+          setExceptionalFiles(updatedFiles);
+
+          message.success(
+            `${file.name} attached`
+          );
+
+          return false;
+        }}
+      >
+
+        <Button icon={<UploadOutlined />}>
+          Upload Document
+        </Button>
+
+      </Upload>
+
+      <span className="font-semibold">
+        File Type - PDF/ JPG/ JPEG/ Email PDF/ Zip Folder
+      </span>
+
+    </div>
+
+  )
+}
 
     </div>
 
     {/* 🔹 BOTTOM BUTTONS */}
     <div className="flex justify-end gap-3 p-4 border-t bg-white">
+
+{
+  hasDocuments && (
 
     <Button
       type="primary"
@@ -1697,13 +1831,17 @@ const canFreezeReport =
       }
     `}
       loading={loading}
-      disabled={isAuditLocked}
+      disabled={
+        isAuditLocked
+        &&
+        !manualEditMode
+      }
       onClick={handleSubmit}
     >
       {
         notificationDocs.length > 0
 
-          ? "Review & Re-Issue CC"
+          ? "Review Reuploaded Documents"
 
           : canFreezeReport
 
@@ -1712,6 +1850,9 @@ const canFreezeReport =
           : "Save & Submit"
       }
     </Button>
+
+  )
+}
 
     </div>
 

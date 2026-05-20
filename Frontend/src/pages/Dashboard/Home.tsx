@@ -7,34 +7,107 @@ import DemographicCard from "../../components/ecommerce/DemographicCard";
 import PageMeta from "../../components/common/PageMeta";
 
 export default function Home() {
+
   return (
+
     <>
       <PageMeta
-        title="React.js Ecommerce Dashboard | TailAdmin - React.js Admin Dashboard Template"
-        description="This is React.js Ecommerce Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+        title="HR Compliance Dashboard"
+        description="Enterprise HR Compliance Dashboard"
       />
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 space-y-6 xl:col-span-7">
-          <EcommerceMetrics />
 
-          <MonthlySalesChart />
+      {/* ===================================== */}
+      {/* MAIN DASHBOARD WRAPPER */}
+      {/* ===================================== */}
+
+      <div className="space-y-6">
+
+        {/* ===================================== */}
+        {/* TOP SECTION */}
+        {/* ===================================== */}
+
+        <div className="grid grid-cols-12 gap-6">
+
+          {/* ===================================== */}
+          {/* LEFT SIDE */}
+          {/* ===================================== */}
+
+          <div className="col-span-12 space-y-6 2xl:col-span-9">
+
+            {/* ===================================== */}
+            {/* METRICS */}
+            {/* ===================================== */}
+
+
+              <EcommerceMetrics />
+
+
+            {/* ===================================== */}
+            {/* MONTHLY AUDITS */}
+            {/* ===================================== */}
+
+
+              <MonthlySalesChart />
+
+
+          </div>
+
+          {/* ===================================== */}
+          {/* RIGHT SIDE */}
+          {/* ===================================== */}
+
+          <div className="col-span-12 2xl:col-span-3">
+
+
+              <MonthlyTarget />
+
+
+          </div>
+
         </div>
 
-        <div className="col-span-12 xl:col-span-5">
-          <MonthlyTarget />
-        </div>
+        {/* ===================================== */}
+        {/* ANALYTICS */}
+        {/* ===================================== */}
 
-        <div className="col-span-12">
+        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition-all dark:border-gray-800 dark:bg-white/[0.03]">
+
           <StatisticsChart />
-        </div>
-{/* 
-        <div className="col-span-12 xl:col-span-5">
-          <DemographicCard />
+
         </div>
 
-        <div className="col-span-12 xl:col-span-7">
-          <RecentOrders />
-        </div> */}
+        {/* ===================================== */}
+        {/* BOTTOM SECTION */}
+        {/* ===================================== */}
+
+        <div className="grid grid-cols-12 gap-6">
+
+          {/* ===================================== */}
+          {/* COMPLIANCE COVERAGE */}
+          {/* ===================================== */}
+
+          <div className="col-span-12 xl:col-span-5">
+
+
+              <DemographicCard />
+
+
+          </div>
+
+          {/* ===================================== */}
+          {/* RECENT AUDITS */}
+          {/* ===================================== */}
+
+          <div className="col-span-12 xl:col-span-7">
+
+
+              <RecentOrders />
+
+
+          </div>
+
+        </div>
+
       </div>
     </>
   );

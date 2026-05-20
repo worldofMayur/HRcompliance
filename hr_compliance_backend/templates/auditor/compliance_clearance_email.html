@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="utf-8">
+
+<style>
+
+@page{
+    size:A4;
+    margin:22px;
+}
+
+body{
+    margin:0;
+    padding:0;
+    background:#f3f4f6;
+    font-family:Arial,sans-serif;
+    color:#111827;
+}
+
+.container{
+    width:100%;
+    background:#f3f4f6;
+    padding:10px 0;
+}
+
+.card{
+    width:100%;
+    background:#ffffff;
+    border-radius:14px;
+    overflow:hidden;
+    border:1px solid #e5e7eb;
+}
+
+.header{
+    background:#1e3a8a;
+    padding:28px 32px;
+    color:white;
+}
+
+.header h1{
+    margin:0;
+    font-size:26px;
+    font-weight:bold;
+    line-height:1.3;
+}
+
+.header p{
+    margin-top:8px;
+    font-size:13px;
+    color:#dbeafe;
+}
+
+.content{
+    padding:28px 32px;
+}
+
+.badge{
+    display:inline-block;
+    background:#dcfce7;
+    color:#166534;
+    padding:7px 16px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:bold;
+    margin-bottom:22px;
+}
+
+.message{
+    font-size:13px;
+    line-height:1.8;
+    margin-bottom:24px;
+    color:#374151;
+}
+
+.summary-card{
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    overflow:hidden;
+    margin-bottom:22px;
+}
+
+.summary-header{
+    background:#f9fafb;
+    padding:14px 18px;
+    font-size:15px;
+    font-weight:bold;
+    color:#111827;
+    border-bottom:1px solid #e5e7eb;
+}
+
+.summary-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.summary-table td{
+    border-top:1px solid #e5e7eb;
+    padding:12px 16px;
+    font-size:13px;
+    vertical-align:top;
+}
+
+.label{
+    background:#f9fafb;
+    width:220px;
+    font-weight:bold;
+    color:#374151;
+}
+
+.note{
+    margin-top:20px;
+    background:#fef3c7;
+    border:1px solid #fde68a;
+    padding:16px;
+    border-radius:10px;
+    color:#92400e;
+    font-size:12px;
+    line-height:1.7;
+}
+
+.exception-card{
+    margin-top:24px;
+    border:1px solid #facc15;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.exception-header{
+    background:#fef3c7;
+    padding:14px 18px;
+    font-size:14px;
+    font-weight:bold;
+    color:#92400e;
+    border-bottom:1px solid #fde68a;
+}
+
+.exception-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.exception-table th{
+    background:#fffbeb;
+    color:#78350f;
+    font-size:12px;
+    padding:12px;
+    border:1px solid #fde68a;
+    text-align:left;
+}
+
+.exception-table td{
+    font-size:12px;
+    padding:12px;
+    border:1px solid #fde68a;
+    vertical-align:top;
+    line-height:1.6;
+}
+
+.signature{
+    margin-top:32px;
+}
+
+.signature-line{
+    width:220px;
+    border-top:1px solid #9ca3af;
+    margin-bottom:8px;
+}
+
+.signature-text{
+    font-size:11px;
+    color:#374151;
+    line-height:1.6;
+}
+
+.footer{
+    padding:22px 32px;
+    background:#f9fafb;
+    border-top:1px solid #e5e7eb;
+    font-size:11px;
+    color:#6b7280;
+    line-height:1.8;
+}
+
+.highlight{
+    color:#2563eb;
+    font-weight:bold;
+}
+
+.small-text{
+    font-size:12px;
+    color:#6b7280;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <!-- HEADER -->
+
+        <div class="header">
+
+            <h1>
+                Compliance Clearance Certificate
+            </h1>
+
+            <p>
+                Final Compliance Audit Successfully Completed
+            </p>
+
+        </div>
+
+        <!-- CONTENT -->
+
+        <div class="content">
+
+            <div class="badge">
+                ✓ AUDIT FINALIZED & FROZEN
+            </div>
+
+            <!-- MESSAGE -->
+
+            <div class="message">
+
+                Hello,
+
+                <br><br>
+
+                Reference to the compliance documents submitted,
+                compliance clearance has been issued with the below details.
+
+                <br><br>
+
+                The compliance audit for
+                <span class="highlight">
+                    {{ vendor_name }}
+                </span>
+                has been successfully completed and finalized.
+
+            </div>
+
+            <!-- SUMMARY -->
+
+            <div class="summary-card">
+
+                <div class="summary-header">
+                    Audit Summary
+                </div>
+
+                <table class="summary-table">
+
+                    <tr>
+                        <td class="label">
+                            Principal Employer
+                        </td>
+
+                        <td>
+                            {{ pe_name }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">
+                            Vendor
+                        </td>
+
+                        <td>
+                            {{ vendor_name }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">
+                            State
+                        </td>
+
+                        <td>
+                            {{ state }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">
+                            Branch
+                        </td>
+
+                        <td>
+                            {{ branch_name }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">
+                            Audit Period
+                        </td>
+
+                        <td>
+                            {{ audit_period }}
+                        </td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+            <!-- EXCEPTIONAL APPROVAL NOTE -->
+
+            {% if exceptional_entries %}
+
+            <div class="note">
+
+                This audit contains Exceptional Approval observations
+                which were reviewed and approved during the audit process.
+
+            </div>
+
+            <!-- EXCEPTION TABLE -->
+
+            <div class="exception-card">
+
+                <div class="exception-header">
+                    Exceptional Approval Details
+                </div>
+
+                <table class="exception-table">
+
+                    <tr>
+
+                        <th>
+                            Audit Particular
+                        </th>
+
+                        <th>
+                            Auditor Observation
+                        </th>
+
+                        <th>
+                            Auditor Recommendation
+                        </th>
+
+                    </tr>
+
+                    {% for item in exceptional_entries %}
+
+                    <tr>
+
+                        <td>
+                            {{ item.audit_particular }}
+                        </td>
+
+                        <td>
+                            {{ item.observation }}
+                        </td>
+
+                        <td>
+                            {{ item.recommendation }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </table>
+
+            </div>
+
+            {% endif %}
+
+            <!-- SIGNATURE -->
+
+            <div class="signature">
+
+                <div class="signature-line"></div>
+
+                <div class="signature-text">
+
+                    Thanks & Regards,
+
+                    <br>
+
+                    Vendor Compliance Audit Tool
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+
+        <div class="footer">
+
+            This is a system generated compliance communication.
+
+            <br><br>
+
+            Please retain this certificate and attached audit documents for your compliance records.
+
+            <br><br>
+
+            <span class="small-text">
+
+                Please do not reply directly to this email.
+
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

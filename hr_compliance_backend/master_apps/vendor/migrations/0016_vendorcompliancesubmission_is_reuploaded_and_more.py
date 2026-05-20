@@ -11,24 +11,41 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+
         migrations.AddField(
             model_name='vendorcompliancesubmission',
             name='is_reuploaded',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(
+                default=False
+            ),
         ),
+
         migrations.AddField(
             model_name='vendorcompliancesubmission',
             name='previous_file',
-            field=models.FileField(blank=True, null=True, upload_to=master_apps.vendor.compliance_models.compliance_main_upload_path),
+            field=models.FileField(
+                blank=True,
+                null=True,
+                upload_to=master_apps.vendor.compliance_models.compliance_upload_path
+            ),
         ),
+
         migrations.AddField(
             model_name='vendorcompliancesubmission',
             name='reupload_remark',
-            field=models.TextField(blank=True, null=True),
+            field=models.TextField(
+                blank=True,
+                null=True
+            ),
         ),
+
         migrations.AddField(
             model_name='vendorcompliancesubmission',
             name='reuploaded_at',
-            field=models.DateTimeField(blank=True, null=True),
+            field=models.DateTimeField(
+                blank=True,
+                null=True
+            ),
         ),
+
     ]

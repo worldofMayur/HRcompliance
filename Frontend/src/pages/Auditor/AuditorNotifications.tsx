@@ -831,9 +831,11 @@ const fetchNotifications = async (
   </span>
 
 ) : (
-  n.title?.toLowerCase().includes("frozen") ||
+n.data?.status === "FROZEN"
 
-  n.title?.toLowerCase().includes("cc")
+||
+
+n.data?.status === "CC_ISSUED"
 ) ? (
 
   <span
@@ -910,9 +912,7 @@ const fetchNotifications = async (
     )}
 
     <button
-      onClick={(e) => {
-
-        e.stopPropagation();
+      onClick={async () => {
 
         navigate(
           "/auditor-dashboard",
@@ -922,6 +922,11 @@ const fetchNotifications = async (
             },
           }
         );
+
+        if (!n.is_read) {
+
+          await markAsRead(n.id);
+        }
       }}
                 className="
                   rounded-lg
@@ -1000,26 +1005,6 @@ const fetchNotifications = async (
                           <span className="font-medium">
                             {n.data?.audit_period}
                           </span>
-
-                          {n.data?.reuploaded_documents?.map(
-                            (doc: string, idx: number) => (
-
-                              <div
-                                key={idx}
-                                className="flex items-center gap-2"
-                              >
-
-                                <span className="text-gray-300">
-                                  •
-                                </span>
-
-                                <span>
-                                  {doc}
-                                </span>
-
-                              </div>
-                            )
-                          )}
 
                         </div>
 

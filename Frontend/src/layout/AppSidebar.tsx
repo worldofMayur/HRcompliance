@@ -426,7 +426,7 @@ const AppSidebar: React.FC = () => {
 
                 <li>
                   <Link
-                    to="vendor-notifications"
+                    to="pe-notifications"
                     onClick={handleNavigation}
                     className={menuClass("/vendor-notifications")}
                   >

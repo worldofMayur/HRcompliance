@@ -1,11 +1,34 @@
 from django.db import models
 import os
 from accounts.models import User
+from django.utils.text import slugify
 
-def vendor_document_upload_path(instance, filename):
+from master_apps.vendor.path_manager import (
+    generate_unique_filename
+)
+
+
+def vendor_document_upload_path(
+    instance,
+    filename
+):
+
+    folder = slugify(
+        instance.vendor.short_name
+    )
+
+    filename = generate_unique_filename(
+        filename
+    )
+
     return os.path.join(
+
         "vendor",
-        instance.vendor.short_name,
+
+        folder,
+
+        "master_documents",
+
         filename
     )
 

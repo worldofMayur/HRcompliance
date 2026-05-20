@@ -84,7 +84,9 @@ ROOT_URLCONF = "hr_compliance_backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [
+            os.path.join(BASE_DIR, "templates")
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -123,6 +125,7 @@ MEDIA_ROOT = os.path.join(
     BASE_DIR,
     "media"
 )
+FILE_UPLOAD_PERMISSIONS = 0o644
 # ==========================================================
 STATIC_URL = "/static/"
 
