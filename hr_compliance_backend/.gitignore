@@ -1,0 +1,26 @@
+# Backend
+hr_compliance_backend/venv/
+hr_compliance_backend/__pycache__/
+hr_compliance_backend/.env
+hr_compliance_backend/media/
+hr_compliance_backend/staticfiles/
+hr_compliance_backend/db.sqlite3
+
+# Frontend
+Frontend/node_modules/
+Frontend/dist/
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
