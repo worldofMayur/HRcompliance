@@ -23,10 +23,7 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv(
-    "ALLOWED_HOSTS",
-    "127.0.0.1,localhost"
-).split(",")
+ALLOWED_HOSTS = ["*"]
 
 # ==========================================================
 # APPLICATIONS
@@ -131,10 +128,7 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-STATICFILES_STORAGE = (
-    "whitenoise.storage.CompressedManifestStaticFilesStorage"
-)
-
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 # ==========================================================
 # AUTH USER MODEL
 # ==========================================================
