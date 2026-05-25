@@ -807,7 +807,7 @@ const downloadCC = async (
                             ? "Preparing..."
                             : downloadedZip.includes(n.id)
                             ? "Downloaded"
-                            : "Download ZIP"
+                            : "Download Vendor Documents"
                         }
 
                       </button>
