@@ -4,6 +4,7 @@ import pymysql
 from dotenv import load_dotenv
 from datetime import timedelta
 
+
 pymysql.install_as_MySQLdb()
 load_dotenv()
 
@@ -102,17 +103,16 @@ WSGI_APPLICATION = "hr_compliance_backend.wsgi.application"
 # ==========================================================
 # DATABASE
 # ==========================================================
+
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("DB_NAME", "hr_compliance_data"),
-        "USER": os.getenv("DB_USER", "hr_admin"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "StrongPassword@123"),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "3306"),
-        "OPTIONS": {
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT', '3306'),
     }
 }
 
