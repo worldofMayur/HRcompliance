@@ -7,7 +7,7 @@ import {
 } from "./auth";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+  baseURL: "https://YOUR_BACKEND_DOMAIN",
 });
 
 // ================= REQUEST =================
@@ -15,7 +15,6 @@ api.interceptors.request.use(
   async (config) => {
     const token = getAccessToken();
 
-    // ✅ DO NOT ADD TOKEN TO LOGIN
     if (
       token &&
       !config.url?.includes("/api/auth/login/")
@@ -37,14 +36,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // ✅ IGNORE LOGIN ERRORS
     if (
       originalRequest?.url?.includes("/api/auth/login/")
     ) {
       return Promise.reject(error);
     }
 
-    // ✅ TOKEN EXPIRED
     if (
       error.response?.status === 401 &&
       !originalRequest._retry
@@ -61,7 +58,6 @@ api.interceptors.response.use(
         return api(originalRequest);
       }
 
-      // ✅ SESSION EXPIRED
       logoutUser();
 
       window.location.href =
