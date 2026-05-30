@@ -72,7 +72,7 @@ const fetchAuditSessionStatus = async (
 
     const response = await axios.get(
 
-      "http://127.0.0.1:8000/api/auditor/audit-session-status/",
+      `${import.meta.env.VITE_API_URL}/api/auditor/audit-session-status/`,
 
       {
         params: {
@@ -327,7 +327,7 @@ useEffect(() => {
 
   const loadPE = async () => {
     const res = await axios.get(
-      "http://127.0.0.1:8000/api/auditor/mapped-pe/",
+      `${import.meta.env.VITE_API_URL}/api/auditor/mapped-pe/`,
       authHeader
     );
     setPeList(res.data);
@@ -915,28 +915,18 @@ const handleSubmit = async () => {
     // ✅ APPEND EXCEPTION FILES
     // =========================
 
-groupedChecklist.forEach((row: any) => {
-
-  if (
-    row.status?.includes(
-      "Exceptional Approval"
-    )
-  ) {
-
-    const file =
-      exceptionalFiles[row.id];
+if (exceptionalFiles) {
+  Object.keys(exceptionalFiles).forEach((checklistId) => {
+    const file = exceptionalFiles[checklistId];
 
     if (file) {
-
       formData.append(
-
-        `exceptional_file_${row.id}`,
-
+        `exceptional_file_${checklistId}`,
         file
       );
     }
-  }
-});
+  });
+}
 
     console.log(
       "📤 FINAL SUBMIT DATA"
@@ -948,7 +938,7 @@ groupedChecklist.forEach((row: any) => {
 
     const res = await axios.post(
 
-      "http://127.0.0.1:8000/api/auditor/save-audit/",
+      `${import.meta.env.VITE_API_URL}/api/auditor/save-audit/`,
 
       formData,
 
