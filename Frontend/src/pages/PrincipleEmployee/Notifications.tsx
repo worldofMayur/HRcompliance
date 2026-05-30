@@ -88,7 +88,7 @@ export default function PENotifications() {
 
       const res = await fetch(
 
-        "http://127.0.0.1:8000/api/auditor/vendor/notifications/",
+        "http://apii.complianceclearance.com/api/auditor/vendor/notifications/",
 
         {
           headers: {
@@ -296,7 +296,7 @@ const downloadCC = async (
       const response =
         await fetch(
 
-          `http://127.0.0.1:8000/api/auditor/audit/documents-zip/${branchId}/?audit_period=${encodeURIComponent(
+          `http://apii.complianceclearance.com/api/auditor/audit/documents-zip/${branchId}/?audit_period=${encodeURIComponent(
             auditPeriod
           )}`,
 

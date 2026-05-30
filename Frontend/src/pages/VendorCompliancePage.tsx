@@ -191,21 +191,21 @@ export default function VendorCompliancePage() {
   }, [selectedPE, selectedBranch, selectedPeriod]);
   const loadMappedPE = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/api/vendor/mapped-pe/", authHeader);
+      const res = await axios.get("http://apii.complianceclearance.com/api/vendor/mapped-pe/", authHeader);
       setPeList(res.data);
     } catch (err) { console.error(err); }
   };
 
   const loadStates = async (peId: string) => {
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/vendor/mapped-states/?pe_id=${peId}`, authHeader);
+      const res = await axios.get(`http://apii.complianceclearance.com/api/vendor/mapped-states/?pe_id=${peId}`, authHeader);
       setStates(res.data);
     } catch (err) { console.error(err); }
   };
 
   const loadBranches = async (peId: string, state: string) => {
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/vendor/mapped-branches/?pe_id=${peId}&state=${state}`, authHeader);
+      const res = await axios.get(`http://apii.complianceclearance.com/api/vendor/mapped-branches/?pe_id=${peId}&state=${state}`, authHeader);
       setBranches(res.data);
     } catch (err) { console.error(err); }
   };
@@ -213,7 +213,7 @@ export default function VendorCompliancePage() {
   const loadMappingMeta = async (peId: string, branchId: string) => {
     try {
       const res = await axios.get(
-        `http://127.0.0.1:8000/api/vendor/mapping-meta/?pe_id=${peId}&branch_id=${branchId}`,
+        `http://apii.complianceclearance.com/api/vendor/mapping-meta/?pe_id=${peId}&branch_id=${branchId}`,
         authHeader
       );
       const data = res.data;
@@ -232,7 +232,7 @@ export default function VendorCompliancePage() {
   try {
 
     const res = await axios.get(
-      `http://127.0.0.1:8000/api/vendor/frozen-periods/?branch_id=${branchId}`,
+      `http://apii.complianceclearance.com/api/vendor/frozen-periods/?branch_id=${branchId}`,
       authHeader
     );
 
@@ -253,7 +253,7 @@ export default function VendorCompliancePage() {
     setDocumentsLoading(true);
 
     const res = await axios.get(
-      `http://127.0.0.1:8000/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}&period=${encodeURIComponent(
+      `http://apii.complianceclearance.com/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}&period=${encodeURIComponent(
         selectedPeriod
       )}`,
       authHeader
@@ -619,8 +619,8 @@ formData.append(
     // ================= API ENDPOINT =================
 
     const endpoint = reuploadMode
-      ? "http://127.0.0.1:8000/api/vendor/reupload-compliance/"
-      : "http://127.0.0.1:8000/api/vendor/submit-compliance/";
+      ? "http://apii.complianceclearance.com/api/vendor/reupload-compliance/"
+      : "http://apii.complianceclearance.com/api/vendor/submit-compliance/";
 
     // ================= API CALL =================
 

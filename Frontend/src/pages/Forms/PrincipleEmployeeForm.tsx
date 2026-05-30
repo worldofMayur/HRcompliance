@@ -1346,7 +1346,7 @@ finally {
                 {branchData.existingDocument && !branchData.document && (
                   <div className="flex items-center justify-between text-sm bg-white px-4 py-1.5 rounded-lg border">
                     <a
-                      href={`http://127.0.0.1:8000${branchData.existingDocument}`}
+                      href={`http://apii.complianceclearance.com${branchData.existingDocument}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 underline"
@@ -1587,7 +1587,7 @@ finally {
                       <td className="px-5 py-3 text-sm">
                         {branch.document ? (
                           <a
-                            href={`http://127.0.0.1:8000${branch.document}`}
+                            href={`http://apii.complianceclearance.com${branch.document}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 underline"

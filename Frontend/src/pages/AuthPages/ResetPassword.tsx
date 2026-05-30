@@ -14,7 +14,7 @@ export default function ResetPassword() {
   useEffect(() => {
     const validate = async () => {
       const res = await fetch(
-        "http://127.0.0.1:8000/api/auth/validate-reset-token/",
+        "http://apii.complianceclearance.com/api/auth/validate-reset-token/",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -43,7 +43,7 @@ export default function ResetPassword() {
     setSubmitting(true);
 
     const res = await fetch(
-      "http://127.0.0.1:8000/api/auth/reset-password/",
+      "http://apii.complianceclearance.com/api/auth/reset-password/",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

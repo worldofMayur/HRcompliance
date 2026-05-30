@@ -28,7 +28,7 @@ export default function ManageCCEmails() {
       const token = localStorage.getItem("access_token");
 
       const res = await axios.get(
-        "http://127.0.0.1:8000/api/vendor/cc-emails/",
+        "http://apii.complianceclearance.com/api/vendor/cc-emails/",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -73,7 +73,7 @@ export default function ManageCCEmails() {
       const token = localStorage.getItem("access_token");
 
       await axios.post(
-        "http://127.0.0.1:8000/api/vendor/cc-emails/",
+        "http://apii.complianceclearance.com/api/vendor/cc-emails/",
         { emails: updated },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -122,7 +122,7 @@ export default function ManageCCEmails() {
       const token = localStorage.getItem("access_token");
 
       await axios.post(
-        "http://127.0.0.1:8000/api/vendor/cc-emails/",
+        "http://apii.complianceclearance.com/api/vendor/cc-emails/",
         { emails: filtered },
         {
           headers: { Authorization: `Bearer ${token}` },
