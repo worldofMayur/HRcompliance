@@ -197,7 +197,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ==========================================================
 # FRONTEND URL (for email reset links)
 # ==========================================================
-FRONTEND_URL = "https://hr.complianceclearance.com""
+FRONTEND_URL = "https://hr.complianceclearance.com"
 
 
 SIMPLE_JWT = {
