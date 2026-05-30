@@ -52,7 +52,7 @@ export default function App() {
   }, []);
 
   return (
-    <Router basename="/TailAdmin">
+    <Router basename="/">   {/* ← Changed to "/" */}
       <ScrollToTop />
 
       <Routes>
