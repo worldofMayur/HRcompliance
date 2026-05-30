@@ -19,9 +19,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-dev-key"
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["*"]  # For now, but better to set specific domains later
 
 # ==========================================================
 # APPLICATIONS
@@ -58,6 +58,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -93,20 +94,25 @@ WSGI_APPLICATION = "hr_compliance_backend.wsgi.application"
 # ==========================================================
 # DATABASE (MySQL)
 # ==========================================================
+# ==========================================================
+# DATABASE (Coolify MySQL)
+# ==========================================================
+# DATABASE (Coolify MySQL)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "hr_compliance_data",
-        "USER": "hr_admin",
-        "PASSWORD": "StrongPassword@123",
-        "HOST": "localhost",
-        "PORT": "3306",
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT", "3306"),
         "OPTIONS": {
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+            # Add this for better stability in containers:
+            "connect_timeout": 10,
         },
     }
 }
-
 # ==========================================================
 # MEDIA FILES
 # ==========================================================
@@ -118,7 +124,11 @@ MEDIA_ROOT = os.path.join(
 FILE_UPLOAD_PERMISSIONS = 0o644
 # ==========================================================
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
 # ==========================================================
 # AUTH USER MODEL
 # ==========================================================
