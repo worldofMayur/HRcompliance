@@ -137,8 +137,8 @@ class VendorCreateAPIView(APIView):
                 token = PasswordResetTokenGenerator().make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-                reset_url = f"{settings.FRONTEND_URL}/TailAdmin/reset-password/{uid}/{token}"
-                login_url = f"{settings.FRONTEND_URL}/TailAdmin/signin"
+                reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+                login_url = f"{settings.FRONTEND_URL}/signin"
 
                 html_content = render_to_string(
                     "emails/password_reset.html",

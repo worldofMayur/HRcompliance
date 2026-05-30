@@ -61,7 +61,7 @@ api.interceptors.response.use(
       logoutUser();
 
       window.location.href =
-        "/TailAdmin/signin";
+        "/signin";
     }
 
     return Promise.reject(error);
