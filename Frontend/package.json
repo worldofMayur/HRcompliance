@@ -3,7 +3,6 @@
     "private": true,
     "version": "2.0.1",
     "type": "module",
-    "homepage": "https://themewagon.github.io/TailAdmin",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
