@@ -351,7 +351,7 @@ useEffect(() => {
 
   const loadVendors = async (peId: string) => {
     const res = await axios.get(
-      `http://apii.complianceclearance.com/api/auditor/mapped-vendors/?pe_id=${peId}`,
+      `https://apii.complianceclearance.com/api/auditor/mapped-vendors/?pe_id=${peId}`,
       authHeader
     );
     setVendorList(res.data);
@@ -369,7 +369,7 @@ const downloadZip = async () => {
 
     const response = await axios.get(
 
-      `http://apii.complianceclearance.com/api/auditor/audit/documents-zip/${selectedBranch}/?audit_period=${auditPeriod}`,
+      `https://apii.complianceclearance.com/api/auditor/audit/documents-zip/${selectedBranch}/?audit_period=${auditPeriod}`,
 
       {
 
@@ -522,7 +522,7 @@ const getPeriodOptions = () => {
 const loadMappingDetails = async (peId: string, vendorId: string, branchId: string) => {
   try {
     const res = await axios.get(
-      `http://apii.complianceclearance.com/api/auditor/mapping-details/?pe_id=${peId}&vendor_id=${vendorId}&branch_id=${branchId}`,
+      `https://apii.complianceclearance.com/api/auditor/mapping-details/?pe_id=${peId}&vendor_id=${vendorId}&branch_id=${branchId}`,
       authHeader
     );
 
@@ -548,7 +548,7 @@ const loadFrozenPeriods = async (
   try {
 
     const res = await axios.get(
-      `http://apii.complianceclearance.com/api/vendor/frozen-periods/?vendor_id=${vendorId}&branch_id=${branchId}`,
+      `https://apii.complianceclearance.com/api/vendor/frozen-periods/?vendor_id=${vendorId}&branch_id=${branchId}`,
       authHeader
     );
 
@@ -561,7 +561,7 @@ const loadFrozenPeriods = async (
 
   const loadStates = async (peId: string, vendorId: string) => {
     const res = await axios.get(
-      `http://apii.complianceclearance.com/api/auditor/mapped-states/?pe_id=${peId}&vendor_id=${vendorId}`,
+      `https://apii.complianceclearance.com/api/auditor/mapped-states/?pe_id=${peId}&vendor_id=${vendorId}`,
       authHeader
     );
     setStateList(res.data);
@@ -569,7 +569,7 @@ const loadFrozenPeriods = async (
 
   const loadBranches = async (peId: string, vendorId: string, state: string) => {
     const res = await axios.get(
-      `http://apii.complianceclearance.com/api/auditor/mapped-branches/?pe_id=${peId}&vendor_id=${vendorId}&state=${state}`,
+      `https://apii.complianceclearance.com/api/auditor/mapped-branches/?pe_id=${peId}&vendor_id=${vendorId}&state=${state}`,
       authHeader
     );
     setBranches(res.data);
@@ -616,7 +616,7 @@ const loadChecklist = async (
     // ======================================
 
     const checklistUrl =
-      `http://apii.complianceclearance.com/api/auditor/audit/checklist/${finalBranch}/?audit_period=${finalPeriod}&vendor_id=${finalVendor}`;
+      `https://apii.complianceclearance.com/api/auditor/audit/checklist/${finalBranch}/?audit_period=${finalPeriod}&vendor_id=${finalVendor}`;
 
     const [checklistRes, remarksRes] =
       await Promise.all([
@@ -627,7 +627,7 @@ const loadChecklist = async (
         ),
 
         axios.get(
-          `http://apii.complianceclearance.com/api/auditor/compliance-remarks/?branch_id=${finalBranch}`,
+          `https://apii.complianceclearance.com/api/auditor/compliance-remarks/?branch_id=${finalBranch}`,
           authHeader
         ),
       ]);

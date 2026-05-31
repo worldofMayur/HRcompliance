@@ -69,7 +69,7 @@ const fetchNotifications = async (
         localStorage.getItem("access_token");
 
       const res = await fetch(
-        "http://apii.complianceclearance.com/api/auditor/vendor/notifications/",
+        "https://apii.complianceclearance.com/api/auditor/vendor/notifications/",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -145,7 +145,7 @@ const fetchNotifications = async (
 
       // ✅ FIXED URL
       await fetch(
-        `http://apii.complianceclearance.com/api/auditor/vendor/notifications/${id}/read/`,
+        `https://apii.complianceclearance.com/api/auditor/vendor/notifications/${id}/read/`,
         {
           method: "PATCH",
           headers: {
@@ -191,7 +191,7 @@ const fetchNotifications = async (
 
           // ✅ FIXED URL
           await fetch(
-            `http://apii.complianceclearance.com/api/auditor/vendor/notifications/${n.id}/read/`,
+            `https://apii.complianceclearance.com/api/auditor/vendor/notifications/${n.id}/read/`,
             {
               method: "PATCH",
               headers: {

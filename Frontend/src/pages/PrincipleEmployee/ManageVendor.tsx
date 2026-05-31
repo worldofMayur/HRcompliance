@@ -8,7 +8,7 @@ import { saveAs } from "file-saver";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const API_BASE = "http://apii.complianceclearance.com/api";
+const API_BASE = "https://apii.complianceclearance.com/api";
 
 export default function ManageVendor() {
   const [vendors, setVendors] = useState([]);

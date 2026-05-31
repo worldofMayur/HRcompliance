@@ -162,8 +162,17 @@ class VendorBranchMappingCreateAPIView(APIView):
             context={"request": request}
         )
 
+        print("REQUEST DATA:", request.data)
+
         if serializer.is_valid():
+
             mapping = serializer.save()
+
+            print("MAPPING CREATED:", mapping.id)
+
+        else:
+
+            print("VALIDATION ERROR:", serializer.errors)
 
             # 🔥 SAVE DOCUMENTS CORRECTLY
             if document_ids:

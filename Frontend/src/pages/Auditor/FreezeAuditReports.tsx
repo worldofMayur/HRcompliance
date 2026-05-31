@@ -59,7 +59,7 @@ export default function FreezeAuditReports() {
 
       const res = await axios.get(
 
-        "http://apii.complianceclearance.com/api/auditor/freeze-audit-reports/",
+        "https://apii.complianceclearance.com/api/auditor/freeze-audit-reports/",
 
         authHeader
       );
@@ -96,7 +96,7 @@ export default function FreezeAuditReports() {
       const response =
         await axios.get(
 
-          `http://apii.complianceclearance.com/api/auditor/download-cc-pdf/${id}/`,
+          `https://apii.complianceclearance.com/api/auditor/download-cc-pdf/${id}/`,
 
           {
             ...authHeader,

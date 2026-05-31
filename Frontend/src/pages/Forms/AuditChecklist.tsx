@@ -12,7 +12,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import api from "../../utils/api";
 
-const API_BASE = "http://apii.complianceclearance.com/api";
+const API_BASE = "https://apii.complianceclearance.com/api";
 
 export default function AuditChecklistForm() {
 
