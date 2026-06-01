@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 
 import SignIn from "./pages/AuthPages/SignIn";
@@ -34,12 +34,14 @@ import ResetPasswordExpired from "./pages/AuthPages/ResetPasswordExpired";
 
 import AuditChecklist from "./pages/Forms/AuditChecklist";
 import "antd/dist/reset.css";
+import VendorNotifications from "./pages/VendorNotifications";
 
 import Documents from "./pages/Forms/Documents";
 import VendorMapping from "./pages/Forms/VendorMapping";
 
 // EXISTING
 import VendorCompliancePage from "./pages/VendorCompliancePage";
+
 
 // 🆕 NEW PE COMPONENTS
 import ManageVendor from "./pages/PrincipleEmployee/ManageVendor";
@@ -51,7 +53,7 @@ export default function App() {
   }, []);
 
   return (
-    <Router>
+    <Router basename="/TailAdmin">
       <ScrollToTop />
 
       <Routes>
@@ -115,6 +117,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="vendor-notifications" element={<VendorNotifications />} />
 
           <Route
             path="vendor"

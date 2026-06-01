@@ -367,10 +367,12 @@ const handleSubmit = async () => {
     // =========================
     // ✅ VALIDATION (STRICT)
     // =========================
+// =========================
+// ✅ VALIDATION (UPDATED)
+// =========================
     const invalidRow = groupedChecklist.find(
       (row) =>
         !row.status ||
-        !["Complied", "Exceptional Approval - Delayed Complied", "Not Applicable For Audit Period"].includes(row.status) ||
         !row.observation ||
         !row.recommendation ||
         !row.observation.trim() ||
@@ -379,7 +381,7 @@ const handleSubmit = async () => {
 
     if (invalidRow) {
       message.error(
-        "All rows must have valid status + Observation & Recommendation"
+        "All rows must have status + Observation & Recommendation"
       );
       setLoading(false);
       return;

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .mapping_models import VendorBranchMapping, VendorMappingHistory
 from master_apps.documents.models import DocumentMaster
 from django.utils.timezone import now
+from datetime import date
 
 
 class DocumentMasterSerializer(serializers.ModelSerializer):
@@ -18,7 +19,7 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
     documents = DocumentMasterSerializer(many=True, read_only=True)
 
     # =========================
-    # ✅ WRITE (EXISTING)
+    # ✅ WRITE
     # =========================
     document_ids = serializers.PrimaryKeyRelatedField(
         queryset=DocumentMaster.objects.all(),
@@ -27,14 +28,12 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    # 🔥 NEW (SAFE ADD) — support direct documents array
     documents_input = serializers.ListField(
         child=serializers.IntegerField(),
         write_only=True,
         required=False
     )
 
-    # 🔥 EXISTING
     audit_rule = serializers.CharField(write_only=True, required=False)
     audit_frequency = serializers.CharField(write_only=True, required=False)
 
@@ -60,52 +59,29 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         today = now().date()
+
+        if obj.effective_date and obj.effective_date > today:
+            return "Active"
+
+        if (
+            obj.principal_employer and
+            hasattr(obj.principal_employer, "status") and
+            obj.principal_employer.status == "Inactive"
+        ):
+            return "Inactive"
+
         if obj.end_date and obj.end_date < today:
             return "Inactive"
+
         return "Active"
 
-    # =========================
-    # ✅ META (UNCHANGED)
-    # =========================
     class Meta:
         model = VendorBranchMapping
-        fields = [
-            "id",
-            "principal_employer",
-
-            "vendor",
-            "vendor_name",
-            "vendor_short_name",
-            "vendor_email",
-            "vendor_mobile",
-            "nature_of_services",
-
-            "branch",
-            "branch_name",
-            "state",
-
-            "auditor",
-            "auditor_name",
-
-            "documents",
-            "document_ids",
-            "documents_input",   # 🔥 ADDED
-
-            "audit_rule",
-            "audit_frequency",
-            "effective_date",
-
-            "start_date",
-            "end_date",
-            "rule",
-            "frequency",
-            "status",
-            "created_at",
-        ]
+        fields = "__all__"
         read_only_fields = ["created_at", "status", "rule", "frequency"]
 
     # =========================
-    # ✅ CREATE (ENHANCED ONLY)
+    # ✅ CREATE
     # =========================
     def create(self, validated_data):
         document_ids = validated_data.pop("document_ids", [])
@@ -122,7 +98,6 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
 
         mapping = super().create(validated_data)
 
-        # 🔥 SAFE DOCUMENT SET
         if document_ids:
             mapping.documents.set(document_ids)
         elif documents_input:
@@ -133,17 +108,21 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         return mapping
 
     # =========================
-    # ✅ UPDATE (ENHANCED ONLY)
+    # ✅ UPDATE (FINAL FIXED)
     # =========================
     def update(self, instance, validated_data):
         request = self.context.get("request")
+
+        # 🔥 ALWAYS take CURRENT DB state as base
+        previous_documents = list(instance.documents.values_list("id", flat=True))
 
         old_data = {
             "rule": instance.rule,
             "frequency": instance.frequency,
             "start_date": str(instance.start_date),
             "end_date": str(instance.end_date),
-            "documents": list(instance.documents.values_list("id", flat=True)),  # 🔥 ADDED
+            "effective_date": str(instance.effective_date) if instance.effective_date else None,
+            "documents": previous_documents,   # ✅ FIXED
         }
 
         document_ids = validated_data.pop("document_ids", None)
@@ -162,29 +141,47 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         today = now().date()
 
         # =========================
-        # 🔥 FUTURE UPDATE (UNCHANGED)
+        # 🔥 FUTURE UPDATE
         # =========================
+        if effective_date:
+            if isinstance(effective_date, str):
+                effective_date = date.fromisoformat(effective_date)
+
+        # Inside update() method of VendorBranchMappingSerializer
+
         if effective_date and effective_date > today:
+
+            if document_ids is not None:
+                safe_documents = [d.id for d in document_ids] if hasattr(document_ids[0], 'id') else document_ids
+            elif documents_input is not None:
+                safe_documents = documents_input
+            else:
+                safe_documents = previous_documents
+
+            safe_new_data = {
+                "rule": validated_data.get("rule", instance.rule),
+                "frequency": validated_data.get("frequency", instance.frequency),
+                "start_date": str(validated_data.get("start_date", instance.start_date)),
+                "end_date": str(validated_data.get("end_date", instance.end_date)),
+                "effective_date": str(effective_date),
+                "documents": safe_documents,
+            }
+
             VendorMappingHistory.objects.create(
                 mapping=instance,
                 changed_by=str(request.user) if request else "system",
                 change_type="FUTURE_UPDATE",
-                old_data=old_data,
-                new_data={
-                    **validated_data,
-                    "documents": document_ids or documents_input or list(
-                        instance.documents.values_list("id", flat=True)
-                    )
-                },
+                effective_date=effective_date,
+                old_data={"documents": previous_documents},
+                new_data=safe_new_data,
             )
-            return instance
+            return instance   # ← Do not apply immediately
 
         # =========================
-        # 🔥 APPLY UPDATE (ENHANCED)
+        # 🔥 IMMEDIATE UPDATE
         # =========================
         instance = super().update(instance, validated_data)
 
-        # 🔥 FIX DOCUMENT ISSUE (CRITICAL)
         if document_ids is not None:
             instance.documents.set(document_ids)
         elif documents_input is not None:
@@ -197,13 +194,15 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
             "frequency": instance.frequency,
             "start_date": str(instance.start_date),
             "end_date": str(instance.end_date),
-            "documents": list(instance.documents.values_list("id", flat=True)),  # 🔥 ADDED
+            "effective_date": str(instance.effective_date) if instance.effective_date else None,
+            "documents": list(instance.documents.values_list("id", flat=True)),
         }
 
         VendorMappingHistory.objects.create(
             mapping=instance,
             changed_by=str(request.user) if request else "system",
             change_type="UPDATE",
+            effective_date=now().date(),
             old_data=old_data,
             new_data=new_data,
         )
@@ -211,18 +210,16 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         return instance
 
     # =========================
-    # ✅ VALIDATION (UNCHANGED)
+    # ✅ VALIDATION
     # =========================
     def validate(self, data):
-
         start_date = data.get("start_date")
         end_date = data.get("end_date")
 
-        if start_date and end_date:
-            if end_date < start_date:
-                raise serializers.ValidationError({
-                    "end_date": "End date must be after start date"
-                })
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({
+                "end_date": "End date must be after start date"
+            })
 
         principal_employer = data.get("principal_employer")
         vendor = data.get("vendor")

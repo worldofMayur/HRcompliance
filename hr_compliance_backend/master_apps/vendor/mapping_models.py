@@ -4,6 +4,7 @@ from .models import Vendor
 from master_apps.principle_employee.models import PrincipalEmployerBranch, PrincipalEmployer
 from master_apps.auditor.models import Auditor
 from master_apps.documents.models import DocumentMaster
+from datetime import date
 
 
 class VendorBranchMapping(models.Model):
@@ -83,7 +84,15 @@ class VendorBranchMapping(models.Model):
     def update_status(self):
         today = now().date()
 
-        # 1️⃣ PE inactive
+        print("---- STATUS DEBUG ----")
+        print("TODAY:", today)
+        print("START:", self.start_date)
+        print("END:", self.end_date)
+        print("EFFECTIVE:", self.effective_date)
+
+        if self.effective_date and self.effective_date > today:
+            return "Active"
+
         if (
             self.principal_employer and
             hasattr(self.principal_employer, "status") and
@@ -91,7 +100,6 @@ class VendorBranchMapping(models.Model):
         ):
             return "Inactive"
 
-        # 2️⃣ End date expired
         if self.end_date and self.end_date < today:
             return "Inactive"
 
@@ -100,14 +108,23 @@ class VendorBranchMapping(models.Model):
     # =========================
     # ✅ CONTROLLED SAVE
     # =========================
+
     def save(self, *args, **kwargs):
         today = now().date()
 
-        # 🔥 APPLY STATUS ONLY IF EFFECTIVE DATE IS VALID
-        if not self.effective_date or self.effective_date <= today:
-            self.status = self.update_status()
+        # 🔥 FIX STRING DATES (GLOBAL SAFETY)
+        if isinstance(self.start_date, str):
+            self.start_date = date.fromisoformat(self.start_date)
 
-        # ❗ If effective_date is future → do not change status yet
+        if isinstance(self.end_date, str):
+            self.end_date = date.fromisoformat(self.end_date)
+
+        if isinstance(self.effective_date, str):
+            self.effective_date = date.fromisoformat(self.effective_date)
+
+        # 🔥 STATUS LOGIC
+        self.status = self.update_status()
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -127,10 +144,18 @@ class VendorMappingHistory(models.Model):
     changed_by = models.CharField(max_length=100)
     change_type = models.CharField(max_length=50)
 
+    # 🔥 ADD THIS (VERY IMPORTANT)
+    effective_date = models.DateField(db_index=True)
+
     old_data = models.JSONField(null=True, blank=True)
     new_data = models.JSONField(null=True, blank=True)
 
     changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["mapping", "effective_date"]),
+        ]
 
     def __str__(self):
         return f"Mapping {self.mapping.id} - {self.change_type}"

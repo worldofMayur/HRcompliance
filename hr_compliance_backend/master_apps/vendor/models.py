@@ -59,3 +59,19 @@ class VendorCCEmail(models.Model):
 
     def __str__(self):
         return f"{self.vendor.short_name} - {self.email}"
+
+class SystemNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    data = models.JSONField(null=True, blank=True)
+
+    type = models.CharField(max_length=20)  # VENDOR / AUDITOR
+
+    is_read = models.BooleanField(default=False)
+
+    branch_id = models.IntegerField(null=True, blank=True)
+    audit_period = models.CharField(max_length=100, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)

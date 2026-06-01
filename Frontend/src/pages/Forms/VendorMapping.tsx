@@ -206,58 +206,79 @@ const toggleDocument = (id: number) => {
   );
 };
 
-  const handleSave = async () => {
+const handleSave = async () => {
 
-    if (!selectedVendor || !selectedBranch || !startDate || !endDate) {
-      alert("Please fill all required fields");
-      return;
-    }
+  if (!selectedVendor || !selectedBranch || !startDate || !endDate) {
+    alert("Please fill all required fields");
+    return;
+  }
 
-    try {
+  // 🔥 FIX 1 — Normalize today's date
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-      const payload = {
-        vendor: Number(selectedVendor),
-        branch: Number(selectedBranch),
-        auditor: selectedAuditor ? Number(selectedAuditor) : null,
-        documents: selectedDocuments,
-        start_date: formatForAPI(startDate),
-        end_date: formatForAPI(endDate),
-        rule: selectedRule,
-        frequency: selectedFrequency,
-      };
+  // 🔥 FIX 2 — Prevent invalid range
+  if (startDate > endDate) {
+    alert("Start date cannot be greater than End date");
+    return;
+  }
 
-      await axios.post(
-        "http://127.0.0.1:8000/api/vendor/mapping/create/",
-        payload,
-        authHeader
-      );
+  // 🔥 FIX 3 — Prevent past end date (MAIN ISSUE)
+  if (endDate < today) {
+    alert("End date cannot be in the past");
+    return;
+  }
 
-      alert("Vendor Mapping Saved Successfully");
+  try {
 
-      setSelectedVendor("");
-      setSelectedVendorObj(null);
+    const payload = {
+      vendor: Number(selectedVendor),
+      branch: Number(selectedBranch),
+      auditor: selectedAuditor ? Number(selectedAuditor) : null,
+      documents: selectedDocuments,
+      start_date: formatForAPI(startDate),
+      end_date: formatForAPI(endDate),
+      rule: selectedRule,
+      frequency: selectedFrequency,
+    };
 
-      setSelectedState("");
-      setSelectedShortName("");
-      setSelectedBranch("");
-      setSelectedBranchObj(null);
+    // 🔥 DEBUG (VERY IMPORTANT)
+    console.log("🚀 FINAL PAYLOAD:", payload);
 
-      setSelectedAuditor("");
-      setSelectedAuditorObj(null);
+    await axios.post(
+      "http://127.0.0.1:8000/api/vendor/mapping/create/",
+      payload,
+      authHeader
+    );
 
-      setSelectedDocument("");
+    alert("Vendor Mapping Saved Successfully");
 
-      setSelectedRule("");
-      setSelectedFrequency("");
-      
-      setDateRange([null, null]);
-      setStartInput("");
-      setEndInput("");
+    // RESET
+    setSelectedVendor("");
+    setSelectedVendorObj(null);
 
-    } catch (error: any) {
-      alert(JSON.stringify(error.response?.data));
-    }
-  };
+    setSelectedState("");
+    setSelectedShortName("");
+    setSelectedBranch("");
+    setSelectedBranchObj(null);
+
+    setSelectedAuditor("");
+    setSelectedAuditorObj(null);
+
+    setSelectedDocument("");
+
+    setSelectedRule("");
+    setSelectedFrequency("");
+
+    setDateRange([null, null]);
+    setStartInput("");
+    setEndInput("");
+
+  } catch (error: any) {
+    console.log("❌ ERROR:", error.response?.data);
+    alert(JSON.stringify(error.response?.data));
+  }
+};
 
   return (
     <div className="space-y-6">

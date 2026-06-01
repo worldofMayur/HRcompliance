@@ -57,13 +57,33 @@ class VendorSubmitComplianceAPIView(APIView):
             )
 
         # 🚨 CRITICAL: BLOCK EXPIRED CONTRACT
-        active_mapping_exists = VendorBranchMapping.objects.filter(
+        mappings = VendorBranchMapping.objects.filter(
             vendor=vendor,
             principal_employer_id=pe_id,
             branch_id=branch_id
-        ).filter(
-            Q(end_date__isnull=True) | Q(end_date__gte=now().date())
-        ).exists()
+        )
+
+        valid_mapping_exists = False
+
+        for mapping in mappings:
+            apply_pending_updates(mapping)
+
+            new_status = mapping.update_status()
+            if mapping.status != new_status:
+                mapping.status = new_status
+                mapping.save()
+
+            if mapping.status == "Active" and (
+                not mapping.end_date or mapping.end_date >= now().date()
+            ):
+                valid_mapping_exists = True
+                break
+
+        if not valid_mapping_exists:
+            return Response(
+                {"error": "Cannot submit. Contract expired."},
+                status=400
+            )
 
         if not active_mapping_exists:
             return Response(
@@ -89,15 +109,34 @@ class VendorSubmitComplianceAPIView(APIView):
             # 📄 MAIN DOCUMENTS
             # ===============================
             if document_id:
-
-                mapping = VendorBranchMapping.objects.filter(
+                mapping_qs = VendorBranchMapping.objects.filter(
                     vendor=vendor,
                     principal_employer_id=pe_id,
                     branch_id=branch_id,
                     documents__id=document_id
-                ).filter(
-                    Q(end_date__isnull=True) | Q(end_date__gte=now().date())
-                ).first()
+                )
+
+                mapping = None
+
+                for m in mapping_qs:
+                    apply_pending_updates(m)
+
+                    new_status = m.update_status()
+                    if m.status != new_status:
+                        m.status = new_status
+                        m.save()
+
+                    if m.status == "Active" and (
+                        not m.end_date or m.end_date >= now().date()
+                    ):
+                        mapping = m
+                        break
+
+                if not mapping:
+                    return Response(
+                        {"error": "Contract expired or invalid mapping"},
+                        status=400
+                    )
 
                 # 🚨 HARD BLOCK (extra safety)
                 if not mapping:

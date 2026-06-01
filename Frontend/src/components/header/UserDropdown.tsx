@@ -35,6 +35,14 @@ export default function UserDropdown() {
     navigate("/TailAdmin/signin");
   }
 
+  // ✅ SAFE DISPLAY NAME (FIX)
+  const displayName =
+    username ||
+    (email ? email.split("@")[0] : "") ||
+    "—";
+
+  const displayEmail = email || "—";
+
   return (
     <div className="relative">
       {/* 🔹 BUTTON */}
@@ -52,34 +60,32 @@ export default function UserDropdown() {
             />
           </div>
 
-          {/* 🟢 ONLINE STATUS */}
           <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
         </div>
 
         {/* User Info */}
         <div className="hidden sm:flex flex-col items-start">
           <span className="text-sm font-semibold text-gray-800 dark:text-white">
-            {username || "SuperAdmin"}
+            {displayName}
           </span>
 
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">
-              {email || "admin@system.com"}
+              {displayEmail}
             </span>
 
-            {/* 🏷️ ROLE BADGE */}
             {role && (
-            <span
-              className={`text-[10px] uppercase tracking-wide ${
-                role === "SUPERADMIN"
-                  ? "text-purple-500"
-                  : role === "AUDITOR"
-                  ? "text-blue-500"
-                  : "text-gray-400"
-              }`}
-            >
-              {role}
-            </span>
+              <span
+                className={`text-[10px] uppercase tracking-wide ${
+                  role === "SUPERADMIN"
+                    ? "text-purple-500"
+                    : role === "AUDITOR"
+                    ? "text-blue-500"
+                    : "text-gray-400"
+                }`}
+              >
+                {role}
+              </span>
             )}
           </div>
         </div>
@@ -111,35 +117,34 @@ export default function UserDropdown() {
           <div className="relative">
             <div className="h-12 w-12 rounded-full overflow-hidden border shadow-sm">
               <img
-                src="./images/user/owner.jpg"
+                src="./images/user/user-01.jpg"
                 alt="User"
                 className="h-full w-full object-cover"
               />
             </div>
 
-            {/* 🟢 ONLINE DOT */}
             <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
           </div>
 
           <div>
             <p className="text-sm font-semibold text-gray-800 dark:text-white">
-              {username || "SuperAdmin"}
+              {displayName}
             </p>
 
-      <div className="flex items-center gap-2">
-        <p className="text-xs text-gray-500">
-          {email || "admin@system.com"}
-        </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-gray-500">
+                {displayEmail}
+              </p>
 
-        {role && (
-          <>
-            <span className="text-gray-300">•</span>
-            <span className="text-[10px] text-gray-400 uppercase tracking-wide">
-              {role}
-            </span>
-          </>
-        )}
-      </div>
+              {role && (
+                <>
+                  <span className="text-gray-300">•</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+                    {role}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
 

@@ -268,7 +268,7 @@ const handleSave = async () => {
 
       start_date: formatForAPI(startDate),
       end_date: formatForAPI(endDate),
-      effective_date: formatForAPI(effectiveDate),
+      effective_date: formatForAPI(effectiveDate || new Date()),
 
       // ✅ ADD THIS LINE
       documents: selectedDocuments.map((d) => d.id),
@@ -463,13 +463,13 @@ const handleChange = (field, value) => {
               {filteredVendors.map((v) => (
 <tr
   key={v.id}
-  className={`border-t hover:bg-gray-50 transition ${
-    calculateStatus(v.end_date) === "Expired"
-      ? "bg-red-50"
-      : calculateStatus(v.end_date) === "Expiring Soon"
-      ? "bg-yellow-50"
-      : ""
-  }`}
+className={`border-t hover:bg-gray-50 transition ${
+  v.status === "Inactive"
+    ? "bg-red-50"
+    : calculateStatus(v.end_date) === "Expiring Soon"
+    ? "bg-yellow-50"
+    : ""
+}`}
 >
   <td className="px-4 py-3">
     <span className={`px-2 py-1 rounded text-xs font-semibold ${

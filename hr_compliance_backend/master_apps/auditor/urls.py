@@ -7,6 +7,8 @@ from .views import (
     AuditorListAPIView,
     AuditorUpdateAPIView,
     AuditorDeleteAPIView,
+    VendorNotificationAPIView,
+    MarkNotificationReadAPIView,
 
     # =========================
     # AUDITOR FLOW
@@ -81,4 +83,7 @@ urlpatterns = [
     AuditorComplianceRemarksAPIView.as_view(),
     name="auditor-compliance-remarks"
     ),
+    # ================= NOTIFICATIONS =================
+    path("vendor/notifications/", VendorNotificationAPIView.as_view()),
+    path("vendor/notifications/<int:pk>/read/", MarkNotificationReadAPIView.as_view()),
 ]

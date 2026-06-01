@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.db import transaction
 from django.conf import settings
+from master_apps.checklist.models import AuditChecklist
 from django.utils.crypto import get_random_string
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -17,6 +18,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import get_object_or_404
 from master_apps.checklist.models import AuditChecklist
 from master_apps.vendor.models import VendorCCEmail
+from master_apps.vendor.models import SystemNotification
 
 
 from .models import Auditor, AuditorDocument
@@ -259,34 +261,14 @@ class SaveAuditAPIView(APIView):
             "Not Applicable For Audit Period"
         ]
 
-        invalid_entries = []
+        all_valid = True
 
-        for i, entry in enumerate(entries):
-            status_val = entry.get("status")
-            observation = entry.get("observation")
-            recommendation = entry.get("recommendation")
+        for entry in entries:
+            if entry.get("status") not in allowed_status:
+                all_valid = False
+                break
 
-            if status_val not in allowed_status:
-                invalid_entries.append({
-                    "row": i + 1,
-                    "error": f"Invalid status: {status_val}"
-                })
-                continue
-
-            if not observation or not recommendation:
-                invalid_entries.append({
-                    "row": i + 1,
-                    "error": "Observation & Recommendation are required"
-                })
-
-        if invalid_entries:
-            return Response({
-                "error": "Validation failed",
-                "details": invalid_entries
-            }, status=400)
-
-        logger.info("✅ Validation passed")
-
+        logger.info("✅ Validation checked")
         # =========================
         # SAVE DATA
         # =========================
@@ -391,29 +373,73 @@ class SaveAuditAPIView(APIView):
         # =========================
         # SEND EMAIL
         # =========================
-        try:
-            logger.info(f"📨 Sending → {vendor.email} | CC: {cc_emails}")
+        # =========================
+        # FINAL FLOW
+        # =========================
 
-            email = EmailMultiAlternatives(
-                subject=subject,
-                body="Compliance Certificate Issued",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[vendor.email],
-                cc=cc_emails
+        if all_valid:
+            try:
+                logger.info(f"📨 Sending → {vendor.email} | CC: {cc_emails}")
+
+                email = EmailMultiAlternatives(
+                    subject=subject,
+                    body="Compliance Certificate Issued",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[vendor.email],
+                    cc=cc_emails
+                )
+
+                email.attach_alternative(html_content, "text/html")
+                email.send(fail_silently=False)
+
+            except Exception as e:
+                logger.error(f"❌ Email failed: {str(e)}")
+
+            return Response({
+                "message": "Audit saved & email sent successfully"
+            })
+
+        else:
+            logger.info("❌ Invalid audit → creating notification")
+
+            formatted_entries = []
+
+            for entry in entries:
+                checklist = AuditChecklist.objects.filter(
+                    id=entry.get("checklist_id")
+                ).first()
+
+                formatted_entries.append({
+                    "audit_particular": (
+                        checklist.audit_particulars if checklist else f"ID {entry.get('checklist_id')}"
+                    ),
+                    "document_name": (
+                        checklist.document.name if checklist and checklist.document else "N/A"
+                    ),
+                    "status": entry.get("status"),
+                    "observation": entry.get("observation"),
+                    "recommendation": entry.get("recommendation"),
+                })
+
+            SystemNotification.objects.create(
+                user=vendor.user,
+                title="Audit Validation Update",
+                type="VENDOR",
+                branch_id=branch_id,
+                audit_period=audit_period,
+                data={
+                    "vendor": vendor.name,
+                    "pe": pe.short_name,
+                    "state": branch.state,
+                    "branch": branch.short_name,
+                    "audit_period": audit_period,
+                    "entries": formatted_entries   # ✅ THIS IS KEY
+                }
             )
 
-            email.attach_alternative(html_content, "text/html")
-
-            sent = email.send(fail_silently=False)
-
-            print("📧 EMAIL STATUS:", "SENT" if sent else "FAILED")
-
-        except Exception as e:
-            logger.error(f"❌ Email failed: {str(e)}")
-
-        return Response({
-            "message": "Audit saved & email sent successfully"
-        })
+            return Response({
+                "message": "Audit saved. Vendor notified to re-upload"
+            })
 
 # ================= LIST =================
 class AuditorListAPIView(APIView):
@@ -708,3 +734,48 @@ class AuditorMappingDetailsAPIView(APIView):
             "start_date": mapping.start_date,
             "end_date": mapping.end_date
         })
+
+
+# ================= NOTIFICATIONS =================
+
+class VendorNotificationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from master_apps.vendor.models import SystemNotification
+
+        data = SystemNotification.objects.filter(
+            user=request.user,
+            type="VENDOR"
+        ).order_by("-created_at")
+
+        return Response([
+            {
+                "id": n.id,
+                "title": n.title,
+                "data": n.data,
+                "created_at": n.created_at,
+                "is_read": n.is_read
+            }
+            for n in data
+        ])
+
+
+class MarkNotificationReadAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        from master_apps.vendor.models import SystemNotification
+
+        notif = SystemNotification.objects.filter(
+            id=pk,
+            user=request.user
+        ).first()
+
+        if not notif:
+            return Response({"error": "Not found"}, status=404)
+
+        notif.is_read = True
+        notif.save()
+
+        return Response({"message": "Marked as read"})

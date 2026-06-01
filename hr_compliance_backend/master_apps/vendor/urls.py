@@ -17,7 +17,7 @@ from .mapping_views import (
 )
 from .compliance_views import VendorSubmitComplianceAPIView
 from .views import VendorCCEmailAPIView
-
+from .mapping_views import VendorMappingMetaAPIView
 
 
 urlpatterns = [
@@ -29,6 +29,7 @@ urlpatterns = [
     path("list/", VendorListAPIView.as_view()),
     path("<int:pk>/update/", VendorUpdateAPIView.as_view()),
     path("<int:pk>/delete/", VendorDeleteAPIView.as_view()),
+    path("mapping-meta/", VendorMappingMetaAPIView.as_view()),
 
     # =========================
     # MAPPING (PE SIDE)

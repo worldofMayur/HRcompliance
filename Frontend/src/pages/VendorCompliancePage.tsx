@@ -80,9 +80,12 @@ export default function VendorCompliancePage() {
 
 useEffect(() => {
   const options = getPeriodOptions();
-  if (options.length) {
-    setSelectedPeriod(options[options.length - 1]); // latest
+
+  // ✅ ONLY SET DEFAULT IF EMPTY
+  if (!selectedPeriod && options.length) {
+    setSelectedPeriod(options[options.length - 1]);
   }
+
 }, [mappingStartDate, mappingEndDate, frequencyBase]);
 
 useEffect(() => {
@@ -99,7 +102,19 @@ useEffect(() => {
 
 useEffect(() => {
   if (selectedPE && selectedBranch) {
+    loadMappingMeta(selectedPE, selectedBranch);
+  }
+}, [selectedBranch]);
+
+useEffect(() => {
+  if (selectedPE && selectedBranch && selectedPeriod) {
     loadDocuments(selectedPE, selectedBranch);
+  }
+}, [selectedPeriod]);
+
+useEffect(() => {
+  if (selectedPE && selectedBranch) {
+    loadMappingMeta(selectedPE, selectedBranch);
   }
 }, [selectedBranch]);
 
@@ -146,35 +161,47 @@ useEffect(() => {
     }
   };
 
-const loadDocuments = async (peId: string, branchId: string) => {
-    if (!peId || !branchId) return;
+  const loadMappingMeta = async (peId: string, branchId: string) => {
   try {
-
     const res = await axios.get(
-      `http://127.0.0.1:8000/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}`,
+      `http://127.0.0.1:8000/api/vendor/mapping-meta/?pe_id=${peId}&branch_id=${branchId}`,
+      authHeader
+    );
+
+    const data = res.data;
+
+    setMappingStartDate(data.start_date ? new Date(data.start_date) : null);
+    setMappingEndDate(data.end_date ? new Date(data.end_date) : null);
+    setFrequencyBase(data.frequency || "");
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const loadDocuments = async (peId: string, branchId: string) => {
+  if (!peId || !branchId) return;
+
+  // ✅ Reset only table (NOT mapping meta)
+  setTableData([]);
+  setDocuments([]);
+
+  try {
+    const res = await axios.get(
+      `http://127.0.0.1:8000/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}&period=${selectedPeriod}`,
       authHeader
     );
 
     const data = res.data || [];
+    console.log("CALLING API WITH PERIOD:", selectedPeriod);
 
+    // ✅ ONLY set documents
     setDocuments(data);
 
-    // ✅ HANDLE MAPPING DATA SAFELY
-    if (data.length > 0) {
-
-      const base = data[0].frequency || "";
-      setFrequencyBase(base);
-
-      setMappingStartDate(data[0].start_date ? new Date(data[0].start_date) : null);
-      setMappingEndDate(data[0].end_date ? new Date(data[0].end_date) : null);
-
-    } else {
-
-      // ✅ RESET if no data
-      setFrequencyBase("");
-      setMappingStartDate(null);
-      setMappingEndDate(null);
-    }
+    // ❌ DO NOT TOUCH THESE (VERY IMPORTANT)
+    // setFrequencyBase(...)
+    // setMappingStartDate(...)
+    // setMappingEndDate(...)
 
     // ✅ BUILD TABLE ROWS
     const rows: DocumentRow[] = data.map((doc: DocumentType) => ({
@@ -187,22 +214,18 @@ const loadDocuments = async (peId: string, branchId: string) => {
 
     setTableData(rows);
 
-    // ✅ AUTO SCROLL TO DOCUMENT SECTION
+    // ✅ AUTO SCROLL
     setTimeout(() => {
       docRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 300);
 
   } catch (error) {
-
     console.error(error);
     message.error("Failed to load documents");
 
-    // ✅ SAFE RESET ON ERROR
+    // ✅ Reset only table (NOT mapping meta)
     setDocuments([]);
     setTableData([]);
-    setFrequencyBase("");
-    setMappingStartDate(null);
-    setMappingEndDate(null);
   }
 };
 
@@ -244,8 +267,7 @@ const getPeriodOptions = () => {
 const isValidPeriod = (start, end) => {
   return (
     start <= mappingEndDate &&
-    end >= mappingStartDate &&
-    start <= today // ✅ allow current period
+    end >= mappingStartDate
   );
 };
 
@@ -662,10 +684,12 @@ const totalDocs = tableData.length;
             <select
               disabled={!selectedState}
               value={selectedBranch}
-                onChange={(e) => {
+              onChange={(e) => {
                 const branchId = e.target.value;
 
                 setSelectedBranch(branchId);
+                setSelectedPeriod("");   // 🔥 RESET PERIOD
+                setTableData([]);        // 🔥 RESET DATA
               }}
               className="border rounded-xl px-3 py-2 text-sm"
             >
