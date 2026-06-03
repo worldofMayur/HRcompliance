@@ -205,54 +205,37 @@ const downloadCC = async (
   pdfUrl: string,
   notificationId: number
 ) => {
-
   try {
 
-    setDownloadingCC(
-      notificationId
-    );
+    setDownloadingCC(notificationId);
 
     const token =
-      localStorage.getItem(
-        "access_token"
-      );
+      localStorage.getItem("access_token");
 
     const response =
-      await fetch(
-        pdfUrl,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await fetch(pdfUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
     if (!response.ok) {
-
       throw new Error(
-        "Failed to download CC"
+        `Failed to open CC (${response.status})`
       );
     }
 
     const blob =
       await response.blob();
 
-    const url =
+    const blobUrl =
       window.URL.createObjectURL(blob);
 
-    const link =
-      document.createElement("a");
-
-    link.href = url;
-
-    link.download =
-      "Compliance_Certificate.pdf";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    link.remove();
+    window.open(
+      blobUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
 
     setDownloadedCC((prev) => [
       ...prev,
@@ -261,10 +244,13 @@ const downloadCC = async (
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      "CC PDF ERROR:",
+      err
+    );
 
     alert(
-      "Failed to download CC"
+      "Unable to open Compliance Certificate."
     );
 
   } finally {

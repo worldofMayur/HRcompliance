@@ -265,26 +265,22 @@ const getStatusStyles = (
 const handleDownloadPDF = async (
   url: string
 ) => {
-
   try {
 
     const token =
-      localStorage.getItem(
-        "access_token"
-      );
+      localStorage.getItem("access_token");
 
     const response =
-      await fetch(
-        url,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
     if (!response.ok) {
-      throw new Error("Failed to download PDF");
+      throw new Error(
+        `Failed to open PDF (${response.status})`
+      );
     }
 
     const blob =
@@ -293,30 +289,24 @@ const handleDownloadPDF = async (
     const blobUrl =
       window.URL.createObjectURL(blob);
 
-    const link =
-      document.createElement("a");
-
-    link.href = blobUrl;
-
-    link.download =
-      "Compliance_Certificate.pdf";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    link.remove();
-
-    window.URL.revokeObjectURL(
-      blobUrl
+    window.open(
+      blobUrl,
+      "_blank",
+      "noopener,noreferrer"
     );
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      "PDF OPEN ERROR:",
+      err
+    );
+
+    alert(
+      "Unable to open Compliance Certificate."
+    );
   }
 };
-
 
 const getRelativeTime = (date: string) => {
 
