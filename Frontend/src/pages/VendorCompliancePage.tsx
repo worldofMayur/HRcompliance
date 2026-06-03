@@ -166,14 +166,14 @@ export default function VendorCompliancePage() {
 
       if (periods.length > 0) {
 
-        setSelectedPeriod((prev) => {
+      setSelectedPeriod((prev) => {
 
-          // KEEP NOTIFICATION PERIOD
+        // Keep notification period
+        if (prev) return prev;
 
-          if (prev) return prev;
-
-          return periods[periods.length - 1];
-        });
+        // Show "Select Period" instead of auto-selecting latest
+        return "";
+      });
 
       } else {
 
