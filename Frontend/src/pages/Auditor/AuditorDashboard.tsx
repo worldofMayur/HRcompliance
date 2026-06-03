@@ -627,9 +627,9 @@ const loadChecklist = async (
         ),
 
         axios.get(
-          `https://apii.complianceclearance.com/api/auditor/compliance-remarks/?branch_id=${finalBranch}`,
+          `https://apii.complianceclearance.com/api/auditor/compliance-remarks/?branch_id=${finalBranch}&vendor_id=${finalVendor}`,
           authHeader
-        ),
+        )
       ]);
 
     // ======================================
