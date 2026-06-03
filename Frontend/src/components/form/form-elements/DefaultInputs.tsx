@@ -105,7 +105,7 @@ export default function DefaultInputs() {
                 height="20"
                 viewBox="0 0 20 20"
                 fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                xmlns="https://www.w3.org/2000/svg"
               >
                 <circle cx="6.25" cy="10" r="5.625" fill="#E80B26" />
                 <circle cx="13.75" cy="10" r="5.625" fill="#F59D31" />

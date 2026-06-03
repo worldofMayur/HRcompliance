@@ -466,7 +466,7 @@ const getRelativeTime = (date: string) => {
         />
 
         <svg
-          xmlns="http://www.w3.org/2000/svg"
+          xmlns="https://www.w3.org/2000/svg"
           className="
             absolute left-3 top-1/2
             h-4 w-4

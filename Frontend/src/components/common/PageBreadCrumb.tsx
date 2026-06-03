@@ -27,7 +27,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
                 height="16"
                 viewBox="0 0 17 16"
                 fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                xmlns="https://www.w3.org/2000/svg"
               >
                 <path
                   d="M6.0765 12.667L10.2432 8.50033L6.0765 4.33366"

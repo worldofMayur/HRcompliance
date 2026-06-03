@@ -316,7 +316,7 @@ var _default = function _default(XRegExp) {
    * @returns {Object} Reference to definition structure when the name matches a Unicode Property.
    *
    * @note
-   * For more info on Unicode Properties, see also http://unicode.org/reports/tr18/#Categories.
+   * For more info on Unicode Properties, see also https://unicode.org/reports/tr18/#Categories.
    *
    * @note
    * This method is *not* part of the officially documented API and may change or be removed in
@@ -357,7 +357,7 @@ var _categories = _interopRequireDefault(require("../../tools/output/categories"
 var _default = function _default(XRegExp) {
   /**
    * Adds support for Unicode's general categories. E.g., `\p{Lu}` or `\p{Uppercase Letter}`. See
-   * category descriptions in UAX #44 <http://unicode.org/reports/tr44/#GC_Values_Table>. Token
+   * category descriptions in UAX #44 <https://unicode.org/reports/tr44/#GC_Values_Table>. Token
    * names are case insensitive, and any spaces, hyphens, and underscores are ignored.
    *
    * Uses Unicode 14.0.0.
@@ -1566,8 +1566,8 @@ XRegExp.match = function (str, regex, scope) {
  * // -> ['2', '4', '56']
  *
  * // Passing forward and returning specific backreferences
- * const html = `<a href="http://xregexp.com/api/">XRegExp</a>
- *               <a href="http://www.google.com/">Google</a>`;
+ * const html = `<a href="https://xregexp.com/api/">XRegExp</a>
+ *               <a href="https://www.google.com/">Google</a>`;
  * XRegExp.matchChain(html, [
  *   {regex: /<a href="([^"]+)">/i, backref: 1},
  *   {regex: XRegExp('(?i)^https?://(?<domain>[^/?#]+)'), backref: 'domain'}
