@@ -1403,31 +1403,23 @@ class SaveAuditAPIView(APIView):
                     ),
                 })
 
+
             html_content = render_to_string(
-
                 "auditor/compliance_clearance_email.html",
-
                 {
                     "pe_name": pe.name,
-
                     "vendor_name": vendor.name,
-
                     "state": branch.state,
-
                     "branch_name": branch.short_name,
-
                     "audit_period": audit_period,
-
                     "entries": entries,
 
-                    # ======================================
-                    # EXCEPTIONAL APPROVAL ENTRIES
-                    # ======================================
+                    "generated_at": now().strftime(
+                        "%d %B %Y %I:%M %p"
+                    ),
 
                     "exceptional_entries": [
-
                         e for e in pdf_entries
-
                         if "Exceptional Approval"
                         in str(e.get("status", ""))
                     ],

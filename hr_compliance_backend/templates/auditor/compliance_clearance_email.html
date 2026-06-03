@@ -307,6 +307,16 @@ body{
                         </td>
                     </tr>
 
+                    <tr>
+                        <td class="label">
+                            CC Issued On
+                        </td>
+
+                        <td>
+                            {{ generated_at }}
+                        </td>
+                    </tr>
+
                 </table>
 
             </div>
@@ -335,6 +345,10 @@ body{
                     <tr>
 
                         <th>
+                            Document Name
+                        </th>
+
+                        <th>
                             Audit Particular
                         </th>
 
@@ -350,21 +364,25 @@ body{
 
                     {% for item in exceptional_entries %}
 
-                    <tr>
+                        <tr>
 
-                        <td>
-                            {{ item.audit_particular }}
-                        </td>
+                            <td>
+                                {{ item.document_name }}
+                            </td>
 
-                        <td>
-                            {{ item.observation }}
-                        </td>
+                            <td>
+                                {{ item.audit_particular }}
+                            </td>
 
-                        <td>
-                            {{ item.recommendation }}
-                        </td>
+                            <td>
+                                {{ item.observation }}
+                            </td>
 
-                    </tr>
+                            <td>
+                                {{ item.recommendation }}
+                            </td>
+
+                        </tr>
 
                     {% endfor %}
 
