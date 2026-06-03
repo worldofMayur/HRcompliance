@@ -668,18 +668,18 @@ const handleSave = async () => {
 
   {/* Branch Summary */}
   {selectedBranchObj && (
-    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg">
+    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg flex items-center gap-2 overflow-x-auto whitespace-nowrap">
       <span>
         <b>State:</b> {selectedState}
       </span>
 
-      <span className="mx-3">|</span>
+      <span>|</span>
 
       <span>
         <b>Branch Short Name:</b> {selectedShortName}
       </span>
 
-      <span className="mx-3">|</span>
+      <span>|</span>
 
       <span>
         <b>Branch Address:</b> {selectedBranchObj.address}
@@ -796,10 +796,16 @@ const handleSave = async () => {
   </div>
 
   {(startDate || endDate) && (
-    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg">
-      <b>Selected Start Date:</b> {formatDate(startDate)}
-      <span className="mx-3">|</span>
-      <b>Selected End Date:</b> {formatDate(endDate)}
+    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+      <span>
+        <b>Selected Start Date:</b> {formatDate(startDate)}
+      </span>
+
+      <span>|</span>
+
+      <span>
+        <b>Selected End Date:</b> {formatDate(endDate)}
+      </span>
     </div>
   )}
 </div>
