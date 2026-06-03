@@ -1001,16 +1001,18 @@ formData.append(
                   justify-between
                   gap-3
                 ">
-                  <Upload
-                    disabled={
-                      frozenPeriods.includes(selectedPeriod) ||
+                <Upload
+                  disabled={
+                    frozenPeriods.includes(selectedPeriod) ||
 
-                      (
-                        reuploadMode &&
-                        !record.isAdditional &&
-                        !record.canReupload
-                      )
-                    }
+                    record.is_reuploaded ||
+
+                    (
+                      reuploadMode &&
+                      !record.isAdditional &&
+                      !record.canReupload
+                    )
+                  }
                     beforeUpload={(file) => {
                       const alreadyExists =
                         tableData.some(
@@ -1040,6 +1042,8 @@ formData.append(
                     size="small"
                     disabled={
                       frozenPeriods.includes(selectedPeriod) ||
+
+                      record.is_reuploaded ||
 
                       (
                         reuploadMode &&

@@ -527,14 +527,42 @@ class VendorMappedDocumentsAPIView(APIView):
 
             docs = latest.documents.all()
 
-        data = [
-            {
+        data = []
+
+        for doc in docs:
+
+            submission = (
+                VendorComplianceSubmission.objects
+                .filter(
+                    vendor=vendor,
+                    branch_id=branch_id,
+                    document_id=doc.id,
+                    audit_period__iexact=period
+                )
+                .order_by("-id")
+                .first()
+            )
+
+            data.append({
                 "id": doc.id,
                 "name": doc.name,
                 "audit_period": period,
-            }
-            for doc in docs
-        ]
+
+                # NEW
+                "submission_id": submission.id if submission else None,
+
+                "is_reuploaded":
+                    submission.is_reuploaded
+                    if submission else False,
+
+                "reupload_remark":
+                    submission.reupload_remark
+                    if submission else "",
+
+                "workflow_status":
+                    submission.workflow_status
+                    if submission else "",
+            })
 
         return Response(data)
 
