@@ -667,13 +667,25 @@ const handleSave = async () => {
   )}
 
   {/* Branch Summary */}
-{selectedBranchObj && (
-  <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg space-y-1">
-    <div><b>State:</b> {selectedState}</div>
-    <div><b>Branch Short Name:</b> {selectedShortName}</div>
-    <div><b>Branch Address:</b> {selectedBranchObj.address}</div>
-  </div>
-)}
+  {selectedBranchObj && (
+    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg">
+      <span>
+        <b>State:</b> {selectedState}
+      </span>
+
+      <span className="mx-3">|</span>
+
+      <span>
+        <b>Branch Short Name:</b> {selectedShortName}
+      </span>
+
+      <span className="mx-3">|</span>
+
+      <span>
+        <b>Branch Address:</b> {selectedBranchObj.address}
+      </span>
+    </div>
+  )}
 
 {/* ✅ ADD HERE */}
 {selectedBranchObj?.short_name === "All Branches" && (
@@ -784,9 +796,10 @@ const handleSave = async () => {
   </div>
 
   {(startDate || endDate) && (
-    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg space-y-1">
-      <div><b>Selected Start Date:</b> {formatDate(startDate)}</div>
-      <div><b>Selected End Date:</b> {formatDate(endDate)}</div>
+    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg">
+      <b>Selected Start Date:</b> {formatDate(startDate)}
+      <span className="mx-3">|</span>
+      <b>Selected End Date:</b> {formatDate(endDate)}
     </div>
   )}
 </div>
