@@ -639,14 +639,8 @@ className={`border-t hover:bg-gray-50 transition ${
     <div className="grid grid-cols-2 gap-3">
       <DatePicker
         selected={startDate}
-        onChange={(date) => {
-          if (date) {
-            setDateRange([date, endDate]);
-            handleChange("start_date", formatForAPI(date));
-          }
-        }}
-        className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm 
-        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+        disabled
+        className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm bg-gray-100 cursor-not-allowed"
         placeholderText="Start Date"
       />
 
