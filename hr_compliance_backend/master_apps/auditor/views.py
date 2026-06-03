@@ -1681,9 +1681,11 @@ class SaveAuditAPIView(APIView):
 
                     user=vendor.user,
 
-                    title=(
-                        "Compliance Clearance "
-                        "Certificate Issued"
+                    title="Compliance Clearance Certificate Issued",
+
+                    message=(
+                        f"Compliance Clearance Certificate issued "
+                        f"for audit period {audit_period}"
                     ),
 
                     type="VENDOR",
@@ -1691,6 +1693,7 @@ class SaveAuditAPIView(APIView):
                     branch_id=branch_id,
 
                     audit_period=audit_period,
+
                     data={
 
                         "vendor": vendor.name,
@@ -1726,9 +1729,11 @@ class SaveAuditAPIView(APIView):
 
                         user=pe.user,
 
-                        title=(
-                            "Compliance Clearance "
-                            "Certificate Issued"
+                        title="Compliance Clearance Certificate Issued",
+
+                        message=(
+                            f"Compliance Clearance Certificate issued "
+                            f"for audit period {audit_period}"
                         ),
 
                         type="VENDOR",
