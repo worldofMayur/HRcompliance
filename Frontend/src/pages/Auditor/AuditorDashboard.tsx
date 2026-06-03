@@ -1192,6 +1192,13 @@ const groupedChecklist = Object.values(
   }, {})
 );
 
+const hasExceptionalApproval =
+  groupedChecklist.some(
+    (row: any) =>
+      row.status ===
+      "Exceptional Approval - Delayed Complied"
+  );
+
 const allowedFreezeStatuses = [
   "Complied",
 
@@ -1788,9 +1795,12 @@ const canFreezeReport =
         }}
       >
 
-        <Button icon={<UploadOutlined />}>
-          Upload Document
-        </Button>
+      <Button
+        icon={<UploadOutlined />}
+        disabled={!hasExceptionalApproval}
+      >
+        Upload Supporting Document
+      </Button>
 
       </Upload>
 
@@ -1822,8 +1832,7 @@ const canFreezeReport =
     `}
       loading={loading}
       disabled={
-        isAuditLocked
-        &&
+        isAuditLocked &&
         !manualEditMode
       }
       onClick={handleSubmit}
