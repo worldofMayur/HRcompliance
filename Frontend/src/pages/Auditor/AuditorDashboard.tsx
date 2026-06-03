@@ -1038,32 +1038,6 @@ if (exceptionalFiles) {
       dataIndex: "document_name",
     },
     {
-      title: "Reupload Remark",
-
-      render: (_: any, record: any) => {
-
-        if (
-          !record.reupload_remark
-        ) {
-
-          return (
-            <span className="text-gray-300">
-              —
-            </span>
-          );
-        }
-
-        return (
-
-          <div className="text-red-600 text-xs font-medium">
-
-            {record.reupload_remark}
-
-          </div>
-        );
-      },
-    },
-    {
       title: "Guidelines For Auditor",
       dataIndex: "auditor_guide",
       render: (text: any) => (
