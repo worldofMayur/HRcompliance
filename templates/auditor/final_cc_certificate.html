@@ -172,9 +172,46 @@ body{
             Audit Summary
         </div>
 
-        <table class="summary-grid">
+    <table class="summary-grid">
 
-            <tr>
+        <tr>
+
+            <td>
+                <div class="summary-label">PE</div>
+                <div class="summary-value">{{ pe_name }}</div>
+            </td>
+
+            <td>
+                <div class="summary-label">Vendor</div>
+                <div class="summary-value">{{ vendor_name }}</div>
+            </td>
+
+            <td>
+                <div class="summary-label">State</div>
+                <div class="summary-value">{{ state }}</div>
+            </td>
+
+            <td>
+                <div class="summary-label">Branch</div>
+                <div class="summary-value">{{ branch_name }}</div>
+            </td>
+
+            <td>
+                <div class="summary-label">Audit Period</div>
+                <div class="summary-value">{{ audit_period }}</div>
+            </td>
+
+            <td>
+                <div class="summary-label">Compliance Score</div>
+                <div class="summary-value">{{ compliance_score }}%</div>
+            </td>
+
+            <td>
+                <div class="summary-label">CC Issued On</div>
+                <div class="summary-value">{{ cc_issued_datetime }}</div>
+            </td>
+
+        </tr>
 
                 <td>
                     <div class="summary-label">PE</div>
@@ -228,6 +265,7 @@ body{
                     <th>Compliance Status</th>
                     <th>Auditor Observation</th>
                     <th>Action Recommendation</th>
+                    <th>Exceptional Approval Document</th>
                 </tr>
 
             </thead>
@@ -272,6 +310,13 @@ body{
                         {{ entry.recommendation }}
                     </td>
 
+                    <td>
+                        {% if entry.exceptional_document_name %}
+                            {{ entry.exceptional_document_name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
 
                 {% endfor %}
@@ -281,6 +326,24 @@ body{
         </table>
 
     </div>
+
+    {% if has_exceptional_approval %}
+
+    <div class="card">
+
+        <div class="section-title">
+            Exceptional Approval Details
+        </div>
+
+        <p style="font-size:14px;line-height:1.7;color:#374151;">
+            The exception(s) identified during the audit have been
+            <strong>reviewed and approved by the Principal Employer</strong>.
+            Compliance Certificate has been issued based on the approved Exceptional Approval.
+        </p>
+
+    </div>
+
+    {% endif %}
 
 </div>
 
