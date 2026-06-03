@@ -1673,6 +1673,32 @@ const canFreezeReport =
         </div>
       </div>
 
+      <div>
+        <span className="text-gray-500">
+          Vendor Start Date:
+        </span>
+
+        <div className="font-medium text-green-700">
+          {mappingStartDate
+            ? new Date(mappingStartDate)
+                .toLocaleDateString("en-GB")
+            : "-"}
+        </div>
+      </div>
+
+      <div>
+        <span className="text-gray-500">
+          Vendor End Date:
+        </span>
+
+        <div className="font-medium text-red-700">
+          {mappingEndDate
+            ? new Date(mappingEndDate)
+                .toLocaleDateString("en-GB")
+            : "-"}
+        </div>
+      </div>
+
     </div>
   </div>
 
