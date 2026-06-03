@@ -25,6 +25,8 @@ from accounts.models import User
 from .models import SystemNotification
 from .constants import WorkflowStatus
 from master_apps.auditor.models import AuditSession
+from master_apps.vendor.models import SystemNotification
+from master_apps.vendor.mapping_models import VendorBranchMapping
 
 
 class VendorSubmitComplianceAPIView(APIView):
@@ -307,17 +309,54 @@ class VendorSubmitComplianceAPIView(APIView):
 
                     }, status=400)
 
-                if existing_submission:
+        if existing_submission:
 
-                    supporting = VendorComplianceSupportingFile.objects.create(
-                        submission=existing_submission,
-                        file=file
-                    )
+            supporting = VendorComplianceSupportingFile.objects.create(
+                submission=existing_submission,
+                file=file
+            )
 
-                    print(
-                        "\n✅ SUPPORTING MODEL CREATED:",
-                        supporting.file.name
-                    )
+            print(
+                "\n✅ SUPPORTING MODEL CREATED:",
+                supporting.file.name
+            )
+
+        # ===============================
+        # 🔔 NOTIFY AUDITOR
+        # ===============================
+
+        mapping = VendorBranchMapping.objects.filter(
+            vendor=vendor,
+            principal_employer_id=pe_id,
+            branch_id=branch_id
+        ).select_related("auditor").first()
+
+        if (
+            mapping and
+            mapping.auditor and
+            getattr(mapping.auditor, "user", None)
+        ):
+
+            SystemNotification.objects.create(
+                user=mapping.auditor.user,
+                title="Compliance Submitted",
+                message=(
+                    f"{vendor.short_name} has submitted "
+                    f"compliance documents for "
+                    f"{selected_period}."
+                ),
+                type="AUDITOR",
+                branch_id=int(branch_id),
+                audit_period=selected_period,
+                data={
+                    "pe_id": int(pe_id),
+                    "vendor_id": vendor.id,
+                    "branch_id": int(branch_id),
+                    "vendor": vendor.short_name,
+                    "audit_period": selected_period,
+                    "status": "SUBMITTED",
+                }
+            )
 
         return Response(
             {"message": "Compliance submitted successfully"},
