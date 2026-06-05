@@ -1741,9 +1741,12 @@ class SaveAuditAPIView(APIView):
 
                         "status": "CC_ISSUED",
 
-                        "pdf_download_url": (
-                            f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
-                        ),
+                        print("CC URL SAVED:", {
+                            "pdf_download_url": (
+                                f"https://apii.complianceclearance.com"
+                                f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
+                            )
+                        }),
                     },
                 )
 
@@ -1787,9 +1790,12 @@ class SaveAuditAPIView(APIView):
 
                             "status": "CC_ISSUED",
 
-                            "pdf_download_url": (
-                                f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
-                            ),
+                            print("CC URL SAVED:", {
+                                "pdf_download_url": (
+                                    f"https://apii.complianceclearance.com"
+                                    f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
+                                )
+                            }),
                         },
                     )
 

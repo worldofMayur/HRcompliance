@@ -270,8 +270,14 @@ const handleDownloadPDF = async (
     const token =
       localStorage.getItem("access_token");
 
-    const response =
-      await fetch(url, {
+      const safeUrl = pdfUrl.replace(
+        "http://apii.complianceclearance.com",
+        "https://apii.complianceclearance.com"
+      );
+
+      console.log("PDF URL:", safeUrl);
+
+      const response = await fetch(safeUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
