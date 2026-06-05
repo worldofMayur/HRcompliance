@@ -910,7 +910,7 @@ return hasExceptional ? (
           "
         />
 
-        Frozen & Finalized
+        Finalized & Frozen
 
       </div>
     </div>

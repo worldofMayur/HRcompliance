@@ -1665,7 +1665,7 @@ const canFreezeReport =
           Vendor End Date:
         </span>
 
-        <div className="font-medium text-red-700">
+        <div className="font-medium text-green-700">
           {mappingEndDate
             ? new Date(mappingEndDate)
                 .toLocaleDateString("en-GB")

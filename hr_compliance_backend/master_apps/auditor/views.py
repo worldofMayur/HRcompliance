@@ -868,13 +868,18 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                             if supp.file.name not in added_files:
 
                                 print(
-                                    "📦 ZIP SUPPORTING:",
+                                    "📦 ZIP ADDITIONAL FILE:",
                                     supp.file.name
                                 )
 
                                 zip_file.write(
                                     supp.file.path,
-                                    arcname=supp.file.name
+                                    arcname=os.path.join(
+                                        "Additional File",
+                                        os.path.basename(
+                                            supp.file.name
+                                        )
+                                    )
                                 )
 
                                 added_files.add(
