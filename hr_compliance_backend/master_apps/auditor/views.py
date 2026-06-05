@@ -790,6 +790,14 @@ class DownloadAuditDocumentsZipAPIView(APIView):
         added_cc_files = set()
         added_files = set()
 
+        vendor_slug = clean(first.vendor.short_name)
+
+        pe_slug = clean(first.branch.principal_employer.short_name)
+
+        branch_slug = clean(first.branch.short_name)
+
+        period_slug = clean(audit_period)
+
         with zipfile.ZipFile(
             buffer,
             "w",
@@ -872,9 +880,21 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                                     supp.file.name
                                 )
 
+                                base_folder = os.path.join(
+                                    vendor_slug,
+                                    pe_slug,
+                                    branch_slug,
+                                    period_slug
+                                )
+
+                                path_parts = supp.file.name.split("/")
+
+                                base_path = "/".join(path_parts[:-2])
+
                                 zip_file.write(
                                     supp.file.path,
                                     arcname=os.path.join(
+                                        base_path,
                                         "Additional File",
                                         os.path.basename(
                                             supp.file.name
