@@ -538,6 +538,16 @@ class DownloadCCPDFAPIView(APIView):
                 },
                 status=404
             )
+        
+
+        print("FILE PATH:", submission.clearance_certificate.path)
+
+        print(
+            "FILE EXISTS:",
+            os.path.exists(
+                submission.clearance_certificate.path
+            )
+        )
 
         if not os.path.exists(
             submission.clearance_certificate.path
