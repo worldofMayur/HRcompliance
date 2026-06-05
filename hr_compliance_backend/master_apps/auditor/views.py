@@ -895,7 +895,7 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                                     supp.file.path,
                                     arcname=os.path.join(
                                         base_path,
-                                        "Additional File",
+                                        "additional_files",
                                         os.path.basename(
                                             supp.file.name
                                         )
