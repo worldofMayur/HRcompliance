@@ -482,12 +482,32 @@ class DownloadCCPDFAPIView(APIView):
         # FETCH STORED CC PDF
         # ==========================================
 
-        submission = (
-            VendorComplianceSubmission.objects.filter(
-                branch_id=entry.branch_id,
-                audit_period=entry.audit_period,
-                clearance_certificate__isnull=False
+        matching = VendorComplianceSubmission.objects.filter(
+            branch_id=entry.branch_id,
+            audit_period=entry.audit_period,
+        )
+
+        print("\n========== CC DEBUG ==========")
+        print("AUDIT ID:", audit_id)
+        print("BRANCH ID:", entry.branch_id)
+        print("AUDIT PERIOD:", entry.audit_period)
+        print("MATCHING SUBMISSIONS:", matching.count())
+
+        for s in matching:
+            print(
+                "SUBMISSION:",
+                s.id,
+                "| VENDOR:",
+                s.vendor.short_name,
+                "| CC:",
+                s.clearance_certificate.name
+                if s.clearance_certificate
+                else "NO_CC"
             )
+
+        submission = (
+            matching
+            .filter(clearance_certificate__isnull=False)
             .exclude(clearance_certificate="")
             .first()
         )
@@ -575,6 +595,17 @@ class DownloadCCPDFAPIView(APIView):
         # ==========================================
         # RETURN SAME PDF
         # ==========================================
+        print(
+            "FILE PATH:",
+            submission.clearance_certificate.path
+        )
+
+        print(
+            "FILE EXISTS:",
+            os.path.exists(
+                submission.clearance_certificate.path
+            )
+        )
 
         return FileResponse(
 
@@ -1711,7 +1742,6 @@ class SaveAuditAPIView(APIView):
                         "status": "CC_ISSUED",
 
                         "pdf_download_url": (
-                            f"https://apii.complianceclearance.com"
                             f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
                         ),
                     },
@@ -1758,7 +1788,6 @@ class SaveAuditAPIView(APIView):
                             "status": "CC_ISSUED",
 
                             "pdf_download_url": (
-                                f"https://apii.complianceclearance.com"
                                 f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
                             ),
                         },
