@@ -1728,25 +1728,17 @@ class SaveAuditAPIView(APIView):
                     data={
 
                         "vendor": vendor.name,
-
                         "vendor_id": vendor.id,
-
                         "branch": branch.short_name,
-
                         "branch_id": branch.id,
-
                         "state": branch.state,
-
                         "audit_period": audit_period,
-
                         "status": "CC_ISSUED",
 
-                        print("CC URL SAVED:", {
-                            "pdf_download_url": (
-                                f"https://apii.complianceclearance.com"
-                                f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
-                            )
-                        }),
+                        "pdf_download_url": (
+                            f"https://apii.complianceclearance.com"
+                            f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
+                        ),
                     },
                 )
 
@@ -1777,25 +1769,17 @@ class SaveAuditAPIView(APIView):
                         data={
 
                             "vendor": vendor.name,
-
                             "vendor_id": vendor.id,
-
                             "branch": branch.short_name,
-
                             "branch_id": branch.id,
-
                             "state": branch.state,
-
                             "audit_period": audit_period,
-
                             "status": "CC_ISSUED",
 
-                            print("CC URL SAVED:", {
-                                "pdf_download_url": (
-                                    f"https://apii.complianceclearance.com"
-                                    f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
-                                )
-                            }),
+                            "pdf_download_url": (
+                                f"https://apii.complianceclearance.com"
+                                f"/api/auditor/download-cc-pdf/{saved_entry.id}/"
+                            ),
                         },
                     )
 
