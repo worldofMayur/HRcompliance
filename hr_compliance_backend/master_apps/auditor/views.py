@@ -1445,7 +1445,7 @@ class SaveAuditAPIView(APIView):
                 })
 
 
-            html_content = render_to_string(
+            email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
                 {
                     "pe_name": pe.name,
@@ -1454,11 +1454,28 @@ class SaveAuditAPIView(APIView):
                     "branch_name": branch.short_name,
                     "audit_period": audit_period,
                     "entries": entries,
-
                     "generated_at": now().strftime(
-                        "%d %B %Y %I:%M %p"
+                        "%d %B %Y %I:%M:%S %p"
                     ),
+                    "exceptional_entries": [
+                        e for e in pdf_entries
+                        if "Exceptional Approval"
+                        in str(e.get("status", ""))
+                    ],
+                }
+            )
 
+            pdf_html = render_to_string(
+                "auditor/final_cc_certificate.html",
+                {
+                    "pe_name": pe.name,
+                    "vendor_name": vendor.name,
+                    "state": branch.state,
+                    "branch_name": branch.short_name,
+                    "audit_period": audit_period,
+                    "generated_at": now().strftime(
+                        "%d %B %Y %I:%M:%S %p"
+                    ),
                     "exceptional_entries": [
                         e for e in pdf_entries
                         if "Exceptional Approval"
@@ -1468,7 +1485,7 @@ class SaveAuditAPIView(APIView):
             )
 
             pdf_bytes = generate_cc_pdf_from_html(
-                html_content
+                pdf_html
             )
 
             # =========================
@@ -1704,7 +1721,7 @@ class SaveAuditAPIView(APIView):
                 )
 
                 email.attach_alternative(
-                    html_content,
+                    email_html,
                     "text/html"
                 )
 
