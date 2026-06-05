@@ -270,7 +270,7 @@ const handleDownloadPDF = async (
     const token =
       localStorage.getItem("access_token");
 
-      const safeUrl = pdfUrl.replace(
+      const safeUrl = url.replace(
         "http://apii.complianceclearance.com",
         "https://apii.complianceclearance.com"
       );
