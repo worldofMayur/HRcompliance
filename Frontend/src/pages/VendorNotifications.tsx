@@ -265,6 +265,7 @@ const getStatusStyles = (
 const handleDownloadPDF = async (
   url: string
 ) => {
+    console.log("VENDOR NEW BUILD LOADED", url);
   try {
 
     const token =
