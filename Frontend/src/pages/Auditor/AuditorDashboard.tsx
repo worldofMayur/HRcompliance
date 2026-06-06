@@ -1527,7 +1527,7 @@ const canFreezeReport =
     {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
 <div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4">
 
-  <div className="grid grid-cols-5 gap-4 text-sm">
+  <div className="flex flex-wrap gap-8 text-sm">
 
     <div>
       <div className="text-gray-500">PE</div>
@@ -1569,14 +1569,15 @@ const canFreezeReport =
   {remarksData.length > 0 && (
     <div className="mt-3 pt-3 border-t">
 
-      <span className="font-medium text-blue-700">
-        Vendor Remark:
-      </span>
+      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="font-semibold text-amber-700">
+          Vendor Remark
+        </div>
 
-      <span className="ml-2">
-        {remarksData[0]?.general_remark}
-      </span>
-
+        <div className="mt-1">
+          {remarksData[0]?.general_remark}
+        </div>
+      </div>
     </div>
   )}
 
