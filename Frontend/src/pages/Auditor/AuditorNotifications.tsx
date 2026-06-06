@@ -976,38 +976,64 @@ n.data?.status === "CC_ISSUED"
                         <div
                           className="
                             mt-2
-                            flex flex-wrap items-center gap-2
                             rounded-xl
                             border border-gray-200
                             bg-gray-50
-                            px-3 py-2
+                            px-3 py-3
                             text-[13px]
-                            text-gray-600
                           "
                         >
 
-                          <span className="font-medium text-gray-800">
-                            {n.data?.vendor}
-                          </span>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
 
-                          <span className="text-gray-300">
-                            •
-                          </span>
+                            <div>
+                              <span className="font-semibold text-gray-700">
+                                Vendor:
+                              </span>{" "}
+                              <span className="text-gray-900">
+                                {n.data?.vendor || "-"}
+                              </span>
+                            </div>
 
-                          <span>
-                            {n.data?.branch}
-                          </span>
+                            <div>
+                              <span className="font-semibold text-gray-700">
+                                State:
+                              </span>{" "}
+                              <span className="text-gray-900">
+                                {n.data?.state || "-"}
+                              </span>
+                            </div>
 
-                          <span className="text-gray-300">
-                            •
-                          </span>
+                            <div>
+                              <span className="font-semibold text-gray-700">
+                                Branch:
+                              </span>{" "}
+                              <span className="text-gray-900">
+                                {n.data?.branch || "-"}
+                              </span>
+                            </div>
 
-                          <span className="font-medium">
-                            {n.data?.audit_period}
-                          </span>
+                            <div>
+                              <span className="font-semibold text-gray-700">
+                                Audit Period:
+                              </span>{" "}
+                              <span className="text-blue-700 font-medium">
+                                {n.data?.audit_period || "-"}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="font-semibold text-gray-700">
+                                Documents:
+                              </span>{" "}
+                              <span className="text-gray-900">
+                                {n.data?.document_count || 0}
+                              </span>
+                            </div>
+
+                          </div>
 
                         </div>
-
                   </div>
                 </div>
               </div>

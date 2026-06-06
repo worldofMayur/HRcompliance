@@ -349,11 +349,7 @@ class VendorSubmitComplianceAPIView(APIView):
             SystemNotification.objects.create(
                 user=mapping.auditor.user,
                 title="Compliance Submitted",
-                message=(
-                    f"{vendor.short_name} has submitted "
-                    f"compliance documents for "
-                    f"{selected_period}."
-                ),
+                message=f"{vendor.short_name} submitted compliance documents",
                 type="AUDITOR",
                 branch_id=int(branch_id),
                 audit_period=selected_period,
@@ -363,13 +359,21 @@ class VendorSubmitComplianceAPIView(APIView):
                     "branch_id": int(branch_id),
 
                     "vendor": vendor.short_name,
+                    "vendor_name": vendor.name,
+
+                    "pe_name": mapping.principal_employer.name,
                     "state": mapping.branch.state,
                     "branch": mapping.branch.short_name,
 
                     "audit_period": selected_period,
+
+                    "document_count": document_count,
+
+                    "submitted_at": now().strftime(
+                        "%d-%b-%Y %I:%M %p"
+                    ),
                 }
             )
-
         return Response(
             {"message": "Compliance submitted successfully"},
             status=201
