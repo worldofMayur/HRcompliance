@@ -1100,9 +1100,7 @@ if (exceptionalFiles) {
           }
           className="rounded-xl px-3 shadow-sm"
           style={{
-            height: 100,
-            whiteSpace: "nowrap",
-            overflowX: "auto"
+            height: 40
           }}
           placeholder="Enter observation"
         />
@@ -1129,9 +1127,7 @@ if (exceptionalFiles) {
       }
       className="rounded-xl px-3 shadow-sm"
       style={{
-        height: 100,
-        whiteSpace: "nowrap",
-        overflowX: "auto"
+        height: 40
       }}
       placeholder="Enter recommendation"
     />
@@ -1385,9 +1381,15 @@ const canFreezeReport =
 <Modal
   open={isModalOpen}
   footer={null}
-  width={1700}
+  width={1800}
   closable={false}
-  styles={{ body: { height: "80vh", overflow: "hidden", padding: 0 } }}
+  styles={{
+  body:{
+    height:"88vh",
+    overflow:"hidden",
+    padding:0
+  }
+  }}
   style={{ top: 20 }}
   title={
     <div className="flex justify-between items-center">
@@ -1519,167 +1521,54 @@ const canFreezeReport =
     <div className="p-4 space-y-4 border-b bg-white">
 
       {/* 🔥 VENDOR REMARKS */}
-    <div className="grid grid-cols-12 gap-4">
+<div className="bg-gray-50 border rounded-lg p-3">
 
-  {/* 🔥 LEFT: REMARKS */}
-  <div className="col-span-8 bg-white border rounded-xl p-4 shadow-sm">
+  <div className="flex flex-wrap gap-6 text-sm">
 
-  <h3 className="font-semibold text-gray-800 mb-3">
-    Vendor Submitted Remarks
-  </h3>
+    <span>
+      <b>PE:</b>
+      {peList.find(p => p.id == selectedPE)?.short_name}
+    </span>
 
-  <div className="space-y-3 max-h-52 overflow-y-auto pr-2">
+    <span>
+      <b>Vendor:</b>
+      {vendorList.find(v => v.id == selectedVendor)?.name}
+    </span>
 
-    {remarksData.length === 0 && (
-      <div className="text-sm text-gray-400">
-        No remarks submitted yet
-      </div>
-    )}
+    <span>
+      <b>State:</b> {selectedState}
+    </span>
 
-    {remarksData.map((group, index) => (
-      <div key={index} className="border rounded-lg p-3 bg-gray-50">
+    <span>
+      <b>Branch:</b>
+      {branches.find(b => b.id == selectedBranch)?.name}
+    </span>
 
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-xs font-medium text-blue-600">
-            {new Date(group.date).toLocaleDateString("en-GB")}
-          </span>
-
-          <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
-            Submitted
-          </span>
-        </div>
-
-        {group.general_remark && (
-          <div className="text-sm text-gray-800 mb-2">
-            <span className="font-medium text-gray-600">
-              General:
-            </span>{" "}
-            {group.general_remark}
-          </div>
-        )}
-
-        
-      </div>
-    ))}
+    <span>
+      <b>Period:</b> {auditPeriod}
+    </span>
 
   </div>
 
-  {/* 🔥 MOVE DOWNLOAD HERE */}
-{
-  hasDocuments && (
+  <div className="flex justify-between items-center">
 
-    <div className="mt-4 flex justify-between items-center p-4 bg-blue-50 border border-blue-200 rounded-xl">
-
-      <div>
-
-        <div className="text-sm font-medium text-blue-900">
-          Audit Documents
-        </div>
-
-        <div className="text-xs text-blue-700">
-          Download all supporting files for verification
-        </div>
-
-      </div>
-
-      <Button
-        type="primary"
-        icon={<DownloadOutlined />}
-        loading={downloading}
-        onClick={downloadZip}
-        disabled={!selectedBranch}
-        className="rounded-lg px-5 shadow-sm"
-      >
-        {
-          downloading
-            ? "Downloading..."
-            : "Download Audit Document"
-        }
-      </Button>
-
-    </div>
-
-  )
-}
-
-</div>
-  {/* 🔥 RIGHT: SUMMARY */}
-  <div className="col-span-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
-
-    <h3 className="font-semibold text-blue-900 mb-3">
-      Audit Summary
-    </h3>
-
-    <div className="space-y-2 text-sm">
-
-      <div>
-        <span className="text-gray-500">PE:</span>
-        <div className="font-medium text-gray-800">
-          {peList.find(p => p.id == selectedPE)?.short_name || "-"}
-        </div>
-      </div>
-
-      <div>
-        <span className="text-gray-500">Vendor:</span>
-        <div className="font-medium text-gray-800">
-          {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
-        </div>
-      </div>
-
-      <div>
-        <span className="text-gray-500">State:</span>
-        <div className="font-medium text-gray-800">
-          {selectedState || "-"}
-        </div>
-      </div>
-
-      <div>
-        <span className="text-gray-500">Branch:</span>
-        <div className="font-medium text-gray-800">
-          {branches.find(b => b.id == selectedBranch)?.name || "-"}
-        </div>
-      </div>
-
-      <div>
-        <span className="text-gray-500">Audit Period:</span>
-        <div className="font-medium text-blue-700">
-          {auditPeriod || "-"}
-        </div>
-      </div>
-
-      <div>
-        <span className="text-gray-500">
-          Vendor Start Date:
-        </span>
-
-        <div className="font-medium text-green-700">
-          {mappingStartDate
-            ? new Date(mappingStartDate)
-                .toLocaleDateString("en-GB")
-            : "-"}
-        </div>
-      </div>
-
-      <div>
-        <span className="text-gray-500">
-          Vendor End Date:
-        </span>
-
-        <div className="font-medium text-green-700">
-          {mappingEndDate
-            ? new Date(mappingEndDate)
-                .toLocaleDateString("en-GB")
-            : "-"}
-        </div>
-      </div>
-
-    </div>
+  <div className="flex flex-wrap gap-6 text-sm">
+    ...
   </div>
 
+  <Button
+    size="small"
+    icon={<DownloadOutlined />}
+    loading={downloading}
+    onClick={downloadZip}
+  >
+    Documents
+  </Button>
+
 </div>
 
-    </div>
-
+</div>
+</div>
     {/* 🔥 SCROLL AREA */}
     <div className="flex-1 overflow-y-auto p-4">
 
@@ -1729,16 +1618,49 @@ const canFreezeReport =
 
         ) : (
 
-          <Table
-            columns={columns}
-            dataSource={groupedChecklist}
-            rowKey="id"
-            pagination={false}
-            bordered
-            size="small"
-          />
+          
 
-        )
+          <>
+                <div className="flex gap-3 mb-3">
+
+                  <div className="px-3 py-1 rounded bg-blue-100 text-blue-800 font-medium">
+                    Total: {groupedChecklist.length}
+                  </div>
+
+                  <div className="px-3 py-1 rounded bg-green-100 text-green-800 font-medium">
+                    Complied: {
+                      groupedChecklist.filter(
+                        (row: any) => row.status === "Complied"
+                      ).length
+                    }
+                  </div>
+
+                  <div className="px-3 py-1 rounded bg-red-100 text-red-800 font-medium">
+                    Pending: {
+                      groupedChecklist.filter(
+                        (row: any) => !row.status
+                      ).length
+                    }
+                  </div>
+
+                </div>
+
+                <Table
+                  columns={columns}
+                  dataSource={groupedChecklist}
+                  rowKey="id"
+                  pagination={false}
+                  bordered
+                  size="small"
+                  scroll={{
+                    y: 500,
+                    x: 1800
+                  }}
+                />
+
+              </>
+
+            )
       }
 
       {/* UPLOAD */}
