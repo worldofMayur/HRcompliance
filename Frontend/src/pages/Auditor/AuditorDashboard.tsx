@@ -1044,6 +1044,7 @@ if (exceptionalFiles) {
     },
     {
       title: "Guidelines For Auditor",
+      width: 350,
       dataIndex: "auditor_guide",
       render: (text: any) => (
         <div className="space-y-1">
@@ -1586,11 +1587,10 @@ const canFreezeReport =
 
     <Button
       type="primary"
-      size="small"
       icon={<DownloadOutlined />}
       onClick={downloadZip}
     >
-      Download Documents
+      Download Audit Documents
     </Button>
 
   </div>
