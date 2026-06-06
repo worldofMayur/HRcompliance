@@ -363,41 +363,38 @@ body{
 
             <!-- EXCEPTION TABLE -->
 
-<div class="exception-card">
+            <div class="exception-card">
 
-    <div class="exception-header">
-        Exceptional Approval Details
-    </div>
+                <div class="exception-header">
+                    Exceptional Approval Details
+                </div>
 
-    {% for item in exceptional_entries %}
+                    <div class="exception-item">
 
-    <div class="exception-item">
+                        <div class="exception-row">
+                            <strong>Document Name</strong>
+                            <span>{{ item.document_name }}</span>
+                        </div>
 
-        <div class="exception-row">
-            <strong>Document Name</strong>
-            <span>{{ item.document_name }}</span>
-        </div>
+                        <div class="exception-row">
+                            <strong>Audit Particular</strong>
+                            <span>{{ item.audit_particular }}</span>
+                        </div>
 
-        <div class="exception-row">
-            <strong>Audit Particular</strong>
-            <span>{{ item.audit_particular }}</span>
-        </div>
+                        <div class="exception-row">
+                            <strong>Auditor Observation</strong>
+                            <span>{{ item.observation }}</span>
+                        </div>
 
-        <div class="exception-row">
-            <strong>Auditor Observation</strong>
-            <span>{{ item.observation }}</span>
-        </div>
+                        <div class="exception-row">
+                            <strong>Auditor Recommendation</strong>
+                            <span>{{ item.recommendation }}</span>
+                        </div>
 
-        <div class="exception-row">
-            <strong>Auditor Recommendation</strong>
-            <span>{{ item.recommendation }}</span>
-        </div>
+                    </div>
+            </div>
 
-    </div>
-
-    {% endfor %}
-
-</div>
+            {% endif %}
 
             <!-- SIGNATURE -->
 
