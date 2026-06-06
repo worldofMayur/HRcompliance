@@ -1087,7 +1087,7 @@ if (exceptionalFiles) {
 
     {
       title: "Auditor Observation",
-      width: 260,
+      width: 220,
       render: (_: any, record: any) => (
         <Input
           value={record.observation}
@@ -1103,9 +1103,10 @@ if (exceptionalFiles) {
           onChange={(e) =>
             updateField(record.id, "observation", e.target.value)
           }
-          className="rounded-xl px-3 shadow-sm"
+          className="w-full rounded-lg"
           style={{
-            height: 40
+            height: 36,
+            maxWidth: "100%"
           }}
           placeholder="Enter observation"
         />
@@ -1114,7 +1115,7 @@ if (exceptionalFiles) {
 
 {
   title: "Action Recommendation",
-  width: 260,
+  width: 220,
   render: (_: any, record: any) => (
     <Input
       value={record.recommendation}
@@ -1130,9 +1131,10 @@ if (exceptionalFiles) {
       onChange={(e) =>
         updateField(record.id, "recommendation", e.target.value)
       }
-      className="rounded-xl px-3 shadow-sm"
+      className="w-full rounded-lg"
       style={{
-        height: 40
+        height: 36,
+        maxWidth: "100%"
       }}
       placeholder="Enter recommendation"
     />
@@ -1523,73 +1525,73 @@ const canFreezeReport =
   <div className="h-full flex flex-col">
 
     {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
-    <div className="p-4 space-y-4 border-b bg-white">
+<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4">
 
-      {/* 🔥 VENDOR REMARKS */}
-<div className="bg-gray-50 border rounded-lg p-3">
+  <div className="grid grid-cols-5 gap-4 text-sm">
 
-  <div className="flex flex-wrap gap-6 text-sm">
-
-    <span>
-      <b>PE:</b>
-      {peList.find(p => p.id == selectedPE)?.short_name}
-    </span>
-
-    <span>
-      <b>Vendor:</b>
-      {vendorList.find(v => v.id == selectedVendor)?.name}
-    </span>
-
-    <span>
-      <b>State:</b> {selectedState}
-    </span>
-
-    <span>
-      <b>Branch:</b>
-      {branches.find(b => b.id == selectedBranch)?.name}
-    </span>
-
-    <span>
-      <b>Period:</b> {auditPeriod}
-    </span>
-
-    {remarksData.length > 0 && (
-      <div className="w-full mt-2 pt-2 border-t">
-
-        <span className="font-semibold text-blue-700">
-          Vendor Remark:
-        </span>
-
-        <span className="ml-2 text-gray-700">
-          {remarksData.length > 0 ? (
-            remarksData.map((r:any,index:number)=>(
-              <div key={index}>
-                {r.general_remark}
-              </div>
-            ))
-          ) : (
-            <span>No remarks available</span>
-          )}
-        </span>
-
+    <div>
+      <div className="text-gray-500">PE</div>
+      <div className="font-semibold">
+        {peList.find(p => p.id == selectedPE)?.short_name}
       </div>
-    )}
+    </div>
+
+    <div>
+      <div className="text-gray-500">Vendor</div>
+      <div className="font-semibold">
+        {vendorList.find(v => v.id == selectedVendor)?.name}
+      </div>
+    </div>
+
+    <div>
+      <div className="text-gray-500">State</div>
+      <div className="font-semibold">
+        {selectedState}
+      </div>
+    </div>
+
+    <div>
+      <div className="text-gray-500">Branch</div>
+      <div className="font-semibold">
+        {branches.find(b => b.id == selectedBranch)?.name}
+      </div>
+    </div>
+
+    <div>
+      <div className="text-gray-500">Period</div>
+      <div className="font-semibold text-blue-600">
+        {auditPeriod}
+      </div>
+    </div>
 
   </div>
 
-  <div className="flex justify-between items-center">
+  {remarksData.length > 0 && (
+    <div className="mt-3 pt-3 border-t">
 
-<Button
-  type="primary"
-  icon={<DownloadOutlined />}
-  loading={downloading}
-  onClick={downloadZip}
-  className="!rounded-lg !bg-blue-600 hover:!bg-blue-700"
->
-  Download Audit Documents
-</Button>
+      <span className="font-medium text-blue-700">
+        Vendor Remark:
+      </span>
 
-</div>
+      <span className="ml-2">
+        {remarksData[0]?.general_remark}
+      </span>
+
+    </div>
+  )}
+
+  <div className="flex justify-end mt-3">
+
+    <Button
+      type="primary"
+      size="large"
+      icon={<DownloadOutlined />}
+      onClick={downloadZip}
+    >
+      Download Documents
+    </Button>
+
+  </div>
 
 </div>
 </div>
