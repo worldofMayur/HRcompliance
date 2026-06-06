@@ -337,6 +337,15 @@ class VendorSubmitComplianceAPIView(APIView):
             getattr(mapping.auditor, "user", None)
         ):
 
+        print("NOTIFICATION DATA:", {
+            "pe_id": int(pe_id),
+            "vendor_id": vendor.id,
+            "branch_id": int(branch_id),
+            "state": mapping.branch.state,
+            "branch": mapping.branch.short_name,
+            "audit_period": selected_period,
+        })
+
             SystemNotification.objects.create(
                 user=mapping.auditor.user,
                 title="Compliance Submitted",
@@ -352,9 +361,12 @@ class VendorSubmitComplianceAPIView(APIView):
                     "pe_id": int(pe_id),
                     "vendor_id": vendor.id,
                     "branch_id": int(branch_id),
+
                     "vendor": vendor.short_name,
+                    "state": mapping.branch.state,
+                    "branch": mapping.branch.short_name,
+
                     "audit_period": selected_period,
-                    "status": "SUBMITTED",
                 }
             )
 
