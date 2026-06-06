@@ -155,7 +155,9 @@ class VendorBranchMappingCreateAPIView(APIView):
 
         # 🔥 FIX DOCUMENTS
         document_ids = data.pop("document_ids", None)
+        print("DOCUMENT IDS:", document_ids)
         documents_input = data.pop("documents", None)
+        print("REQUEST DATA:", request.data)
 
         serializer = VendorBranchMappingSerializer(
             data=data,
@@ -170,19 +172,22 @@ class VendorBranchMappingCreateAPIView(APIView):
 
             print("MAPPING CREATED:", mapping.id)
 
-        else:
-
-            print("VALIDATION ERROR:", serializer.errors)
-
-            # 🔥 SAVE DOCUMENTS CORRECTLY
             if document_ids:
                 mapping.documents.set(document_ids)
             elif documents_input:
                 mapping.documents.set(documents_input)
 
-            return Response({"message": "Mapping created"}, status=201)
+            return Response(
+                {"message": "Mapping created"},
+                status=201
+            )
 
-        return Response(serializer.errors, status=400)
+        print("VALIDATION ERROR:", serializer.errors)
+
+        return Response(
+            serializer.errors,
+            status=400
+        )
 
 
 # ==========================================================

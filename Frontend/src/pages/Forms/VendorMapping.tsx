@@ -454,25 +454,18 @@ const handleSave = async () => {
   try {
 
     const payload = {
-
       vendor: Number(selectedVendor),
-
       branch: Number(selectedBranch),
-
       auditor: selectedAuditor
         ? Number(selectedAuditor)
         : null,
 
-      documents: selectedDocuments,
+      document_ids: selectedDocuments,
 
-      start_date:
-        formatForAPI(startDate),
-
-      end_date:
-        formatForAPI(endDate),
+      start_date: formatForAPI(startDate),
+      end_date: formatForAPI(endDate),
 
       rule: selectedRule,
-
       frequency: selectedFrequency,
     };
 
