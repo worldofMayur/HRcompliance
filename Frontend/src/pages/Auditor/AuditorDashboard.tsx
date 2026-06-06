@@ -1591,20 +1591,42 @@ const canFreezeReport =
 
   </div>
 
-  {remarksData.length > 0 && (
-    <div className="mt-3 pt-3 border-t">
+{remarksData.length > 0 && (
 
-<div className="mt-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl shadow-sm">
-<div className="font-semibold text-amber-700 mb-1">
-  📝 Vendor Remark
+  <div className="mt-3 space-y-2">
+
+    {remarksData.map((remark, index) => (
+
+      <div
+        key={index}
+        className="p-3 bg-amber-50 border border-amber-200 rounded-lg"
+      >
+
+        <div className="flex justify-between">
+
+          <span className="font-medium text-amber-700">
+            Vendor Remark
+          </span>
+
+          <span className="text-xs text-gray-500">
+            {new Date(
+              remark.created_at
+            ).toLocaleString()}
+          </span>
+
         </div>
 
         <div className="mt-1">
-          {remarksData[0]?.general_remark}
+          {remark.general_remark}
         </div>
+
       </div>
-    </div>
-  )}
+
+    ))}
+
+  </div>
+
+)}
 
   <div className="flex justify-end mt-3">
 
