@@ -1005,9 +1005,13 @@ class SaveAuditAPIView(APIView):
     @transaction.atomic
     def post(self, request):
 
-        from django.conf import settings
-        from django.core.mail import EmailMultiAlternatives
-        from master_apps.vendor.models import VendorCCEmail  # ✅ NEW IMPORT
+        import traceback
+
+        try:
+
+            from django.conf import settings
+            from django.core.mail import EmailMultiAlternatives
+            from master_apps.vendor.models import VendorCCEmail
 
         branch_id = request.data.get("branch_id")
         audit_period = request.data.get("audit_period")
@@ -1937,6 +1941,20 @@ class SaveAuditAPIView(APIView):
                     "to re-upload documents."
                 )
             })
+
+        except Exception as e:
+
+            print("========== SAVE AUDIT ERROR ==========")
+            print(str(e))
+            print(traceback.format_exc())
+
+            return Response(
+                {
+                    "error": str(e),
+                    "trace": traceback.format_exc()
+                },
+                status=500
+            )
             
         return Response({
             "message": "Audit saved successfully"
