@@ -627,7 +627,7 @@ const loadChecklist = async (
         ),
 
         axios.get(
-          `https://apii.complianceclearance.com/api/auditor/compliance-remarks/?branch_id=${finalBranch}&vendor_id=${finalVendor}`,
+          `https://apii.complianceclearance.com/api/auditor/compliance-remarks/?branch_id=${finalBranch}&vendor_id=${finalVendor}&audit_period=${encodeURIComponent(finalPeriod)}`,
           authHeader
         )
       ]);
@@ -685,6 +685,11 @@ const loadChecklist = async (
 
     setRemarksData(
       remarksRes.data || []
+    );
+
+    console.log(
+      "REMARKS RESPONSE:",
+      remarksRes.data
     );
 
     setIsModalOpen(true);
@@ -1548,22 +1553,41 @@ const canFreezeReport =
       <b>Period:</b> {auditPeriod}
     </span>
 
+    {remarksData.length > 0 && (
+      <div className="w-full mt-2 pt-2 border-t">
+
+        <span className="font-semibold text-blue-700">
+          Vendor Remark:
+        </span>
+
+        <span className="ml-2 text-gray-700">
+          {remarksData.length > 0 ? (
+            remarksData.map((r:any,index:number)=>(
+              <div key={index}>
+                {r.general_remark}
+              </div>
+            ))
+          ) : (
+            <span>No remarks available</span>
+          )}
+        </span>
+
+      </div>
+    )}
+
   </div>
 
   <div className="flex justify-between items-center">
 
-  <div className="flex flex-wrap gap-6 text-sm">
-    ...
-  </div>
-
-  <Button
-    size="small"
-    icon={<DownloadOutlined />}
-    loading={downloading}
-    onClick={downloadZip}
-  >
-    Documents
-  </Button>
+<Button
+  type="primary"
+  icon={<DownloadOutlined />}
+  loading={downloading}
+  onClick={downloadZip}
+  className="!rounded-lg !bg-blue-600 hover:!bg-blue-700"
+>
+  Download Audit Documents
+</Button>
 
 </div>
 
@@ -1653,7 +1677,7 @@ const canFreezeReport =
                   bordered
                   size="small"
                   scroll={{
-                    y: 500,
+                    y: 350,
                     x: 1800
                   }}
                 />
