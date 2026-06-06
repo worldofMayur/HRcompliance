@@ -1056,6 +1056,7 @@ if (exceptionalFiles) {
 
     {
       title: "Compliance Status",
+      width: 220,
       render: (_: any, record: any, index: number) => (
         <select
           value={record.status || ""}
@@ -1585,7 +1586,7 @@ const canFreezeReport =
 
     <Button
       type="primary"
-      size="large"
+      size="small"
       icon={<DownloadOutlined />}
       onClick={downloadZip}
     >
