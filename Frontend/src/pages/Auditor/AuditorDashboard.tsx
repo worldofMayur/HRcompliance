@@ -7,6 +7,7 @@ import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icon
 export default function AuditorDashboard() {
   const token = localStorage.getItem("access_token");
   const location = useLocation();
+  const { TextArea } = Input;
 
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` },
@@ -1033,14 +1034,28 @@ if (exceptionalFiles) {
   /* ================= TABLE ================= */
 
   const columns = [
-    { title: "State", dataIndex: "state" },
-    { title: "Act Name", dataIndex: "act_name" },
-    { title: "Audit Particulars", dataIndex: "audit_particulars" },
-    { title: "Section", dataIndex: "section_rule" },
-    { title: "Form Number", dataIndex: "form_number" },
     {
-      title: "Document Name",
-      dataIndex: "document_name",
+      title: "Audit Requirement",
+      width: 380,
+      render: (_: any, record: any) => (
+        <div className="space-y-1">
+          <div className="font-semibold text-blue-700">
+            {record.audit_particulars}
+          </div>
+
+          <div className="text-xs text-gray-600">
+            Act: {record.act_name}
+          </div>
+
+          <div className="text-xs text-gray-600">
+            Section: {record.section_rule}
+          </div>
+
+          <div className="text-xs text-gray-600">
+            Document: {record.document_name}
+          </div>
+        </div>
+      ),
     },
     {
       title: "Guidelines For Auditor",
@@ -1073,7 +1088,7 @@ if (exceptionalFiles) {
           onChange={(e) =>
           updateField(record.id, "status", e.target.value)
           }
-          className="border rounded px-2 py-1"
+          className="border rounded-lg px-3 py-2 w-full"
         >
           <option value="">Select</option>
           <option value="Complied">Complied</option>
@@ -1091,7 +1106,11 @@ if (exceptionalFiles) {
       title: "Auditor Observation",
       width: 220,
       render: (_: any, record: any) => (
-        <Input
+        <TextArea
+          autoSize={{
+            minRows: 2,
+            maxRows: 3,
+          }}
           value={record.observation}
           disabled={
             isAuditLocked
@@ -1119,7 +1138,11 @@ if (exceptionalFiles) {
   title: "Action Recommendation",
   width: 220,
   render: (_: any, record: any) => (
-    <Input
+    <TextArea
+      autoSize={{
+        minRows: 2,
+        maxRows: 3,
+      }}
       value={record.recommendation}
       disabled={
         isAuditLocked
@@ -1571,9 +1594,9 @@ const canFreezeReport =
   {remarksData.length > 0 && (
     <div className="mt-3 pt-3 border-t">
 
-      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-        <div className="font-semibold text-amber-700">
-          Vendor Remark
+<div className="mt-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl shadow-sm">
+<div className="font-semibold text-amber-700 mb-1">
+  📝 Vendor Remark
         </div>
 
         <div className="mt-1">
@@ -1665,7 +1688,8 @@ const canFreezeReport =
                   <div className="px-3 py-1 rounded bg-red-100 text-red-800 font-medium">
                     Pending: {
                       groupedChecklist.filter(
-                        (row: any) => !row.status
+                        (row: any) =>
+                          !allowedFreezeStatuses.includes(row.status)
                       ).length
                     }
                   </div>
