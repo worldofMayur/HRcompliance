@@ -2756,32 +2756,41 @@ class FreezeAuditReportsAPIView(APIView):
 
         from master_apps.vendor.mapping_models import VendorBranchMapping
 
-        auditor = getattr(
-            request.user,
-            "auditor_profile",
-            None
-        )
+        if request.user.role == "AUDITOR":
 
-        frozen_sessions = AuditSession.objects.filter(
-            auditor=auditor,
-            status="FROZEN"
-        )
-
-        entries = AuditEntry.objects.filter(
-            auditor=auditor,
-
-            branch_id__in=frozen_sessions.values_list(
-                "branch_id",
-                flat=True
-            ),
-
-            audit_period__in=frozen_sessions.values_list(
-                "audit_period",
-                flat=True
+            auditor = getattr(
+                request.user,
+                "auditor_profile",
+                None
             )
-        ).select_related(
-            "checklist"
-        ).order_by("-id")
+
+            frozen_sessions = AuditSession.objects.filter(
+                auditor=auditor,
+                status="FROZEN"
+            )
+
+            entries = AuditEntry.objects.filter(
+                auditor=auditor,
+                branch_id__in=frozen_sessions.values_list(
+                    "branch_id",
+                    flat=True
+                ),
+                audit_period__in=frozen_sessions.values_list(
+                    "audit_period",
+                    flat=True
+                )
+            ).select_related(
+                "checklist"
+            ).order_by("-id")
+
+        else:
+
+            entries = AuditEntry.objects.all().select_related(
+                "checklist"
+            ).order_by("-id")
+
+            print("ROLE:", request.user.role)
+            print("TOTAL ENTRIES:", entries.count())
 
         grouped = {}
 
