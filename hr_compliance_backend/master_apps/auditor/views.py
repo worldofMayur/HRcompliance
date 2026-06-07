@@ -1685,6 +1685,15 @@ class SaveAuditAPIView(APIView):
 
                 first_submission.save()
 
+                import os
+
+                print("CC SAVED:", first_submission.clearance_certificate.name)
+                print("CC PATH:", first_submission.clearance_certificate.path)
+                print(
+                    "CC EXISTS AFTER SAVE:",
+                    os.path.exists(first_submission.clearance_certificate.path)
+                )
+
                                 # =========================
                 # COPY SAME PDF PATHS
                 # =========================
