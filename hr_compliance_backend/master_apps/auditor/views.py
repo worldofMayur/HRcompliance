@@ -984,6 +984,45 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                                 cc_basename
                             )
 
+
+                    # =====================================
+                    # FINAL AUDIT REPORT PDF
+                    # =====================================
+
+                    if (
+                        getattr(
+                            sub,
+                            "audit_report_pdf",
+                            None
+                        )
+                        and os.path.exists(
+                            sub.audit_report_pdf.path
+                        )
+                    ):
+
+                        report_basename = os.path.basename(
+                            sub.audit_report_pdf.name
+                        )
+
+                        if report_basename not in added_cc_files:
+
+                            print(
+                                "📦 ZIP AUDIT REPORT:",
+                                sub.audit_report_pdf.name
+                            )
+
+                            zip_file.write(
+                                sub.audit_report_pdf.path,
+                                arcname=os.path.join(
+                                    "compliance_clearance_certificate",
+                                    report_basename
+                                )
+                            )
+
+                            added_cc_files.add(
+                                report_basename
+                            )
+
                 except Exception as e:
 
                     print(
@@ -1378,12 +1417,6 @@ class SaveAuditAPIView(APIView):
                 f"{pe.short_name} | "
                 f"{vendor.short_name}"
             )
-
-
-
-            # =========================
-            # FINAL AUDIT REPORT
-            # =========================
 
             # =========================
             # BUILD FULL PDF ENTRIES
