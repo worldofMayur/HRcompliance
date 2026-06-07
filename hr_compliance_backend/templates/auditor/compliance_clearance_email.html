@@ -363,39 +363,41 @@ body{
 
             <!-- EXCEPTION TABLE -->
 
-            <div class="exception-card">
+<div class="exception-card">
 
-                <div class="exception-header">
-                    Exceptional Approval Details
-                </div>
+    <div class="exception-header">
+        Exceptional Approval Details
+    </div>
 
-                    <div class="exception-item">
+    <table class="exception-table">
 
-                        <div class="exception-row">
-                            <strong>Document Name</strong>
-                            <span>{{ item.document_name }}</span>
-                        </div>
+        <thead>
+            <tr>
+                <th>Document Name</th>
+                <th>Audit Particular</th>
+                <th>Observation</th>
+                <th>Recommendation</th>
+            </tr>
+        </thead>
 
-                        <div class="exception-row">
-                            <strong>Audit Particular</strong>
-                            <span>{{ item.audit_particular }}</span>
-                        </div>
+        <tbody>
 
-                        <div class="exception-row">
-                            <strong>Auditor Observation</strong>
-                            <span>{{ item.observation }}</span>
-                        </div>
+            {% for item in exceptional_entries %}
 
-                        <div class="exception-row">
-                            <strong>Auditor Recommendation</strong>
-                            <span>{{ item.recommendation }}</span>
-                        </div>
+            <tr>
+                <td>{{ item.document_name|default:"-" }}</td>
+                <td>{{ item.audit_particular|default:"-" }}</td>
+                <td>{{ item.observation|default:"-" }}</td>
+                <td>{{ item.recommendation|default:"-" }}</td>
+            </tr>
 
-                    </div>
-            </div>
+            {% endfor %}
 
-            {% endif %}
+        </tbody>
 
+    </table>
+
+</div>
             <!-- SIGNATURE -->
 
             <div class="signature">
