@@ -122,15 +122,6 @@ export default function App() {
             }
           />
 
-          <Route
-            path="freeze-audit-reports"
-            element={
-              <ProtectedRoute allowedRoles={["AUDITOR"]}>
-                <FreezeAuditReports />
-              </ProtectedRoute>
-            }
-          />
-
           {/* CORE */}
           <Route path="profile" element={<UserProfiles />} />
           <Route path="calendar" element={<Calendar />} />
