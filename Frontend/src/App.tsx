@@ -114,6 +114,15 @@ export default function App() {
           />
 
           <Route
+            path="auditor-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["AUDITOR"]}>
+                <AuditorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="auditor-notifications"
             element={
               <ProtectedRoute allowedRoles={["AUDITOR"]}>
