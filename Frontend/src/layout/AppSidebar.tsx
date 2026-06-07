@@ -426,24 +426,6 @@ const AppSidebar: React.FC = () => {
 
                 <li>
                   <Link
-                    to="pe-notifications"
-                    onClick={handleNavigation}
-                    className={menuClass("/vendor-notifications")}
-                  >
-                    <span className="menu-item-icon-size shrink-0">
-                      <ListIcon />
-                    </span>
-
-                    {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Notifications
-                      </span>
-                    )}
-                  </Link>
-                </li>
-
-                <li>
-                  <Link
                     to="freeze-audit-reports"
                     onClick={handleNavigation}
                     className={menuClass("/freeze-audit-reports")}
@@ -455,6 +437,24 @@ const AppSidebar: React.FC = () => {
                     {(isExpanded || isHovered || isMobileOpen) && (
                       <span className="menu-item-text font-medium">
                         Frozen Audit Reports
+                      </span>
+                    )}
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    to="pe-notifications"
+                    onClick={handleNavigation}
+                    className={menuClass("/vendor-notifications")}
+                  >
+                    <span className="menu-item-icon-size shrink-0">
+                      <ListIcon />
+                    </span>
+
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Notifications
                       </span>
                     )}
                   </Link>
