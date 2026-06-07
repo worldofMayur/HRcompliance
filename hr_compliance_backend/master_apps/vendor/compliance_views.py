@@ -473,8 +473,52 @@ def reupload_compliance(request):
 
                 uploaded_file = request.FILES[key]
 
+                is_additional = (
+                    request.data.get(
+                        f"document_{index}_is_additional"
+                    ) == "true"
+                )
+
+                if is_additional:
+
+                    parent_document_id = request.data.get(
+                        f"document_{index}_parent_id"
+                    )
+
+                    if not parent_document_id:
+                        continue
+
+                    submission = (
+                        VendorComplianceSubmission.objects.filter(
+                            vendor=vendor,
+                            branch_id=branch_id,
+                            document_id=parent_document_id,
+                            audit_period__iexact=selected_period,
+                        )
+                        .order_by("-id")
+                        .first()
+                    )
+
+                    if submission:
+
+                        VendorComplianceSupportingFile.objects.create(
+                            submission=submission,
+                            file=uploaded_file
+                        )
+
+                        print(
+                            "✅ REUPLOAD ADDITIONAL FILE:",
+                            uploaded_file.name
+                        )
+
+                        uploaded_count += 1
+
+                    continue
+
                 if not document_id:
                     continue
+
+                
 
                 # ===============================
                 # 🔍 FIND EXISTING SUBMISSION
