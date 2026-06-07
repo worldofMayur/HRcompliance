@@ -540,7 +540,16 @@ class DownloadCCPDFAPIView(APIView):
             )
         
 
-        print("FILE PATH:", submission.clearance_certificate.path)
+        print("\n===== CC FILE DEBUG =====")
+        print("CC NAME:", submission.clearance_certificate.name)
+        print("CC PATH:", submission.clearance_certificate.path)
+        print("MEDIA ROOT:", settings.MEDIA_ROOT)
+        print(
+            "EXISTS:",
+            os.path.exists(
+                submission.clearance_certificate.path
+            )
+        )
 
         print(
             "FILE EXISTS:",
