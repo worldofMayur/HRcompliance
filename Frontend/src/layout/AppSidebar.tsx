@@ -441,6 +441,24 @@ const AppSidebar: React.FC = () => {
                     )}
                   </Link>
                 </li>
+
+                <li>
+                  <Link
+                    to="freeze-audit-reports"
+                    onClick={handleNavigation}
+                    className={menuClass("/freeze-audit-reports")}
+                  >
+                    <span className="menu-item-icon-size shrink-0">
+                      <TableIcon />
+                    </span>
+
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Frozen Audit Reports
+                      </span>
+                    )}
+                  </Link>
+                </li>
               </>
             )}
 

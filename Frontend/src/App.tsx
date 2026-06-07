@@ -105,10 +105,10 @@ export default function App() {
           <Route path="dashboard" element={<Home />} />
 
           <Route
-            path="auditor-dashboard"
+            path="freeze-audit-reports"
             element={
-              <ProtectedRoute allowedRoles={["AUDITOR"]}>
-                <AuditorDashboard />
+              <ProtectedRoute allowedRoles={["AUDITOR", "PE"]}>
+                <FreezeAuditReports />
               </ProtectedRoute>
             }
           />
