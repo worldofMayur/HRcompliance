@@ -1614,8 +1614,11 @@ const canFreezeReport =
           <span className="font-medium text-amber-700">
             Vendor Remark
           </span>
+
           <span className="text-xs text-gray-500">
-            {remark.date || "-"}
+            {new Date(
+              remark.created_at
+            ).toLocaleString()}
           </span>
 
         </div>
