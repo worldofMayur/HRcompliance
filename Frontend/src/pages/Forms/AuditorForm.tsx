@@ -42,6 +42,16 @@ const ALLOWED_TYPES = [
 const dateInputClass =
   "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
 
+const formatDate = (dateString: string) => {
+  if (!dateString) return "—";
+
+  return new Date(dateString).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
+};
+
 /* =========================
    COMPONENT
 ========================= */
@@ -581,8 +591,8 @@ const filteredAuditors =
                     "Work Location",
                     "Mobile",
                     "Email",
-                    "Start Date",
-                    "End Date",
+                    "Start Date (DD/MM/YY)",
+                    "End Date (DD/MM/YY)",
                   ].map((h) => (
                     <TableCell
                       key={h}
@@ -623,8 +633,13 @@ const filteredAuditors =
                     <TableCell className="px-6 py-5 text-center">{a.ho_address}</TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.mobile}</TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.email}</TableCell>
-                    <TableCell className="px-6 py-5 text-center">{a.start_date}</TableCell>
-                    <TableCell className="px-6 py-5 text-center">{a.end_date}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">
+                      {formatDate(a.start_date)}
+                    </TableCell>
+
+                    <TableCell className="px-6 py-5 text-center">
+                      {formatDate(a.end_date)}
+                    </TableCell>
 
                     <TableCell className="px-6 py-5 text-center">
                       <Badge color="success">Active</Badge>

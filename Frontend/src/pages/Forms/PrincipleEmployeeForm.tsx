@@ -1007,8 +1007,8 @@ finally {
                     "Mobile",
                     "Nature of Business",
                     "Establishment Type",
-                    "From",
-                    "To",
+                    "Valid From (DD/MM/YY)",
+                    "Valid To (DD/MM/YY)",
                     "Rules",
                     "Status",
                   ].map((h) => (
