@@ -53,6 +53,7 @@ from django.core.files.base import ContentFile
 from master_apps.vendor.constants import (
     WorkflowStatus
 )
+issued_time = timezone.localtime(now())
 
 from master_apps.vendor.compliance_models import (
     ExceptionalApprovalDocument
@@ -1512,24 +1513,6 @@ class SaveAuditAPIView(APIView):
                     ),
                 })
 
-            from django.utils import timezone
-            from django.utils.timezone import now
-
-            all_submissions = (
-                VendorComplianceSubmission.objects.filter(
-                    branch_id=branch_id,
-                    vendor_id=vendor.id,
-                    audit_period=audit_period
-                )
-            )
-
-            first_submission = all_submissions.first()
-
-            issued_time = timezone.localtime(now())
-
-            print("STEP 1")
-            print("FIRST SUBMISSION:", first_submission)
-            print("ISSUED TIME:", issued_time)
 
             email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
@@ -1550,8 +1533,6 @@ class SaveAuditAPIView(APIView):
                     ],
                 }
             )
-
-            print("STEP 2")
 
             pdf_html = render_to_string(
                 "auditor/final_cc_certificate.html",
@@ -1575,8 +1556,6 @@ class SaveAuditAPIView(APIView):
             pdf_bytes = generate_cc_pdf_from_html(
                 pdf_html
             )
-
-            print("STEP 3")
 
             # =========================
             # GENERATE FINAL AUDIT REPORT
@@ -1633,8 +1612,6 @@ class SaveAuditAPIView(APIView):
                 )
             })
 
-            print("STEP 4")
-
             print(
                 "\n✅ FINAL AUDIT REPORT GENERATED"
             )
@@ -1645,6 +1622,12 @@ class SaveAuditAPIView(APIView):
                     vendor_id=vendor.id,
                     audit_period=audit_period
                 )
+            )
+
+            first_submission = all_submissions.first()
+
+            issued_time = timezone.localtime(
+                first_submission.frozen_at
             )
 
             if first_submission:
@@ -1833,10 +1816,6 @@ class SaveAuditAPIView(APIView):
                 email.send(
                     fail_silently=False
                 )
-
-                print("STEP 5")
-                print("VENDOR EMAIL:", vendor.email)
-                print("CC EMAILS:", cc_emails)
 
                 SystemNotification.objects.create(
 
@@ -2530,7 +2509,6 @@ class AuditChecklistAPIView(APIView):
 
 # ================= REMARKS =================
 class AuditorComplianceRemarksAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -2540,83 +2518,37 @@ class AuditorComplianceRemarksAPIView(APIView):
 
         branch_id = request.GET.get("branch_id")
         vendor_id = request.GET.get("vendor_id")
-        audit_period = request.GET.get("audit_period")
 
-        submissions = (
-
-            VendorComplianceSubmission.objects.filter(
-
-                branch_id=branch_id,
-
-                vendor_id=vendor_id,
-
-                audit_period__iexact=audit_period
-
-            )
-            .select_related("document")
-            .order_by("-submitted_at")
-        )
+        submissions = VendorComplianceSubmission.objects.filter(
+            branch_id=branch_id,
+            vendor_id=vendor_id
+        ).select_related("document").order_by("-submitted_at")
 
         data = {}
 
         for sub in submissions:
 
-            date_key = (
-                timezone.localtime(
-                    sub.submitted_at
-                ).strftime(
-                    "%d %b %Y %I:%M:%S %p"
-                )
-                if sub.submitted_at
-                else "-"
-            )
+            # ✅ USE audit_period (more accurate)
+            date_key = sub.submitted_at.strftime("%Y-%m-%d")
 
             if date_key not in data:
-
                 data[date_key] = {
-
                     "date": date_key,
-
                     "general_remark": None,
-
-                    "documents": [],
+                    "documents": []
                 }
 
             if sub.general_remark:
-
-                data[date_key][
-                    "general_remark"
-                ] = sub.general_remark
+                data[date_key]["general_remark"] = sub.general_remark
 
             data[date_key]["documents"].append({
-
-                "document_name": (
-                    sub.document.name
-                    if sub.document
-                    else ""
-                ),
-
+                "document_name": sub.document.name if sub.document else "",
                 "remark": None,
-
-                "file": (
-                    sub.main_file.url
-                    if sub.main_file
-                    else None
-                ),
+                "file": sub.main_file.url if sub.main_file else None
             })
 
-        return Response(
-
-            sorted(
-
-                data.values(),
-
-                key=lambda x: x["date"],
-
-                reverse=True
-            )
-        )
-
+        # ✅ SORTED RESPONSE
+        return Response(sorted(data.values(), key=lambda x: x["date"], reverse=True))
 
 
 class AuditorCompliancePeriodAPIView(APIView):
