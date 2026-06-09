@@ -2509,6 +2509,7 @@ class AuditChecklistAPIView(APIView):
 
 # ================= REMARKS =================
 class AuditorComplianceRemarksAPIView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
