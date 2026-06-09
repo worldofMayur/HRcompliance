@@ -36,6 +36,16 @@ const normalSelectClass =
 const dateInputClass =
   "w-full h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
 
+const formatDate = (dateString: string) => {
+  if (!dateString) return "—";
+
+  return new Date(dateString).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
+};
+
 /* =========================
    COMPONENT
 ========================= */
@@ -685,8 +695,8 @@ finally {
         "Mobile",
         "Nature of Business",
         "Establishment",
-        "From",
-        "To",
+        "Valid From (DD/MM/YY)",
+        "Valid To (DD/MM/YY)",
         "Rules",
         "Status",
         "Branch",
@@ -1032,8 +1042,13 @@ finally {
                     <TableCell className="px-6 py-5">{pe.mobile}</TableCell>
                     <TableCell className="px-6 py-5">{pe.nature_of_business}</TableCell>
                     <TableCell className="px-6 py-5">{pe.establishment_type}</TableCell>
-                    <TableCell className="px-6 py-5">{pe.start_date}</TableCell>
-                    <TableCell className="px-6 py-5">{pe.end_date || "—"}</TableCell>
+                    <TableCell className="px-6 py-5">
+                      {formatDate(pe.start_date)}
+                    </TableCell>
+
+                    <TableCell className="px-6 py-5">
+                      {formatDate(pe.end_date)}
+                    </TableCell>
                     <TableCell className="px-6 py-5">{pe.rules_applicable}</TableCell>
                     <TableCell className="px-6 py-5 text-green-700">Active</TableCell>
                     <TableCell className="px-6 py-5">
