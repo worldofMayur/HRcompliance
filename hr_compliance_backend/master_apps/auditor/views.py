@@ -2540,9 +2540,13 @@ class AuditorComplianceRemarksAPIView(APIView):
         for sub in submissions:
 
             date_key = (
-                sub.submitted_at.strftime("%Y-%m-%d")
+                timezone.localtime(
+                    sub.submitted_at
+                ).strftime(
+                    "%d %b %Y %I:%M:%S %p"
+                )
                 if sub.submitted_at
-                else "-"
+                else None
             )
 
             if date_key not in data:
