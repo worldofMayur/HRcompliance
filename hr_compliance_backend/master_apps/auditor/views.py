@@ -1512,6 +1512,12 @@ class SaveAuditAPIView(APIView):
                 })
 
 
+            from django.utils import timezone
+
+            generated_timestamp = timezone.localtime().strftime(
+                "%d-%b-%Y %I:%M:%S %p"
+            )
+
             email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
                 {
@@ -1521,9 +1527,7 @@ class SaveAuditAPIView(APIView):
                     "branch_name": branch.short_name,
                     "audit_period": audit_period,
                     "entries": entries,
-                    "generated_at": now().strftime(
-                        "%d %B %Y %I:%M:%S %p"
-                    ),
+                    "generated_at": generated_timestamp,
                     "exceptional_entries": [
                         e for e in pdf_entries
                         if "Exceptional Approval"
@@ -1540,9 +1544,7 @@ class SaveAuditAPIView(APIView):
                     "state": branch.state,
                     "branch_name": branch.short_name,
                     "audit_period": audit_period,
-                    "generated_at": now().strftime(
-                        "%d %B %Y %I:%M:%S %p"
-                    ),
+                    "generated_at": generated_timestamp,
                     "exceptional_entries": [
                         e for e in pdf_entries
                         if "Exceptional Approval"
@@ -1577,9 +1579,7 @@ class SaveAuditAPIView(APIView):
 
                     "entries": pdf_entries,
 
-                    "generated_at": now().strftime(
-                        "%d %B %Y %I:%M %p"
-                    ),
+                    "generated_at": generated_timestamp,
 
                     "has_exceptional_approval": any(
 
@@ -1604,10 +1604,7 @@ class SaveAuditAPIView(APIView):
                 "audit_period": audit_period,
 
                 "entries": pdf_entries,
-
-                "generated_at": now().strftime(
-                    "%d %B %Y %I:%M %p"
-                )
+                "generated_at": generated_timestamp,
             })
 
             print(
@@ -2512,10 +2509,12 @@ class AuditorComplianceRemarksAPIView(APIView):
 
         branch_id = request.GET.get("branch_id")
         vendor_id = request.GET.get("vendor_id")
+        audit_period = request.GET.get("audit_period")
 
         submissions = VendorComplianceSubmission.objects.filter(
             branch_id=branch_id,
-            vendor_id=vendor_id
+            vendor_id=vendor_id,
+            audit_period=audit_period
         ).select_related("document").order_by("-submitted_at")
 
         data = {}
@@ -2523,17 +2522,32 @@ class AuditorComplianceRemarksAPIView(APIView):
         for sub in submissions:
 
             # ✅ USE audit_period (more accurate)
-            date_key = sub.submitted_at.strftime("%Y-%m-%d")
+            date_key = (
+                sub.submitted_at.strftime("%Y-%m-%d")
+                if sub.submitted_at
+                else "Unknown"
+            )
 
             if date_key not in data:
                 data[date_key] = {
                     "date": date_key,
+                    "created_at": (
+                        sub.reuploaded_at
+                        if sub.reuploaded_at
+                        else sub.submitted_at
+                    ),
                     "general_remark": None,
                     "documents": []
                 }
 
-            if sub.general_remark:
-                data[date_key]["general_remark"] = sub.general_remark
+            remark_text = (
+                sub.reupload_remark
+                if sub.reupload_remark
+                else sub.general_remark
+            )
+
+            if remark_text:
+                data[date_key]["general_remark"] = remark_text
 
             data[date_key]["documents"].append({
                 "document_name": sub.document.name if sub.document else "",

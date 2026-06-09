@@ -1615,12 +1615,13 @@ const canFreezeReport =
             Vendor Remark
           </span>
 
-          <span className="text-xs text-gray-500">
-            {new Date(
-              remark.created_at
-            ).toLocaleString()}
-          </span>
-
+        <span className="text-xs text-gray-500">
+          {remark.created_at
+            ? new Date(
+                remark.created_at
+              ).toLocaleString("en-IN")
+            : "-"}
+        </span>
         </div>
 
         <div className="mt-1">
