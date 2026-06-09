@@ -1626,6 +1626,10 @@ class SaveAuditAPIView(APIView):
 
             first_submission = all_submissions.first()
 
+            issued_time = timezone.localtime(
+                first_submission.frozen_at
+            )
+
             if first_submission:
 
                 # =========================
