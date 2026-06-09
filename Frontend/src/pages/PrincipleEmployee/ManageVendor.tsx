@@ -646,6 +646,7 @@ className={`border-t hover:bg-gray-50 transition ${
     selected={startDate}
     disabled
     dateFormat="dd/MM/yyyy"
+    placeholderText="dd/mm/yy"
     className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm bg-gray-100"
   />
 </div>
@@ -657,7 +658,8 @@ className={`border-t hover:bg-gray-50 transition ${
 
   <DatePicker
     selected={endDate}
-    dateFormat="dd/MM/yyyy"
+    dateFormat="dd/MM/yy"
+    placeholderText="dd/mm/yy"
     onChange={(date) => {
       if (date) {
         setDateRange([startDate, date]);
