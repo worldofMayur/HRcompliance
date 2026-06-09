@@ -1623,6 +1623,8 @@ class SaveAuditAPIView(APIView):
                     audit_period=audit_period
                 )
             )
+            print("FIRST SUBMISSION:", first_submission)
+            print("FROZEN AT:", getattr(first_submission, "frozen_at", None))
 
             first_submission = all_submissions.first()
 
