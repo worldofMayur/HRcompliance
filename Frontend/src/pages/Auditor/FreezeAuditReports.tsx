@@ -1012,7 +1012,7 @@ return hasExceptional ? (
                 </h3>
 
                 <div className="
-                  grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6
+                  grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7
                   divide-y md:divide-y-0 md:divide-x
                   divide-gray-100
                   gap-x-8 gap-y-4
@@ -1039,6 +1039,23 @@ return hasExceptional ? (
                     {
                       label: "Audit Period",
                       value: selectedReport.audit_period,
+                    },
+
+                    {
+                      label: "Frozen On",
+
+                      value: selectedReport.frozen_at
+                        ? new Date(
+                            selectedReport.frozen_at
+                          ).toLocaleString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                        : "-",
                     },
 
                     {
