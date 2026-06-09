@@ -637,27 +637,36 @@ className={`border-t hover:bg-gray-50 transition ${
     </div>
 
     {/* 🔹 DATES */}
-    <div className="grid grid-cols-2 gap-3">
-      <DatePicker
-        selected={startDate}
-        disabled
-        className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm bg-gray-100 cursor-not-allowed"
-        placeholderText="Start Date"
-      />
+<div>
+  <label className="block text-xs font-medium text-gray-500 mb-1">
+    Agreement Start Date (DD/MM/YYYY)
+  </label>
 
-<DatePicker
-  selected={endDate}
-  onChange={(date) => {
-    if (date) {
-      setDateRange([startDate, date]);
-      handleChange("end_date", formatForAPI(date));
-    }
-  }}
-  className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm 
-  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-  placeholderText="End Date"
-/>
-    </div>
+  <DatePicker
+    selected={startDate}
+    disabled
+    dateFormat="dd/MM/yyyy"
+    className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm bg-gray-100"
+  />
+</div>
+
+<div>
+  <label className="block text-xs font-medium text-gray-500 mb-1">
+    Agreement End Date (DD/MM/YYYY)
+  </label>
+
+  <DatePicker
+    selected={endDate}
+    dateFormat="dd/MM/yyyy"
+    onChange={(date) => {
+      if (date) {
+        setDateRange([startDate, date]);
+        handleChange("end_date", formatForAPI(date));
+      }
+    }}
+    className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm"
+  />
+</div>
 
     {/* 🔹 AUDIT */}
     <div className="grid grid-cols-3 gap-3">
@@ -797,6 +806,7 @@ className={`border-t hover:bg-gray-50 transition ${
 
       <DatePicker
         selected={effectiveDate}
+        dateFormat="dd/MM/yyyy"
         onChange={(date) => setEffectiveDate(date)}
         className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
         focus:ring-2 focus:ring-blue-500 outline-none"
