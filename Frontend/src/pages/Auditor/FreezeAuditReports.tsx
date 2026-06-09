@@ -326,6 +326,16 @@ export default function FreezeAuditReports() {
     },
 
     {
+      title: "Frozen On",
+      dataIndex: "frozen_at",
+
+      render: (value: string) =>
+        value
+          ? new Date(value).toLocaleString("en-IN")
+          : "-",
+    },
+
+    {
   title: "Status",
 
   width: 180,
@@ -1040,7 +1050,6 @@ return hasExceptional ? (
                       label: "Audit Period",
                       value: selectedReport.audit_period,
                     },
-
                     {
                       label: "Frozen On",
 

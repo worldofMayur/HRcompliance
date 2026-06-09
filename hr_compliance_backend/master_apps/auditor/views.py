@@ -2840,9 +2840,6 @@ class FreezeAuditReportsAPIView(APIView):
                 "checklist"
             ).order_by("-id")
 
-            print("ROLE:", request.user.role)
-            print("TOTAL ENTRIES:", entries.count())
-
         grouped = {}
 
         for entry in entries:
@@ -2853,10 +2850,6 @@ class FreezeAuditReportsAPIView(APIView):
                 continue
 
             audit_period = entry.audit_period
-
-            # ======================================
-            # FIND RELATED MAPPING
-            # ======================================
 
             mapping = (
                 VendorBranchMapping.objects.filter(
@@ -2894,6 +2887,16 @@ class FreezeAuditReportsAPIView(APIView):
                 else "-"
             )
 
+            submission = (
+                VendorComplianceSubmission.objects.filter(
+                    branch_id=entry.branch_id,
+                    audit_period=audit_period,
+                    is_frozen=True
+                )
+                .order_by("-id")
+                .first()
+            )
+
             key = (
                 f"{vendor_name}_"
                 f"{branch_name}_"
@@ -2916,17 +2919,22 @@ class FreezeAuditReportsAPIView(APIView):
 
                     "audit_period": audit_period,
 
+                    "frozen_at": (
+                        submission.frozen_at
+                        if submission
+                        else None
+                    ),
+
                     "entries": [],
                 }
 
             grouped[key]["entries"].append({
 
                 "id": entry.id,
+
                 "audit_entry_id": entry.id,
 
-                "audit_particular": (
-                    checklist.audit_particulars
-                ),
+                "audit_particular": checklist.audit_particulars,
 
                 "status": entry.status,
 
