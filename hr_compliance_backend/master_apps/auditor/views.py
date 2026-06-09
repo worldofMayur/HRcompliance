@@ -2518,37 +2518,79 @@ class AuditorComplianceRemarksAPIView(APIView):
 
         branch_id = request.GET.get("branch_id")
         vendor_id = request.GET.get("vendor_id")
+        audit_period = request.GET.get("audit_period")
 
-        submissions = VendorComplianceSubmission.objects.filter(
-            branch_id=branch_id,
-            vendor_id=vendor_id
-        ).select_related("document").order_by("-submitted_at")
+        submissions = (
+
+            VendorComplianceSubmission.objects.filter(
+
+                branch_id=branch_id,
+
+                vendor_id=vendor_id,
+
+                audit_period__iexact=audit_period
+
+            )
+            .select_related("document")
+            .order_by("-submitted_at")
+        )
 
         data = {}
 
         for sub in submissions:
 
-            # ✅ USE audit_period (more accurate)
-            date_key = sub.submitted_at.strftime("%Y-%m-%d")
+            date_key = (
+                sub.submitted_at.strftime("%Y-%m-%d")
+                if sub.submitted_at
+                else "-"
+            )
 
             if date_key not in data:
+
                 data[date_key] = {
+
                     "date": date_key,
+
                     "general_remark": None,
-                    "documents": []
+
+                    "documents": [],
                 }
 
             if sub.general_remark:
-                data[date_key]["general_remark"] = sub.general_remark
+
+                data[date_key][
+                    "general_remark"
+                ] = sub.general_remark
 
             data[date_key]["documents"].append({
-                "document_name": sub.document.name if sub.document else "",
+
+                "document_name": (
+                    sub.document.name
+                    if sub.document
+                    else ""
+                ),
+
                 "remark": None,
-                "file": sub.main_file.url if sub.main_file else None
+
+                "file": (
+                    sub.main_file.url
+                    if sub.main_file
+                    else None
+                ),
             })
 
-        # ✅ SORTED RESPONSE
-        return Response(sorted(data.values(), key=lambda x: x["date"], reverse=True))
+        return Response(
+
+            sorted(
+
+                data.values(),
+
+                key=lambda x: x["date"],
+
+                reverse=True
+            )
+        )
+
 
 
 class AuditorCompliancePeriodAPIView(APIView):
