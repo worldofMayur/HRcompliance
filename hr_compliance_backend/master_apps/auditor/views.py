@@ -1525,11 +1525,11 @@ class SaveAuditAPIView(APIView):
 
             first_submission = all_submissions.first()
 
-            issued_time = (
-                timezone.localtime(first_submission.frozen_at)
-                if first_submission and first_submission.frozen_at
-                else timezone.localtime(now())
-            )
+            issued_time = timezone.localtime(now())
+
+            print("STEP 1")
+            print("FIRST SUBMISSION:", first_submission)
+            print("ISSUED TIME:", issued_time)
 
             email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
@@ -1550,6 +1550,8 @@ class SaveAuditAPIView(APIView):
                     ],
                 }
             )
+
+            print("STEP 2")
 
             pdf_html = render_to_string(
                 "auditor/final_cc_certificate.html",
@@ -1573,6 +1575,8 @@ class SaveAuditAPIView(APIView):
             pdf_bytes = generate_cc_pdf_from_html(
                 pdf_html
             )
+
+            print("STEP 3")
 
             # =========================
             # GENERATE FINAL AUDIT REPORT
@@ -1628,6 +1632,8 @@ class SaveAuditAPIView(APIView):
                     "%d %B %Y %I:%M %p"
                 )
             })
+
+            print("STEP 4")
 
             print(
                 "\n✅ FINAL AUDIT REPORT GENERATED"
@@ -1827,6 +1833,10 @@ class SaveAuditAPIView(APIView):
                 email.send(
                     fail_silently=False
                 )
+
+                print("STEP 5")
+                print("VENDOR EMAIL:", vendor.email)
+                print("CC EMAILS:", cc_emails)
 
                 SystemNotification.objects.create(
 
