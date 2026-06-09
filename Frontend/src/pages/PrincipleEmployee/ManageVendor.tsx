@@ -458,7 +458,8 @@ const handleChange = (field, value) => {
                 <tr>
                 {[
                 "Status","Vendor Short Name","Vendor Name","State","Branch",
-                "Agreement Start Date","Agreement End Date",
+                "Agreement Start Date (DD/MM/YY)",
+                "Agreement End Date (DD/MM/YY)",
                 "Audit Rule","Audit Frequency","Assigned Auditor",
                 "Mapped Documents",   // 👈 ADD THIS
                 "Vendor SPOC Email ID","SPOC Mobile Number","Nature of Services",
