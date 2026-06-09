@@ -2800,152 +2800,165 @@ class MarkNotificationReadAPIView(APIView):
 
 
 class FreezeAuditReportsAPIView(APIView):
+permission_classes = [IsAuthenticated]
 
-    permission_classes = [IsAuthenticated]
+def get(self, request):
 
-    def get(self, request):
+    from master_apps.vendor.mapping_models import VendorBranchMapping
 
-        from master_apps.vendor.mapping_models import VendorBranchMapping
+    if request.user.role == "AUDITOR":
 
-        if request.user.role == "AUDITOR":
+        auditor = getattr(
+            request.user,
+            "auditor_profile",
+            None
+        )
 
-            auditor = getattr(
-                request.user,
-                "auditor_profile",
-                None
+        frozen_sessions = AuditSession.objects.filter(
+            auditor=auditor,
+            status="FROZEN"
+        )
+
+        entries = AuditEntry.objects.filter(
+            auditor=auditor,
+            branch_id__in=frozen_sessions.values_list(
+                "branch_id",
+                flat=True
+            ),
+            audit_period__in=frozen_sessions.values_list(
+                "audit_period",
+                flat=True
             )
+        ).select_related(
+            "checklist"
+        ).order_by("-id")
 
-            frozen_sessions = AuditSession.objects.filter(
-                auditor=auditor,
-                status="FROZEN"
+    else:
+
+        entries = AuditEntry.objects.all().select_related(
+            "checklist"
+        ).order_by("-id")
+
+    grouped = {}
+
+    for entry in entries:
+
+        checklist = entry.checklist
+
+        if not checklist:
+            continue
+
+        audit_period = entry.audit_period
+
+        mapping = (
+            VendorBranchMapping.objects.filter(
+                branch_id=entry.branch_id
             )
+            .select_related(
+                "vendor",
+                "principal_employer",
+                "branch"
+            )
+            .first()
+        )
 
-            entries = AuditEntry.objects.filter(
-                auditor=auditor,
-                branch_id__in=frozen_sessions.values_list(
-                    "branch_id",
-                    flat=True
+        vendor_name = (
+            mapping.vendor.name
+            if mapping and mapping.vendor
+            else "-"
+        )
+
+        pe_name = (
+            mapping.principal_employer.short_name
+            if mapping and mapping.principal_employer
+            else "-"
+        )
+
+        branch_name = (
+            mapping.branch.short_name
+            if mapping and mapping.branch
+            else "-"
+        )
+
+        state_name = (
+            checklist.state.name
+            if checklist.state
+            else "-"
+        )
+
+        submission = (
+            VendorComplianceSubmission.objects.filter(
+                branch_id=entry.branch_id,
+                audit_period__iexact=audit_period
+            )
+            .exclude(frozen_at__isnull=True)
+            .order_by("-frozen_at")
+            .first()
+        )
+
+        print(
+            "FREEZE DEBUG:",
+            {
+                "branch_id": entry.branch_id,
+                "audit_period": audit_period,
+                "submission_found": bool(submission),
+                "frozen_at": (
+                    submission.frozen_at
+                    if submission
+                    else None
                 ),
-                audit_period__in=frozen_sessions.values_list(
-                    "audit_period",
-                    flat=True
-                )
-            ).select_related(
-                "checklist"
-            ).order_by("-id")
+            }
+        )
 
-        else:
+        key = (
+            f"{vendor_name}_"
+            f"{branch_name}_"
+            f"{audit_period}"
+        )
 
-            entries = AuditEntry.objects.all().select_related(
-                "checklist"
-            ).order_by("-id")
+        if key not in grouped:
 
-        grouped = {}
-
-        for entry in entries:
-
-            checklist = entry.checklist
-
-            if not checklist:
-                continue
-
-            audit_period = entry.audit_period
-
-            mapping = (
-                VendorBranchMapping.objects.filter(
-                    branch_id=entry.branch_id
-                )
-                .select_related(
-                    "vendor",
-                    "principal_employer",
-                    "branch"
-                )
-                .first()
-            )
-
-            vendor_name = (
-                mapping.vendor.name
-                if mapping and mapping.vendor
-                else "-"
-            )
-
-            pe_name = (
-                mapping.principal_employer.short_name
-                if mapping and mapping.principal_employer
-                else "-"
-            )
-
-            branch_name = (
-                mapping.branch.short_name
-                if mapping and mapping.branch
-                else "-"
-            )
-
-            state_name = (
-                checklist.state.name
-                if checklist.state
-                else "-"
-            )
-
-            submission = (
-                VendorComplianceSubmission.objects.filter(
-                    branch_id=entry.branch_id,
-                    audit_period=audit_period,
-                    is_frozen=True
-                )
-                .order_by("-id")
-                .first()
-            )
-
-            key = (
-                f"{vendor_name}_"
-                f"{branch_name}_"
-                f"{audit_period}"
-            )
-
-            if key not in grouped:
-
-                grouped[key] = {
-
-                    "id": entry.id,
-
-                    "vendor_name": vendor_name,
-
-                    "pe_name": pe_name,
-
-                    "state": state_name,
-
-                    "branch_name": branch_name,
-
-                    "audit_period": audit_period,
-
-                    "frozen_at": (
-                        submission.frozen_at
-                        if submission
-                        else None
-                    ),
-
-                    "entries": [],
-                }
-
-            grouped[key]["entries"].append({
+            grouped[key] = {
 
                 "id": entry.id,
 
-                "audit_entry_id": entry.id,
+                "vendor_name": vendor_name,
 
-                "audit_particular": checklist.audit_particulars,
+                "pe_name": pe_name,
 
-                "status": entry.status,
+                "state": state_name,
 
-                "observation": entry.observation,
+                "branch_name": branch_name,
 
-                "recommendation": entry.recommendation,
-            })
+                "audit_period": audit_period,
 
-        return Response(
-            list(grouped.values())
-        )
+                "frozen_at": (
+                    submission.frozen_at
+                    if submission
+                    else None
+                ),
+
+                "entries": [],
+            }
+
+        grouped[key]["entries"].append({
+
+            "id": entry.id,
+
+            "audit_entry_id": entry.id,
+
+            "audit_particular": checklist.audit_particulars,
+
+            "status": entry.status,
+
+            "observation": entry.observation,
+
+            "recommendation": entry.recommendation,
+        })
+
+    return Response(
+        list(grouped.values())
+    )
 
 
 # ======================================
