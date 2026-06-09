@@ -53,7 +53,6 @@ from django.core.files.base import ContentFile
 from master_apps.vendor.constants import (
     WorkflowStatus
 )
-issued_time = timezone.localtime(now())
 
 from master_apps.vendor.compliance_models import (
     ExceptionalApprovalDocument
@@ -1513,6 +1512,24 @@ class SaveAuditAPIView(APIView):
                     ),
                 })
 
+            from django.utils import timezone
+            from django.utils.timezone import now
+
+            all_submissions = (
+                VendorComplianceSubmission.objects.filter(
+                    branch_id=branch_id,
+                    vendor_id=vendor.id,
+                    audit_period=audit_period
+                )
+            )
+
+            first_submission = all_submissions.first()
+
+            issued_time = (
+                timezone.localtime(first_submission.frozen_at)
+                if first_submission and first_submission.frozen_at
+                else timezone.localtime(now())
+            )
 
             email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
@@ -1622,14 +1639,6 @@ class SaveAuditAPIView(APIView):
                     vendor_id=vendor.id,
                     audit_period=audit_period
                 )
-            )
-            print("FIRST SUBMISSION:", first_submission)
-            print("FROZEN AT:", getattr(first_submission, "frozen_at", None))
-
-            first_submission = all_submissions.first()
-
-            issued_time = timezone.localtime(
-                first_submission.frozen_at
             )
 
             if first_submission:
@@ -2543,7 +2552,11 @@ class AuditorComplianceRemarksAPIView(APIView):
         for sub in submissions:
 
             date_key = (
-                sub.submitted_at.strftime("%Y-%m-%d")
+                timezone.localtime(
+                    sub.submitted_at
+                ).strftime(
+                    "%d %b %Y %I:%M:%S %p"
+                )
                 if sub.submitted_at
                 else "-"
             )
