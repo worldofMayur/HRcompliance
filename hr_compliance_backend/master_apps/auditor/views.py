@@ -30,7 +30,6 @@ from master_apps.documents.models import (
     DocumentMaster,
     ComplianceAuditArchive
 )
-from django.utils import timezone
 
 from .models import Auditor, AuditorDocument
 from .serializers import AuditorSerializer
@@ -53,7 +52,6 @@ from django.core.files.base import ContentFile
 from master_apps.vendor.constants import (
     WorkflowStatus
 )
-issued_time = timezone.localtime(now())
 
 from master_apps.vendor.compliance_models import (
     ExceptionalApprovalDocument
@@ -1523,7 +1521,7 @@ class SaveAuditAPIView(APIView):
                     "branch_name": branch.short_name,
                     "audit_period": audit_period,
                     "entries": entries,
-                    "generated_at": issued_time.strftime(
+                    "generated_at": now().strftime(
                         "%d %B %Y %I:%M:%S %p"
                     ),
                     "exceptional_entries": [
@@ -1542,7 +1540,7 @@ class SaveAuditAPIView(APIView):
                     "state": branch.state,
                     "branch_name": branch.short_name,
                     "audit_period": audit_period,
-                    "generated_at": issued_time.strftime(
+                    "generated_at": now().strftime(
                         "%d %B %Y %I:%M:%S %p"
                     ),
                     "exceptional_entries": [
@@ -1579,7 +1577,7 @@ class SaveAuditAPIView(APIView):
 
                     "entries": pdf_entries,
 
-                    "generated_at": issued_time.strftime(
+                    "generated_at": now().strftime(
                         "%d %B %Y %I:%M %p"
                     ),
 
@@ -1607,7 +1605,7 @@ class SaveAuditAPIView(APIView):
 
                 "entries": pdf_entries,
 
-                "generated_at": issued_time.strftime(
+                "generated_at": now().strftime(
                     "%d %B %Y %I:%M %p"
                 )
             })
@@ -1625,10 +1623,6 @@ class SaveAuditAPIView(APIView):
             )
 
             first_submission = all_submissions.first()
-
-            issued_time = timezone.localtime(
-                first_submission.frozen_at
-            )
 
             if first_submission:
 
