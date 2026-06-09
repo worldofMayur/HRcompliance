@@ -1034,29 +1034,36 @@ if (exceptionalFiles) {
   /* ================= TABLE ================= */
 
   const columns = [
-    {
-      title: "Audit Requirement",
-      width: 380,
-      render: (_: any, record: any) => (
-        <div className="space-y-1">
+      {
+        title: "Audit Requirement",
+        width: 250,
+        render: (_: any, record: any) => (
+          <div className="space-y-1">
+            <div className="text-xs text-gray-600">
+              Act: {record.act_name}
+            </div>
+
+            <div className="text-xs text-gray-600">
+              Section: {record.section_rule}
+            </div>
+
+            <div className="text-xs text-gray-600">
+              Document: {record.document_name}
+            </div>
+          </div>
+        ),
+      },
+
+      {
+        title: "Audit Particulars",
+        width: 280,
+        dataIndex: "audit_particulars",
+        render: (text: string) => (
           <div className="font-semibold text-blue-700">
-            {record.audit_particulars}
+            {text}
           </div>
-
-          <div className="text-xs text-gray-600">
-            Act: {record.act_name}
-          </div>
-
-          <div className="text-xs text-gray-600">
-            Section: {record.section_rule}
-          </div>
-
-          <div className="text-xs text-gray-600">
-            Document: {record.document_name}
-          </div>
-        </div>
-      ),
-    },
+        ),
+      },
     {
       title: "Guidelines For Auditor",
       width: 350,
