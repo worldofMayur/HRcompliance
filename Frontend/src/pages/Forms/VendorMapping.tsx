@@ -285,14 +285,18 @@ const filteredVendors = useMemo(() => {
             : []
         );
 
-        const activeBranches =
-          Array.isArray(branchesRes.data)
-            ? branchesRes.data.filter(
-                (b: any) =>
-                  !b.status ||
-                  b.status === "active"
-              )
-            : [];
+      setSelectedRule(
+        branchesRes.data.rule || ""
+      );
+
+      const activeBranches =
+        Array.isArray(branchesRes.data.branches)
+          ? branchesRes.data.branches.filter(
+              (b: any) =>
+                !b.status ||
+                b.status === "active"
+            )
+          : [];
 
         setAllBranches(activeBranches);
 
@@ -571,9 +575,6 @@ const handleSave = async () => {
 
                   setSelectedVendor(String(v.id));
                   setVendorSearch(v.short_name);
-
-                  setSelectedRule("");
-
                   setShowVendorDropdown(false);
                 }}
                 className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"

@@ -244,7 +244,7 @@ class PEBranchDropdownAPIView(APIView):
             status="active"
         ).order_by("state")
 
-        data = [
+        branch_data = [
             {
                 "id": branch.id,
                 "state": branch.state,
@@ -254,7 +254,10 @@ class PEBranchDropdownAPIView(APIView):
             for branch in branches
         ]
 
-        return Response(data)
+        return Response({
+            "rule": pe.rules_applicable.upper(),
+            "branches": branch_data
+        })
 
 
 # ==========================================================
