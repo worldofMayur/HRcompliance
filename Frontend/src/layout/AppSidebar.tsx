@@ -126,7 +126,7 @@ const AppSidebar: React.FC = () => {
 
           ${
             isExpanded || isMobileOpen || isHovered
-              ? "w-[330px]"
+              ? "w-[290px]"
               : "w-[90px]"
           }
 
