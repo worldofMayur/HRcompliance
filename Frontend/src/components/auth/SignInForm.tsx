@@ -96,7 +96,7 @@ export default function SignInForm() {
   return (
     <div className="flex flex-col flex-1">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-  <div className="rounded-2xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(15,23,42,0.08)] p-8 md:p-10">
+<div className="rounded-2xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(15,23,42,0.08)] p-6 md:p-8">
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 text-[32px] font-semibold tracking-tight text-gray-900 dark:text-white">
@@ -108,7 +108,7 @@ export default function SignInForm() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="space-y-7">
+            <div className="space-y-5">
               <div>
                 <Label>Email *</Label>
                 <Input
