@@ -296,7 +296,8 @@ class VendorMappedPEAPIView(APIView):
         data = [
             {
                 "id": pe.id,
-                "short_name": pe.short_name
+                "short_name": pe.short_name,
+                "rules_applicable": pe.rules_applicable
             }
             for pe in pes
         ]
