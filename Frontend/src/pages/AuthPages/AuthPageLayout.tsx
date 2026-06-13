@@ -27,13 +27,12 @@ export default function AuthLayout({
             
             {/* logo */}
               <div className="mb-8 flex items-center gap-4">
-            <div className="flex items-center justify-center">
+            <div className="mb-8 flex items-center gap-5">
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-14 w-auto object-contain"
+                className="h-20 w-auto object-contain"
               />
-            </div>
 
               <div>
                 <h1 className="text-3xl font-semibold tracking-[-0.03em] text-white">
@@ -44,6 +43,7 @@ export default function AuthLayout({
                   Vendor Compliance Management System
                 </p>
               </div>
+            </div>
             </div>
 
             {/* heading */}

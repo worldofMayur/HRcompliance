@@ -198,52 +198,31 @@ const AppSidebar: React.FC = () => {
             "
           >
             {/* LOGO ICON */}
-            <div
-              className="
-                relative
-                flex
-                h-12
-                w-12
-                items-center
-                justify-center
-                rounded-2xl
-                bg-gradient-to-br
-                from-brand-500
-                to-blue-600
-                text-white
-                shadow-lg
-                transition-all
-                duration-300
-                group-hover/logo:scale-105
-              "
-            >
-              <div className="absolute inset-0 rounded-2xl bg-white/10" />
-
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2L4 5V11C4 16.25 7.4 21.05 12 22C16.6 21.05 20 16.25 20 11V5L12 2Z"
-                  fill="currentColor"
-                />
-              </svg>
+            <div className="flex items-center justify-center">
+              <img
+                src="/Kekul.png"
+                alt="KEKUL"
+                className="h-16 w-auto object-contain"
+              />
             </div>
 
             {/* LOGO TEXT */}
             {(isExpanded || isHovered || isMobileOpen) && (
-              <div className="flex flex-col leading-tight">
+              <div className="flex flex-col leading-tight max-w-[180px]">
                 <span
                   className="
-                    text-[15px]
+                    text-[14px]
                     font-semibold
                     tracking-[0.01em]
                     text-gray-800
                     dark:text-gray-100
                   "
                 >
-                  HR Compliance
+                  Vendor Compliance Audit
                 </span>
 
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  Enterprise Portal
+                  Compliance Management System
                 </span>
               </div>
             )}
