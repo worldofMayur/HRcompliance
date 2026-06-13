@@ -200,19 +200,20 @@ const AppSidebar: React.FC = () => {
           >
             {/* LOGO ICON */}
             <div className="flex items-center justify-center">
-              <img
-                src="/Kekul-Logo.png"
-                alt="KEKUL"
-                style={{
-                  width: "160px",
-                  display: "block",
-                }}
-              />
+            <img
+              src="/Kekul-Logo.png"
+              alt="KEKUL"
+              style={{
+                width: "150px",
+                display: "block",
+                marginBottom: "12px",
+              }}
+            />
             </div>
 
             {/* LOGO TEXT */}
             {(isExpanded || isHovered || isMobileOpen) && (
-<div className="flex flex-col items-center text-center leading-tight mt-2">
+<div className="flex flex-col items-center text-center leading-tight mt-4">
                   <span
                   className="
                     text-[18px]
