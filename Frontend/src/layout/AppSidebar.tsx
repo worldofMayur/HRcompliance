@@ -207,6 +207,7 @@ const AppSidebar: React.FC = () => {
                 width: "120px",
                 display: "block",
                 marginBottom: "12px",
+                marginTop: "12px",
               }}
             />
             </div>
