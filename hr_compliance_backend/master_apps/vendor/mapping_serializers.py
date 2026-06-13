@@ -94,8 +94,14 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         audit_rule = validated_data.pop("audit_rule", None)
         audit_frequency = validated_data.pop("audit_frequency", None)
 
-        if audit_rule:
-            validated_data["rule"] = audit_rule
+        principal_employer = validated_data.get(
+            "principal_employer"
+        )
+
+        if principal_employer:
+            validated_data["rule"] = (
+                principal_employer.rules_applicable.upper()
+            )
 
         if audit_frequency:
             validated_data["frequency"] = audit_frequency
@@ -142,12 +148,15 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         document_ids = validated_data.pop("document_ids", None)
         documents_input = validated_data.pop("documents_input", None)
 
-        audit_rule = validated_data.pop("audit_rule", None)
-        audit_frequency = validated_data.pop("audit_frequency", None)
         effective_date = validated_data.pop("effective_date", None)
 
-        if audit_rule is not None:
-            validated_data["rule"] = audit_rule
+        validated_data.pop("rule", None)
+        validated_data.pop("audit_rule", None)
+
+        audit_frequency = validated_data.pop(
+            "audit_frequency",
+            None
+        )
 
         if audit_frequency is not None:
             validated_data["frequency"] = audit_frequency

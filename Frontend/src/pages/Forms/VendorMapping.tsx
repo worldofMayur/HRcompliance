@@ -118,9 +118,6 @@ export default function VendorMapping() {
   const [selectedAuditor, setSelectedAuditor] =
     useState("");
 
-  const [selectedRule, setSelectedRule] =
-    useState("");
-
   const [selectedFrequency, setSelectedFrequency] =
     useState("");
 
@@ -465,7 +462,6 @@ const handleSave = async () => {
       start_date: formatForAPI(startDate),
       end_date: formatForAPI(endDate),
 
-      rule: selectedRule,
       frequency: selectedFrequency,
     };
 
@@ -811,36 +807,12 @@ const handleSave = async () => {
   <div className="grid md:grid-cols-2 gap-4">
 
     {/* RULE */}
-    <select
-      className="rounded-lg border border-gray-300 p-2.5 text-sm"
-      onChange={(e) => setSelectedRule(e.target.value)}
-    >
-    <option value="">Rule</option>
-
-    {[
-      { label: "Central", value: "CENTRAL" },
-      { label: "State", value: "STATE" },
-    ]
-
-    .sort((a, b) =>
-      a.label.localeCompare(
-        b.label,
-        undefined,
-        { sensitivity: "base" }
-      )
-    )
-
-    .map((rule) => (
-
-      <option
-        key={rule.value}
-        value={rule.value}
-      >
-        {rule.label}
-      </option>
-
-    ))}
-    </select>
+<input
+  type="text"
+  value={selectedRule}
+  readOnly
+  className="rounded-lg border border-gray-300 p-2.5 text-sm bg-gray-100 cursor-not-allowed"
+/>
 
     {/* FREQUENCY */}
     <select
