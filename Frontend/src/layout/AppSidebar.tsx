@@ -200,16 +200,13 @@ const AppSidebar: React.FC = () => {
           >
             {/* LOGO ICON */}
             <div className="flex items-center justify-center">
-            <div className="bg-red-500 p-4">
               <img
-                src="/Kekul.png"
+                src="/Kekul-Logo.png"
                 alt="KEKUL"
                 style={{
                   width: "220px",
-                  border: "5px solid blue",
                 }}
               />
-            </div>
             </div>
 
             {/* LOGO TEXT */}
