@@ -1,15 +1,15 @@
 <!DOCTYPE html>
+
 <html>
 
 <head>
-
 <meta charset="utf-8">
 
 <style>
 
 @page{
     size:A4;
-    margin:15px;
+    margin:10px;
 }
 
 body{
@@ -18,19 +18,21 @@ body{
     color:#1f2937;
     margin:0;
     padding:0;
+    font-size:11px;
 }
 
 .wrapper{
     border:1px solid #dbeafe;
-    border-radius:16px;
-    padding:22px;
+    border-radius:12px;
+    padding:14px;
+    page-break-inside:avoid;
 }
 
 .top-line{
-    height:5px;
+    height:4px;
     background:#2563eb;
-    border-radius:20px;
-    margin-bottom:16px;
+    border-radius:12px;
+    margin-bottom:10px;
 }
 
 .header{
@@ -38,42 +40,43 @@ body{
 }
 
 .title{
-    font-size:24px;
+    font-size:20px;
     font-weight:bold;
     color:#111827;
-    margin-bottom:6px;
+    margin-bottom:4px;
+    line-height:1.2;
 }
 
 .subtitle{
-    font-size:12px;
+    font-size:11px;
     color:#6b7280;
-    margin-bottom:10px;
+    margin-bottom:8px;
 }
 
 .badge{
     display:inline-block;
     background:#dcfce7;
     color:#166534;
-    padding:8px 18px;
+    padding:5px 12px;
     border-radius:999px;
-    font-size:11px;
+    font-size:9px;
     font-weight:bold;
 }
 
 .message-box{
-    margin-top:18px;
+    margin-top:10px;
     background:#f8fafc;
     border:1px solid #e5e7eb;
-    border-radius:12px;
-    padding:14px;
-    line-height:1.5;
-    font-size:12px;
+    border-radius:8px;
+    padding:10px;
+    line-height:1.4;
+    font-size:10px;
 }
 
 .section-title{
-    margin-top:18px;
-    margin-bottom:8px;
-    font-size:15px;
+    margin-top:10px;
+    margin-bottom:6px;
+    font-size:13px;
     font-weight:bold;
     color:#111827;
 }
@@ -85,8 +88,8 @@ body{
 
 .summary-table td{
     border:1px solid #e5e7eb;
-    padding:8px;
-    font-size:11px;
+    padding:6px;
+    font-size:10px;
 }
 
 .label{
@@ -100,27 +103,27 @@ body{
     width:22%;
 }
 
-.footer{
-    margin-top:20px;
-    text-align:center;
-    font-size:10px;
-    color:#6b7280;
-    line-height:1.5;
-}
-
 .signature{
-    margin-top:20px;
+    margin-top:12px;
 }
 
 .signature-line{
-    width:220px;
+    width:180px;
     border-top:1px solid #9ca3af;
-    margin-bottom:8px;
+    margin-bottom:5px;
 }
 
 .signature-text{
-    font-size:11px;
+    font-size:10px;
     color:#374151;
+}
+
+.footer{
+    margin-top:12px;
+    text-align:center;
+    font-size:9px;
+    color:#6b7280;
+    line-height:1.4;
 }
 
 .highlight{
@@ -136,132 +139,94 @@ body{
 
 <div class="wrapper">
 
-    <div class="top-line"></div>
+<div class="top-line"></div>
 
-    <div class="header">
+<div class="header">
 
-        <div class="title">
-            Compliance Clearance Certificate
-        </div>
-
-        <div class="subtitle">
-            Final Compliance Audit Successfully Completed
-        </div>
-
-        <div class="badge">
-            ✓ AUDIT FINALIZED & FROZEN
-        </div>
-
+    <div class="title">
+        Compliance Clearance Certificate
     </div>
 
-    <div class="message-box">
-
-        Dear
-        <span class="highlight">
-            {{ vendor_name }}
-        </span>,
-
-        <br><br>
-
-        We are pleased to inform you that the compliance audit for the below branch and audit period has been successfully completed and finalized.
-
-        <br><br>
-
-        Based on the final audit review, the Compliance Clearance Certificate (CC) has been officially issued successfully.
-
+    <div class="subtitle">
+        Final Compliance Audit Successfully Completed
     </div>
 
-    <div class="section-title">
-        Audit Summary
+    <div class="badge">
+        ✓ AUDIT FINALIZED & FROZEN
     </div>
 
-    <table class="summary-table">
+</div>
 
-        <tr>
+<div class="message-box">
 
-            <td class="label">
-                Principal Employer
-            </td>
+    Dear
+    <span class="highlight">
+        {{ vendor_name }}
+    </span>,
 
-            <td class="value">
-                {{ pe_name }}
-            </td>
+    <br><br>
 
-            <td class="label">
-                Vendor
-            </td>
+    We are pleased to inform you that the compliance audit for the below branch and audit period has been successfully completed and finalized.
 
-            <td class="value">
-                {{ vendor_name }}
-            </td>
+    <br><br>
 
-        </tr>
+    Based on the final audit review, the Compliance Clearance Certificate (CC) has been officially issued successfully.
 
-        <tr>
+</div>
 
-            <td class="label">
-                State
-            </td>
+<div class="section-title">
+    Audit Summary
+</div>
 
-            <td class="value">
-                {{ state }}
-            </td>
+<table class="summary-table">
 
-            <td class="label">
-                Branch
-            </td>
+    <tr>
+        <td class="label">Principal Employer</td>
+        <td class="value">{{ pe_name }}</td>
 
-            <td class="value">
-                {{ branch_name }}
-            </td>
+        <td class="label">Vendor</td>
+        <td class="value">{{ vendor_name }}</td>
+    </tr>
 
-        </tr>
+    <tr>
+        <td class="label">State</td>
+        <td class="value">{{ state }}</td>
 
-        <tr>
+        <td class="label">Branch</td>
+        <td class="value">{{ branch_name }}</td>
+    </tr>
 
-            <td class="label">
-                Audit Period
-            </td>
+    <tr>
+        <td class="label">Audit Period</td>
+        <td colspan="3">{{ audit_period }}</td>
+    </tr>
 
-            <td colspan="3">
-                {{ audit_period }}
-            </td>
+    <tr>
+        <td class="label">CC Issued On</td>
+        <td colspan="3">{{ generated_at }}</td>
+    </tr>
 
-        </tr>
+</table>
 
-        <tr>
+<div class="signature">
 
-            <td class="label">
-                CC Issued On
-            </td>
+    <div class="signature-line"></div>
 
-            <td colspan="3">
-                {{ generated_at }}
-            </td>
-
-        </tr>
-
-    </table>
-
-    <div class="signature">
-
-        <div class="signature-line"></div>
-
-        <div class="signature-text">
-            Compliance Audit Team
-        </div>
-
+    <div class="signature-text">
+        Compliance Audit Team
     </div>
 
-    <div class="footer">
+</div>
 
-        This is a system generated compliance communication.
+<div class="footer">
 
-        <br>
+    This is a system generated compliance communication.
 
-        Please retain this certificate and audit documents for your compliance records.
+    <br>
 
-    </div>
+    Please retain this certificate and audit documents for your compliance records.
+
+</div>
 
 </div>
 
