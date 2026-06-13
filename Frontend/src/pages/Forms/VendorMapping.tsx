@@ -497,8 +497,6 @@ const handleSave = async () => {
 
     setVendorSearch("");
 
-    setSelectedRule("");
-
     setSelectedFrequency("");
 
     setDateRange([null, null]);
@@ -801,29 +799,23 @@ const handleSave = async () => {
 
 
 {/* AUDIT RULES */}
+{/* AUDIT RULES */}
 <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-  <h2 className="text-lg font-semibold mb-4">Audit Rules</h2>
+  <h2 className="text-lg font-semibold mb-4">
+    Audit Rules
+  </h2>
 
   <div className="grid md:grid-cols-2 gap-4">
 
-    {/* RULE */}
-<input
-  type="text"
-  value={selectedRule}
-  readOnly
-  className="rounded-lg border border-gray-300 p-2.5 text-sm bg-gray-100 cursor-not-allowed"
-/>
-
-    {/* FREQUENCY */}
     <select
       className="rounded-lg border border-gray-300 p-2.5 text-sm"
       onChange={(e) => setSelectedFrequency(e.target.value)}
     >
-<option value="">Audit Frequency</option>
-<option value="MONTHLY">Monthly</option>
-<option value="QUARTERLY">Quarterly</option>
-<option value="HALF_YEARLY">Half-Yearly</option>
-<option value="ANNUALLY">Annually</option>
+      <option value="">Audit Frequency</option>
+      <option value="MONTHLY">Monthly</option>
+      <option value="QUARTERLY">Quarterly</option>
+      <option value="HALF_YEARLY">Half-Yearly</option>
+      <option value="ANNUALLY">Annually</option>
     </select>
 
   </div>
