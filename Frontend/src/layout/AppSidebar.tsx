@@ -204,7 +204,7 @@ const AppSidebar: React.FC = () => {
                 src="/Kekul-Logo.png"
                 alt="KEKUL"
                 style={{
-                  width: "220px",
+                  width: "150px",
                 }}
               />
             </div>
