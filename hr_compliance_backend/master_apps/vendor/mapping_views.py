@@ -628,9 +628,9 @@ class VendorMappingMetaAPIView(APIView):
         return Response({
             "start_date": mapping.start_date,
             "end_date": mapping.end_date,
-            "frequency": mapping.frequency
+            "frequency": mapping.frequency,
+            "rule": mapping.rule
         })
-
 # master_apps/auditor/views.py
 
 class AuditorMappingDetailsAPIView(APIView):

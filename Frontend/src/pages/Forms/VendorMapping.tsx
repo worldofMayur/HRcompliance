@@ -567,12 +567,12 @@ const handleSave = async () => {
               <div
                 key={v.id}
                 onClick={() => {
+                  console.log("Selected Vendor", v);
+
                   setSelectedVendor(String(v.id));
                   setVendorSearch(v.short_name);
 
-                  setSelectedRule(
-                    v.rules_applicable?.toUpperCase() || ""
-                  );
+                  setSelectedRule("");
 
                   setShowVendorDropdown(false);
                 }}
