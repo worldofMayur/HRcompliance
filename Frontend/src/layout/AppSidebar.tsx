@@ -204,7 +204,7 @@ const AppSidebar: React.FC = () => {
                 src="/Kekul-Logo.png"
                 alt="KEKUL"
                 style={{
-                  width: "220px",
+                  width: "180px",
                   display: "block",
                 }}
               />
@@ -212,21 +212,21 @@ const AppSidebar: React.FC = () => {
 
             {/* LOGO TEXT */}
             {(isExpanded || isHovered || isMobileOpen) && (
-<div className="flex flex-col items-center text-center leading-none -mt-2">
+<div className="flex flex-col items-center text-center leading-tight mt-1">
                   <span
                   className="
-                    text-[20px]
+                    text-[18px]
                     font-bold
                     tracking-[0.01em]
                     text-gray-800
                     dark:text-gray-100
                   "
                 >
-                  Vendor Audit
+                  Vendor Compliance
                 </span>
 
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  Management System
+                 Audit Management Platform
                 </span>
               </div>
             )}
