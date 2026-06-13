@@ -24,6 +24,7 @@ interface Vendor {
   name: string;
   email: string;
   mobile: string;
+  rules_applicable?: string;
   agreement_address?: string;
   nature_of_compliance?: string;
   contact_person?: string;
@@ -73,6 +74,9 @@ export default function VendorMapping() {
 
   const [states, setStates] =
     useState<StateType[]>([]);
+
+  const [selectedRule, setSelectedRule] =
+  useState("");
 
   const [allBranches, setAllBranches] =
     useState<BranchType[]>([]);
@@ -565,6 +569,11 @@ const handleSave = async () => {
                 onClick={() => {
                   setSelectedVendor(String(v.id));
                   setVendorSearch(v.short_name);
+
+                  setSelectedRule(
+                    v.rules_applicable?.toUpperCase() || ""
+                  );
+
                   setShowVendorDropdown(false);
                 }}
                 className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
@@ -806,6 +815,14 @@ const handleSave = async () => {
   </h2>
 
   <div className="grid md:grid-cols-2 gap-4">
+
+    <input
+      type="text"
+      value={selectedRule}
+      readOnly
+      placeholder="Rule"
+      className="rounded-lg border border-gray-300 p-2.5 text-sm bg-gray-100 cursor-not-allowed"
+    />
 
     <select
       className="rounded-lg border border-gray-300 p-2.5 text-sm"
