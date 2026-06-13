@@ -212,7 +212,7 @@ const AppSidebar: React.FC = () => {
 
             {/* LOGO TEXT */}
             {(isExpanded || isHovered || isMobileOpen) && (
-<div className="flex flex-col items-center text-center leading-tight mt-1">
+<div className="flex flex-col items-center text-center leading-tight mt-2">
                   <span
                   className="
                     text-[18px]
