@@ -1135,7 +1135,7 @@ formData.append(
             border-t border-gray-100
             pt-6
           ">
-            <label className="block text-sm font-semibold text-gray-800 mb-2">General Remarks</label>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">Vendor Remarks</label>
             <TextArea
               rows={3}
               className="rounded-xl"
