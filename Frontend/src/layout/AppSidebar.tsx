@@ -172,8 +172,8 @@ const AppSidebar: React.FC = () => {
             relative
             z-10
             flex
-            pt-5
-            pb-6
+            pt-2
+            pb-3
             ${
               !isExpanded && !isHovered
                 ? "lg:justify-center"
@@ -184,15 +184,15 @@ const AppSidebar: React.FC = () => {
           <Link
             to="/TailAdmin/"
             onClick={handleNavigation}
-            className="
+              className="
               group/logo
               flex
               flex-col
               items-center
-              gap-1
+              gap-0
               rounded-2xl
-              px-4
-              py-3
+              px-2
+              py-1
               transition-all
               duration-300
               hover:translate-x-[2px]
@@ -204,18 +204,19 @@ const AppSidebar: React.FC = () => {
                 src="/Kekul-Logo.png"
                 alt="KEKUL"
                 style={{
-                  width: "150px",
+                  width: "220px",
+                  display: "block",
                 }}
               />
             </div>
 
             {/* LOGO TEXT */}
             {(isExpanded || isHovered || isMobileOpen) && (
-              <div className="flex flex-col items-center text-center leading-tight">
-                <span
+<div className="flex flex-col items-center text-center leading-none -mt-2">
+                  <span
                   className="
-                    text-[18px]
-                    font-semibold
+                    text-[20px]
+                    font-bold
                     tracking-[0.01em]
                     text-gray-800
                     dark:text-gray-100
