@@ -187,8 +187,9 @@ const AppSidebar: React.FC = () => {
             className="
               group/logo
               flex
+              flex-col
               items-center
-              gap-3
+              gap-1
               rounded-2xl
               px-4
               py-3
@@ -202,16 +203,16 @@ const AppSidebar: React.FC = () => {
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-20 w-auto object-contain"
+                className="h-28 w-auto object-contain"
               />
             </div>
 
             {/* LOGO TEXT */}
             {(isExpanded || isHovered || isMobileOpen) && (
-              <div className="flex flex-col leading-tight max-w-[180px]">
+              <div className="flex flex-col items-center text-center leading-tight">
                 <span
                   className="
-                    text-[14px]
+                    text-[18px]
                     font-semibold
                     tracking-[0.01em]
                     text-gray-800
