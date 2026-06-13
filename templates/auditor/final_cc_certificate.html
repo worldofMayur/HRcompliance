@@ -7,8 +7,8 @@
 <style>
 
 @page {
-    size: A4;
-    margin: 22px;
+    size:A4 landscape;
+    margin:10px;
 }
 
 body{
@@ -21,21 +21,21 @@ body{
 
 .wrapper{
     background:white;
-    border-radius:24px;
-    padding:28px;
+    border-radius:16px;
+    padding:14px;
 }
 
 .header{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    margin-bottom:30px;
+    margin-bottom:12px;
 }
 
 .title{
-    font-size:32px;
+    font-size:24px;
     font-weight:700;
-    margin-bottom:8px;
+    margin-bottom:4px;
 }
 
 .subtitle{
@@ -49,23 +49,23 @@ body{
     background:#f3e8ff;
     color:#7c3aed;
     border-radius:999px;
-    padding:8px 16px;
-    font-size:12px;
     font-weight:600;
+    margin-top:8px;
+    padding:5px 12px;
+    font-size:10px;
 }
 
 .card{
     border:1px solid #e5e7eb;
-    border-radius:24px;
-    padding:22px;
-    margin-bottom:24px;
-    background:white;
+    border-radius:14px;
+    padding:12px;
+    margin-bottom:12px;
 }
 
 .section-title{
-    font-size:18px;
+    font-size:15px;
+    margin-bottom:10px;
     font-weight:700;
-    margin-bottom:18px;
 }
 
 .summary-grid{
@@ -75,19 +75,19 @@ body{
 
 .summary-grid td{
     width:16%;
-    padding:10px;
+    padding:6px;
     vertical-align:top;
 }
 
 .summary-label{
-    font-size:11px;
+    font-size:9px;
     text-transform:uppercase;
     color:#9ca3af;
     margin-bottom:6px;
 }
 
 .summary-value{
-    font-size:15px;
+    font-size:12px;
     font-weight:600;
 }
 
@@ -99,7 +99,7 @@ body{
 .table th{
     background:#fafafa;
     color:#6b7280;
-    font-size:11px;
+    font-size:9px;
     text-transform:uppercase;
     text-align:left;
     padding:14px;
@@ -107,18 +107,26 @@ body{
 }
 
 .table td{
-    padding:16px 14px;
+    padding:8px;
     border-bottom:1px solid #f3f4f6;
     vertical-align:top;
-    font-size:13px;
+    font-size:10px;
+    line-height:1.3;
+
 }
 
 .status{
     display:inline-block;
     border-radius:999px;
-    padding:8px 14px;
-    font-size:12px;
+    padding:4px 8px;
+    font-size:9px;
     font-weight:600;
+}
+
+p{
+    margin:0;
+    font-size:11px !important;
+    line-height:1.4 !important;
 }
 
 .status-green{
@@ -212,38 +220,6 @@ body{
             </td>
 
         </tr>
-
-                <td>
-                    <div class="summary-label">PE</div>
-                    <div class="summary-value">{{ pe_name }}</div>
-                </td>
-
-                <td>
-                    <div class="summary-label">Vendor</div>
-                    <div class="summary-value">{{ vendor_name }}</div>
-                </td>
-
-                <td>
-                    <div class="summary-label">State</div>
-                    <div class="summary-value">{{ state }}</div>
-                </td>
-
-                <td>
-                    <div class="summary-label">Branch</div>
-                    <div class="summary-value">{{ branch_name }}</div>
-                </td>
-
-                <td>
-                    <div class="summary-label">Audit Period</div>
-                    <div class="summary-value">{{ audit_period }}</div>
-                </td>
-
-                <td>
-                    <div class="summary-label">Compliance Score</div>
-                    <div class="summary-value">{{ compliance_score }}%</div>
-                </td>
-
-            </tr>
 
         </table>
 
