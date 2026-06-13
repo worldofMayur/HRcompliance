@@ -202,7 +202,7 @@ const AppSidebar: React.FC = () => {
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-16 w-auto object-contain"
+                className="h-18 w-18 object-contain"
               />
             </div>
 
