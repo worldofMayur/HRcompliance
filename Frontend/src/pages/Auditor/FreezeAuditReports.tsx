@@ -432,7 +432,7 @@ return hasExceptional ? (
             hover:bg-blue-700
           "
         >
-          View CC
+          View Audit Report/ CC
         </Button>
       ),
     },
