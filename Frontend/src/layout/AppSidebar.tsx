@@ -203,7 +203,7 @@ const AppSidebar: React.FC = () => {
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-28 w-auto object-contain border-2 border-red-500"
+                className="w-[220px] object-contain border-2 border-red-500"
               />
             </div>
 
