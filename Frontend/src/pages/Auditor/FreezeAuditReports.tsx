@@ -1022,7 +1022,7 @@ return hasExceptional ? (
                 </h3>
 
                 <div className="
-                  grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7
+                  grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6
                   divide-y md:divide-y-0 md:divide-x
                   divide-gray-100
                   gap-x-8 gap-y-4
@@ -1066,31 +1066,6 @@ return hasExceptional ? (
                           })
                         : "-",
                     },
-
-                    {
-                    label: "Compliance Score",
-
-                    value: `${Math.round(
-
-                      (
-                        selectedReport.entries?.filter(
-                          (e: any) =>
-
-                            e.status === "Complied" ||
-
-                            e.status ===
-                            "Exceptional Approval - Delayed Complied" ||
-
-                            e.status ===
-                            "Not Applicable For Audit Period"
-                        ).length /
-
-                        (selectedReport.entries?.length || 1)
-
-                      ) * 100
-
-                    )}%`,
-                  },
                   ].map((item, idx) => (
 
                     <div key={idx}>
