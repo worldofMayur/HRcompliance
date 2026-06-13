@@ -126,7 +126,7 @@ const AppSidebar: React.FC = () => {
 
           ${
             isExpanded || isMobileOpen || isHovered
-              ? "w-[290px]"
+              ? "w-[330px]"
               : "w-[90px]"
           }
 
@@ -202,7 +202,7 @@ const AppSidebar: React.FC = () => {
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-18 w-18 object-contain"
+                className="h-20 w-auto object-contain"
               />
             </div>
 
@@ -218,11 +218,11 @@ const AppSidebar: React.FC = () => {
                     dark:text-gray-100
                   "
                 >
-                  Vendor Compliance Audit
+                  Vendor Audit
                 </span>
 
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  Compliance Management System
+                  Management System
                 </span>
               </div>
             )}
