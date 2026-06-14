@@ -788,7 +788,7 @@ return hasExceptional ? (
         open={open}
         footer={null}
         onCancel={() => setOpen(false)}
-        width="90%"
+        width="80%"
 
         centered
 
