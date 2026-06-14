@@ -572,18 +572,26 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
             </h3>
 
             <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Document Name
+              </label>
+
               <Input
-                label="Document Name"
                 value={formData.name}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, name: e.target.value }))
+                  setFormData((p) => ({
+                    ...p,
+                    name: e.target.value,
+                  }))
                 }
               />
+            </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Principal Employer
-                </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Document Category
+              </label>
 
                 <select
                   className="w-full h-11 rounded-lg border px-3"
@@ -643,8 +651,8 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
               <Button variant="outline" onClick={() => setShowForm(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave}>
-                {editDoc ? "Update" : "Create"}
+              <Button onClick={handleSave} className="size-sm">
+                {editDoc ? "Update Document" : "Create Document"}
               </Button>
           </div>
         </div>
