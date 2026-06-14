@@ -1039,7 +1039,7 @@ const data = filteredChecklists.map(c => ({
 
   {/* 🔹 TABLE */}
 <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-  <table className="min-w-[1500px] w-full text-sm">
+  <table className="min-w-[1900px] w-full text-sm">
 
     {/* HEADER */}
     <thead className="bg-gray-50 sticky top-0 z-10">
@@ -1142,7 +1142,7 @@ const data = filteredChecklists.map(c => ({
       <td className="px-5 py-4">{c.state}</td>
       <td className="px-5 py-4">{c.act}</td>
 
-      <td className="px-5 py-4">
+      <td className="px-5 py-4 w-[220px] max-w-[220px]">
         {editingId === c.id ? (
           <Input
             value={editData.audit_particulars}
@@ -1184,7 +1184,7 @@ const data = filteredChecklists.map(c => ({
       <td className="px-5 py-4">{c.document}</td>
 
       {/* ✅ GROUPED GUIDELINES */}
-      <td className="px-5 py-4 max-w-[420px]">
+      <td className="px-5 py-4 w-[700px] min-w-[700px] max-w-[700px]">
         {editingId === c.id ? (
           <textarea
             value={editData.auditor_guide}
