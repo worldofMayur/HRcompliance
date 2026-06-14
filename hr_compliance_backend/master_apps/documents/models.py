@@ -57,6 +57,12 @@ class DocumentMaster(models.Model):
         on_delete=models.CASCADE
     )
 
+    document_category = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     is_active = models.BooleanField(default=True)
 

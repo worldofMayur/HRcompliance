@@ -44,6 +44,7 @@ export default function Documents() {
 
   const [formData, setFormData] = useState({
     name: "",
+    document_type: "",
     frequency: "monthly",
     principal_employer: "",
   });
@@ -182,69 +183,72 @@ return documents
   /* =========================
      CRUD HANDLERS
   ========================= */
-  const openAdd = () => {
-    setEditDoc(null);
+const openAdd = () => {
+  setEditDoc(null);
 
-    setFormData({
-      name: "",
-      frequency: "monthly",
-      principal_employer: "",
-    });
+  setFormData({
+    name: "",
+    document_type: "",
+    frequency: "monthly",
+    principal_employer: "State",
+  });
 
-    setShowForm(true);
-  };
+  setShowForm(true);
+};
 
   const openEdit = (doc) => {
     setEditDoc(doc);
     setFormData({
       name: doc.name,
+      document_type: "",
       frequency: doc.frequency,
       principal_employer: doc.principal_employer || "",
     });
     setShowForm(true);
   };
 
-  const handleSave = async () => {
-    if (!formData.name.trim()) {
-      alert("Document name is required");
-      return;
-    }
+const handleSave = async () => {
+  if (!formData.name.trim()) {
+    alert("Document name is required");
+    return;
+  }
 
-    try {
-
-      if (editDoc) {
-
-        await api.put(
-          `/api/document-master/${editDoc.id}/update/`,
-          formData
-        );
-
-      } else {
-
-        await api.post(
-          "/api/document-master/create/",
-          formData
-        );
-      }
-
-    } catch (error: any) {
-
-      console.error(
-        error.response?.data
-      );
-
-      alert(
-        error.response?.data?.detail ||
-        error.response?.data?.error ||
-        "Operation failed"
-      );
-
-      return;
-    }
-
-    setShowForm(false);
-    fetchDocuments();
+  const payload = {
+    ...formData,
+    principal_employer:
+      formData.principal_employer === "State" ||
+      formData.principal_employer === "Central"
+        ? null
+        : formData.principal_employer,
   };
+
+  try {
+    if (editDoc) {
+      await api.put(
+        `/api/document-master/${editDoc.id}/update/`,
+        payload
+      );
+    } else {
+      await api.post(
+        "/api/document-master/create/",
+        payload
+      );
+    }
+  } catch (error: any) {
+    console.error(error.response?.data);
+
+    alert(
+      error.response?.data?.detail ||
+      error.response?.data?.error ||
+      "Operation failed"
+    );
+
+    return;
+  }
+
+  setShowForm(false);
+  fetchDocuments();
+};
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this document?")) return;
@@ -569,51 +573,62 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
                 }
               />
 
-              <select
-                className="w-full h-11 rounded-lg border px-3"
-                value={formData.principal_employer}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    principal_employer: e.target.value,
-                  }))
-                }
-              >
-                <option value="">Common</option>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Principal Employer
+                </label>
 
-                {[...peList]
-                  .sort((a, b) =>
-                    (a.name || "").localeCompare(
-                      b.name || "",
-                      undefined,
-                      { sensitivity: "base" }
+                <select
+                  className="w-full h-11 rounded-lg border px-3"
+                  value={formData.principal_employer}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      principal_employer: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="State">State</option>
+                  <option value="Central">Central</option>
+
+                  {[...peList]
+                    .sort((a, b) =>
+                      (a.name || "").localeCompare(
+                        b.name || "",
+                        undefined,
+                        { sensitivity: "base" }
+                      )
                     )
-                  )
-                  .map((pe) => (
-                    <option key={pe.id} value={pe.id}>
-                      {pe.name}
-                    </option>
-                ))}
-              </select>
+                    .map((pe) => (
+                      <option key={pe.id} value={pe.id}>
+                        {pe.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
 
-              <select
-                className="w-full h-11 rounded-lg border px-3"
-                value={formData.frequency}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    frequency: e.target.value,
-                  }))
-                }
-              >
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="half_yearly">Half Yearly</option>
-              <option value="annually">Annually</option>
-              <option value="one_time">One Time</option>
-              </select>
-            </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Frequency
+                </label>
 
+                <select
+                  className="w-full h-11 rounded-lg border px-3"
+                  value={formData.frequency}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      frequency: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="half_yearly">Half Yearly</option>
+                  <option value="annually">Annually</option>
+                  <option value="one_time">One Time</option>
+                </select>
+              </div>
             <div className="mt-6 flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowForm(false)}>
                 Cancel

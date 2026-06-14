@@ -19,16 +19,20 @@ class DocumentMasterSerializer(serializers.ModelSerializer):
             "name",
             "frequency",
             "principal_employer",
-            "principal_employer_name",   # ✅ REQUIRED FOR UI
+            "document_category",
+            "principal_employer_name",
             "is_active",
         ]
 
     def create(self, validated_data):
         pe = validated_data.get("principal_employer")
         name = validated_data.get("name")
+        category = validated_data.get("document_category")
 
-        # ✅ Keep your existing logic
-        if pe:
+        if category:
+            validated_data["name"] = f"{category}_{name}"
+
+        elif pe:
             validated_data["name"] = f"{pe.short_name}_{name}"
 
         return super().create(validated_data)
