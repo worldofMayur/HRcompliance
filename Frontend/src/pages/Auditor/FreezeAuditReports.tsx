@@ -1127,12 +1127,14 @@ return hasExceptional ? (
 
   {/* TABLE */}
 
-    <div
-      className="
-        overflow-auto
-        max-h-[500px]
-      "
-    >
+        <div
+          className="
+            overflow-auto
+            max-h-[500px]
+            w-full
+          "
+        >
+        <div style={{ width: "3200px" }}>
 
       <Table
         rowKey={(_, index) =>
@@ -1143,6 +1145,9 @@ return hasExceptional ? (
           x: 3200,
           y: 450,
         }}
+
+        tableLayout="fixed"
+
 
       size="middle"
 
@@ -1273,8 +1278,20 @@ return hasExceptional ? (
     ),
   },
 
+  {
+    title: "Guidelines",
+    dataIndex: "guidelines",
+    width: 700,
+    render: (text:string) => (
+      <div className="whitespace-pre-wrap">
+        {text || "-"}
+      </div>
+    ),
+  },
+
 ]}
     />
+    </div>
 
   </div>
 </div>
@@ -1282,14 +1299,6 @@ return hasExceptional ? (
 {/* CUSTOM STYLES */}
 
 <style>{`
-
-  .compliance-table .ant-table-content {
-    overflow-x: scroll !important;
-  }
-
-  .compliance-table .ant-table-body {
-    overflow-x: scroll !important;
-  }
 
   .compliance-table .ant-table-content::-webkit-scrollbar,
   .compliance-table .ant-table-body::-webkit-scrollbar {
