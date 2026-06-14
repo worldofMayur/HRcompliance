@@ -552,6 +552,19 @@ class VendorMappedDocumentsAPIView(APIView):
                 .first()
             )
 
+            print(
+                "DOC DEBUG",
+                {
+                    "doc_id": doc.id,
+                    "doc_name": doc.name,
+                    "period": period,
+                    "submission_id": submission.id if submission else None,
+                    "workflow_status": submission.workflow_status if submission else None,
+                    "is_reuploaded": submission.is_reuploaded if submission else None,
+                    "reupload_remark": submission.reupload_remark if submission else None,
+                }
+            )
+
             data.append({
                 "id": doc.id,
                 "name": doc.name,

@@ -275,51 +275,42 @@ class VendorSubmitComplianceAPIView(APIView):
 
                 existing_submission = (
                     VendorComplianceSubmission.objects.filter(
-
                         vendor=vendor,
-
                         principal_employer_id=pe_id,
-
                         branch_id=branch_id,
-
                         audit_period__iexact=selected_period,
-
                         document_id=parent_document_id
-
                     )
                     .order_by("-submitted_at")
                     .first()
                 )
 
                 if (
-
                     existing_submission
-
                     and
-
                     existing_submission.is_frozen
                 ):
+                    return Response(
+                        {
+                            "error": (
+                                "Cannot upload additional documents "
+                                "for finalized audit."
+                            )
+                        },
+                        status=400
+                    )
 
-                    return Response({
+                if existing_submission:
 
-                        "error": (
-                            "Cannot upload additional documents "
-                            "for finalized audit."
-                        )
+                    VendorComplianceSupportingFile.objects.create(
+                        submission=existing_submission,
+                        file=file
+                    )
 
-                    }, status=400)
-
-        if existing_submission:
-
-            supporting = VendorComplianceSupportingFile.objects.create(
-                submission=existing_submission,
-                file=file
-            )
-
-            print(
-                "\n✅ SUPPORTING MODEL CREATED:",
-                supporting.file.name
-            )
+                    print(
+                        "✅ SUPPORTING FILE SAVED:",
+                        file.name
+                    )
 
         # ===============================
         # 🔔 NOTIFY AUDITOR
@@ -642,8 +633,6 @@ def reupload_compliance(request):
 
                 submission.is_reuploaded = True
 
-                # KEEP ORIGINAL MAIN FILE SAFE
-
                 submission.version += 1
 
                 # SAVE REUPLOAD ONLY IN VERSION TABLE
@@ -657,6 +646,8 @@ def reupload_compliance(request):
 
                     is_reupload=True
                 )
+
+                submission.main_file = uploaded_file
 
                 print(
                     "\n🔁 REUPLOAD VERSION SAVED:",
