@@ -629,6 +629,9 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
                   <option value="one_time">One Time</option>
                 </select>
               </div>
+
+            </div> {/* closes space-y-4 */}
+
             <div className="mt-6 flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowForm(false)}>
                 Cancel
@@ -636,8 +639,8 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
               <Button onClick={handleSave}>
                 {editDoc ? "Update" : "Create"}
               </Button>
-            </div>
           </div>
+        </div>
         </div>
       )}
     </div>
