@@ -784,17 +784,11 @@ return hasExceptional ? (
       </div>
 
       {/* MODAL */}
-
       <Modal
         open={open}
-
         footer={null}
-
-        onCancel={() =>
-          setOpen(false)
-        }
-
-        width={1500}
+        onCancel={() => setOpen(false)}
+        width="95%"
 
         centered
 
@@ -804,10 +798,8 @@ return hasExceptional ? (
 
         styles={{
           body: {
-
             padding: 0,
-
-            maxHeight: "88vh",
+            maxHeight: "92vh",
 
             overflow: "hidden",
 
@@ -823,11 +815,12 @@ return hasExceptional ? (
 
         {selectedReport && (
 
-          <div className="
-            flex flex-col
-            overflow-hidden
-            rounded-3xl
-          ">
+        <div className="
+          flex flex-col
+          overflow-hidden
+          rounded-3xl
+          min-h-[85vh]
+        ">
 
 {/* MODAL HEADER */}
 
@@ -1140,6 +1133,7 @@ return hasExceptional ? (
       rowKey={(_, index) =>
         index?.toString() || "row"
       }
+      scroll={{ x: 1800 }}
 
       size="middle"
 
