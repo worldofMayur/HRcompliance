@@ -1056,7 +1056,7 @@ if (exceptionalFiles) {
 
       {
         title: "Form",
-        width: 120,
+        width: 80,
         dataIndex: "form_number",
         render: (text: string) => (
           <div>
