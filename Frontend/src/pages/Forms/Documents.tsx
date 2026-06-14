@@ -215,6 +215,13 @@ const handleSave = async () => {
 
   const payload = {
     ...formData,
+
+    document_category:
+      formData.principal_employer === "State" ||
+      formData.principal_employer === "Central"
+        ? formData.principal_employer
+        : null,
+
     principal_employer:
       formData.principal_employer === "State" ||
       formData.principal_employer === "Central"
