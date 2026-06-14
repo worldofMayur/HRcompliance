@@ -1055,6 +1055,17 @@ if (exceptionalFiles) {
       },
 
       {
+        title: "Form",
+        width: 120,
+        dataIndex: "form_number",
+        render: (text: string) => (
+          <div>
+            {text || "-"}
+          </div>
+        ),
+      },
+
+      {
         title: "Audit Particulars",
         width: 280,
         dataIndex: "audit_particulars",
@@ -1177,11 +1188,12 @@ if (exceptionalFiles) {
 const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
 
-    const key =
-      `${item.audit_particulars}_` +
-      `${item.act_name}_` +
-      `${item.section_rule}_` +
-      `${item.document_name}`;
+  const key =
+    `${item.form_number}_` +
+    `${item.audit_particulars}_` +
+    `${item.act_name}_` +
+    `${item.section_rule}_` +
+    `${item.document_name}`;
 
     if (!acc[key]) {
       acc[key] = {
