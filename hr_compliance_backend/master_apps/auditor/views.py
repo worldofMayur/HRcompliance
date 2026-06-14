@@ -1897,6 +1897,66 @@ class SaveAuditAPIView(APIView):
 
             formatted_entries = []
 
+
+            # ======================================
+            # UPDATE SUBMISSION STATUS
+            # ======================================
+
+            for entry in entries:
+
+                status_value = entry.get("status")
+
+                checklist = AuditChecklist.objects.filter(
+                    id=entry.get("checklist_id")
+                ).select_related("document").first()
+
+                if not checklist or not checklist.document:
+                    continue
+
+                submission = (
+                    VendorComplianceSubmission.objects.filter(
+                        vendor_id=vendor.id,
+                        branch_id=branch_id,
+                        audit_period=audit_period,
+                        document=checklist.document
+                    )
+                    .order_by("-id")
+                    .first()
+                )
+
+                if not submission:
+                    continue
+
+                # Reupload required
+                if status_value not in [
+                    "Complied",
+                    "Not Applicable For Audit Period",
+                    "Exceptional Approval - Delayed Complied"
+                ]:
+
+                    submission.workflow_status = (
+                        WorkflowStatus.REUPLOAD_REQUESTED
+                    )
+
+                    submission.reupload_remark = (
+                        entry.get("observation") or ""
+                    )
+
+                else:
+
+                    submission.workflow_status = (
+                        WorkflowStatus.SUBMITTED
+                    )
+
+                    submission.reupload_remark = ""
+
+                submission.save(
+                    update_fields=[
+                        "workflow_status",
+                        "reupload_remark"
+                    ]
+                )
+
             for entry in entries:
 
                 checklist = AuditChecklist.objects.filter(
