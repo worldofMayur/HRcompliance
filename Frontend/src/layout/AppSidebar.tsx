@@ -375,6 +375,24 @@ const AppSidebar: React.FC = () => {
               <>
                 <li>
                   <Link
+                    to="dashboard"
+                    onClick={handleNavigation}
+                    className={menuClass("/dashboard")}
+                  >
+                    <span className="menu-item-icon-size shrink-0">
+                      <TableIcon />
+                    </span>
+
+                    {(isExpanded || isHovered || isMobileOpen) && (
+                      <span className="menu-item-text font-medium">
+                        Reports & Dashboard
+                      </span>
+                    )}
+                  </Link>
+                </li>
+                
+                <li>
+                  <Link
                     to="vendor-mapping"
                     onClick={handleNavigation}
                     className={menuClass("/vendor-mapping")}
