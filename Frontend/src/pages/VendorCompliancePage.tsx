@@ -282,19 +282,9 @@ export default function VendorCompliancePage() {
         doc.workflow_status === "REUPLOAD_REQUESTED"
     );
 
-    const calculatedReuploadMode =
-      reuploadMode || hasReuploadDocs;
-
     setEffectiveReuploadMode(
-      calculatedReuploadMode
+      hasReuploadDocs
     );
-
-    if (
-      hasReuploadDocs &&
-      !reuploadMode
-    ) {
-      setReuploadMode(true);
-    }
 
 console.log(
   "📄 Failed Document IDs:",
@@ -319,7 +309,7 @@ const rows: DocumentRow[] = data.map(
 
     // ✅ Show remarks ONLY in reupload flow
     reupload_remark:
-      calculatedReuploadMode &&
+      hasReuploadDocs &&
       doc.workflow_status === "REUPLOAD_REQUESTED"
         ? doc.reupload_remark || ""
         : "",
@@ -527,7 +517,7 @@ const handleSubmit = async () => {
 
     // ================= REUPLOAD MODE =================
 
-    if (reuploadMode && complianceId) {
+    if (effectiveReuploadMode && complianceId) {
 
       formData.append(
         "compliance_id",
@@ -664,13 +654,13 @@ formData.append(
 
     // ================= SUCCESS MESSAGE =================
 
-    if (reuploadMode) {
+if (effectiveReuploadMode) {
 
-      message.success(
-        "Documents reuploaded successfully"
-      );
+  message.success(
+    "Documents reuploaded successfully"
+  );
 
-    } else {
+} else {
 
       message.success(
         "Compliance submitted successfully"
@@ -687,6 +677,8 @@ formData.append(
 
     // Optional cleanup
     setReuploadMode(false);
+
+    setEffectiveReuploadMode(false);
 
     setFailedEntries([]);
 
