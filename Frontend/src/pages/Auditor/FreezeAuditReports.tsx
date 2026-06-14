@@ -794,7 +794,7 @@ return hasExceptional ? (
           setOpen(false)
         }
 
-        width={1380}
+        width={1500}
 
         centered
 
