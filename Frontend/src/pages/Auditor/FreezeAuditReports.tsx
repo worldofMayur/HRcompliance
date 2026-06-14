@@ -1163,94 +1163,114 @@ return hasExceptional ? (
 
       columns={[
 
-        {
-          title: "State",
+  {
+    title: "State",
+    width: 120,
+    render: () => (
+      <span className="font-medium text-gray-700">
+        {selectedReport.state || "-"}
+      </span>
+    ),
+  },
 
-          width: 140,
+  {
+    title: "Act",
+    dataIndex: "act_name",
+    width: 220,
+    render: (text: string) => (
+      <div className="whitespace-pre-wrap text-gray-600">
+        {text || "-"}
+      </div>
+    ),
+  },
 
-          render: () => (
+  {
+    title: "Section",
+    dataIndex: "section",
+    width: 120,
+    render: (text: string) => (
+      <div className="text-gray-600">
+        {text || "-"}
+      </div>
+    ),
+  },
 
-            <span className="
-              font-medium text-gray-700
-            ">
-              {selectedReport.state || "-"}
-            </span>
-          ),
-        },
+  {
+    title: "Form",
+    dataIndex: "form_number",
+    width: 120,
+    render: (text: string) => (
+      <div className="text-gray-600">
+        {text || "-"}
+      </div>
+    ),
+  },
 
-        {
-          title: "Audit Particular",
+  {
+    title: "Document",
+    dataIndex: "document_name",
+    width: 220,
+    render: (text: string) => (
+      <div className="whitespace-pre-wrap text-gray-600">
+        {text || "-"}
+      </div>
+    ),
+  },
 
-          dataIndex: "audit_particular",
+  {
+    title: "Audit Particular",
+    dataIndex: "audit_particular",
+    width: 280,
+    render: (text: string) => (
+      <div className="whitespace-pre-wrap text-gray-600">
+        {text || "-"}
+      </div>
+    ),
+  },
 
-          render: (text: string) => (
+  {
+    title: "Compliance Status",
+    dataIndex: "status",
+    width: 240,
+    render: (status: string) => (
+      <span
+        className={`
+          inline-flex items-center
+          rounded-full
+          px-4 py-2
+          text-xs tracking-wide
+          font-medium
+          ${getStatusClass(status)}
+        `}
+      >
+        {status || "Not Applicable"}
+      </span>
+    ),
+  },
 
-            <div className="
-              whitespace-pre-wrap
-              text-gray-600
-            ">
-              {text || "-"}
-            </div>
-          ),
-        },
+  {
+    title: "Auditor Observation",
+    dataIndex: "observation",
+    width: 250,
+    render: (text: string) => (
+      <div className="whitespace-pre-wrap text-gray-600">
+        {text || "-"}
+      </div>
+    ),
+  },
 
-        {
-          title: "Compliance Status",
+  {
+    title: "Action Recommendation",
+    dataIndex: "recommendation",
+    width: 250,
+    render: (text: string) => (
+      <div className="whitespace-pre-wrap text-gray-600">
+        {text || "-"}
+      </div>
+    ),
+  },
 
-          dataIndex: "status",
-
-          width: 240,
-
-          render: (status: string) => (
-
-            <span
-              className={`
-                inline-flex items-center
-                rounded-full
-                px-4 py-2
-                text-xs tracking-wide
-                font-medium
-                ${getStatusClass(status)}
-              `}
-            >
-              {status ||
-                "Not Applicable"}
-            </span>
-          ),
-        },
-
-        {
-          title: "Auditor Observation",
-
-          dataIndex: "observation",
-
-          render: (text: string) => (
-
-            <div className="
-              whitespace-pre-wrap
-              text-gray-600
-            ">
-              {text || "-"}
-            </div>
-          ),
-        },
-
-        {
-          title: "Action Recommendation",
-
-          dataIndex: "recommendation",
-
-          render: (text: string) => (
-
-            <div className="
-              whitespace-pre-wrap
-              text-gray-600
-            ">
-              {text || "-"}
-            </div>
-          ),
-        },
-      ]}
+]}
     />
 
   </div>
