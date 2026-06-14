@@ -788,7 +788,7 @@ return hasExceptional ? (
         open={open}
         footer={null}
         onCancel={() => setOpen(false)}
-        width="95%"
+        width="90%"
 
         centered
 
@@ -1127,13 +1127,22 @@ return hasExceptional ? (
 
   {/* TABLE */}
 
-  <div className="overflow-x-auto">
+    <div
+      className="
+        overflow-auto
+        max-h-[500px]
+      "
+    >
 
-    <Table
-      rowKey={(_, index) =>
-        index?.toString() || "row"
-      }
-      scroll={{ x: 1800 }}
+      <Table
+        rowKey={(_, index) =>
+          index?.toString() || "row"
+        }
+
+        scroll={{
+          x: 1800,
+          y: 450,
+        }}
 
       size="middle"
 
@@ -1295,6 +1304,25 @@ return hasExceptional ? (
 
   .freeze-audit-table .ant-table {
     border-radius: 20px !important;
+  }
+
+    .compliance-table .ant-table-body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .compliance-table .ant-table-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 999px;
+  }
+
+  .compliance-table .ant-table-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  .compliance-table .ant-table-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
   }
 
   .freeze-audit-table .ant-table-thead > tr > th {
