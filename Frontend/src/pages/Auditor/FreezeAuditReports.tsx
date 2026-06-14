@@ -1127,13 +1127,13 @@ return hasExceptional ? (
 
   {/* TABLE */}
 
-        <div
-          className="
-            overflow-auto
-            max-h-[500px]
-            w-full
-          "
-        >
+      <div
+        className="
+          overflow-auto
+          max-h-[500px]
+          w-full
+        "
+      >
         <div style={{ width: "3200px" }}>
 
       <Table
@@ -1273,17 +1273,6 @@ return hasExceptional ? (
     width: 250,
     render: (text: string) => (
       <div className="whitespace-pre-wrap text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-  {
-    title: "Guidelines",
-    dataIndex: "guidelines",
-    width: 700,
-    render: (text:string) => (
-      <div className="whitespace-pre-wrap">
         {text || "-"}
       </div>
     ),
