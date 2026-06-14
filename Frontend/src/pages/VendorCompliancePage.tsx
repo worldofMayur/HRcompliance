@@ -72,6 +72,8 @@ export default function VendorCompliancePage() {
   const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
   const [reuploadMode, setReuploadMode] = useState(false);
   const [failedEntries, setFailedEntries] = useState<any[]>([]);
+  const [effectiveReuploadMode, setEffectiveReuploadMode] =
+  useState(false);
   const [complianceId, setComplianceId] = useState<number | null>(null);
 
   const [mappingStartDate, setMappingStartDate] = useState<any>(null);
@@ -271,9 +273,28 @@ export default function VendorCompliancePage() {
 
     console.log("❌ Failed Entries:", failedEntries);
 
-const failedDocIds = failedEntries.map(
-  (e: any) => e.document_id
-);
+    const failedDocIds = failedEntries.map(
+      (e: any) => e.document_id
+    );
+
+    const hasReuploadDocs = data.some(
+      (doc: any) =>
+        doc.workflow_status === "REUPLOAD_REQUESTED"
+    );
+
+    const calculatedReuploadMode =
+      reuploadMode || hasReuploadDocs;
+
+    setEffectiveReuploadMode(
+      calculatedReuploadMode
+    );
+
+    if (
+      hasReuploadDocs &&
+      !reuploadMode
+    ) {
+      setReuploadMode(true);
+    }
 
 console.log(
   "📄 Failed Document IDs:",
@@ -298,7 +319,8 @@ const rows: DocumentRow[] = data.map(
 
     // ✅ Show remarks ONLY in reupload flow
     reupload_remark:
-      reuploadMode
+      calculatedReuploadMode &&
+      doc.workflow_status === "REUPLOAD_REQUESTED"
         ? doc.reupload_remark || ""
         : "",
 
@@ -308,9 +330,9 @@ const rows: DocumentRow[] = data.map(
     fileList: [],
 
     // ✅ ONLY failed documents reuploadable
-    canReupload: reuploadMode
-      ? failedDocIds.includes(doc.id)
-      : true,
+    canReupload:
+      doc.workflow_status ===
+      "REUPLOAD_REQUESTED",
   })
 );
 
@@ -618,7 +640,7 @@ formData.append(
 
     // ================= API ENDPOINT =================
 
-    const endpoint = reuploadMode
+    const endpoint = effectiveReuploadMode
       ? "https://apii.complianceclearance.com/api/vendor/reupload-compliance/"
       : "https://apii.complianceclearance.com/api/vendor/submit-compliance/";
 
@@ -948,7 +970,7 @@ formData.append(
                   gap-3
 
                   ${
-                    reuploadMode
+                    effectiveReuploadMode
                       ? (
                           record.canReupload
                             ? "bg-white hover:shadow-md"
@@ -970,19 +992,19 @@ formData.append(
                       border
 
                       ${
-                      reuploadMode
-                        ? (
-                            record.canReupload
-                              ? "bg-red-50 text-red-600 border border-red-200"
-                              : "bg-green-50 text-green-600 border border-green-200"
-                          )
-                        : "bg-blue-50 text-blue-600 border border-blue-200"
+                        effectiveReuploadMode
+                          ? (
+                              record.canReupload
+                                ? "bg-red-50 text-red-600 border border-red-200"
+                                : "bg-green-50 text-green-600 border border-green-200"
+                            )
+                          : "bg-blue-50 text-blue-600 border border-blue-200"
                       }
                     `}
                   >
                   {record.fileList.length > 0 ? (
                     "Uploaded"
-                  ) : reuploadMode ? (
+                  ) : effectiveReuploadMode ? (
 
                     record.canReupload ? (
                       "Reupload Required"
@@ -1002,17 +1024,15 @@ formData.append(
                   gap-3
                 ">
                 <Upload
-                  disabled={
-                    frozenPeriods.includes(selectedPeriod) ||
+                    disabled={
+                      frozenPeriods.includes(selectedPeriod) ||
 
-                    record.is_reuploaded ||
-
-                    (
-                      reuploadMode &&
-                      !record.isAdditional &&
-                      !record.canReupload
-                    )
-                  }
+                      (
+                        effectiveReuploadMode &&
+                        !record.isAdditional &&
+                        !record.canReupload
+                      )
+                    }
                     beforeUpload={(file) => {
                       const alreadyExists =
                         tableData.some(
@@ -1043,10 +1063,8 @@ formData.append(
                     disabled={
                       frozenPeriods.includes(selectedPeriod) ||
 
-                      record.is_reuploaded ||
-
                       (
-                        reuploadMode &&
+                        effectiveReuploadMode &&
                         !record.isAdditional &&
                         !record.canReupload
                       )
@@ -1074,7 +1092,7 @@ formData.append(
 
                 <div className="text-xs truncate">
 
-                {reuploadMode &&
+                {effectiveReuploadMode &&
                   record.canReupload &&
                   record.reupload_remark && (
 
@@ -1219,10 +1237,8 @@ formData.append(
     "
   >
     {
-      reuploadMode
-
+      effectiveReuploadMode
         ? "Reupload Compliance Documents"
-
         : "Submit Compliance Record"
     }
   </Button>

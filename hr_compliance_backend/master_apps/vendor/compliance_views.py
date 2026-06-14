@@ -694,7 +694,7 @@ def reupload_compliance(request):
 
                 submission.reuploaded_at = timezone.now()
 
-                submission.reupload_remark = (
+                submission.general_remark = (
                     general_remark
                 )
 
