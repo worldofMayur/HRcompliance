@@ -1591,21 +1591,9 @@ class SaveAuditAPIView(APIView):
                 }
             )
 
-            audit_report_pdf_bytes = generate_enterprise_audit_pdf({
-
-                "pe_name": pe.name,
-
-                "vendor_name": vendor.name,
-
-                "state": str(branch.state),
-
-                "branch_name": branch.short_name,
-
-                "audit_period": audit_period,
-
-                "entries": pdf_entries,
-                "generated_at": generated_timestamp,
-            })
+            audit_report_pdf_bytes = generate_cc_pdf_from_html(
+                audit_report_html
+            )
 
             print(
                 "\n✅ FINAL AUDIT REPORT GENERATED"
