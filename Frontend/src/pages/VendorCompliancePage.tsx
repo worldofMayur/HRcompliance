@@ -272,15 +272,32 @@ export default function VendorCompliancePage() {
     setDocuments(data);
 
     console.log("❌ Failed Entries:", failedEntries);
+    console.log(
+      "🔴 Reupload Mode:",
+      reuploadMode
+    );
+
+    console.log(
+      "🔴 Failed Entries:",
+      failedEntries
+    );
+
+    console.log(
+      "🔴 API Docs:",
+      data
+    );
 
     const failedDocIds = failedEntries.map(
       (e: any) => e.document_id
     );
 
-    const hasReuploadDocs = data.some(
-      (doc: any) =>
-        doc.workflow_status === "REUPLOAD_REQUESTED"
-    );
+    const hasReuploadDocs =
+      reuploadMode ||
+      data.some(
+        (doc: any) =>
+          doc.workflow_status ===
+          "REUPLOAD_REQUESTED"
+      );
 
     setEffectiveReuploadMode(
       hasReuploadDocs
@@ -321,8 +338,15 @@ const rows: DocumentRow[] = data.map(
 
     // ✅ ONLY failed documents reuploadable
     canReupload:
-      doc.workflow_status ===
-      "REUPLOAD_REQUESTED",
+      reuploadMode
+        ? failedEntries.some(
+            (e: any) =>
+              Number(e.document_id) === Number(doc.id)
+          )
+        : (
+            doc.workflow_status ===
+            "REUPLOAD_REQUESTED"
+          ),
   })
 );
 
