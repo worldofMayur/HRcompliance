@@ -2961,7 +2961,41 @@ class FreezeAuditReportsAPIView(APIView):
 
                 "audit_entry_id": entry.id,
 
-                "audit_particular": checklist.audit_particulars,
+                "state": (
+                    checklist.state.name
+                    if checklist.state
+                    else "-"
+                ),
+
+                "act_name": (
+                    checklist.act.name
+                    if checklist.act
+                    else "-"
+                ),
+
+                "section": (
+                    checklist.section.section_number
+                    if checklist.section
+                    else "-"
+                ),
+
+                "form_number": (
+                    checklist.form_number
+                    if checklist.form_number
+                    else "-"
+                ),
+
+                "document_name": (
+                    checklist.document.name
+                    if checklist.document
+                    else "-"
+                ),
+
+                "audit_particular": (
+                    checklist.audit_particulars
+                    if checklist.audit_particulars
+                    else "-"
+                ),
 
                 "status": entry.status,
 
