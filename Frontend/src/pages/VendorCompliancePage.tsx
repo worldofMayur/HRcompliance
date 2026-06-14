@@ -1089,9 +1089,13 @@ if (effectiveReuploadMode) {
                       rounded-lg border-none
 
                       ${
-                        record.canReupload
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        effectiveReuploadMode
+                          ? (
+                              record.canReupload
+                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            )
+                          : "bg-blue-500 text-white hover:bg-blue-600"
                       }
                     `}
                   >
