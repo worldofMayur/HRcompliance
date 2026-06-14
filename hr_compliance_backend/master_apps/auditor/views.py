@@ -1537,7 +1537,7 @@ class SaveAuditAPIView(APIView):
             )
 
             pdf_html = render_to_string(
-                "auditor/final_cc_certificate.html",
+                "auditor/compliance_clearance_email.html",
                 {
                     "pe_name": pe.name,
                     "vendor_name": vendor.name,

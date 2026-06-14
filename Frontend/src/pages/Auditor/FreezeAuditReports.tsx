@@ -1140,7 +1140,7 @@ return hasExceptional ? (
         }
 
         scroll={{
-          x: 1800,
+          x: 2500,
           y: 450,
         }}
 
@@ -1283,32 +1283,23 @@ return hasExceptional ? (
 
 <style>{`
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  /* =====================================
+     COMPLIANCE TABLE SCROLLBAR
+  ===================================== */
+
+  .compliance-table .ant-table-body {
+    overflow-x: scroll !important;
+    overflow-y: auto !important;
+    scrollbar-gutter: stable both-edges;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f8fafc;
-    border-radius: 8px;
+  .compliance-table .ant-table-content {
+    overflow-x: scroll !important;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
-
-  .freeze-audit-table .ant-table {
-    border-radius: 20px !important;
-  }
-
-    .compliance-table .ant-table-body::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  .compliance-table .ant-table-body::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
   }
 
   .compliance-table .ant-table-body::-webkit-scrollbar-track {
@@ -1323,6 +1314,14 @@ return hasExceptional ? (
 
   .compliance-table .ant-table-body::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+
+  /* =====================================
+     FREEZE AUDIT TABLE
+  ===================================== */
+
+  .freeze-audit-table .ant-table {
+    border-radius: 20px !important;
   }
 
   .freeze-audit-table .ant-table-thead > tr > th {
@@ -1345,6 +1344,10 @@ return hasExceptional ? (
   .freeze-audit-table .ant-table-tbody > tr:hover > td {
     background: #f5f9ff !important;
   }
+
+  /* =====================================
+     COMPLIANCE TABLE
+  ===================================== */
 
   .compliance-table .ant-table {
     border-radius: 0 !important;
@@ -1386,9 +1389,30 @@ return hasExceptional ? (
     border-inline-end: none !important;
   }
 
-`}
-      </style>
+  /* =====================================
+     GENERIC CUSTOM SCROLLBAR
+  ===================================== */
 
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+`}</style>
             </div>
           </div>
         )}
