@@ -1179,7 +1179,7 @@ return hasExceptional ? (
   },
 
   {
-    title: "Section",
+    title: "Section/ Rule",
     dataIndex: "section",
     width: 120,
     render: (text: string) => (
