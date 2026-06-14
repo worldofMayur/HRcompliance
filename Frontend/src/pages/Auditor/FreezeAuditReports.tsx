@@ -788,7 +788,7 @@ return hasExceptional ? (
         open={open}
         footer={null}
         onCancel={() => setOpen(false)}
-        width="80%"
+        width={1700}
 
         centered
 
@@ -1140,7 +1140,7 @@ return hasExceptional ? (
         }
 
         scroll={{
-          x: 2500,
+          x: 3200,
           y: 450,
         }}
 
@@ -1282,6 +1282,25 @@ return hasExceptional ? (
 {/* CUSTOM STYLES */}
 
 <style>{`
+
+  .compliance-table .ant-table-content {
+    overflow-x: scroll !important;
+  }
+
+  .compliance-table .ant-table-body {
+    overflow-x: scroll !important;
+  }
+
+  .compliance-table .ant-table-content::-webkit-scrollbar,
+  .compliance-table .ant-table-body::-webkit-scrollbar {
+    height: 14px !important;
+  }
+
+  .compliance-table .ant-table-content::-webkit-scrollbar-thumb,
+  .compliance-table .ant-table-body::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 999px;
+  }
 
   /* =====================================
      COMPLIANCE TABLE SCROLLBAR
