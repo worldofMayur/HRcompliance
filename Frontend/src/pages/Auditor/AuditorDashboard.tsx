@@ -1612,14 +1612,13 @@ const canFreezeReport =
 
 {remarksData.length > 0 && (
 
-  <div className="mt-4 w-1/2">
+  <div className="mt-4 w-[45%]">
 
     <div className="font-semibold text-amber-700 mb-2">
       Vendor Remark History
     </div>
 
-    <div className="space-y-2 max-h-[160px] overflow-y-auto">
-
+<div className="space-y-1 max-h-[90px] overflow-y-auto">
       {remarksData.map((remark, index) => (
 
         <Tooltip
@@ -1630,7 +1629,7 @@ const canFreezeReport =
           <div
             className="
               px-3
-              py-2
+              py-1
               bg-amber-50
               border
               border-amber-200
@@ -1669,15 +1668,61 @@ const canFreezeReport =
 )}
 
   <div className="mt-3">
-    <Button
-      type="primary"
-      icon={<DownloadOutlined />}
-      onClick={downloadZip}
-    >
-      Download Audit Documents
-    </Button>
-  </div>
+<div className="mt-3 flex gap-3 flex-wrap">
 
+  <Button
+    type="primary"
+    icon={<DownloadOutlined />}
+    onClick={downloadZip}
+  >
+    Download Audit Documents
+  </Button>
+
+  {hasExceptionalApproval && (
+
+    <Upload
+      disabled={
+        isAuditLocked &&
+        !manualEditMode
+      }
+      multiple={false}
+      beforeUpload={(file) => {
+
+        const exceptionalRows =
+          groupedChecklist.filter(
+            (row: any) =>
+              row.status ===
+              "Exceptional Approval - Delayed Complied"
+          );
+
+        const updatedFiles: any = {
+          ...exceptionalFiles
+        };
+
+        exceptionalRows.forEach((row: any) => {
+          updatedFiles[row.id] = file;
+        });
+
+        setExceptionalFiles(updatedFiles);
+
+        message.success(
+          `${file.name} attached`
+        );
+
+        return false;
+      }}
+      showUploadList={false}
+    >
+
+      <Button icon={<UploadOutlined />}>
+        Upload Supporting Document
+      </Button>
+
+    </Upload>
+
+  )}
+
+</div>
 </div>
     {/* 🔥 SCROLL AREA */}
     <div className="flex-1 overflow-y-auto p-4">
@@ -1775,77 +1820,6 @@ const canFreezeReport =
       }
 
       {/* UPLOAD */}
-{
-  hasDocuments && (
-
-    <div className="flex justify-start flex-col mt-4 gap-2">
-
-      <span className="font-semibold">
-        For Exceptional Approval, Upload Supporting Evidance
-      </span>
-
-      <Upload
-        disabled={
-          isAuditLocked
-          &&
-          !manualEditMode
-        }
-        multiple={false}
-        beforeUpload={(file) => {
-
-          const exceptionalRows =
-            groupedChecklist.filter(
-              (row: any) =>
-                row.status ===
-                "Exceptional Approval - Delayed Complied"
-            );
-
-          if (exceptionalRows.length === 0) {
-
-            message.warning(
-              "Select Exceptional Approval status first"
-            );
-
-            return Upload.LIST_IGNORE;
-          }
-
-          const updatedFiles: any = {
-            ...exceptionalFiles
-          };
-
-          exceptionalRows.forEach((row: any) => {
-
-            updatedFiles[row.id] = file;
-          });
-
-          setExceptionalFiles(updatedFiles);
-
-          message.success(
-            `${file.name} attached`
-          );
-
-          return false;
-        }}
-      >
-
-      <Button
-        icon={<UploadOutlined />}
-        disabled={!hasExceptionalApproval}
-      >
-        Upload Supporting Document
-      </Button>
-
-      </Upload>
-
-      <span className="font-semibold">
-        File Type - PDF/ JPG/ JPEG/ Email PDF/ Zip Folder
-      </span>
-
-    </div>
-
-  )
-}
-
     </div>
 
     {/* 🔹 BOTTOM BUTTONS */}
