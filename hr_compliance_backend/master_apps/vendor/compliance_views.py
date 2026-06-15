@@ -635,19 +635,15 @@ def reupload_compliance(request):
 
                 submission.version += 1
 
-                # SAVE REUPLOAD ONLY IN VERSION TABLE
                 reupload_version = VendorComplianceFileVersion.objects.create(
-
                     submission=submission,
-
                     file=uploaded_file,
-
                     version=submission.version,
-
                     is_reupload=True
                 )
 
-                submission.main_file = uploaded_file
+                # IMPORTANT:
+                # DO NOT REPLACE ORIGINAL MAIN FILE
 
                 print(
                     "\n🔁 REUPLOAD VERSION SAVED:",
