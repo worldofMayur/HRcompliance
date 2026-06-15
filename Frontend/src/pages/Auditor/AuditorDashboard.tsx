@@ -1579,7 +1579,7 @@ const canFreezeReport =
   <div className="h-full flex flex-col">
 
     {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
-<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4">
+<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-3">
 
   <div className="flex flex-wrap gap-8 text-sm">
 
@@ -1654,7 +1654,7 @@ const canFreezeReport =
 
 <div className="mt-4 flex justify-between gap-6">
 
-  <div className="w-[60%]">
+  <div className="w-[65%]">
 
     {remarksData.length > 0 && (
 
@@ -1672,7 +1672,7 @@ const canFreezeReport =
 
         </div>
 
-        <div className="space-y-1 max-h-[180px] overflow-y-auto">
+        <div className="space-y-1 max-h-[70px] overflow-y-auto">
 
           {remarksData.map((remark, index) => (
 
@@ -1684,7 +1684,7 @@ const canFreezeReport =
             <div
               className="
                 px-2
-                py-[6px]
+                py-1
                 bg-amber-50
                 border
                 border-amber-200
@@ -1708,7 +1708,7 @@ const canFreezeReport =
 
               </div>
 
-              <div className="text-sm text-gray-800 mt-1">
+              <div className="text-xs text-gray-800">
                 {remark.remark}
               </div>
 
@@ -1726,7 +1726,7 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[35%] flex justify-end">
+<div className="w-[30%] flex justify-end">
 
 <div className="w-full max-w-[380px] flex flex-col gap-3">
 
@@ -1789,7 +1789,7 @@ const canFreezeReport =
 
   <div
     className="
-      p-3
+      p-2
       rounded-lg
       border
       border-orange-200
