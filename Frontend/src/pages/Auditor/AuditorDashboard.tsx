@@ -1652,10 +1652,9 @@ const canFreezeReport =
 
 </div>
 
-<div className="mt-4 flex justify-between gap-6">
+<div className="mt-4 flex justify-between items-start gap-6">
 
-  <div className="w-[45%]">
-
+<div className="w-[55%]">
     {remarksData.length > 0 && (
 
       <>
@@ -1672,8 +1671,7 @@ const canFreezeReport =
 
         </div>
 
-        <div className="space-y-1 max-h-[70px] overflow-y-auto">
-
+<div className="space-y-1 max-h-[55px] overflow-y-auto">
           {remarksData.map((remark, index) => (
 
             <Tooltip
@@ -1726,8 +1724,7 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[30%] flex justify-end">
-
+<div className="w-[25%] flex justify-end -mt-2">
 <div className="w-full max-w-[380px] flex flex-col gap-3">
 
   <Button
@@ -1740,7 +1737,6 @@ const canFreezeReport =
 
   
 
-  {hasExceptionalApproval && (
 
     <Upload
       disabled={
@@ -1780,10 +1776,15 @@ const canFreezeReport =
         Upload Supporting Document
       </Button>
 
+      {Object.values(exceptionalFiles)[0] && (
+  <div className="text-xs text-green-600 mt-1">
+    Selected:
+    {(Object.values(exceptionalFiles)[0] as File).name}
+  </div>
+)}
+
     </Upload>
 
-
-  )}
 
   {hasExceptionalApproval && (
 
