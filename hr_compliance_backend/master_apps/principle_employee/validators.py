@@ -2,22 +2,61 @@ import os
 from django.core.exceptions import ValidationError
 
 ALLOWED_EXTENSIONS = {
-    ".pdf", ".doc", ".docx",
-    ".xls", ".xlsx",
-    ".ppt", ".pptx",
-    ".png", ".jpg", ".jpeg",
+    ".pdf",
+
+    ".doc",
+    ".docx",
+
+    ".xls",
+    ".xlsx",
+
+    ".ppt",
+    ".pptx",
+
+    ".png",
+    ".jpg",
+    ".jpeg",
+
+    ".txt",
+    ".csv",
+
+    ".msg",
+    ".eml",
+
+    ".rtf",
+
+    ".odt",
+    ".ods",
+    ".odp",
 }
 
 ALLOWED_CONTENT_TYPES = {
     "application/pdf",
+
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
     "application/vnd.ms-powerpoint",
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+
     "image/png",
     "image/jpeg",
+
+    "text/plain",
+    "text/csv",
+
+    "application/vnd.ms-outlook",
+    "message/rfc822",
+
+    "application/rtf",
+    "text/rtf",
+
+    "application/vnd.oasis.opendocument.text",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "application/vnd.oasis.opendocument.presentation",
 }
 
 MAX_FILE_SIZE_MB = 3
@@ -30,7 +69,7 @@ def validate_document_file(file):
     ext = os.path.splitext(file.name)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise ValidationError(
-            f"Unsupported file type '{ext}'. Allowed types: PDF, Word, Excel, PPT, JPG, PNG."
+            "Unsupported file type. Allowed: PDF, Word, Excel, PowerPoint, Images, TXT, CSV, MSG, EML, RTF, ODT, ODS, ODP."
         )
 
     # =============================

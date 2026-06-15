@@ -4,6 +4,7 @@ from .models import (
     PrincipalEmployerDocument,
     PrincipalEmployerBranch,
 )
+from .validators import validate_document_file
 
 
 class PrincipalEmployerDocumentSerializer(serializers.ModelSerializer):
@@ -12,23 +13,7 @@ class PrincipalEmployerDocumentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate_document(self, file):
-        allowed_extensions = [
-            "pdf", "doc", "docx", "xls", "xlsx",
-            "ppt", "pptx", "png", "jpg", "jpeg"
-        ]
-
-        ext = file.name.split(".")[-1].lower()
-
-        if ext not in allowed_extensions:
-            raise serializers.ValidationError(
-                "Unsupported file type. Allowed: PDF, Word, Excel, PowerPoint, PNG, JPG"
-            )
-
-        if file.size > 3 * 1024 * 1024:
-            raise serializers.ValidationError(
-                "File size must be less than 3 MB"
-            )
-
+        validate_document_file(file)
         return file
 
 

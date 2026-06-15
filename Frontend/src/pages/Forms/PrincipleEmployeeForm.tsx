@@ -125,12 +125,14 @@ const formatForAPI = (date: Date | null) => {
   return () => clearInterval(timer);
 }, [branchList]);
 
-    const [branchData, setBranchData] = useState({
-      state: "",
-      short_name: "",
-      address: "",
-      status: "active",   // default active
-    });
+  const [branchData, setBranchData] = useState({
+    state: "",
+    short_name: "",
+    address: "",
+    status: "active",
+    document: null,
+    existingDocument: null,
+  });
 
   useEffect(() => {
 
@@ -443,13 +445,49 @@ const filteredData = useMemo(() => {
   ========================= */
     const MAX_FILE_SIZE = 3 * 1024 * 1024;
 
+    const ALLOWED_EXTENSIONS = [
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "png",
+    "jpg",
+    "jpeg",
+    "txt",
+    "csv",
+    "msg",
+    "eml",
+    "rtf",
+    "odt",
+    "ods",
+    "odp",
+  ];
+
     const addDocument = (file: File) => {
+
+      const ext =
+        file.name.split(".").pop()?.toLowerCase();
+
+      if (!ALLOWED_EXTENSIONS.includes(ext || "")) {
+        alert(`Unsupported file type: ${ext}`);
+        return;
+      }
+
       if (file.size > MAX_FILE_SIZE) {
         alert("File size must be less than 3 MB");
         return;
       }
 
-      if (documents.some((d) => d.name === file.name)) {
+      if (
+        documents.some(
+          (d) =>
+            d.name === file.name &&
+            d.size === file.size
+        )
+      ) {
         alert("Document already added");
         return;
       }
@@ -582,7 +620,9 @@ const handleSubmit = async () => {
   }
 
   if (!isEditMode && !documents.length) {
-    alert("At least one document is required");
+    alert(
+      "Please upload at least one supporting document."
+    );
     return;
   }
 
@@ -930,15 +970,66 @@ finally {
   </ComponentCard>
 
   <div className="space-y-6">
-    <ComponentCard title="Documents">
-      <FileInput
-        multiple
-        onChange={(e) =>
-          e.target.files &&
-          Array.from(e.target.files).forEach(addDocument)
-        }
-      />
-    </ComponentCard>
+    <ComponentCard title="Documents (Multiple files supported)">
+
+  <FileInput
+    multiple
+    accept="
+      .pdf,
+      .doc,
+      .docx,
+      .xls,
+      .xlsx,
+      .ppt,
+      .pptx,
+      .png,
+      .jpg,
+      .jpeg,
+      .txt,
+      .csv,
+      .msg,
+      .eml,
+      .rtf,
+      .odt,
+      .ods,
+      .odp
+    "
+    onChange={(e) =>
+      e.target.files &&
+      Array.from(e.target.files).forEach(addDocument)
+    }
+  />
+
+  <p className="mt-2 text-xs text-gray-500">
+    Supported: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, PNG, JPG,
+    JPEG, TXT, CSV, MSG, EML, RTF, ODT, ODS, ODP
+    (Max 3 MB per file)
+  </p>
+
+  {documents.length > 0 && (
+    <div className="mt-3 space-y-2">
+      {documents.map((doc) => (
+        <div
+          key={`${doc.name}-${doc.size}`}
+          className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        >
+          <span className="truncate">
+            {doc.name}
+          </span>
+
+          <button
+            type="button"
+            className="text-red-500 hover:text-red-700"
+            onClick={() => removeDocument(doc.name)}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+
+</ComponentCard>
 
     <ComponentCard>
       <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
