@@ -10,9 +10,11 @@ from .views import (
     PrincipalEmployerBranchCreateAPIView,
     PrincipalEmployerBranchListAPIView,
     PrincipalEmployerBranchUpdateAPIView,
-    )
+    PrincipalEmployerDocumentZipAPIView,   # ✅ NEW
+)
 
 urlpatterns = [
+
     # ==============================
     # PRINCIPAL EMPLOYER APIs
     # ==============================
@@ -21,20 +23,32 @@ urlpatterns = [
         PrincipalEmployerCreateAPIView.as_view(),
         name="principal-employer-create",
     ),
+
     path(
         "principal-employer/list/",
         PrincipalEmployerListAPIView.as_view(),
         name="principal-employer-list",
     ),
+
     path(
         "principal-employer/<int:pk>/update/",
         PrincipalEmployerUpdateAPIView.as_view(),
         name="principal-employer-update",
     ),
+
     path(
         "principal-employer/<int:pk>/delete/",
         PrincipalEmployerDeleteAPIView.as_view(),
         name="principal-employer-delete",
+    ),
+
+    # ==============================
+    # DOWNLOAD ALL PE DOCUMENTS ZIP
+    # ==============================
+    path(
+        "principal-employer/<int:pe_id>/download-documents/",
+        PrincipalEmployerDocumentZipAPIView.as_view(),
+        name="pe-document-zip",
     ),
 
     # ==============================
@@ -45,11 +59,13 @@ urlpatterns = [
         PrincipalEmployerBranchCreateAPIView.as_view(),
         name="branch-create",
     ),
+
     path(
         "principal-employer/<int:pe_id>/branches/",
         PrincipalEmployerBranchListAPIView.as_view(),
         name="branch-list",
     ),
+
     path(
         "principal-employer/branch/<int:pk>/update/",
         PrincipalEmployerBranchUpdateAPIView.as_view(),
@@ -62,5 +78,5 @@ urlpatterns = [
 # ==============================
 urlpatterns += static(
     settings.MEDIA_URL,
-    document_root=settings.MEDIA_ROOT
+    document_root=settings.MEDIA_ROOT,
 )

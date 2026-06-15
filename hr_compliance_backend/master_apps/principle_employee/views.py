@@ -17,6 +17,9 @@ from django.utils.timezone import now
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import get_object_or_404
+import zipfile
+from io import BytesIO
+from django.http import HttpResponse
 
 from .models import (
     PrincipalEmployer,
@@ -425,3 +428,60 @@ class PrincipalEmployerBranchUpdateAPIView(APIView):
             PrincipalEmployerBranchSerializer(updated_branch).data,
             status=status.HTTP_200_OK
         )
+
+
+class PrincipalEmployerDocumentZipAPIView(APIView):
+
+    def get(self, request, pe_id):
+
+        pe = get_object_or_404(
+            PrincipalEmployer,
+            pk=pe_id
+        )
+
+        documents = PrincipalEmployerDocument.objects.filter(
+            principal_employer=pe
+        )
+
+        if not documents.exists():
+            return Response(
+                {"error": "No documents found"},
+                status=404
+            )
+
+        zip_buffer = BytesIO()
+
+        with zipfile.ZipFile(
+            zip_buffer,
+            "w",
+            zipfile.ZIP_DEFLATED
+        ) as zip_file:
+
+            for doc in documents:
+
+                if doc.document and os.path.exists(
+                    doc.document.path
+                ):
+
+                    zip_file.write(
+                        doc.document.path,
+                        arcname=os.path.basename(
+                            doc.document.name
+                        )
+                    )
+
+        zip_buffer.seek(0)
+
+        response = HttpResponse(
+            zip_buffer.read(),
+            content_type="application/zip"
+        )
+
+        response[
+            "Content-Disposition"
+        ] = (
+            f'attachment; '
+            f'filename="{pe.short_name}_documents.zip"'
+        )
+
+        return response

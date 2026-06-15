@@ -1577,6 +1577,27 @@ finally {
                     Export
                 </Button>
 
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 px-4 text-sm"
+                  onClick={() => {
+
+                    if (!selectedPEObject?.id) {
+                      alert("Principal Employer not selected");
+                      return;
+                    }
+
+                    window.open(
+                      `${import.meta.env.VITE_API_URL}/api/principal-employer/${selectedPEObject.id}/download-documents/`,
+                      "_blank"
+                    );
+
+                  }}
+                >
+                  Download Documents
+                </Button>
+
               </div>
           </div>
 
