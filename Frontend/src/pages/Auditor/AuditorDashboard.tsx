@@ -12,6 +12,7 @@ export default function AuditorDashboard() {
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` },
   };
+import { Tooltip } from "antd";
 
   /* ================= DATA ================= */
 
@@ -1614,35 +1615,71 @@ const canFreezeReport =
 
   <div className="mt-3 space-y-2">
 
-    {remarksData.map((remark, index) => (
+{remarksData.length > 0 && (
 
-      <div
-        key={index}
-        className="p-3 bg-amber-50 border border-amber-200 rounded-lg"
-      >
+  <div className="mt-4 w-1/2">
 
-        <div className="flex justify-between">
+    <div className="font-semibold text-amber-700 mb-2">
+      Vendor Remark History
+    </div>
 
-          <span className="font-medium text-amber-700">
-            Vendor Remark
-          </span>
+    <div className="space-y-2 max-h-[220px] overflow-y-auto">
 
-        <span className="text-xs text-gray-500">
-          {remark.created_at
-            ? new Date(
-                remark.created_at
-              ).toLocaleString("en-IN")
-            : "-"}
-        </span>
-        </div>
+      {remarksData.map((remark, index) => (
 
-        <div className="mt-1">
-          {remark.general_remark}
-        </div>
+        <Tooltip
+          key={index}
+          title={remark.remark}
+        >
 
-      </div>
+          <div
+            className="
+              p-3
+              bg-amber-50
+              border
+              border-amber-200
+              rounded-lg
+              cursor-pointer
+            "
+          >
 
-    ))}
+            <div className="flex justify-between">
+
+              <span className="font-medium text-amber-700">
+
+                {remark.document_name}
+
+              </span>
+
+              <span className="text-xs text-gray-500">
+
+                {remark.created_at
+                  ? new Date(
+                      remark.created_at
+                    ).toLocaleString("en-IN")
+                  : "-"}
+
+              </span>
+
+            </div>
+
+            <div className="text-sm mt-1 truncate">
+
+              {remark.remark}
+
+            </div>
+
+          </div>
+
+        </Tooltip>
+
+      ))}
+
+    </div>
+
+  </div>
+
+)}
 
   </div>
 

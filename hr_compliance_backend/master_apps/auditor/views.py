@@ -2572,53 +2572,49 @@ class AuditorComplianceRemarksAPIView(APIView):
         vendor_id = request.GET.get("vendor_id")
         audit_period = request.GET.get("audit_period")
 
-        submissions = VendorComplianceSubmission.objects.filter(
-            branch_id=branch_id,
-            vendor_id=vendor_id,
-            audit_period=audit_period
-        ).select_related("document").order_by("-submitted_at")
+        submissions = (
+            VendorComplianceSubmission.objects
+            .filter(
+                branch_id=branch_id,
+                vendor_id=vendor_id,
+                audit_period=audit_period
+            )
+            .select_related("document")
+            .order_by("submitted_at")
+        )
 
-        data = {}
+        timeline = []
 
         for sub in submissions:
 
-            # ✅ USE audit_period (more accurate)
-            date_key = (
-                sub.submitted_at.strftime("%Y-%m-%d")
-                if sub.submitted_at
-                else "Unknown"
-            )
-
-            if date_key not in data:
-                data[date_key] = {
-                    "date": date_key,
-                    "created_at": (
-                        sub.reuploaded_at
-                        if sub.reuploaded_at
-                        else sub.submitted_at
-                    ),
-                    "general_remark": None,
-                    "documents": []
-                }
-
-            remark_text = (
+            remark = (
                 sub.reupload_remark
                 if sub.reupload_remark
                 else sub.general_remark
             )
 
-            if remark_text:
-                data[date_key]["general_remark"] = remark_text
+            if not remark:
+                continue
 
-            data[date_key]["documents"].append({
-                "document_name": sub.document.name if sub.document else "",
-                "remark": None,
-                "file": sub.main_file.url if sub.main_file else None
+            timeline.append({
+                "document_name":
+                    sub.document.name if sub.document else "",
+
+                "remark": remark,
+
+                "workflow_status":
+                    sub.workflow_status,
+
+                "is_reuploaded":
+                    sub.is_reuploaded,
+
+                "created_at":
+                    sub.reuploaded_at
+                    if sub.reuploaded_at
+                    else sub.submitted_at,
             })
 
-        # ✅ SORTED RESPONSE
-        return Response(sorted(data.values(), key=lambda x: x["date"], reverse=True))
-
+        return Response(timeline)
 
 class AuditorCompliancePeriodAPIView(APIView):
 
