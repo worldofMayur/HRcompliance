@@ -1652,73 +1652,63 @@ const canFreezeReport =
 
 </div>
 
-{remarksData.length > 0 && (
+<div className="mt-4 flex justify-between gap-6">
 
-  <div className="mt-4 w-[45%]">
+  <div className="w-[50%]">
 
-  <div className="flex items-center justify-between mb-2">
+    {remarksData.length > 0 && (
 
-    <div className="font-semibold text-amber-700">
-      Vendor Remark History
-    </div>
+      <>
 
-    <div className="text-xs text-gray-500">
-      {remarksData.length} Remark(s)
-    </div>
+        <div className="flex items-center justify-between mb-2">
 
-  </div>
-
-<div className="space-y-1 max-h-[90px] overflow-y-auto">
-      {remarksData.map((remark, index) => (
-
-        <Tooltip
-          key={index}
-          title={remark.remark}
-        >
-
-          <div
-            className="
-              px-2
-              py-[6px]
-              bg-amber-50
-              border
-              border-amber-200
-              rounded-md
-            "
-          >
-
-            <div className="flex justify-between">
-
-              <span className="font-medium text-amber-700">
-                Vendor Remark
-              </span>
-
-              <span className="text-xs text-gray-500">
-                {remark.created_at
-                  ? new Date(remark.created_at).toLocaleString("en-IN")
-                  : "-"}
-              </span>
-
-            </div>
-
-            <div className="text-sm text-gray-800">
-              {remark.remark}
-            </div>
-
+          <div className="font-semibold text-amber-700">
+            Vendor Remark History
           </div>
 
-        </Tooltip>
+          <div className="text-xs text-gray-500">
+            {remarksData.length} Remark(s)
+          </div>
 
-      ))}
+        </div>
 
-    </div>
+        <div className="space-y-1 max-h-[90px] overflow-y-auto">
+
+          {remarksData.map((remark, index) => (
+
+            <Tooltip
+              key={index}
+              title={remark.remark}
+            >
+
+              <div
+                className="
+                  px-2
+                  py-[6px]
+                  bg-amber-50
+                  border
+                  border-amber-200
+                  rounded-md
+                "
+              >
+                ...
+              </div>
+
+            </Tooltip>
+
+          ))}
+
+        </div>
+
+      </>
+
+    )}
 
   </div>
 
-)}
+<div className="w-[45%] flex justify-end">
 
-  <div className="mt-3">
-<div className="mt-3 flex gap-3 flex-wrap">
+<div className="w-full max-w-[420px] flex flex-col gap-3">
 
   <Button
     type="primary"
@@ -1727,6 +1717,8 @@ const canFreezeReport =
   >
     Download Audit Documents
   </Button>
+
+  
 
   {hasExceptionalApproval && (
 
@@ -1770,17 +1762,13 @@ const canFreezeReport =
 
     </Upload>
 
+
   )}
 
-</div>
-</div>
-
-{hasExceptionalApproval && (
+  {hasExceptionalApproval && (
 
   <div
     className="
-      mt-3
-      w-[45%]
       p-3
       rounded-lg
       border
@@ -1795,21 +1783,24 @@ const canFreezeReport =
 
     <div className="mt-2 text-sm text-gray-700">
 
-      • Upload supporting evidence for delayed compliance
+      • Upload supporting evidence
 
       <br />
 
-      • Accepted formats: PDF, JPG, PNG, ZIP
+      • PDF, JPG, PNG, ZIP supported
 
       <br />
 
-      • Evidence is mandatory before final submission
+      • Mandatory before submission
 
     </div>
 
   </div>
 
 )}
+
+</div>
+</div>
 </div>
     {/* 🔥 SCROLL AREA */}
     <div className="flex-1 overflow-y-auto p-4">
