@@ -1654,7 +1654,7 @@ const canFreezeReport =
 
 <div className="mt-4 flex justify-between gap-6">
 
-  <div className="w-[50%]">
+  <div className="w-[60%]">
 
     {remarksData.length > 0 && (
 
@@ -1672,7 +1672,7 @@ const canFreezeReport =
 
         </div>
 
-        <div className="space-y-1 max-h-[90px] overflow-y-auto">
+        <div className="space-y-1 max-h-[180px] overflow-y-auto">
 
           {remarksData.map((remark, index) => (
 
@@ -1681,18 +1681,38 @@ const canFreezeReport =
               title={remark.remark}
             >
 
-              <div
-                className="
-                  px-2
-                  py-[6px]
-                  bg-amber-50
-                  border
-                  border-amber-200
-                  rounded-md
-                "
-              >
-                ...
+            <div
+              className="
+                px-2
+                py-[6px]
+                bg-amber-50
+                border
+                border-amber-200
+                rounded-md
+              "
+            >
+
+              <div className="flex justify-between">
+
+                <span className="font-medium text-amber-700">
+                  Vendor Remark
+                </span>
+
+                <span className="text-xs text-gray-500">
+                  {remark.created_at
+                    ? new Date(
+                        remark.created_at
+                      ).toLocaleString("en-IN")
+                    : "-"}
+                </span>
+
               </div>
+
+              <div className="text-sm text-gray-800 mt-1">
+                {remark.remark}
+              </div>
+
+            </div>
 
             </Tooltip>
 
@@ -1706,9 +1726,9 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[45%] flex justify-end">
+<div className="w-[35%] flex justify-end">
 
-<div className="w-full max-w-[420px] flex flex-col gap-3">
+<div className="w-full max-w-[380px] flex flex-col gap-3">
 
   <Button
     type="primary"
