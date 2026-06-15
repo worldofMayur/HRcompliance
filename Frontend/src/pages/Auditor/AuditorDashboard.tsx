@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { Table, Input, Button, message, Modal } from "antd";
+import { Table, Input, Button, message, Modal, Tooltip } from "antd";
 import { Upload } from "antd";
 import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
 export default function AuditorDashboard() {
@@ -12,7 +12,6 @@ export default function AuditorDashboard() {
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` },
   };
-import { Tooltip } from "antd";
 
   /* ================= DATA ================= */
 
