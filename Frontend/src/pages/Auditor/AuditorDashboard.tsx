@@ -1070,7 +1070,17 @@ if (exceptionalFiles) {
         width: 280,
         dataIndex: "audit_particulars",
         render: (text: string) => (
-          <div className="font-semibold text-blue-700">
+          <div
+            className="
+              bg-blue-50
+              border
+              border-blue-100
+              rounded-md
+              p-2
+              font-semibold
+              text-blue-700
+            "
+          >
             {text}
           </div>
         ),
@@ -1610,13 +1620,53 @@ const canFreezeReport =
 
   </div>
 
+  <div className="mt-3">
+
+  <span
+    className="
+      inline-flex
+      items-center
+      px-3
+      py-1
+      rounded-full
+      bg-green-50
+      border
+      border-green-200
+      text-green-700
+      text-sm
+      font-medium
+    "
+  >
+    Mapping Active:
+    {" "}
+    {mappingStartDate
+      ? new Date(mappingStartDate).toLocaleDateString("en-IN")
+      : "-"}
+
+    {" "}→{" "}
+
+    {mappingEndDate
+      ? new Date(mappingEndDate).toLocaleDateString("en-IN")
+      : "-"}
+  </span>
+
+</div>
+
 {remarksData.length > 0 && (
 
   <div className="mt-4 w-[45%]">
 
-    <div className="font-semibold text-amber-700 mb-2">
+  <div className="flex items-center justify-between mb-2">
+
+    <div className="font-semibold text-amber-700">
       Vendor Remark History
     </div>
+
+    <div className="text-xs text-gray-500">
+      {remarksData.length} Remark(s)
+    </div>
+
+  </div>
 
 <div className="space-y-1 max-h-[90px] overflow-y-auto">
       {remarksData.map((remark, index) => (
@@ -1628,8 +1678,8 @@ const canFreezeReport =
 
           <div
             className="
-              px-3
-              py-1
+              px-2
+              py-[6px]
               bg-amber-50
               border
               border-amber-200
@@ -1724,6 +1774,42 @@ const canFreezeReport =
 
 </div>
 </div>
+
+{hasExceptionalApproval && (
+
+  <div
+    className="
+      mt-3
+      w-[45%]
+      p-3
+      rounded-lg
+      border
+      border-orange-200
+      bg-orange-50
+    "
+  >
+
+    <div className="font-semibold text-orange-700">
+      Exceptional Approval Evidence Required
+    </div>
+
+    <div className="mt-2 text-sm text-gray-700">
+
+      • Upload supporting evidence for delayed compliance
+
+      <br />
+
+      • Accepted formats: PDF, JPG, PNG, ZIP
+
+      <br />
+
+      • Evidence is mandatory before final submission
+
+    </div>
+
+  </div>
+
+)}
 </div>
     {/* 🔥 SCROLL AREA */}
     <div className="flex-1 overflow-y-auto p-4">
@@ -1803,6 +1889,9 @@ const canFreezeReport =
                 </div>
 
                 <Table
+                  rowClassName={() =>
+                    "hover:bg-blue-50 transition-colors"
+                  }
                   columns={columns}
                   dataSource={groupedChecklist}
                   rowKey="id"
