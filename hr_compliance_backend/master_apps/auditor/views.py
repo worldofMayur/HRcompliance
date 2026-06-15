@@ -665,6 +665,60 @@ class AuditorCreateAPIView(APIView):
                 documents = request.FILES.getlist("documents")
 
                 if not documents:
+                    return Response(
+                        {
+                            "error": "Please upload at least one document"
+                        },
+                        status=400
+                    )
+
+                if len(documents) > 20:
+                    return Response(
+                        {
+                            "error": "Maximum 20 documents allowed"
+                        },
+                        status=400
+                    )
+
+                allowed_extensions = {
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "xls",
+                    "xlsx",
+                    "ppt",
+                    "pptx",
+                    "jpg",
+                    "jpeg",
+                    "png",
+                }
+
+                for file in documents:
+
+                    extension = file.name.split(".")[-1].lower()
+
+                    if extension not in allowed_extensions:
+                        return Response(
+                            {
+                                "error": (
+                                    f"{file.name} has unsupported format. "
+                                    "Allowed: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG"
+                                )
+                            },
+                            status=400
+                        )
+
+                    if file.size > 10 * 1024 * 1024:
+                        return Response(
+                            {
+                                "error": (
+                                    f"{file.name} exceeds maximum size of 10 MB"
+                                )
+                            },
+                            status=400
+                        )
+
+                if not documents:
                     return Response({"error": "Please upload at least one document"}, status=400)
 
                 serializer = AuditorSerializer(data=request.data)

@@ -33,9 +33,21 @@ const emailRegex =
 
 const ALLOWED_TYPES = [
   "application/pdf",
+
   "application/msword",
+
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+  "application/vnd.ms-excel",
+
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+  "application/vnd.ms-powerpoint",
+
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+
   "image/jpeg",
+
   "image/png",
 ];
 
@@ -475,6 +487,23 @@ const filteredAuditors =
                 e.target.files && handleFiles(e.target.files)
               }
             />
+
+            <div className="mt-2 text-xs text-gray-500">
+
+            Supported formats:
+            PDF, DOC, DOCX, XLS, XLSX,
+            PPT, PPTX, JPG, JPEG, PNG
+
+            <br />
+
+            Maximum file size:
+            10 MB per file
+
+            <br />
+
+            Multiple documents supported
+
+          </div>
 
             {documents.length > 0 && (
               <div className="mt-4 space-y-2">

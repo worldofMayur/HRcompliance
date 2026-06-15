@@ -3,9 +3,41 @@ from .models import Auditor, AuditorDocument
 
 
 class AuditorDocumentSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = AuditorDocument
         fields = ["id", "document", "uploaded_at"]
+
+    def validate_document(self, file):
+
+        allowed_extensions = [
+            "pdf",
+            "doc",
+            "docx",
+            "xls",
+            "xlsx",
+            "ppt",
+            "pptx",
+            "jpg",
+            "jpeg",
+            "png",
+        ]
+
+        extension = file.name.split(".")[-1].lower()
+
+        if extension not in allowed_extensions:
+            raise serializers.ValidationError(
+                "Allowed formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG"
+            )
+
+        max_size = 10 * 1024 * 1024
+
+        if file.size > max_size:
+            raise serializers.ValidationError(
+                "Maximum file size allowed is 10 MB"
+            )
+
+        return file
 
 
 class AuditorSerializer(serializers.ModelSerializer):
