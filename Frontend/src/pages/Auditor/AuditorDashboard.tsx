@@ -1652,9 +1652,9 @@ const canFreezeReport =
 
 </div>
 
-<div className="mt-4 flex justify-between items-start gap-6">
+<div className="mt-4 flex justify-between gap-6">
 
-  <div className="w-[30%] flex justify-end self-start pt-1">
+  <div className="w-[65%]">
 
     {remarksData.length > 0 && (
 
@@ -1726,9 +1726,9 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[30%] flex justify-end self-start">
+<div className="w-[30%] flex justify-end">
 
-<div className="w-full max-w-[380px] flex flex-col gap-2">
+<div className="w-full max-w-[380px] flex flex-col gap-3">
 
   <Button
     type="primary"
