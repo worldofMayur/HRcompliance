@@ -1724,6 +1724,7 @@ const canFreezeReport =
 
 </div>
 </div>
+</div>
     {/* 🔥 SCROLL AREA */}
     <div className="flex-1 overflow-y-auto p-4">
 
