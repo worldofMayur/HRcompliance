@@ -1914,7 +1914,7 @@ const canFreezeReport =
                   bordered
                   size="small"
                   scroll={{
-                    y: 350,
+                    y: 450,
                     x: 1800
                   }}
                 />
