@@ -525,17 +525,25 @@ const handleSubmit = async () => {
     return;
   }
 
-  const hasFile = tableData.some(
-    (r) => r.fileList.length > 0
-  );
-
-  if (!hasFile) {
-    message.error("Upload at least one document.");
+  if (!generalRemark.trim()) {
+    message.error("Please enter general remark.");
     return;
   }
 
-  if (!generalRemark.trim()) {
-    message.error("Please enter general remark.");
+  // ================= REQUIRED DOCUMENT VALIDATION =================
+
+  const missingDocs = tableData.filter(
+    (row) =>
+      !row.isAdditional &&
+      row.fileList.length === 0
+  );
+
+  if (missingDocs.length > 0) {
+
+  message.error(
+    `Please upload all mandatory documents before submitting. Missing: ${missingDocs.length}`
+  );
+
     return;
   }
 
@@ -1275,10 +1283,6 @@ if (effectiveReuploadMode) {
       !selectedBranch ||
 
       !selectedPeriod ||
-
-      tableData.every(
-        r => r.fileList.length === 0
-      ) ||
 
       !generalRemark.trim()
     }
