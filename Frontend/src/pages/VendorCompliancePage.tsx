@@ -941,7 +941,13 @@ if (effectiveReuploadMode) {
           px-3 py-1
         ">
           <span className="text-xs font-medium text-amber-700">
-            Remaining: {totalDocs - uploadedCount}
+            Remaining: {
+              tableData.filter(
+                r =>
+                  !r.isAdditional &&
+                  r.fileList.length === 0
+              ).length
+            }
           </span>
         </div>
 
