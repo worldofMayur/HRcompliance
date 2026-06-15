@@ -756,6 +756,7 @@ class DownloadAuditDocumentsZipAPIView(APIView):
             .select_related(
                 "vendor",
                 "branch",
+                "branch__principal_employer",
                 "document"
             )
             .prefetch_related(
@@ -789,11 +790,7 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
         first = submissions.first()
 
-        zip_filename = (
-            f"{clean(first.vendor.short_name)}_"
-            f"{clean(first.branch.short_name)}_"
-            f"{clean(audit_period)}.zip"
-        )
+        zip_filename = f"{root_folder}.zip"
 
         # Prevent duplicate files
         added_cc_files = set()
@@ -806,6 +803,15 @@ class DownloadAuditDocumentsZipAPIView(APIView):
         branch_slug = clean(first.branch.short_name)
 
         period_slug = clean(audit_period)
+
+        root_folder = (
+            f"{vendor_slug} - "
+            f"{pe_slug} - "
+            f"{branch_slug} - "
+            f"{period_slug}"
+        )
+
+        zip_filename = f"{root_folder}.zip"
 
         with zipfile.ZipFile(
             buffer,
@@ -835,7 +841,13 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
                             zip_file.write(
                                 sub.main_file.path,
-                                arcname=sub.main_file.name
+                                arcname=os.path.join(
+                                    root_folder,
+                                    "Main Documents",
+                                    os.path.basename(
+                                        sub.main_file.name
+                                    )
+                                )
                             )
 
                             added_files.add(
@@ -864,7 +876,13 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
                                 zip_file.write(
                                     version.file.path,
-                                    arcname=version.file.name
+                                    arcname=os.path.join(
+                                        root_folder,
+                                        "Reuploaded Documents",
+                                        os.path.basename(
+                                            version.file.name
+                                        )
+                                    )
                                 )
 
                                 added_files.add(
@@ -889,22 +907,11 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                                     supp.file.name
                                 )
 
-                                base_folder = os.path.join(
-                                    vendor_slug,
-                                    pe_slug,
-                                    branch_slug,
-                                    period_slug
-                                )
-
-                                path_parts = supp.file.name.split("/")
-
-                                base_path = "/".join(path_parts[:-2])
-
                                 zip_file.write(
                                     supp.file.path,
                                     arcname=os.path.join(
-                                        base_path,
-                                        "additional_files",
+                                        root_folder,
+                                        "Additional Documents",
                                         os.path.basename(
                                             supp.file.name
                                         )
@@ -935,7 +942,13 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
                                 zip_file.write(
                                     exc.file.path,
-                                    arcname=exc.file.name
+                                    arcname=os.path.join(
+                                        root_folder,
+                                        "Exceptional Approval Documents",
+                                        os.path.basename(
+                                            exc.file.name
+                                        )
+                                    )
                                 )
 
                                 added_files.add(
@@ -975,7 +988,8 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                                 sub.clearance_certificate.path,
 
                                 arcname=os.path.join(
-                                    "compliance_clearance_certificate",
+                                    root_folder,
+                                    "CC Certificate",
                                     cc_basename
                                 )
                             )
@@ -1014,7 +1028,8 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                             zip_file.write(
                                 sub.audit_report_pdf.path,
                                 arcname=os.path.join(
-                                    "compliance_clearance_certificate",
+                                    root_folder,
+                                    "Audit Report",
                                     report_basename
                                 )
                             )
