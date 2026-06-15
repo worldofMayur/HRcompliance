@@ -293,6 +293,7 @@ export default function VendorCompliancePage() {
 
     const hasReuploadDocs =
       reuploadMode ||
+      failedEntries.length > 0 ||
       data.some(
         (doc: any) =>
           doc.workflow_status ===
@@ -308,7 +309,25 @@ console.log(
   failedDocIds
 );
 
-const rows: DocumentRow[] = data.map(
+const filteredDocs =
+  failedEntries.length > 0
+    ? data.filter((doc: any) =>
+        failedEntries.some(
+          (f: any) =>
+            Number(f.document_id) === Number(doc.id)
+        )
+      )
+    : (
+        hasReuploadDocs
+          ? data.filter(
+              (doc: any) =>
+                doc.workflow_status ===
+                "REUPLOAD_REQUESTED"
+            )
+          : data
+      );
+
+const rows: DocumentRow[] = filteredDocs.map(
   (doc: DocumentType) => ({
 
     key: `doc-${doc.id}`,
@@ -1134,28 +1153,45 @@ if (effectiveReuploadMode) {
                   )}
 
                   {record.fileList.length > 0 ? (
-                  <div className="
-                    mt-2
-                    flex items-center gap-2
-                    rounded-lg
-                    border border-emerald-100
-                    bg-emerald-50/40
-                    px-2.5 py-2
-                  ">
-
-                    <span className="text-[11px] text-emerald-600">
-                      ✓
-                    </span>
-
-                    <p className="
-                      text-[11px]
-                      font-medium
-                      text-emerald-700
-                      truncate
-                    ">
+                  <div
+                    className="
+                      mt-2
+                      flex items-center
+                      justify-between
+                      rounded-lg
+                      border border-emerald-100
+                      bg-emerald-50/40
+                      px-2.5 py-2
+                    "
+                  >
+                    <p
+                      className="
+                        text-[11px]
+                        font-medium
+                        text-emerald-700
+                        truncate
+                        flex-1
+                      "
+                    >
                       {record.fileList[0].name}
                     </p>
 
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateRow(record.key, {
+                          fileList: [],
+                        })
+                      }
+                      className="
+                        ml-2
+                        text-red-500
+                        font-bold
+                        hover:text-red-700
+                      "
+                    >
+                      ✕
+                    </button>
                   </div>
                   ) : (
                     <p className="

@@ -20,6 +20,7 @@ from django.utils.timezone import now
 import calendar
 import datetime
 from .compliance_models import VendorComplianceSubmission
+from .constants import WorkflowStatus
 
 
 def parse_period(period):
@@ -582,8 +583,20 @@ class VendorMappedDocumentsAPIView(APIView):
                     if submission else "",
 
                 "workflow_status":
-                    submission.workflow_status
-                    if submission else "",
+                (
+                    WorkflowStatus.REUPLOAD_REQUESTED
+                    if (
+                        submission
+                        and submission.is_reuploaded
+                        and submission.workflow_status
+                        == WorkflowStatus.REUPLOADED
+                    )
+                    else (
+                        submission.workflow_status
+                        if submission
+                        else ""
+                    )
+                ),
             })
 
         return Response(data)
