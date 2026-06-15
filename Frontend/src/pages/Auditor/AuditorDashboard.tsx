@@ -1799,9 +1799,13 @@ const canFreezeReport =
 
 )}
 
-</div>
-</div>
-</div>
+</div> {/* max-w-[420px] */}
+
+</div> {/* w-[45%] */}
+
+</div> {/* flex justify-between */}
+
+</div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
     {/* 🔥 SCROLL AREA */}
     <div className="flex-1 overflow-y-auto p-4">
 
