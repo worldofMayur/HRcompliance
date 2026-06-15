@@ -790,8 +790,6 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
         first = submissions.first()
 
-        zip_filename = f"{root_folder}.zip"
-
         # Prevent duplicate files
         added_cc_files = set()
         added_files = set()
