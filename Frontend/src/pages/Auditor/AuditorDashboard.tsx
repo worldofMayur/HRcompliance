@@ -1612,7 +1612,6 @@ const canFreezeReport =
 
 {remarksData.length > 0 && (
 
-  <div className="mt-3 space-y-2">
 
 {remarksData.length > 0 && (
 
@@ -1622,7 +1621,7 @@ const canFreezeReport =
       Vendor Remark History
     </div>
 
-    <div className="space-y-2 max-h-[220px] overflow-y-auto">
+    <div className="space-y-2 max-h-[160px] overflow-y-auto">
 
       {remarksData.map((remark, index) => (
 
@@ -1632,23 +1631,21 @@ const canFreezeReport =
         >
 
           <div
-            className="
-              p-3
-              bg-amber-50
-              border
-              border-amber-200
-              rounded-lg
-              cursor-pointer
-            "
+          className="
+            px-3
+            py-2
+            bg-amber-50
+            border
+            border-amber-200
+            rounded-md
+          "
           >
 
             <div className="flex justify-between">
 
-              <span className="font-medium text-amber-700">
-
-                {remark.document_name}
-
-              </span>
+            <span className="font-medium text-amber-700">
+              Vendor Remark
+            </span>
 
               <span className="text-xs text-gray-500">
 
@@ -1662,10 +1659,8 @@ const canFreezeReport =
 
             </div>
 
-            <div className="text-sm mt-1 truncate">
-
+            <div className="text-sm text-gray-800">
               {remark.remark}
-
             </div>
 
           </div>
@@ -1680,12 +1675,10 @@ const canFreezeReport =
 
 )}
 
-  </div>
 
 )}
 
-  <div className="flex justify-end mt-3">
-
+  <div className="mt-3">
     <Button
       type="primary"
       icon={<DownloadOutlined />}
@@ -1693,7 +1686,6 @@ const canFreezeReport =
     >
       Download Audit Documents
     </Button>
-
   </div>
 
 </div>
