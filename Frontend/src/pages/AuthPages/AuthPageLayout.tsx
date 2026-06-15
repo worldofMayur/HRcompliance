@@ -17,10 +17,10 @@ export default function AuthLayout({
         </div>
 
         {/* RIGHT - CLEAN BRANDING */}
-        <div className="relative hidden lg:flex lg:w-1/2 bg-[#0B1120]">
+        <div className="relative hidden lg:flex lg:w-1/2 bg-[#071A12]">
           
           {/* very subtle gradient */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.18),transparent_35%)]" />
 
           {/* content */}
           <div className="relative z-10 flex h-full w-full flex-col justify-center px-12 xl:px-20">
@@ -50,7 +50,7 @@ export default function AuthLayout({
             <div className="max-w-xl">
               <h2 className="text-4xl xl:text-5xl font-semibold leading-[1.1] tracking-[-0.05em] text-white">
                 Modern compliance
-                <span className="block text-blue-400">
+                <span className="block text-emerald-400">
                   built for enterprises.
                 </span>
               </h2>
