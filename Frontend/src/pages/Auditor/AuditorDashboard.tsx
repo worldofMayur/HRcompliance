@@ -1654,7 +1654,7 @@ const canFreezeReport =
 
 <div className="mt-4 flex justify-between gap-6">
 
-  <div className="w-[65%]">
+  <div className="w-[45%]">
 
     {remarksData.length > 0 && (
 
@@ -1914,7 +1914,7 @@ const canFreezeReport =
                   bordered
                   size="small"
                   scroll={{
-                    y: 450,
+                    y: 400,
                     x: 1800
                   }}
                 />
