@@ -1,12 +1,19 @@
 from rest_framework import serializers
 from .models import Vendor, VendorDocument
 from .models import VendorCCEmail
+from master_apps.principle_employee.validators import (
+    validate_document_file
+)
 
 
 class VendorDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = VendorDocument
         fields = "__all__"
+
+    def validate_document(self, file):
+        validate_document_file(file)
+        return file
 
 
 class VendorSerializer(serializers.ModelSerializer):

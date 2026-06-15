@@ -7,6 +7,10 @@ from master_apps.vendor.path_manager import (
     generate_unique_filename
 )
 
+from master_apps.principle_employee.validators import (
+    validate_document_file
+)
+
 
 def vendor_document_upload_path(
     instance,
@@ -65,7 +69,10 @@ class VendorDocument(models.Model):
         on_delete=models.CASCADE,
         related_name="documents"
     )
-    document = models.FileField(upload_to=vendor_document_upload_path)
+    document = models.FileField(
+        upload_to=vendor_document_upload_path,
+        validators=[validate_document_file]
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

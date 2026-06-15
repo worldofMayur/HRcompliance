@@ -31,6 +31,29 @@ import api from "../../utils/api";
 const emailRegex =
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+const MAX_FILE_SIZE = 3 * 1024 * 1024;
+
+const ALLOWED_EXTENSIONS = [
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "png",
+  "jpg",
+  "jpeg",
+  "txt",
+  "csv",
+  "msg",
+  "eml",
+  "rtf",
+  "odt",
+  "ods",
+  "odp",
+];
+
 export default function VendorForm() {
 
   /* =========================
@@ -149,11 +172,41 @@ const fetchVendors = async () => {
      FILE HANDLERS
   ========================= */
   const handleFiles = (files: FileList) => {
+
     const valid: File[] = [];
+
     for (const f of Array.from(files)) {
-      if (documents.some((d) => d.name === f.name)) continue;
+
+      const ext =
+        f.name.split(".").pop()?.toLowerCase();
+
+      if (!ALLOWED_EXTENSIONS.includes(ext || "")) {
+        alert(
+          `Unsupported file type: ${ext}`
+        );
+        continue;
+      }
+
+      if (f.size > MAX_FILE_SIZE) {
+        alert(
+          `${f.name} exceeds 3 MB limit`
+        );
+        continue;
+      }
+
+      if (
+        documents.some(
+          (d) =>
+            d.name === f.name &&
+            d.size === f.size
+        )
+      ) {
+        continue;
+      }
+
       valid.push(f);
     }
+
     setDocuments((p) => [...p, ...valid]);
   };
 
@@ -454,12 +507,40 @@ const fetchVendors = async () => {
     {/* DOCUMENT CARD */}
     <ComponentCard title="Documents">
 
-      <FileInput
-        multiple
+    <FileInput
+      multiple
+      accept="
+        .pdf,
+        .doc,
+        .docx,
+        .xls,
+        .xlsx,
+        .ppt,
+        .pptx,
+        .png,
+        .jpg,
+        .jpeg,
+        .txt,
+        .csv,
+        .msg,
+        .eml,
+        .rtf,
+        .odt,
+        .ods,
+        .odp
+      "
         onChange={(e) =>
           e.target.files && handleFiles(e.target.files)
         }
       />
+
+      <p className="mt-2 text-xs text-gray-500">
+        Supported:
+        PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX,
+        PNG, JPG, JPEG, TXT, CSV,
+        MSG, EML, RTF, ODT, ODS, ODP
+        (Max 3 MB per file)
+      </p>
 
       {/* DOCUMENT LIST */}
       {documents.length > 0 && (
@@ -472,6 +553,9 @@ const fetchVendors = async () => {
             >
               <span className="truncate text-gray-700">
                 📄 {f.name}
+                <span className="ml-2 text-gray-400 text-xs">
+                  ({(f.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
               </span>
 
               <button
