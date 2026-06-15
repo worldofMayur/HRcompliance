@@ -1245,6 +1245,9 @@ const canFreezeReport =
       allowedFreezeStatuses.includes(row.status)
   );
 
+  const selectedExceptionalFile =
+  Object.values(exceptionalFiles)[0] as any;
+
   /* ================= UI ================= */
 
   return (
@@ -1671,7 +1674,7 @@ const canFreezeReport =
 
         </div>
 
-<div className="space-y-1 max-h-[55px] overflow-y-auto">
+<div className="space-y-1 max-h-[70px] overflow-y-auto">
           {remarksData.map((remark, index) => (
 
             <Tooltip
@@ -1724,7 +1727,7 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[25%] flex justify-end -mt-2">
+<div className="w-[35%] flex justify-end">
 <div className="w-full max-w-[380px] flex flex-col gap-3">
 
   <Button
@@ -1772,53 +1775,17 @@ const canFreezeReport =
       showUploadList={false}
     >
 
-      <Button icon={<UploadOutlined />}>
-        Upload Supporting Document
-      </Button>
+    <Button icon={<UploadOutlined />}>
+      Upload Supporting Document
+    </Button>
 
-      {Object.values(exceptionalFiles)[0] && (
-  <div className="text-xs text-green-600 mt-1">
-    Selected:
-    {(Object.values(exceptionalFiles)[0] as File).name}
-  </div>
-)}
+    {selectedExceptionalFile && (
+      <div className="text-xs text-green-600 mt-1">
+        Selected: {selectedExceptionalFile.name}
+      </div>
+    )}
 
     </Upload>
-
-
-  {hasExceptionalApproval && (
-
-  <div
-    className="
-      p-2
-      rounded-lg
-      border
-      border-orange-200
-      bg-orange-50
-    "
-  >
-
-    <div className="font-semibold text-orange-700">
-      Exceptional Approval Evidence Required
-    </div>
-
-    <div className="mt-2 text-sm text-gray-700">
-
-      • Upload supporting evidence
-
-      <br />
-
-      • PDF, JPG, PNG, ZIP supported
-
-      <br />
-
-      • Mandatory before submission
-
-    </div>
-
-  </div>
-
-)}
 
 </div> {/* max-w-[420px] */}
 
