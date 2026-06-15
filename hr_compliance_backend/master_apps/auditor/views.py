@@ -2587,16 +2587,14 @@ class AuditorComplianceRemarksAPIView(APIView):
 
         for sub in submissions:
 
-            remark = (
-                sub.reupload_remark
-                if sub.reupload_remark
-                else sub.general_remark
-            )
+            # ONLY VENDOR REMARKS
+            remark = sub.general_remark
 
-            if not remark:
+            if not remark or not remark.strip():
                 continue
 
             timeline.append({
+
                 "document_name":
                     sub.document.name if sub.document else "",
 
