@@ -1612,9 +1612,6 @@ const canFreezeReport =
 
 {remarksData.length > 0 && (
 
-
-{remarksData.length > 0 && (
-
   <div className="mt-4 w-1/2">
 
     <div className="font-semibold text-amber-700 mb-2">
@@ -1631,30 +1628,26 @@ const canFreezeReport =
         >
 
           <div
-          className="
-            px-3
-            py-2
-            bg-amber-50
-            border
-            border-amber-200
-            rounded-md
-          "
+            className="
+              px-3
+              py-2
+              bg-amber-50
+              border
+              border-amber-200
+              rounded-md
+            "
           >
 
             <div className="flex justify-between">
 
-            <span className="font-medium text-amber-700">
-              Vendor Remark
-            </span>
+              <span className="font-medium text-amber-700">
+                Vendor Remark
+              </span>
 
               <span className="text-xs text-gray-500">
-
                 {remark.created_at
-                  ? new Date(
-                      remark.created_at
-                    ).toLocaleString("en-IN")
+                  ? new Date(remark.created_at).toLocaleString("en-IN")
                   : "-"}
-
               </span>
 
             </div>
@@ -1672,9 +1665,6 @@ const canFreezeReport =
     </div>
 
   </div>
-
-)}
-
 
 )}
 
