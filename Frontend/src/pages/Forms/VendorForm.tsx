@@ -636,7 +636,7 @@ const fetchVendors = async () => {
 </div>
 
           <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <Table className="min-w-[1700px]">
+            <Table className="w-full">
               <TableHeader className="sticky top-0 z-10 bg-gray-50">
                 <TableRow className="bg-gray-50">
                   <TableCell isHeader className="w-12 px-6 py-4" />
@@ -714,11 +714,13 @@ const fetchVendors = async () => {
     {v.contact_person}
   </TableCell>
 
-  <TableCell className="px-4 py-4 text-sm text-gray-700 align-top min-w-[500px] whitespace-normal leading-6">
-    {v.ho_address}
+  <TableCell className="px-4 py-4 text-sm text-gray-700 w-[320px]">
+    <div className="line-clamp-2">
+      {v.ho_address}
+    </div>
   </TableCell>
 
-  <TableCell className="px-4 py-4 text-sm text-indigo-600 align-top min-w-[220px]">
+  <TableCell className="px-4 py-4 text-sm text-indigo-600 w-[220px]">
     {v.email}
   </TableCell>
 
