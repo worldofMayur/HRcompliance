@@ -1292,15 +1292,9 @@ finally {
 
     <div className="flex items-center justify-between">
 
-    <TableCell
-      className={`px-6 py-5 ${
-        pe.status === "Active"
-          ? "text-green-700"
-          : "text-red-700"
-      }`}
-    >
-      {pe.status}
-    </TableCell>
+    <span className="text-[10px] text-green-600 font-medium">
+      Active
+    </span>
 
       <span className="text-[10px] text-green-600 font-medium">
         Running
