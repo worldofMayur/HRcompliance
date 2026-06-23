@@ -105,12 +105,6 @@ class VendorCreateAPIView(APIView):
                 # =====================================
                 documents = request.FILES.getlist("document")
 
-                if not documents:
-                    return Response(
-                        {"error": "Please upload at least one document"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
                 MAX_FILE_SIZE = 3 * 1024 * 1024  # 3MB
 
                 for file in documents:

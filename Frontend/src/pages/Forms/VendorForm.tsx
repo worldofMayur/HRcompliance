@@ -52,6 +52,7 @@ const ALLOWED_EXTENSIONS = [
   "odt",
   "ods",
   "odp",
+  "zip",
 ];
 
 export default function VendorForm() {
@@ -92,12 +93,13 @@ export default function VendorForm() {
         .filter((v) => {
           const searchText = search.toLowerCase();
 
-          return (
-            v.name?.toLowerCase().includes(searchText) ||
-            v.short_name?.toLowerCase().includes(searchText) ||
-            v.email?.toLowerCase().includes(searchText) ||
-            v.contact_person?.toLowerCase().includes(searchText)
-          );
+        return (
+          v.name?.toLowerCase().includes(searchText) ||
+          v.short_name?.toLowerCase().includes(searchText) ||
+          v.email?.toLowerCase().includes(searchText) ||
+          v.contact_person?.toLowerCase().includes(searchText) ||
+          v.ho_address?.toLowerCase().includes(searchText)
+        );
         })
 
         // ✅ ALPHABETICAL SORT
@@ -220,11 +222,6 @@ const fetchVendors = async () => {
   const handleSubmit = async () => {
     if (Object.values(formData).some((v) => !v)) {
       alert("All fields are required");
-      return;
-    }
-
-    if (!documents.length && !isEditMode) {
-      alert("At least one document is required");
       return;
     }
 
@@ -462,6 +459,8 @@ const fetchVendors = async () => {
           name="mobile"
           value={formData.mobile}
           onChange={handleChange}
+          maxLength={10}
+          inputMode="numeric"
         />
       </div>
 
@@ -527,7 +526,8 @@ const fetchVendors = async () => {
         .rtf,
         .odt,
         .ods,
-        .odp
+        .odp,
+        .zip
       "
         onChange={(e) =>
           e.target.files && handleFiles(e.target.files)
@@ -538,7 +538,7 @@ const fetchVendors = async () => {
         Supported:
         PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX,
         PNG, JPG, JPEG, TXT, CSV,
-        MSG, EML, RTF, ODT, ODS, ODP
+        MSG, EML, RTF, ODT, ODS, ODP, ZIP
         (Max 3 MB per file)
       </p>
 
@@ -642,9 +642,11 @@ const fetchVendors = async () => {
                     "Vendor",
                     "Short Name",
                     "Contact Person",
+                    "Address As Per Agreement",
                     "Email",
                     "Mobile",
                     "Nature of Services",
+                    "Documents",
                     "Status",
                   ].map((h) => (
                     <TableCell
@@ -711,6 +713,10 @@ const fetchVendors = async () => {
                       {v.contact_person}
                     </TableCell>
 
+                    <TableCell className="px-6 py-5 min-w-[400px] whitespace-normal">
+                      {v.ho_address}
+                    </TableCell>
+
                     <TableCell className="px-5 py-4 text-md text-indigo-600">
                       {v.email}
                     </TableCell>
@@ -721,6 +727,16 @@ const fetchVendors = async () => {
 
                     <TableCell className="px-5 py-4 text-sm text-gray-600">
                       {v.nature_of_services}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-sm">
+                      {v.documents?.length ? (
+                        <span className="text-blue-600 font-medium">
+                          {v.documents.length} File(s)
+                        </span>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
 
                     <TableCell className="px-5 py-4 text-sm">
