@@ -49,6 +49,9 @@ const ALLOWED_TYPES = [
   "image/jpeg",
 
   "image/png",
+
+  "application/zip",
+  "application/x-zip-compressed",
 ];
 
 const dateInputClass =
@@ -62,6 +65,14 @@ const formatDate = (dateString: string) => {
     month: "2-digit",
     year: "2-digit",
   });
+};
+
+const formatForAPI = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 };
 
 /* =========================
@@ -345,6 +356,7 @@ const filteredAuditors =
       tableData.map((a) => ({
         Company: a.company,
         ShortName: a.short_name,
+        Address: a.ho_address,
         Email: a.email,
         Mobile: a.mobile,
         StartDate: a.start_date,
@@ -438,7 +450,7 @@ const filteredAuditors =
                   setStartDateObj(date);
 
                   if (date) {
-                    const formatted = date.toISOString().split("T")[0];
+                    const formatted = formatForAPI(date);
 
                     setFormData((p) => ({
                       ...p,
@@ -461,7 +473,7 @@ const filteredAuditors =
                   setEndDateObj(date);
 
                   if (date) {
-                    const formatted = date.toISOString().split("T")[0];
+                    const formatted = formatForAPI(date);
 
                     setFormData((p) => ({
                       ...p,
@@ -628,6 +640,7 @@ const filteredAuditors =
                     "Email",
                     "Start Date (DD/MM/YY)",
                     "End Date (DD/MM/YY)",
+                    "Status",
                   ].map((h) => (
                     <TableCell
                       key={h}
