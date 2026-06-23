@@ -67,6 +67,10 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const formatForAPI = (date: Date) => {
+  return date.toISOString().split("T")[0];
+};
+
 
 /* =========================
    COMPONENT
