@@ -360,6 +360,7 @@ const fetchVendors = async () => {
         "Vendor",
         "Short Name",
         "Contact Person",
+        "Address As Per Agreement",
         "Email",
         "Mobile",
         "Nature of Services",
@@ -369,6 +370,7 @@ const fetchVendors = async () => {
         v.name,
         v.short_name,
         v.contact_person,
+        v.ho_address,
         v.email,
         v.mobile,
         v.nature_of_services,
@@ -634,7 +636,7 @@ const fetchVendors = async () => {
 </div>
 
           <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <Table>
+            <Table className="min-w-[1700px]">
               <TableHeader className="sticky top-0 z-10 bg-gray-50">
                 <TableRow className="bg-gray-50">
                   <TableCell isHeader className="w-12 px-6 py-4" />
@@ -677,107 +679,99 @@ const fetchVendors = async () => {
 
             filteredVendors.map((v) => (
 
-                  <TableRow
-                    key={v.id}
-                    className="
-                      border-t
-                      transition-all
-                      duration-200
-                      odd:bg-white
-                      even:bg-gray-50/40
-                      hover:bg-indigo-50
-                    "
-                  >
-                    <TableCell className="px-6 py-5">
-                      <Checkbox
-                        checked={selectedRows.includes(v.id)}
-                        onChange={(e) =>
-                          setSelectedRows((prev) =>
-                            e.target.checked
-                              ? [...prev, v.id]
-                              : prev.filter((id) => id !== v.id)
-                          )
-                        }
-                      />
-                    </TableCell>
+<TableRow
+  key={v.id}
+  className="
+    border-t
+    odd:bg-white
+    even:bg-gray-50/40
+    hover:bg-indigo-50
+    align-top
+  "
+>
+  <TableCell className="px-4 py-4 align-top">
+    <Checkbox
+      checked={selectedRows.includes(v.id)}
+      onChange={(e) =>
+        setSelectedRows((prev) =>
+          e.target.checked
+            ? [...prev, v.id]
+            : prev.filter((id) => id !== v.id)
+        )
+      }
+    />
+  </TableCell>
 
-                    <TableCell className="px-6 py-5 font-semibold text-gray-800">
-                      {v.name}
-                    </TableCell>
+  <TableCell className="px-4 py-4 font-semibold text-gray-800 align-top min-w-[180px]">
+    {v.name}
+  </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
-                      {v.short_name}
-                    </TableCell>
+  <TableCell className="px-4 py-4 text-sm text-gray-600 align-top min-w-[120px]">
+    {v.short_name}
+  </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
-                      {v.contact_person}
-                    </TableCell>
+  <TableCell className="px-4 py-4 text-sm text-gray-600 align-top min-w-[140px]">
+    {v.contact_person}
+  </TableCell>
 
-                    <TableCell className="px-6 py-4 min-w-[550px] max-w-[650px] whitespace-normal break-words leading-6 align-top">
-                      {v.ho_address}
-                    </TableCell>
+  <TableCell className="px-4 py-4 text-sm text-gray-700 align-top min-w-[500px] whitespace-normal leading-6">
+    {v.ho_address}
+  </TableCell>
 
-                    <TableCell className="px-5 py-4 text-md text-indigo-600">
-                      {v.email}
-                    </TableCell>
+  <TableCell className="px-4 py-4 text-sm text-indigo-600 align-top min-w-[220px]">
+    {v.email}
+  </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
-                      {v.mobile}
-                    </TableCell>
+  <TableCell className="px-4 py-4 text-sm text-gray-600 align-top min-w-[120px]">
+    {v.mobile}
+  </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
-                      {v.nature_of_services}
-                    </TableCell>
+  <TableCell className="px-4 py-4 text-sm text-gray-600 align-top min-w-[180px]">
+    {v.nature_of_services}
+  </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm">
-                      {v.documents?.length ? (
-                        <a
-                          href="#"
-                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                          onClick={async (e) => {
+  <TableCell className="px-4 py-4 text-sm align-top min-w-[180px]">
+    {v.documents?.length ? (
+      <a
+        href="#"
+        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+        onClick={async (e) => {
+          e.preventDefault();
 
-                            e.preventDefault();
+          const response = await api.get(
+            `/api/vendor/${v.id}/download-documents/`,
+            {
+              responseType: "blob",
+            }
+          );
 
-                            const response = await api.get(
-                              `/api/vendor/${v.id}/download-documents/`,
-                              {
-                                responseType: "blob",
-                              }
-                            );
+          const url = window.URL.createObjectURL(
+            new Blob([response.data])
+          );
 
-                            const url =
-                              window.URL.createObjectURL(
-                                new Blob([response.data])
-                              );
+          const link = document.createElement("a");
 
-                            const link =
-                              document.createElement("a");
+          link.href = url;
+          link.download = `${v.short_name}_documents.zip`;
 
-                            link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
 
-                            link.download =
-                              `${v.short_name}_documents.zip`;
+          window.URL.revokeObjectURL(url);
+        }}
+      >
+        Download Documents
+      </a>
+    ) : (
+      "—"
+    )}
+  </TableCell>
 
-                            document.body.appendChild(link);
-
-                            link.click();
-
-                            link.remove();
-
-                            window.URL.revokeObjectURL(url);
-                          }}
-                        >
-                          Download Documents
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-
-                    <TableCell className="px-5 py-4 text-sm">
-                      <Badge color="success">Active</Badge>
-                    </TableCell>
-                  </TableRow>
+  <TableCell className="px-4 py-4 align-top">
+    <Badge color="success">Active</Badge>
+  </TableCell>
+</TableRow>
                 ))
               )}
 
