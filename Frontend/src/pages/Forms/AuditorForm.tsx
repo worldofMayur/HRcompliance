@@ -220,11 +220,6 @@ const filteredAuditors =
       return;
     }
 
-    if (!editingId && !documents.length) {
-      alert("At least one document is required");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -413,7 +408,18 @@ const filteredAuditors =
 
             <div>
               <Label>Mobile</Label>
-              <Input name="mobile" value={formData.mobile} onChange={handleChange} />
+              <Input
+                name="mobile"
+                value={formData.mobile}
+                maxLength={10}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setFormData((p) => ({
+                    ...p,
+                    mobile: value.slice(0, 10),
+                  }));
+                }}
+              />
             </div>
 
             <div>

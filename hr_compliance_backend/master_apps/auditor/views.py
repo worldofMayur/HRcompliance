@@ -664,14 +664,6 @@ class AuditorCreateAPIView(APIView):
 
                 documents = request.FILES.getlist("documents")
 
-                if not documents:
-                    return Response(
-                        {
-                            "error": "Please upload at least one document"
-                        },
-                        status=400
-                    )
-
                 if len(documents) > 20:
                     return Response(
                         {
@@ -691,6 +683,7 @@ class AuditorCreateAPIView(APIView):
                     "jpg",
                     "jpeg",
                     "png",
+                    "zip",
                 }
 
                 for file in documents:
@@ -702,7 +695,7 @@ class AuditorCreateAPIView(APIView):
                             {
                                 "error": (
                                     f"{file.name} has unsupported format. "
-                                    "Allowed: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG"
+                                    "Allowed: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, ZIP"
                                 )
                             },
                             status=400
@@ -717,9 +710,6 @@ class AuditorCreateAPIView(APIView):
                             },
                             status=400
                         )
-
-                if not documents:
-                    return Response({"error": "Please upload at least one document"}, status=400)
 
                 serializer = AuditorSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
