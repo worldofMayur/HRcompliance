@@ -1158,41 +1158,42 @@ finally {
                     </TableCell>
                     <TableCell className="px-6 py-5">{pe.rules_applicable}</TableCell>
                     <TableCell className="px-6 py-5">
-                    {pe.documents?.length ? (
-                      <Button
-                        size="sm"
-                        onClick={async () => {
+                      {pe.documents?.length ? (
+                        <a
+                          href="#"
+                          onClick={async (e) => {
+                            e.preventDefault();
 
-                          const response = await api.get(
-                            `/api/principal-employer/${pe.id}/download-documents/`,
-                            {
-                              responseType: "blob",
-                            }
-                          );
+                            const response = await api.get(
+                              `/api/principal-employer/${pe.id}/download-documents/`,
+                              {
+                                responseType: "blob",
+                              }
+                            );
 
-                          const url = window.URL.createObjectURL(
-                            new Blob([response.data])
-                          );
+                            const url = window.URL.createObjectURL(
+                              new Blob([response.data])
+                            );
 
-                          const link = document.createElement("a");
+                            const link = document.createElement("a");
 
-                          link.href = url;
+                            link.href = url;
+                            link.download = `${pe.short_name}_documents.zip`;
 
-                          link.download =
-                            `${pe.short_name}_documents.zip`;
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
 
-                          link.click();
-
-                          window.URL.revokeObjectURL(url);
-
-                        }}
-                      >
-                        Download
-                      </Button>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
+                            window.URL.revokeObjectURL(url);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                        >
+                          Download Documents
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
                     <TableCell className="px-6 py-5 text-green-700">Active</TableCell>
                     <TableCell className="px-6 py-5">
                       <Button
