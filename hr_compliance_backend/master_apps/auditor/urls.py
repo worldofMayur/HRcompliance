@@ -15,6 +15,7 @@ from .views import (
     # =========================
     VendorNotificationAPIView,
     MarkNotificationReadAPIView,
+    DownloadAuditorDocumentsAPIView,
 
     # =========================
     # AUDITOR FLOW
@@ -77,6 +78,12 @@ urlpatterns = [
         "<int:pk>/delete/",
         AuditorDeleteAPIView.as_view(),
         name="auditor-delete"
+    ),
+
+    path(
+        "<int:auditor_id>/download-documents/",
+        DownloadAuditorDocumentsAPIView.as_view(),
+        name="auditor-download-documents"
     ),
 
     # =====================================================

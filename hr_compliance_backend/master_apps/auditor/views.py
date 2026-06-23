@@ -2135,6 +2135,62 @@ class AuditorDeleteAPIView(APIView):
 
         return Response({"message": "Auditor deleted successfully"})
 
+class DownloadAuditorDocumentsAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, auditor_id):
+
+        auditor = get_object_or_404(
+            Auditor,
+            id=auditor_id
+        )
+
+        documents = AuditorDocument.objects.filter(
+            auditor=auditor
+        )
+
+        if not documents.exists():
+            return Response(
+                {"error": "No documents found"},
+                status=404
+            )
+
+        buffer = BytesIO()
+
+        with zipfile.ZipFile(
+            buffer,
+            "w",
+            zipfile.ZIP_DEFLATED
+        ) as zip_file:
+
+            for doc in documents:
+
+                if (
+                    doc.document
+                    and os.path.exists(doc.document.path)
+                ):
+
+                    zip_file.write(
+                        doc.document.path,
+                        arcname=os.path.basename(
+                            doc.document.name
+                        )
+                    )
+
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer,
+            content_type="application/zip"
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="{auditor.short_name}_documents.zip"'
+        )
+
+        return response
+
 
 # ================= AUDITOR FLOW =================
 class AuditorMappedPEAPIView(APIView):

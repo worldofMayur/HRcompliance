@@ -645,6 +645,7 @@ const handleEditSelected = () => {
                     "Work Location",
                     "Mobile",
                     "Email",
+                    "Documents",
                     "Start Date (DD/MM/YY)",
                     "End Date (DD/MM/YY)",
                     "Status",
@@ -688,6 +689,58 @@ const handleEditSelected = () => {
                     <TableCell className="px-6 py-5 text-center">{a.ho_address}</TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.mobile}</TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.email}</TableCell>
+                    <TableCell className="px-6 py-5 text-center">
+
+                      {a.documents?.length ? (
+
+                        <a
+                          href="#"
+                          onClick={async (e) => {
+
+                            e.preventDefault();
+
+                            const response = await api.get(
+                              `/api/auditor/${a.id}/download-documents/`,
+                              {
+                                responseType: "blob",
+                              }
+                            );
+
+                            const url = window.URL.createObjectURL(
+                              new Blob([response.data])
+                            );
+
+                            const link =
+                              document.createElement("a");
+
+                            link.href = url;
+
+                            link.download =
+                              `${a.short_name}_documents.zip`;
+
+                            document.body.appendChild(link);
+
+                            link.click();
+
+                            link.remove();
+
+                            window.URL.revokeObjectURL(url);
+                          }}
+                          className="
+                            text-blue-600
+                            hover:text-blue-800
+                            hover:underline
+                            font-medium
+                          "
+                        >
+                          Download Documents
+                        </a>
+
+                      ) : (
+                        "—"
+                      )}
+
+                    </TableCell>
                     <TableCell className="px-6 py-5 text-center">
                       {formatDate(a.start_date)}
                     </TableCell>
