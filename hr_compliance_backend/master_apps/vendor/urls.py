@@ -4,6 +4,7 @@ from .views import (
     VendorListAPIView,
     VendorUpdateAPIView,
     VendorDeleteAPIView,
+    VendorDocumentZipAPIView
 )
 from .mapping_views import (
     VendorBranchMappingCreateAPIView,
@@ -48,6 +49,10 @@ urlpatterns = [
 
     # ✅ UPDATE API (FIXED URL)
     path("vendor-mapping/<int:pk>/", VendorBranchMappingUpdateAPIView.as_view()),
+        path(
+        "<int:vendor_id>/download-documents/",
+        VendorDocumentZipAPIView.as_view(),
+    ),
 
     # =========================
     # PE BRANCH DROPDOWN

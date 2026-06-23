@@ -19,6 +19,10 @@ from .models import Vendor, VendorDocument
 from .serializers import VendorSerializer, VendorDocumentSerializer
 from .models import VendorCCEmail
 from .serializers import VendorCCEmailSerializer
+import io
+import zipfile
+
+from django.http import HttpResponse
 
 User = get_user_model()
 
@@ -352,3 +356,46 @@ class VendorCCEmailAPIView(APIView):
             {"message": "CC emails saved successfully"},
             status=200
         )
+
+
+class VendorDocumentZipAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, vendor_id):
+
+        vendor = get_object_or_404(
+            Vendor,
+            pk=vendor_id
+        )
+
+        documents = VendorDocument.objects.filter(
+            vendor=vendor
+        )
+
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(
+            zip_buffer,
+            "w",
+            zipfile.ZIP_DEFLATED
+        ) as zip_file:
+
+            for doc in documents:
+
+                if doc.document and doc.document.path:
+
+                    zip_file.write(
+                        doc.document.path,
+                        arcname=doc.document.name.split("/")[-1]
+                    )
+
+        response = HttpResponse(
+            zip_buffer.getvalue(),
+            content_type="application/zip"
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="{vendor.short_name}_documents.zip"'
+        )
+
+        return response

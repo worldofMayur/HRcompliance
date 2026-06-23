@@ -666,7 +666,7 @@ const fetchVendors = async () => {
 
             <TableRow>
               <TableCell
-                colSpan={8}
+                colSpan={10}
                 className="py-10 text-center text-gray-500"
               >
                 No vendors found
@@ -713,9 +713,9 @@ const fetchVendors = async () => {
                       {v.contact_person}
                     </TableCell>
 
-                    <TableCell className="px-6 py-5 min-w-[400px] whitespace-normal">
-                      {v.ho_address}
-                    </TableCell>
+                  <TableCell className="px-6 py-5 min-w-[550px] max-w-[650px] whitespace-normal break-words leading-6">
+                    {v.ho_address}
+                  </TableCell>
 
                     <TableCell className="px-5 py-4 text-md text-indigo-600">
                       {v.email}
@@ -731,9 +731,44 @@ const fetchVendors = async () => {
 
                     <TableCell className="px-5 py-4 text-sm">
                       {v.documents?.length ? (
-                        <span className="text-blue-600 font-medium">
-                          {v.documents.length} File(s)
-                        </span>
+                        <a
+                          href="#"
+                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                          onClick={async (e) => {
+
+                            e.preventDefault();
+
+                            const response = await api.get(
+                              `/api/vendor/${v.id}/download-documents/`,
+                              {
+                                responseType: "blob",
+                              }
+                            );
+
+                            const url =
+                              window.URL.createObjectURL(
+                                new Blob([response.data])
+                              );
+
+                            const link =
+                              document.createElement("a");
+
+                            link.href = url;
+
+                            link.download =
+                              `${v.short_name}_documents.zip`;
+
+                            document.body.appendChild(link);
+
+                            link.click();
+
+                            link.remove();
+
+                            window.URL.revokeObjectURL(url);
+                          }}
+                        >
+                          Download Documents
+                        </a>
                       ) : (
                         "—"
                       )}
