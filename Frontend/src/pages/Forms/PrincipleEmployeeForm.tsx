@@ -625,15 +625,13 @@ const handleSubmit = async () => {
     return;
   }
 
-  if (!isEditMode && !documents.length) {
-    alert(
-      "Please upload at least one supporting document."
-    );
+  if (Object.values(errors).some(Boolean)) {
+    alert("Fix validation errors");
     return;
   }
 
-  if (Object.values(errors).some(Boolean)) {
-    alert("Fix validation errors");
+  if (formData.mobile.length !== 10) {
+    alert("Mobile number must be exactly 10 digits");
     return;
   }
 
@@ -838,7 +836,13 @@ finally {
 
       <div>
         <Label>Mobile</Label>
-        <Input name="mobile" value={formData.mobile} onChange={handleChange} />
+        <Input
+          name="mobile"
+          value={formData.mobile}
+          onChange={handleChange}
+          maxLength={10}
+          inputMode="numeric"
+        />
       </div>
 
       <div>
@@ -1101,6 +1105,7 @@ finally {
                     "Principal Employer",
                     "Short Name",
                     "Contact Person",
+                    "HO Address",
                     "Email",
                     "Mobile",
                     "Nature of Business",
@@ -1137,6 +1142,9 @@ finally {
                     <TableCell className="px-6 py-5 font-medium">{pe.name}</TableCell>
                     <TableCell className="px-6 py-5">{pe.short_name}</TableCell>
                     <TableCell className="px-6 py-5">{pe.contact_person}</TableCell>
+                    <TableCell className="px-6 py-5 max-w-[250px] truncate">
+                      {pe.ho_address}
+                    </TableCell>
                     <TableCell className="px-6 py-5">{pe.email}</TableCell>
                     <TableCell className="px-6 py-5">{pe.mobile}</TableCell>
                     <TableCell className="px-6 py-5">{pe.nature_of_business}</TableCell>
