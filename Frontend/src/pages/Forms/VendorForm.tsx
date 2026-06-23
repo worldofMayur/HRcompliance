@@ -705,27 +705,27 @@ const fetchVendors = async () => {
                       {v.name}
                     </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
                       {v.short_name}
                     </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
                       {v.contact_person}
                     </TableCell>
 
-                  <TableCell className="px-6 py-5 min-w-[550px] max-w-[650px] whitespace-normal break-words leading-6">
-                    {v.ho_address}
-                  </TableCell>
+                    <TableCell className="px-6 py-4 min-w-[550px] max-w-[650px] whitespace-normal break-words leading-6 align-top">
+                      {v.ho_address}
+                    </TableCell>
 
                     <TableCell className="px-5 py-4 text-md text-indigo-600">
                       {v.email}
                     </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
                       {v.mobile}
                     </TableCell>
 
-                    <TableCell className="px-5 py-4 text-sm text-gray-600">
+                    <TableCell className="px-5 py-4 text-sm text-gray-600 align-top">
                       {v.nature_of_services}
                     </TableCell>
 
