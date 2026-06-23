@@ -54,22 +54,29 @@ const ALLOWED_TYPES = [
   "application/x-zip-compressed",
 ];
 
-const dateInputClass =
-  "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
+  const dateInputClass =
+    "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return "—";
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "—";
 
-  return new Date(dateString).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-  });
-};
+    const [year, month, day] = dateString.split("-");
 
-const formatForAPI = (date: Date) => {
-  return date.toISOString().split("T")[0];
-};
+    return `${day}/${month}/${year.slice(-2)}`;
+  };
+
+  const formatForAPI = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
 
 
 /* =========================
@@ -330,13 +337,13 @@ const handleEditSelected = () => {
 
   setStartDateObj(
     a.start_date
-      ? new Date(a.start_date)
+      ? new Date(a.start_date + "T00:00:00")
       : null
   );
 
   setEndDateObj(
     a.end_date
-      ? new Date(a.end_date)
+      ? new Date(a.end_date + "T00:00:00")
       : null
   );
 };
