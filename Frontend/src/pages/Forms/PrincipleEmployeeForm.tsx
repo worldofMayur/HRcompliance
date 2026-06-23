@@ -1142,7 +1142,7 @@ finally {
                     <TableCell className="px-6 py-5 font-medium">{pe.name}</TableCell>
                     <TableCell className="px-6 py-5">{pe.short_name}</TableCell>
                     <TableCell className="px-6 py-5">{pe.contact_person}</TableCell>
-                    <TableCell className="px-6 py-5 max-w-[300px] whitespace-normal break-words">
+                    <TableCell className="px-6 py-5 max-w-[450px] whitespace-normal break-words">
                       {pe.ho_address}
                     </TableCell>
                     <TableCell className="px-6 py-5">{pe.email}</TableCell>
