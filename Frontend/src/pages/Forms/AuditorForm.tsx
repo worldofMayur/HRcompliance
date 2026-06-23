@@ -300,28 +300,42 @@ const filteredAuditors =
      BULK ACTIONS
   ========================= */
 
-  const handleEditSelected = () => {
+const handleEditSelected = () => {
 
-    if (selectedRows.length !== 1) {
-      alert("Select exactly one auditor to edit");
-      return;
-    }
+  if (selectedRows.length !== 1) {
+    alert("Select exactly one auditor to edit");
+    return;
+  }
 
-    const a = tableData.find((x) => x.id === selectedRows[0]);
+  const a = tableData.find(
+    (x) => x.id === selectedRows[0]
+  );
 
-    setEditingId(a.id);
+  setEditingId(a.id);
 
-    setFormData({
-      name: a.name,
-      company: a.company,
-      shortName: a.short_name,
-      hoAddress: a.ho_address,
-      mobile: a.mobile,
-      email: a.email,
-      startDate: a.start_date,
-      endDate: a.end_date,
-    });
-  };
+  setFormData({
+    name: a.name,
+    company: a.company,
+    shortName: a.short_name,
+    hoAddress: a.ho_address,
+    mobile: a.mobile,
+    email: a.email,
+    startDate: a.start_date,
+    endDate: a.end_date,
+  });
+
+  setStartDateObj(
+    a.start_date
+      ? new Date(a.start_date)
+      : null
+  );
+
+  setEndDateObj(
+    a.end_date
+      ? new Date(a.end_date)
+      : null
+  );
+};
 
   const handleBulkDelete = async () => {
 
