@@ -16,6 +16,8 @@ from django.utils.encoding import force_bytes
 from django.utils.timezone import now
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from rest_framework.permissions import IsAuthenticated
+
 from django.shortcuts import get_object_or_404
 import zipfile
 from io import BytesIO
@@ -424,7 +426,9 @@ class PrincipalEmployerBranchUpdateAPIView(APIView):
         )
 
 
+
 class PrincipalEmployerDocumentZipAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, pe_id):
 

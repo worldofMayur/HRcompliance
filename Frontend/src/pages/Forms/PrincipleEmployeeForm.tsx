@@ -1012,8 +1012,7 @@ finally {
   />
 
   <p className="mt-2 text-xs text-gray-500">
-    Supported: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, PNG, JPG,
-    JPEG, TXT, CSV, MSG, EML, RTF, ODT, ODS, ODP
+    Supported: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, PNG, JPG, JPEG, TXT, CSV, MSG, EML, RTF, ODT, ODS, ODP, ZIP
     (Max 3 MB per file)
   </p>
 
@@ -1115,6 +1114,7 @@ finally {
                     "Rules",
                     "Documents",
                     "Status",
+                    "Branches",
                   ].map((h) => (
                     <TableCell key={h} isHeader className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">
                       {h}
@@ -1142,7 +1142,7 @@ finally {
                     <TableCell className="px-6 py-5 font-medium">{pe.name}</TableCell>
                     <TableCell className="px-6 py-5">{pe.short_name}</TableCell>
                     <TableCell className="px-6 py-5">{pe.contact_person}</TableCell>
-                    <TableCell className="px-6 py-5 max-w-[250px] truncate">
+                    <TableCell className="px-6 py-5 max-w-[300px] whitespace-normal break-words">
                       {pe.ho_address}
                     </TableCell>
                     <TableCell className="px-6 py-5">{pe.email}</TableCell>
@@ -1159,14 +1159,36 @@ finally {
                     <TableCell className="px-6 py-5">{pe.rules_applicable}</TableCell>
                     <TableCell className="px-6 py-5">
                     {pe.documents?.length ? (
-                      <a
-                        href={`${import.meta.env.VITE_API_URL}/api/principal-employer/${pe.id}/download-documents/`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+
+                          const response = await api.get(
+                            `/api/principal-employer/${pe.id}/download-documents/`,
+                            {
+                              responseType: "blob",
+                            }
+                          );
+
+                          const url = window.URL.createObjectURL(
+                            new Blob([response.data])
+                          );
+
+                          const link = document.createElement("a");
+
+                          link.href = url;
+
+                          link.download =
+                            `${pe.short_name}_documents.zip`;
+
+                          link.click();
+
+                          window.URL.revokeObjectURL(url);
+
+                        }}
                       >
-                        View Documents
-                      </a>
+                        Download
+                      </Button>
                     ) : (
                       "—"
                     )}
@@ -1269,9 +1291,15 @@ finally {
 
     <div className="flex items-center justify-between">
 
-      <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-        Active
-      </span>
+    <TableCell
+      className={`px-6 py-5 ${
+        pe.status === "Active"
+          ? "text-green-700"
+          : "text-red-700"
+      }`}
+    >
+      {pe.status}
+    </TableCell>
 
       <span className="text-[10px] text-green-600 font-medium">
         Running
@@ -1611,17 +1639,40 @@ finally {
                   size="sm"
                   variant="outline"
                   className="h-9 px-4 text-sm"
-                  onClick={() => {
+                  onClick={async () => {
 
                     if (!selectedPEObject?.id) {
                       alert("Principal Employer not selected");
                       return;
                     }
 
-                    window.open(
-                      `${import.meta.env.VITE_API_URL}/api/principal-employer/${selectedPEObject.id}/download-documents/`,
-                      "_blank"
+                    const response = await api.get(
+                      `/api/principal-employer/${selectedPEObject.id}/download-documents/`,
+                      {
+                        responseType: "blob",
+                      }
                     );
+
+                    const url = window.URL.createObjectURL(
+                      new Blob([response.data])
+                    );
+
+                    const link = document.createElement("a");
+
+                    link.href = url;
+
+                    link.setAttribute(
+                      "download",
+                      `${selectedPEObject.short_name}_documents.zip`
+                    );
+
+                    document.body.appendChild(link);
+
+                    link.click();
+
+                    link.remove();
+
+                    window.URL.revokeObjectURL(url);
 
                   }}
                 >
