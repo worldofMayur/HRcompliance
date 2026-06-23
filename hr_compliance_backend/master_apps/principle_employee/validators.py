@@ -9,6 +9,7 @@ ALLOWED_EXTENSIONS = {
 
     ".xls",
     ".xlsx",
+    ".zip",
 
     ".ppt",
     ".pptx",
@@ -57,6 +58,10 @@ ALLOWED_CONTENT_TYPES = {
     "application/vnd.oasis.opendocument.text",
     "application/vnd.oasis.opendocument.spreadsheet",
     "application/vnd.oasis.opendocument.presentation",
+
+    "application/zip",
+    "application/x-zip-compressed",
+    "multipart/x-zip",
 }
 
 MAX_FILE_SIZE_MB = 3
@@ -69,7 +74,7 @@ def validate_document_file(file):
     ext = os.path.splitext(file.name)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise ValidationError(
-            "Unsupported file type. Allowed: PDF, Word, Excel, PowerPoint, Images, TXT, CSV, MSG, EML, RTF, ODT, ODS, ODP."
+            "Unsupported file type. Allowed: PDF, Word, Excel, PowerPoint, Images, TXT, CSV, MSG, EML, RTF, ODT, ODS, ODP, ZIP."
         )
 
     # =============================

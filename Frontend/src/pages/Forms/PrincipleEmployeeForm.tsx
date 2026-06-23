@@ -94,10 +94,15 @@ export default function PrincipleEmployeeForm() {
   return date;
 };
 
-const formatForAPI = (date: Date | null) => {
-  if (!date) return "";
-  return date.toISOString().split("T")[0];
-};
+  const formatForAPI = (date: Date | null) => {
+    if (!date) return "";
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
   let start = 0;
@@ -464,6 +469,7 @@ const filteredData = useMemo(() => {
     "odt",
     "ods",
     "odp",
+    "zip",
   ];
 
     const addDocument = (file: File) => {
@@ -992,7 +998,8 @@ finally {
       .rtf,
       .odt,
       .ods,
-      .odp
+      .odp,
+      .zip
     "
     onChange={(e) =>
       e.target.files &&
@@ -1101,6 +1108,7 @@ finally {
                     "Valid From (DD/MM/YY)",
                     "Valid To (DD/MM/YY)",
                     "Rules",
+                    "Documents",
                     "Status",
                   ].map((h) => (
                     <TableCell key={h} isHeader className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">
@@ -1141,6 +1149,20 @@ finally {
                       {formatDate(pe.end_date)}
                     </TableCell>
                     <TableCell className="px-6 py-5">{pe.rules_applicable}</TableCell>
+                    <TableCell className="px-6 py-5">
+                    {pe.documents?.length ? (
+                      <a
+                        href={`${import.meta.env.VITE_API_URL}/api/principal-employer/${pe.id}/download-documents/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        View Documents
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
                     <TableCell className="px-6 py-5 text-green-700">Active</TableCell>
                     <TableCell className="px-6 py-5">
                       <Button
