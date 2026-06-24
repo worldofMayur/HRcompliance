@@ -1206,12 +1206,19 @@ const data = filteredChecklists.map(c => ({
       {/* ✅ GROUPED GUIDELINES */}
       <td className="px-5 py-4 w-[700px] min-w-[700px] max-w-[700px]">
       <div className="whitespace-pre-line">
-        {c.auditor_guide.map((point, i) => (
-          <div key={i}>
+        {Array.isArray(c.auditor_guide) ? (
+          c.auditor_guide.map((point, i) => (
+            <div key={i}>
+              <span className="font-bold mr-1">•</span>
+              {point}
+            </div>
+          ))
+        ) : (
+          <div>
             <span className="font-bold mr-1">•</span>
-            {point}
+            {c.auditor_guide}
           </div>
-        ))}
+        )}
       </div>
       </td>
 
