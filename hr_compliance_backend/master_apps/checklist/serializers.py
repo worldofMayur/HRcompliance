@@ -101,9 +101,9 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
             defaults={"title": validated_data["section"].strip()}
         )
 
+        # 🔥 HANDLE BOTH CASES
         guide_input = validated_data["auditor_guide"]
 
-        # 🔥 HANDLE BOTH CASES
         if isinstance(guide_input, str):
             checklist_points = [guide_input.strip()]
 
@@ -122,11 +122,11 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
         checklist_points = list(
             dict.fromkeys(checklist_points)
         )
-        else:
-            raise serializers.ValidationError("Invalid auditor_guide format")
 
         if not checklist_points:
-            raise serializers.ValidationError("Checklist points cannot be empty")
+            raise serializers.ValidationError(
+                "Checklist points cannot be empty"
+            )
 
         # 🚀 CREATE MULTIPLE ROWS
         objects = []
