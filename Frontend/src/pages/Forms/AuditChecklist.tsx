@@ -607,6 +607,31 @@ if (a.act !== b.act) {
   });
 }, [checklists, search, statusFilter, stateFilter]);
 
+const groupedChecklists = useMemo(() => {
+
+  const groups = {};
+
+  filteredChecklists.forEach((item) => {
+
+    const key = `${item.state_id}-${item.act_id}-${item.section}-${item.document_id}-${item.audit_particulars}`;
+
+    if (!groups[key]) {
+      groups[key] = {
+        ...item,
+        auditor_guide: [item.auditor_guide],
+      };
+    } else {
+      groups[key].auditor_guide.push(
+        item.auditor_guide
+      );
+    }
+
+  });
+
+  return Object.values(groups);
+
+}, [filteredChecklists]);
+
   /* =========================
      EXPORT EXCEL
   ========================= */
@@ -744,7 +769,7 @@ const data = filteredChecklists.map(c => ({
     {/* DROPDOWN */}
     <div className="relative w-full">
       <div
-        className="w-full h-11 rounded-lg border border-gray-200 px-4 flex items-center cursor-pointer bg-white"
+        className="w-full min-h-[44px] h-auto py-2 rounded-lg border border-gray-200 px-4 flex items-center cursor-pointer bg-white"
         onClick={() => setActDropdownOpen(!actDropdownOpen)}
       >
         {acts.find((a) => a.id === Number(formData.act))?.name ||
@@ -1170,7 +1195,7 @@ const data = filteredChecklists.map(c => ({
 
 {/* 📄 DATA */}
 {!loading &&
-  filteredChecklists.map((c, idx) => (
+  groupedChecklists.map((c, idx) => (
     <tr
       key={c.id}
       className={`border-t transition ${
