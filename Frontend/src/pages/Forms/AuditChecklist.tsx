@@ -1168,53 +1168,9 @@ const data = filteredChecklists.map(c => ({
         </tr>
       )}
 
-      {/* 📄 DATA */}
-      {/* 📄 DATA */}
-{!loading && (() => {
-
-  const groupedData = Object.values(
-    filteredChecklists.reduce((acc, item) => {
-
-      const key = `${item.state}-${item.act}-${item.section}-${item.document}-${item.audit_particulars}`;
-
-      if (!acc[key]) {
-        acc[key] = {
-          ...item,
-          auditor_guide: Array.isArray(item.auditor_guide)
-            ? item.auditor_guide
-            : [item.auditor_guide],
-        };
-      } else {
-
-        if (Array.isArray(item.auditor_guide)) {
-          acc[key].auditor_guide.push(...item.auditor_guide);
-        } else {
-          acc[key].auditor_guide.push(item.auditor_guide);
-        }
-
-      }
-
-      return acc;
-
-    }, {})
-  );
-
-  groupedData.forEach((item) => {
-    item.auditor_guide = [
-      ...new Set(item.auditor_guide)
-    ];
-  });
-
-  return groupedData.map((c, idx) => (
-
-    // YOUR EXISTING <tr> CODE HERE
-
-  ));
-
-})()}
-
-
-  return groupedData.map((c, idx) => (
+{/* 📄 DATA */}
+{!loading &&
+  filteredChecklists.map((c, idx) => (
     <tr
       key={c.id}
       className={`border-t transition ${
@@ -1269,8 +1225,8 @@ const data = filteredChecklists.map(c => ({
       </td>
 
     </tr>
-  ));
-})()}
+  ))
+}
     </tbody>
   </table>
 </div>
