@@ -156,6 +156,9 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
 # =========================
 
 class AuditChecklistListSerializer(serializers.ModelSerializer):
+    state_id = serializers.IntegerField(source="state.id")
+    act_id = serializers.IntegerField(source="act.id")
+    document_id = serializers.IntegerField(source="document.id")
     state = serializers.CharField(source="state.name")
     act = serializers.CharField(source="act.name")
     compliance_nature = serializers.CharField(source="compliance_nature.name")
@@ -170,12 +173,15 @@ class AuditChecklistListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "state",
+            "state_id",
             "act",
+            "act_id",
             "compliance_nature",
             "audit_particulars",
             "section",
             "form_number",
             "document",
+            "document_id",
             "auditor_guide",
             "sequence",
             "is_active",

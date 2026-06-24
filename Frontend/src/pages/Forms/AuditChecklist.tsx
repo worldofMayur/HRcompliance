@@ -21,7 +21,6 @@ export default function AuditChecklistForm() {
   ========================= */
   const [states, setStates] = useState([]);
   const [acts, setActs] = useState([]);
-  const [newGuideline, setNewGuideline] = useState("");
   const [sections, setSections] = useState([]);
   const [showActModal, setShowActModal] = useState(false);
   const [newActName, setNewActName] = useState("");
@@ -29,6 +28,8 @@ export default function AuditChecklistForm() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [stateFilter, setStateFilter] = useState("");
 
+  const [isEditMode, setIsEditMode] = useState(false);
+const [editingId, setEditingId] = useState<number | null>(null);
   const [documentSearch, setDocumentSearch] = useState("");
   const [docDropdownOpen, setDocDropdownOpen] = useState(false);
   const [stateSearch, setStateSearch] = useState("");
@@ -46,20 +47,6 @@ const actRef = useRef(null);
   /* =========================
      INLINE EDIT
   ========================= */
-    const [showEditModal, setShowEditModal] =
-    useState(false);
-
-    const [editingRow, setEditingRow] =
-    useState(null);
-    const [editGuidelines,
-    setEditGuidelines] = useState([]);
-
-    const [editData, setEditData] = useState({
-    audit_particulars: "",
-    form_number: "",
-    auditor_guide: "",
-    section: "",
-  });
 
   /* =========================
      SEARCH & FILTERS
@@ -243,8 +230,8 @@ useEffect(() => {
   /* =========================
      DEPENDENT DROPDOWNS
   ========================= */
-  useEffect(() => {
-    if (!formData.state) return;
+useEffect(() => {
+  if (!formData.state) return;
 
   api.get(
     `/api/checklist/acts/?state=${formData.state}`
@@ -263,12 +250,19 @@ useEffect(() => {
     );
   });
 
-setFormData(p => ({ ...p, act: "", section: "" }));
-    setSections([]);
-  }, [formData.state]);
+  if (!isEditMode) {
+    setFormData(p => ({
+      ...p,
+      act: "",
+      section: "",
+    }));
+  }
 
-  useEffect(() => {
-    if (!formData.act) return;
+  setSections([]);
+}, [formData.state, isEditMode]);
+
+useEffect(() => {
+  if (!formData.act) return;
 
   api.get(
     `/api/checklist/sections/?act=${formData.act}`
@@ -281,9 +275,14 @@ setFormData(p => ({ ...p, act: "", section: "" }));
     );
   });
 
-setFormData(p => ({ ...p, section: "" }));
-  }, [formData.act]);
+  if (!isEditMode) {
+    setFormData(p => ({
+      ...p,
+      section: "",
+    }));
+  }
 
+}, [formData.act, isEditMode]);
 
   const filteredActs = useMemo(() => {
   if (!actSearch) return acts;
@@ -361,6 +360,52 @@ const handleSubmit = async (e) => {
   }
 
   try {
+
+    // =========================
+    // EDIT MODE
+    // =========================
+    if (isEditMode) {
+
+      await api.put(
+        `/api/checklist/${editingId}/update-guidelines/`,
+        {
+          audit_particulars:
+            formData.audit_particulars || "",
+
+          form_number:
+            formData.form_number || "",
+
+          guidelines:
+            checkpoints.map((c) => c.text),
+        }
+      );
+
+      alert("Checklist updated successfully ✅");
+
+      setIsEditMode(false);
+      setEditingId(null);
+
+      setFormData({
+        state: "",
+        act: "",
+        compliance_nature: "",
+        section: "",
+        document: "",
+        audit_particulars: "",
+        form_number: "",
+      });
+
+      setCheckpoints([]);
+      setCheckpointInput("");
+
+      fetchList();
+
+      return;
+    }
+
+    // =========================
+    // CREATE MODE
+    // =========================
     const payload = {
       state: Number(formData.state),
       act: Number(formData.act),
@@ -368,11 +413,14 @@ const handleSubmit = async (e) => {
       section: formData.section.trim(),
       document: Number(formData.document),
 
-      audit_particulars: formData.audit_particulars || "",
-      form_number: formData.form_number || "",
+      audit_particulars:
+        formData.audit_particulars || "",
 
-      // ✅ SEND ARRAY ONCE
-      auditor_guide: checkpoints.map(c => c.text),
+      form_number:
+        formData.form_number || "",
+
+      auditor_guide:
+        checkpoints.map((c) => c.text),
     };
 
     await api.post(
@@ -393,11 +441,19 @@ const handleSubmit = async (e) => {
     });
 
     setCheckpoints([]);
+    setCheckpointInput("");
+
     fetchList();
 
   } catch (err) {
+
     console.error(err);
-    alert("Something went wrong");
+
+    alert(
+      isEditMode
+        ? "Failed to update checklist"
+        : "Failed to create checklist"
+    );
   }
 };
   /* =========================
@@ -405,73 +461,42 @@ const handleSubmit = async (e) => {
   ========================= */
 const startEdit = (row) => {
 
-  setEditingRow(row);
+  setIsEditMode(true);
+  setEditingId(row.id);
 
-  setEditData({
-    audit_particulars: row.audit_particulars || "",
-    form_number: row.form_number || "",
+  setFormData({
+    state: row.state_id || "",
+    act: row.act_id || "",
+
+    compliance_nature: "General",
+
     section: row.section || "",
+
+    document: row.document_id || "",
+
+    audit_particulars:
+      row.audit_particulars || "",
+
+    form_number:
+      row.form_number || "",
   });
 
-  setEditGuidelines(
-    Array.isArray(row.auditor_guide)
+  setCheckpoints(
+    (Array.isArray(row.auditor_guide)
       ? row.auditor_guide
       : [row.auditor_guide]
+    ).map((point, index) => ({
+      id: index + 1,
+      text: point,
+    }))
   );
 
-  setShowEditModal(true);
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 };
 
-const addGuideline = (value) => {
-
-  if (!value.trim()) return;
-
-  setEditGuidelines(prev => [
-    ...prev,
-    value.trim(),
-  ]);
-};
-
-const removeGuideline = (index) => {
-
-  setEditGuidelines(prev =>
-    prev.filter((_, i) => i !== index)
-  );
-};
-
-const saveEdit = async () => {
-
-  try {
-
-    await api.put(
-      `/api/checklist/${editingRow.id}/update-guidelines/`,
-      {
-        audit_particulars:
-          editData.audit_particulars,
-
-        form_number:
-          editData.form_number,
-
-        guidelines:
-          editGuidelines,
-      }
-    );
-
-    alert("Updated successfully");
-
-    setShowEditModal(false);
-    setEditingRow(null);
-    setEditGuidelines([]);
-    setNewGuideline("");
-    fetchList();
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert("Update failed");
-  }
-};
 
   const toggleStatus = async (id) => {
     await api.post(
@@ -581,16 +606,6 @@ if (a.act !== b.act) {
     });
   });
 }, [checklists, search, statusFilter, stateFilter]);
-
-const [debouncedSearch, setDebouncedSearch] = useState(search);
-
-useEffect(() => {
-  const t = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 300);
-
-  return () => clearTimeout(t);
-}, [search]);
 
   /* =========================
      EXPORT EXCEL
@@ -935,12 +950,40 @@ const data = filteredChecklists.map(c => ({
   )}
 </div>
 
+{isEditMode && (
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => {
+
+      setIsEditMode(false);
+      setEditingId(null);
+
+      setFormData({
+        state: "",
+        act: "",
+        compliance_nature: "",
+        section: "",
+        document: "",
+        audit_particulars: "",
+        form_number: "",
+      });
+
+      setCheckpoints([]);
+      setCheckpointInput("");
+    }}
+  >
+    Cancel Edit
+  </Button>
+)}
+
     {/* ACTIONS */}
     <div className="flex justify-end gap-3 border-t pt-5">
-      <Button
-        variant="outline"
-        className="h-10"
-        onClick={() => {
+    <Button
+      type="button"
+      variant="outline"
+      className="h-10"
+      onClick={() => {
           setFormData({
             state: "",
             act: "",
@@ -958,95 +1001,15 @@ const data = filteredChecklists.map(c => ({
         Reset
       </Button>
 
-      <Button type="submit" className="h-10">
-        Save Checklist
+      <Button type="submit">
+        {isEditMode
+          ? "Update Checklist"
+          : "Save Checklist"}
       </Button>
     </div>
 
   </form>
 </ComponentCard>
-
-{showEditModal && (
-  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-
-    <div className="bg-white rounded-xl p-6 w-[900px]">
-
-      <h2 className="text-lg font-semibold mb-4">
-        Edit Checklist
-      </h2>
-
-      <Input
-        value={editData.audit_particulars}
-        onChange={(e) =>
-          setEditData({
-            ...editData,
-            audit_particulars: e.target.value,
-          })
-        }
-      />
-
-      <div className="mt-4">
-        {editGuidelines.map((item, index) => (
-          <div
-            key={index}
-            className="flex justify-between border p-2 mb-2 rounded"
-          >
-            <span>{item}</span>
-
-            <button
-              onClick={() => removeGuideline(index)}
-              className="text-red-600"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4 flex gap-2">
-
-      <Input
-        value={newGuideline}
-        onChange={(e) =>
-          setNewGuideline(e.target.value)
-        }
-        placeholder="Add new guideline"
-      />
-
-      <Button
-        type="button"
-        onClick={() => {
-          addGuideline(newGuideline);
-          setNewGuideline("");
-        }}
-      >
-        Add
-      </Button>
-
-    </div>
-
-      <div className="flex justify-end gap-2 mt-4">
-        <Button
-          variant="outline"
-          onClick={() => {
-            setShowEditModal(false);
-            setEditingRow(null);
-            setEditGuidelines([]);
-            setNewGuideline("");
-          }}
-        >
-          Cancel
-        </Button>
-
-        <Button onClick={saveEdit}>
-          Save
-        </Button>
-      </div>
-
-    </div>
-
-  </div>
-)}
 
     {/* ADD ACT MODAL */}
     {showActModal && (
@@ -1208,27 +1171,48 @@ const data = filteredChecklists.map(c => ({
       {/* 📄 DATA */}
       {/* 📄 DATA */}
 {!loading && (() => {
+
   const groupedData = Object.values(
     filteredChecklists.reduce((acc, item) => {
+
       const key = `${item.state}-${item.act}-${item.section}-${item.document}-${item.audit_particulars}`;
+
       if (!acc[key]) {
         acc[key] = {
           ...item,
           auditor_guide: Array.isArray(item.auditor_guide)
-          ? item.auditor_guide
-          : [item.auditor_guide],
+            ? item.auditor_guide
+            : [item.auditor_guide],
         };
       } else {
-          if (Array.isArray(item.auditor_guide)) {
-            acc[key].auditor_guide.push(...item.auditor_guide);
-          } else {
-            acc[key].auditor_guide.push(item.auditor_guide);
-          }
+
+        if (Array.isArray(item.auditor_guide)) {
+          acc[key].auditor_guide.push(...item.auditor_guide);
+        } else {
+          acc[key].auditor_guide.push(item.auditor_guide);
+        }
+
       }
 
       return acc;
+
     }, {})
   );
+
+  groupedData.forEach((item) => {
+    item.auditor_guide = [
+      ...new Set(item.auditor_guide)
+    ];
+  });
+
+  return groupedData.map((c, idx) => (
+
+    // YOUR EXISTING <tr> CODE HERE
+
+  ));
+
+})()}
+
 
   return groupedData.map((c, idx) => (
     <tr
