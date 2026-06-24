@@ -21,6 +21,7 @@ export default function AuditChecklistForm() {
   ========================= */
   const [states, setStates] = useState([]);
   const [acts, setActs] = useState([]);
+  const [newGuideline, setNewGuideline] = useState("");
   const [sections, setSections] = useState([]);
   const [showActModal, setShowActModal] = useState(false);
   const [newActName, setNewActName] = useState("");
@@ -45,8 +46,13 @@ const actRef = useRef(null);
   /* =========================
      INLINE EDIT
   ========================= */
-  const [editingId, setEditingId] = useState(null);
-  const [editGuide, setEditGuide] = useState("");
+    const [showEditModal, setShowEditModal] =
+    useState(false);
+
+    const [editingRow, setEditingRow] =
+    useState(null);
+    const [editGuidelines,
+    setEditGuidelines] = useState([]);
 
     const [editData, setEditData] = useState({
     audit_particulars: "",
@@ -156,11 +162,9 @@ const handleCreateAct = async () => {
 
     // ✅ Optional silent sync (safe fallback)
     setTimeout(() => {
-      fetch(`${API_BASE}/checklist/acts/?state=${formData.state}`, {
-        headers: authHeaders,
-      })
-        .then(r => r.json())
-        .then(setActs);
+      api
+        .get(`/api/checklist/acts/?state=${formData.state}`)
+        .then((res) => setActs(res.data));
     }, 300);
 
   } catch (err) {
@@ -400,19 +404,47 @@ const handleSubmit = async (e) => {
      INLINE EDIT
   ========================= */
 const startEdit = (row) => {
-  setEditingId(row.id);
+
+  setEditingRow(row);
+
   setEditData({
     audit_particulars: row.audit_particulars || "",
     form_number: row.form_number || "",
-    auditor_guide: row.auditor_guide || "",
     section: row.section || "",
   });
+
+  setEditGuidelines(
+    Array.isArray(row.auditor_guide)
+      ? row.auditor_guide
+      : [row.auditor_guide]
+  );
+
+  setShowEditModal(true);
 };
 
-const saveEdit = async (id) => {
+const addGuideline = (value) => {
+
+  if (!value.trim()) return;
+
+  setEditGuidelines(prev => [
+    ...prev,
+    value.trim(),
+  ]);
+};
+
+const removeGuideline = (index) => {
+
+  setEditGuidelines(prev =>
+    prev.filter((_, i) => i !== index)
+  );
+};
+
+const saveEdit = async () => {
+
   try {
+
     await api.put(
-      `/api/checklist/${id}/update/`,
+      `/api/checklist/${editingRow.id}/update-guidelines/`,
       {
         audit_particulars:
           editData.audit_particulars,
@@ -420,31 +452,24 @@ const saveEdit = async (id) => {
         form_number:
           editData.form_number,
 
-        auditor_guide:
-          editData.auditor_guide,
-
-        section:
-          editData.section,
+        guidelines:
+          editGuidelines,
       }
     );
 
-    alert("Updated successfully ✅");
+    alert("Updated successfully");
 
-    setEditingId(null);
-
-    // reset edit data (important)
-    setEditData({
-      audit_particulars: "",
-      form_number: "",
-      auditor_guide: "",
-      section: "",
-    });
-
+    setShowEditModal(false);
+    setEditingRow(null);
+    setEditGuidelines([]);
+    setNewGuideline("");
     fetchList();
 
   } catch (err) {
-    console.error("Network error:", err);
-    alert("Something went wrong while updating");
+
+    console.error(err);
+
+    alert("Update failed");
   }
 };
 
@@ -941,6 +966,88 @@ const data = filteredChecklists.map(c => ({
   </form>
 </ComponentCard>
 
+{showEditModal && (
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+
+    <div className="bg-white rounded-xl p-6 w-[900px]">
+
+      <h2 className="text-lg font-semibold mb-4">
+        Edit Checklist
+      </h2>
+
+      <Input
+        value={editData.audit_particulars}
+        onChange={(e) =>
+          setEditData({
+            ...editData,
+            audit_particulars: e.target.value,
+          })
+        }
+      />
+
+      <div className="mt-4">
+        {editGuidelines.map((item, index) => (
+          <div
+            key={index}
+            className="flex justify-between border p-2 mb-2 rounded"
+          >
+            <span>{item}</span>
+
+            <button
+              onClick={() => removeGuideline(index)}
+              className="text-red-600"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex gap-2">
+
+      <Input
+        value={newGuideline}
+        onChange={(e) =>
+          setNewGuideline(e.target.value)
+        }
+        placeholder="Add new guideline"
+      />
+
+      <Button
+        type="button"
+        onClick={() => {
+          addGuideline(newGuideline);
+          setNewGuideline("");
+        }}
+      >
+        Add
+      </Button>
+
+    </div>
+
+      <div className="flex justify-end gap-2 mt-4">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setShowEditModal(false);
+            setEditingRow(null);
+            setEditGuidelines([]);
+            setNewGuideline("");
+          }}
+        >
+          Cancel
+        </Button>
+
+        <Button onClick={saveEdit}>
+          Save
+        </Button>
+      </div>
+
+    </div>
+
+  </div>
+)}
+
     {/* ADD ACT MODAL */}
     {showActModal && (
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -1143,96 +1250,38 @@ const data = filteredChecklists.map(c => ({
       <td className="px-5 py-4">{c.act}</td>
 
       <td className="px-5 py-4 w-[220px] max-w-[220px]">
-        {editingId === c.id ? (
-          <Input
-            value={editData.audit_particulars}
-            onChange={(e) =>
-              setEditData({ ...editData, audit_particulars: e.target.value })
-            }
-          />
-        ) : (
-          c.audit_particulars || "-"
-        )}
+      {c.audit_particulars || "-"}
       </td>
 
       <td className="px-5 py-4">
-        {editingId === c.id ? (
-          <Input
-            value={editData.section}
-            onChange={(e) =>
-              setEditData({ ...editData, section: e.target.value })
-            }
-          />
-        ) : (
-          c.section
-        )}
+      {c.section}
       </td>
 
       <td className="px-5 py-4">
-        {editingId === c.id ? (
-          <Input
-            value={editData.form_number}
-            onChange={(e) =>
-              setEditData({ ...editData, form_number: e.target.value })
-            }
-          />
-        ) : (
-          c.form_number || "-"
-        )}
+      {c.form_number || "-"}
       </td>
 
       <td className="px-5 py-4">{c.document}</td>
 
       {/* ✅ GROUPED GUIDELINES */}
       <td className="px-5 py-4 w-[700px] min-w-[700px] max-w-[700px]">
-        {editingId === c.id ? (
-          <textarea
-            value={editData.auditor_guide}
-            onChange={(e) =>
-              setEditData({ ...editData, auditor_guide: e.target.value })
-            }
-            className="w-full border rounded px-2 py-1"
-          />
-        ) : (
-          <div className="whitespace-pre-line">
-            {c.auditor_guide.map((point, i) => (
-            <div key={i}>
-              <span className="font-bold mr-1">•</span>
-              {point}
-            </div>            
-          ))}
+      <div className="whitespace-pre-line">
+        {c.auditor_guide.map((point, i) => (
+          <div key={i}>
+            <span className="font-bold mr-1">•</span>
+            {point}
           </div>
-        )}
+        ))}
+      </div>
       </td>
 
       <td className="px-5 py-4 space-x-2">
-        {editingId === c.id ? (
-          <>
-            <Button size="sm" onClick={() => saveEdit(c.id)}>
-              Save
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setEditingId(null);
-                setEditData({
-                  audit_particulars: "",
-                  form_number: "",
-                  auditor_guide: "",
-                  section: "",
-                });
-              }}
-            >
-              Cancel
-            </Button>
-          </>
-        ) : (
-          <Button size="sm" onClick={() => startEdit(c)}>
-            Edit
-          </Button>
-        )}
+      <Button
+        size="sm"
+        onClick={() => startEdit(c)}
+      >
+        Edit
+      </Button>
       </td>
 
     </tr>

@@ -75,6 +75,7 @@ class AuditChecklist(models.Model):
 
     state = models.ForeignKey(State, on_delete=models.PROTECT)
     act = models.ForeignKey(Act, on_delete=models.PROTECT)
+    sequence = models.PositiveIntegerField(default=0)
 
     # REQUIRED
     compliance_nature = models.ForeignKey(ComplianceNature, on_delete=models.PROTECT)
@@ -104,7 +105,12 @@ class AuditChecklist(models.Model):
             models.Index(fields=["state", "act"]),
             models.Index(fields=["is_active"]),
         ]
-        ordering = ["state", "act", "section"]
+        ordering = [
+            "state",
+            "act",
+            "section",
+            "sequence"
+        ]
 
     def __str__(self):
         return f"{self.act} | {self.section} | {self.audit_particulars or ''} | {self.auditor_guide[:30]}"

@@ -106,8 +106,22 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
         # 🔥 HANDLE BOTH CASES
         if isinstance(guide_input, str):
             checklist_points = [guide_input.strip()]
+
         elif isinstance(guide_input, list):
-            checklist_points = [str(p).strip() for p in guide_input if str(p).strip()]
+            checklist_points = [
+                str(p).strip()
+                for p in guide_input
+                if str(p).strip()
+            ]
+
+        else:
+            raise serializers.ValidationError(
+                "Invalid auditor_guide format"
+            )
+
+        checklist_points = list(
+            dict.fromkeys(checklist_points)
+        )
         else:
             raise serializers.ValidationError("Invalid auditor_guide format")
 
@@ -115,19 +129,22 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("Checklist points cannot be empty")
 
         # 🚀 CREATE MULTIPLE ROWS
-        objects = [
-            AuditChecklist(
-                state=state,
-                act=act,
-                compliance_nature=compliance,
-                section=section,
-                document=document,
-                audit_particulars=validated_data["audit_particulars"],
-                form_number=validated_data.get("form_number", ""),
-                auditor_guide=point,
+        objects = []
+
+        for index, point in enumerate(checklist_points):
+            objects.append(
+                AuditChecklist(
+                    state=state,
+                    act=act,
+                    compliance_nature=compliance,
+                    section=section,
+                    document=document,
+                    audit_particulars=validated_data["audit_particulars"],
+                    form_number=validated_data.get("form_number", ""),
+                    auditor_guide=point,
+                    sequence=index + 1,
+                )
             )
-            for point in checklist_points
-        ]
 
         AuditChecklist.objects.bulk_create(objects)
 
@@ -160,5 +177,6 @@ class AuditChecklistListSerializer(serializers.ModelSerializer):
             "form_number",
             "document",
             "auditor_guide",
+            "sequence",
             "is_active",
         ]

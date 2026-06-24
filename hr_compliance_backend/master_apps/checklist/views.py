@@ -13,6 +13,7 @@ from .serializers import (
     AuditChecklistCreateSerializer,
     AuditChecklistListSerializer,
 )
+from django.db import transaction
 
 
 # =========================
@@ -111,7 +112,12 @@ class AuditChecklistListAPIView(APIView):
                 "section",
                 "document",
             )
-            .order_by("-id")
+            .order_by(
+                "state",
+                "act",
+                "section",
+                "sequence"
+            )
         )
 
         serializer = AuditChecklistListSerializer(qs, many=True)
@@ -157,6 +163,44 @@ class AuditChecklistUpdateAPIView(APIView):
         return Response(
             {"message": "Checklist updated successfully"},
             status=status.HTTP_200_OK,
+        )
+
+
+class AuditChecklistGroupUpdateAPIView(APIView):
+
+    def put(self, request, pk):
+
+        try:
+            first_row = AuditChecklist.objects.get(pk=pk)
+
+        except AuditChecklist.DoesNotExist:
+            return Response(
+                {"error": "Checklist not found"},
+                status=404
+            )
+
+        group_rows = AuditChecklist.objects.filter(
+            state=first_row.state,
+            act=first_row.act,
+            section=first_row.section,
+            document=first_row.document,
+            audit_particulars=first_row.audit_particulars,
+        )
+
+        group_rows.update(
+            audit_particulars=request.data.get(
+                "audit_particulars",
+                first_row.audit_particulars
+            ),
+
+            form_number=request.data.get(
+                "form_number",
+                first_row.form_number
+            )
+        )
+
+        return Response(
+            {"message": "Updated"}
         )
 
 
@@ -233,3 +277,61 @@ class AuditChecklistDeleteAPIView(APIView):
                 {"error": "Not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class AuditChecklistGuidelineUpdateAPIView(APIView):
+
+    def put(self, request, pk):
+
+        guidelines = request.data.get(
+            "guidelines",
+            []
+        )
+
+        first_row = AuditChecklist.objects.get(
+            pk=pk
+        )
+
+        group = AuditChecklist.objects.filter(
+            state=first_row.state,
+            act=first_row.act,
+            section=first_row.section,
+            document=first_row.document,
+            audit_particulars=first_row.audit_particulars
+        )
+
+        with transaction.atomic():
+
+            group.delete()
+
+            AuditChecklist.objects.bulk_create(rows)
+
+        rows = []
+
+        for index, point in enumerate(guidelines):
+
+            rows.append(
+                AuditChecklist(
+                    state=first_row.state,
+                    act=first_row.act,
+                    compliance_nature=first_row.compliance_nature,
+                    section=first_row.section,
+                    document=first_row.document,
+                    audit_particulars=request.data.get(
+                        "audit_particulars"
+                    ),
+                    form_number=request.data.get(
+                        "form_number"
+                    ),
+                    auditor_guide=point,
+                    sequence=index + 1
+                )
+            )
+
+        AuditChecklist.objects.bulk_create(
+            rows
+        )
+
+        return Response(
+            {"message":"Updated"}
+        )
