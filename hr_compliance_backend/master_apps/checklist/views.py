@@ -283,55 +283,57 @@ class AuditChecklistGuidelineUpdateAPIView(APIView):
 
     def put(self, request, pk):
 
-        guidelines = request.data.get(
-            "guidelines",
-            []
-        )
+        try:
 
-        first_row = AuditChecklist.objects.get(
-            pk=pk
-        )
+            guidelines = request.data.get("guidelines", [])
 
-        group = AuditChecklist.objects.filter(
-            state=first_row.state,
-            act=first_row.act,
-            section=first_row.section,
-            document=first_row.document,
-            audit_particulars=first_row.audit_particulars
-        )
+            first_row = AuditChecklist.objects.get(pk=pk)
 
-        with transaction.atomic():
+            group = AuditChecklist.objects.filter(
+                state=first_row.state,
+                act=first_row.act,
+                section=first_row.section,
+                document=first_row.document,
+                audit_particulars=first_row.audit_particulars
+            )
 
             group.delete()
 
+            rows = []
+
+            for index, point in enumerate(guidelines):
+
+                rows.append(
+                    AuditChecklist(
+                        state=first_row.state,
+                        act=first_row.act,
+                        compliance_nature=first_row.compliance_nature,
+                        section=first_row.section,
+                        document=first_row.document,
+                        audit_particulars=request.data.get(
+                            "audit_particulars",
+                            first_row.audit_particulars
+                        ),
+                        form_number=request.data.get(
+                            "form_number",
+                            first_row.form_number
+                        ),
+                        auditor_guide=point,
+                        sequence=index + 1
+                    )
+                )
+
             AuditChecklist.objects.bulk_create(rows)
 
-        rows = []
+            return Response({
+                "message": "Updated"
+            })
 
-        for index, point in enumerate(guidelines):
+        except Exception as e:
 
-            rows.append(
-                AuditChecklist(
-                    state=first_row.state,
-                    act=first_row.act,
-                    compliance_nature=first_row.compliance_nature,
-                    section=first_row.section,
-                    document=first_row.document,
-                    audit_particulars=request.data.get(
-                        "audit_particulars"
-                    ),
-                    form_number=request.data.get(
-                        "form_number"
-                    ),
-                    auditor_guide=point,
-                    sequence=index + 1
-                )
+            return Response(
+                {
+                    "error": str(e)
+                },
+                status=500
             )
-
-        AuditChecklist.objects.bulk_create(
-            rows
-        )
-
-        return Response(
-            {"message":"Updated"}
-        )
