@@ -1,63 +1,77 @@
-import { Card, Select } from "antd";
 import { useState } from "react";
 
-const { Option } = Select;
+import ReportCards from "./components/ReportCards";
+
+import BranchReport from "./reports/BranchReport";
+import ComplianceReport from "./reports/ComplianceReport";
+import ExceptionalReport from "./reports/ExceptionalReport";
+
+import { ReportType } from "./data/reportConfig";
 
 export default function ReportsDashboard() {
-  const [report, setReport] = useState("");
+  const [selectedReport, setSelectedReport] =
+    useState<ReportType>("branch");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
-      <div>
-        <h1 className="text-2xl font-bold">
+      {/* Header */}
+
+      <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+
           Reports & Dashboard
+
         </h1>
 
-        <p className="text-gray-500 mt-1">
-          Dashboard will be developed later.
+        <p className="mt-2 text-gray-500 dark:text-gray-400">
+
+          Dashboard KPIs will be added here later.
+          Select a report below to generate reports.
+
         </p>
+
       </div>
 
-      <Card title="Select Report">
+      {/* Dashboard Placeholder */}
 
-        <Select
-          placeholder="Select Report"
-          style={{ width: 350 }}
-          value={report || undefined}
-          onChange={setReport}
-        >
-          <Option value="branch">
-            Branch Wise Vendor Mapping
-          </Option>
+      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
 
-          <Option value="compliance">
-            Vendor Compliance Status
-          </Option>
+        <h2 className="text-lg font-semibold">
 
-          <Option value="exception">
-            Exceptional Approval Report
-          </Option>
-        </Select>
+          Dashboard (Coming Soon)
 
-      </Card>
+        </h2>
 
-      {report === "branch" && (
-        <Card title="Branch Wise Vendor Mapping">
-          Coming Soon...
-        </Card>
+        <p className="mt-2 text-gray-500">
+
+          Total Vendors, Pending Audits, Completed Audits,
+          Compliance %, Monthly Trends etc.
+
+        </p>
+
+      </div>
+
+      {/* Report Cards */}
+
+      <ReportCards
+        selectedReport={selectedReport}
+        onSelect={setSelectedReport}
+      />
+
+      {/* Selected Report */}
+
+      {selectedReport === "branch" && (
+        <BranchReport />
       )}
 
-      {report === "compliance" && (
-        <Card title="Vendor Compliance Status">
-          Coming Soon...
-        </Card>
+      {selectedReport === "compliance" && (
+        <ComplianceReport />
       )}
 
-      {report === "exception" && (
-        <Card title="Exceptional Approval Report">
-          Coming Soon...
-        </Card>
+      {selectedReport === "exception" && (
+        <ExceptionalReport />
       )}
 
     </div>
