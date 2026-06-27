@@ -36,10 +36,6 @@ export default function ReportsDashboard() {
 
       {/* Dashboard Placeholder */}
 
-      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-5 py-3 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900">
-        Dashboard widgets will be available soon.
-      </div>
-
       {/* Report Cards */}
 
       <ReportCards

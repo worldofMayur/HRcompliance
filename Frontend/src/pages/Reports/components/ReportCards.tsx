@@ -26,9 +26,6 @@ export default function ReportCards({
             }
           `}
         >
-          <div className="mb-3 text-3xl">
-            {card.icon}
-          </div>
 
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">
             {card.title}
