@@ -375,7 +375,7 @@ const AppSidebar: React.FC = () => {
               <>
                 <li>
                   <Link
-                    to="dashboard"
+                    to="reports-dashboard"
                     onClick={handleNavigation}
                     className={menuClass("/dashboard")}
                   >

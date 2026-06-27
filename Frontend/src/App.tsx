@@ -16,6 +16,7 @@ import BarChart from "./pages/Charts/BarChart";
 import Calendar from "./pages/Calendar";
 import BasicTables from "./pages/Tables/BasicTables";
 import FormElements from "./pages/Forms/FormElements";
+import ReportsDashboard from "./pages/Reports/ReportsDashboard";
 import PENotifications from "./pages/PrincipleEmployee/Notifications";
 import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
@@ -206,6 +207,15 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["PE"]}>
                 <ManageVendor />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="reports-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["PE"]}>
+                <ReportsDashboard />
               </ProtectedRoute>
             }
           />
