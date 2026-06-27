@@ -21,11 +21,13 @@ type ReportType =
   | "exception"
   | "";
 
+import { ReactNode } from "react";
+
 interface ReportCard {
   id: ReportType;
   title: string;
   description: string;
-  icon: JSX.Element;
+  icon: ReactNode;
 }
 
 const reportCards: ReportCard[] = [
@@ -667,5 +669,11 @@ export default function ReportsDashboard() {
               
             </div>
           </div>
+
         )}
+
       </div>
+
+    </div>
+  );
+}
