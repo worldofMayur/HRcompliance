@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Select } from "antd";
 
-import ReportCards from "./components/ReportCards";
+const { Option } = Select;
 
 import BranchReport from "./reports/BranchReport";
 import ComplianceReport from "./reports/ComplianceReport";
@@ -15,33 +16,55 @@ export default function ReportsDashboard() {
   return (
     <div className="space-y-5">
 
-      {/* Header */}
-
       <div className="rounded-xl border border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
 
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+  <div className="flex items-end justify-between gap-6">
 
-          Reports & Dashboard
+    <div>
 
-        </h1>
+      <h1 className="text-2xl font-bold">
+        Reports & Dashboard
+      </h1>
 
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <p className="mt-1 text-sm text-gray-500">
+        Generate reports using the filters below.
+      </p>
 
-          Dashboard KPIs will be added here later.
-          Select a report below to generate reports.
+    </div>
 
-        </p>
+    <div className="w-80">
 
-      </div>
+      <label className="mb-2 block text-sm font-medium">
+        Report Type
+      </label>
+
+      <Select
+        className="w-full"
+        value={selectedReport}
+        onChange={(value) => setSelectedReport(value)}
+      >
+        <Option value="branch">
+          Branch Wise Vendor Mapping
+        </Option>
+
+        <Option value="compliance">
+          Vendor Compliance Status
+        </Option>
+
+        <Option value="exception">
+          Exceptional Approval Report
+        </Option>
+
+      </Select>
+
+    </div>
+
+  </div>
+
+</div>
 
       {/* Dashboard Placeholder */}
 
-      {/* Report Cards */}
-
-      <ReportCards
-        selectedReport={selectedReport}
-        onSelect={setSelectedReport}
-      />
 
       {/* Selected Report */}
 
