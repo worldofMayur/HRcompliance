@@ -51,13 +51,13 @@ export default function ReportFilters({
   onGenerate,
 }: Props) {
   return (
-    <div className="rounded-xl border bg-white p-6 dark:bg-gray-900">
+    <div className="rounded-xl border bg-white p-5 dark:bg-gray-900">
 
-      <h2 className="mb-6 text-xl font-semibold">
+      <h2 className="mb-4 text-xl font-semibold">
         Report Filters
       </h2>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 
         {(reportType === "branch" || reportType === "exception") && (
           <div>
@@ -176,7 +176,7 @@ export default function ReportFilters({
         )}
       </div>
 
-      <div className="mt-8">
+      <div className="mt-5">
         <Button
           type="primary"
           icon={<SearchOutlined />}

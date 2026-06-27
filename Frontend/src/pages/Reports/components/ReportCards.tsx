@@ -16,7 +16,7 @@ export default function ReportCards({
           key={card.id}
           onClick={() => onSelect(card.id)}
           className={`
-            w-full rounded-2xl border p-6 text-left
+            w-full rounded-xl border p-5 text-left
             transition-all duration-300
             hover:-translate-y-1 hover:shadow-lg
             ${
@@ -26,23 +26,17 @@ export default function ReportCards({
             }
           `}
         >
-          <div className="mb-4 text-4xl">
+          <div className="mb-3 text-3xl">
             {card.icon}
           </div>
 
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
             {card.title}
           </h3>
 
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {card.description}
           </p>
-
-          {selectedReport === card.id && (
-            <div className="mt-4 inline-flex rounded-lg bg-brand-600 px-3 py-1 text-xs font-medium text-white">
-              Selected
-            </div>
-          )}
         </button>
       ))}
     </div>

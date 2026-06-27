@@ -41,7 +41,7 @@ export default function ReportTable({
 
       {/* Header */}
 
-      <div className="flex items-center justify-between border-b p-5">
+      <div className="flex items-center justify-between border-b px-5 py-4">
 
         <div>
 
@@ -73,7 +73,7 @@ export default function ReportTable({
 
       {data.length === 0 ? (
 
-        <div className="p-12">
+        <div className="p-8">
 
           <Empty description="No Report Generated" />
 

@@ -13,11 +13,11 @@ export default function ReportsDashboard() {
     useState<ReportType>("branch");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
 
       {/* Header */}
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
 
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
 
@@ -25,7 +25,7 @@ export default function ReportsDashboard() {
 
         </h1>
 
-        <p className="mt-2 text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
 
           Dashboard KPIs will be added here later.
           Select a report below to generate reports.
@@ -36,21 +36,8 @@ export default function ReportsDashboard() {
 
       {/* Dashboard Placeholder */}
 
-      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-
-        <h2 className="text-lg font-semibold">
-
-          Dashboard (Coming Soon)
-
-        </h2>
-
-        <p className="mt-2 text-gray-500">
-
-          Total Vendors, Pending Audits, Completed Audits,
-          Compliance %, Monthly Trends etc.
-
-        </p>
-
+      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-5 py-3 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900">
+        Dashboard widgets will be available soon.
       </div>
 
       {/* Report Cards */}
