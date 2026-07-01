@@ -2,87 +2,98 @@ import { useState } from "react";
 
 import ReportFilters from "../components/ReportFilters";
 
-import { REPORT_COLUMNS } from "../data/reportConfig";
+import { message } from "antd";
+import api from "../../../utils/api";
 
 export default function ExceptionalReport() {
 
   const [principalEmployer, setPrincipalEmployer] = useState("");
-  const [state, setState] = useState("");
-  const [branch, setBranch] = useState("");
-  const [vendor, setVendor] = useState("");
+  const [state, setState] = useState<string[]>([]);
+  const [branch, setBranch] = useState<string[]>([]);
+  const [vendor, setVendor] = useState<string[]>([]);
   const [periodicity, setPeriodicity] = useState("");
   const [auditMonth, setAuditMonth] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any[]>([]);
 
-  const generateReport = async () => {
+const generateReport = async () => {
+  setLoading(true);
 
-    setLoading(true);
+  try {
+    const payload = {
+      states: state,
+      branches: branch,
+      vendors: vendor,
+      audit_period: auditMonth,
+    };
 
-    try {
+    const response = await api.post(
+      "/api/vendor/reports/exceptional-approval/",
+      payload,
+      {
+        responseType: "blob",
+      }
+    );
 
-      console.log({
-        principalEmployer,
-        state,
-        branch,
-        vendor,
-        auditMonth,
-      });
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
 
-      setTimeout(() => {
+    const url = window.URL.createObjectURL(blob);
 
-        setData([
-          {
-            state: "Maharashtra",
-            branch: "Mumbai",
-            vendor: "ABC Security",
-            document: "Labour License",
-            observation: "Expired",
-            recommendation: "Renew Immediately",
-            approval_status: "Pending",
-          },
-        ]);
+    const link = document.createElement("a");
 
-        setLoading(false);
+    link.href = url;
+    link.download = "ExceptionalApprovalReport.xlsx";
 
-      }, 800);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-    } catch (error) {
+    window.URL.revokeObjectURL(url);
 
-      console.error(error);
-
-      setLoading(false);
-
-    }
-  };
+    message.success("Report downloaded successfully.");
+  } catch (error) {
+    console.error(error);
+    message.error("Failed to download report.");
+  } finally {
+    setLoading(false);
+  }
+};
 
 return (
   <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
 
-    <ReportFilters
-      reportType="exception"
+<ReportFilters
+  reportType="exception"
 
-      principalEmployer={principalEmployer}
-      setPrincipalEmployer={setPrincipalEmployer}
+  principalEmployer={principalEmployer}
+  setPrincipalEmployer={setPrincipalEmployer}
 
-      state={state}
-      setState={setState}
+  state={state}
+  setState={setState}
 
-      branch={branch}
-      setBranch={setBranch}
+  branch={branch}
+  setBranch={setBranch}
 
-      vendor={vendor}
-      setVendor={setVendor}
+  vendor={vendor}
+  setVendor={setVendor}
 
-      periodicity={periodicity}
-      setPeriodicity={setPeriodicity}
+  periodicity={periodicity}
+  setPeriodicity={setPeriodicity}
 
-      auditMonth={auditMonth}
-      setAuditMonth={setAuditMonth}
+  auditMonth={auditMonth}
+  setAuditMonth={setAuditMonth}
 
-      onGenerate={generateReport}
-    />
+  loading={loading}
+
+  statesOptions={statesOptions}
+  branchesOptions={branchesOptions}
+  vendorsOptions={vendorsOptions}
+  servicesOptions={[]}
+
+  onGenerate={generateReport}
+/>
 
   </div>
 );

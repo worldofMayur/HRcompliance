@@ -14,6 +14,16 @@ from rest_framework.response import Response
 from master_apps.principle_employee.models import PrincipalEmployer
 from master_apps.vendor.mapping_models import VendorBranchMapping
 
+from rest_framework.views import APIView
+from django.http import HttpResponse
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
+
+from master_apps.auditor.models import AuditEntry
+from master_apps.vendor.mapping_models import VendorBranchMapping
+from master_apps.principle_employee.models import PrincipalEmployerBranch
+
 
 # ===================================================================
 # MAIN EXCEL REPORT
@@ -458,3 +468,170 @@ class PEReportAuditPeriodsAPIView(APIView):
             }
             for period in audit_periods
         ])
+
+
+
+class PEExceptionalAuditPeriodsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
+
+        states = (
+            request.GET.getlist("states")
+            or request.GET.getlist("states[]")
+        )
+
+        branches = (
+            request.GET.getlist("branches")
+            or request.GET.getlist("branches[]")
+        )
+
+        vendors = (
+            request.GET.getlist("vendors")
+            or request.GET.getlist("vendors[]")
+        )
+
+        if states:
+            queryset = queryset.filter(
+                branch__state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        branch_ids = queryset.values_list(
+            "branch_id",
+            flat=True
+        )
+
+        periods = (
+            AuditEntry.objects.filter(
+                branch_id__in=branch_ids
+            )
+            .values_list(
+                "audit_period",
+                flat=True
+            )
+            .distinct()
+            .order_by("-audit_period")
+        )
+
+        return Response([
+            {
+                "id": period,
+                "name": period,
+            }
+            for period in periods
+        ])
+
+
+class ExceptionalApprovalReportAPIView(APIView):
+
+    def post(self, request):
+
+        states = request.data.get("states", [])
+        branches = request.data.get("branches", [])
+        vendors = request.data.get("vendors", [])
+        audit_period = request.data.get("audit_period", "")
+
+        queryset = AuditEntry.objects.select_related(
+            "checklist",
+            "checklist__document",
+            "auditor",
+        ).filter(
+            status__in=[
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied",
+            ]
+        )
+
+        if audit_period:
+            queryset = queryset.filter(audit_period=audit_period)
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Exceptional Approval Report"
+
+        headers = [
+            "State",
+            "Branch Short Name",
+            "Branch Address",
+            "Audit Periodicity",
+            "Vendor Name",
+            "Audit Month",
+            "Exceptional Approval Document",
+            "Audit Particulars",
+            "Exceptional Approval Auditor Observation",
+            "Exceptional Approval Auditor Recommendation",
+        ]
+
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col)
+            cell.value = header
+            cell.font = Font(bold=True)
+
+        row = 2
+
+        for audit in queryset:
+
+            try:
+                mapping = VendorBranchMapping.objects.select_related(
+                    "vendor",
+                    "branch",
+                ).get(
+                    branch_id=audit.branch_id
+                )
+
+            except VendorBranchMapping.DoesNotExist:
+                continue
+
+            branch = mapping.branch
+
+            if states and branch.state not in states:
+                continue
+
+            if branches and str(branch.id) not in branches:
+                continue
+
+            if vendors and str(mapping.vendor.id) not in vendors:
+                continue
+
+            ws.cell(row=row, column=1).value = branch.state
+            ws.cell(row=row, column=2).value = branch.short_name
+            ws.cell(row=row, column=3).value = branch.address
+            ws.cell(row=row, column=4).value = mapping.frequency
+            ws.cell(row=row, column=5).value = mapping.vendor.name
+            ws.cell(row=row, column=6).value = audit.audit_period
+            ws.cell(row=row, column=7).value = audit.checklist.document.name
+            ws.cell(row=row, column=8).value = audit.checklist.audit_particulars
+            ws.cell(row=row, column=9).value = audit.observation
+            ws.cell(row=row, column=10).value = audit.recommendation
+
+            row += 1
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        response[
+            "Content-Disposition"
+        ] = 'attachment; filename="ExceptionalApprovalReport.xlsx"'
+
+        wb.save(response)
+
+        return response
