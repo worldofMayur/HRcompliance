@@ -32,13 +32,13 @@ return (
 
     {/* Main Layout */}
 
-    <div className="grid grid-cols-12 gap-5">
+    <div className="grid gap-5 xl:grid-cols-[3fr_1fr]">
 
       {/* LEFT SIDE (70%) */}
 
-      <div className="col-span-12 xl:col-span-8">
+      <div>
 
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+        <div className="min-h-[750px] rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
 
           <h2 className="text-xl font-semibold">
             Dashboard
@@ -56,7 +56,7 @@ return (
 
       {/* RIGHT SIDE (30%) */}
 
-      <div className="col-span-12 xl:col-span-4 space-y-5">
+      <div className="space-y-5 xl:sticky xl:top-6 self-start xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto">
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
 
