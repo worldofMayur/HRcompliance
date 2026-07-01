@@ -51,17 +51,37 @@ export default function ReportFilters({
   onGenerate,
 }: Props) {
   return (
-    <div className="rounded-xl border bg-white p-5 dark:bg-gray-900">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
 
-      <h2 className="mb-4 text-xl font-semibold">
-        Report Filters
-      </h2>
+      {/* Header */}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mb-5 flex items-center gap-3">
 
-        {(reportType === "branch" || reportType === "exception") && (
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg">
+          🔍
+        </div>
+
+        <div>
+
+          <h2 className="text-lg font-semibold">
+            Report Filters
+          </h2>
+
+          <p className="text-xs text-gray-500">
+            Select filters and generate report
+          </p>
+
+        </div>
+
+      </div>
+
+      <div className="space-y-4">
+
+        {(reportType === "branch" ||
+          reportType === "exception") && (
           <div>
-            <label className="mb-2 block text-sm font-medium">
+
+            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
               Principal Employer
             </label>
 
@@ -71,13 +91,17 @@ export default function ReportFilters({
               value={principalEmployer || undefined}
               onChange={setPrincipalEmployer}
             >
-              <Option value="1">Sample PE</Option>
+              <Option value="1">
+                Sample PE
+              </Option>
             </Select>
+
           </div>
         )}
 
         <div>
-          <label className="mb-2 block text-sm font-medium">
+
+          <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
             State
           </label>
 
@@ -87,14 +111,18 @@ export default function ReportFilters({
             value={state || undefined}
             onChange={setState}
           >
-            <Option value="1">Maharashtra</Option>
+            <Option value="1">
+              Maharashtra
+            </Option>
           </Select>
+
         </div>
 
         {(reportType === "branch" ||
           reportType === "exception") && (
           <div>
-            <label className="mb-2 block text-sm font-medium">
+
+            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
               Branch
             </label>
 
@@ -104,13 +132,17 @@ export default function ReportFilters({
               value={branch || undefined}
               onChange={setBranch}
             >
-              <Option value="1">Mumbai</Option>
+              <Option value="1">
+                Mumbai
+              </Option>
             </Select>
+
           </div>
         )}
 
         <div>
-          <label className="mb-2 block text-sm font-medium">
+
+          <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
             Vendor
           </label>
 
@@ -120,13 +152,17 @@ export default function ReportFilters({
             value={vendor || undefined}
             onChange={setVendor}
           >
-            <Option value="1">Vendor A</Option>
+            <Option value="1">
+              Vendor A
+            </Option>
           </Select>
+
         </div>
 
-        {(reportType === "compliance") && (
+        {reportType === "compliance" && (
           <div>
-            <label className="mb-2 block text-sm font-medium">
+
+            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
               Audit Periodicity
             </label>
 
@@ -136,20 +172,32 @@ export default function ReportFilters({
               value={periodicity || undefined}
               onChange={setPeriodicity}
             >
-              <Option value="Monthly">Monthly</Option>
-              <Option value="Quarterly">Quarterly</Option>
+              <Option value="Monthly">
+                Monthly
+              </Option>
+
+              <Option value="Quarterly">
+                Quarterly
+              </Option>
+
               <Option value="Half Yearly">
                 Half Yearly
               </Option>
-              <Option value="Yearly">Yearly</Option>
+
+              <Option value="Yearly">
+                Yearly
+              </Option>
+
             </Select>
+
           </div>
         )}
 
         {(reportType === "compliance" ||
           reportType === "exception") && (
           <div>
-            <label className="mb-2 block text-sm font-medium">
+
+            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
               Audit Month
             </label>
 
@@ -172,20 +220,26 @@ export default function ReportFilters({
               <Option value="November">November</Option>
               <Option value="December">December</Option>
             </Select>
+
           </div>
         )}
+
       </div>
 
-      <div className="mt-5">
+      <div className="mt-6">
+
         <Button
           type="primary"
-          icon={<SearchOutlined />}
           size="large"
+          block
+          icon={<SearchOutlined />}
           onClick={onGenerate}
         >
           Generate Report
         </Button>
+
       </div>
+
     </div>
   );
 }
