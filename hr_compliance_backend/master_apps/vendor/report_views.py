@@ -233,17 +233,16 @@ class PEReportBranchesAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
-        states = request.GET.getlist("states")
+        states = (
+            request.GET.getlist("states")
+            or request.GET.getlist("states[]")
+        )
+
+        print("States:", states)
         queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
-
-        branches = (
-            queryset.values("branch_id", "branch__short_name")
-            .distinct()
-            .order_by("branch__short_name")
-        )
 
         branches = (
             queryset.values(
@@ -276,8 +275,18 @@ class PEReportVendorsAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
-        states = request.GET.getlist("states")
-        branches = request.GET.getlist("branches")
+        states = (
+            request.GET.getlist("states")
+            or request.GET.getlist("states[]")
+        )
+
+        branches = (
+            request.GET.getlist("branches")
+            or request.GET.getlist("branches[]")
+        )
+
+        print("States:", states)
+        print("Branches:", branches)
 
         queryset = VendorBranchMapping.objects.filter(
             principal_employer=pe
@@ -320,9 +329,24 @@ class PEReportServicesAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
-        states = request.GET.getlist("states")
-        branches = request.GET.getlist("branches")
-        vendors = request.GET.getlist("vendors")
+        states = (
+            request.GET.getlist("states")
+            or request.GET.getlist("states[]")
+        )
+
+        branches = (
+            request.GET.getlist("branches")
+            or request.GET.getlist("branches[]")
+        )
+
+        vendors = (
+            request.GET.getlist("vendors")
+            or request.GET.getlist("vendors[]")
+        )
+
+        print("States:", states)
+        print("Branches:", branches)
+        print("Vendors:", vendors)
 
         queryset = VendorBranchMapping.objects.filter(
             principal_employer=pe
