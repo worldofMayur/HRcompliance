@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { message } from "antd";
 
 import api from "../../../utils/api";
@@ -16,10 +16,65 @@ export default function BranchReport() {
   const [auditMonth, setAuditMonth] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [statesOptions] = useState<any[]>([]);
-  const [branchesOptions] = useState<any[]>([]);
-  const [vendorsOptions] = useState<any[]>([]);
-  const [servicesOptions] = useState<any[]>([]);
+
+  // Dropdown Options
+  const [statesOptions, setStatesOptions] = useState<any[]>([]);
+  const [branchesOptions, setBranchesOptions] = useState<any[]>([]);
+  const [vendorsOptions, setVendorsOptions] = useState<any[]>([]);
+  const [servicesOptions, setServicesOptions] = useState<any[]>([]);
+
+  // Load States, Vendors, and Services on mount
+  useEffect(() => {
+    loadStates();
+    loadVendors();
+    loadServices();
+  }, []);
+
+  // Load Branches when State selection changes
+  useEffect(() => {
+    loadBranches();
+  }, [state]);
+
+  const loadStates = async () => {
+    try {
+      const res = await api.get("/api/vendor/reports/states/");
+      setStatesOptions(res.data);
+    } catch (error) {
+      console.error("Failed to load states", error);
+      message.error("Failed to load states");
+    }
+  };
+
+  const loadBranches = async () => {
+    try {
+      const params = state.length > 0 ? { states: state } : {};
+      const res = await api.get("/api/vendor/reports/branches/", { params });
+      setBranchesOptions(res.data);
+    } catch (error) {
+      console.error("Failed to load branches", error);
+      message.error("Failed to load branches");
+    }
+  };
+
+  const loadVendors = async () => {
+    try {
+      const res = await api.get("/api/vendor/reports/vendors/");
+      setVendorsOptions(res.data);
+    } catch (error) {
+      console.error("Failed to load vendors", error);
+      message.error("Failed to load vendors");
+    }
+  };
+
+  const loadServices = async () => {
+    try {
+      const res = await api.get("/api/vendor/reports/services/");
+      setServicesOptions(res.data);
+    } catch (error) {
+      console.error("Failed to load services", error);
+      message.error("Failed to load services");
+    }
+  };
 
   const generateReport = async () => {
     setLoading(true);
@@ -39,24 +94,17 @@ export default function BranchReport() {
       );
 
       const blob = new Blob([response.data], {
-        type:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       const url = window.URL.createObjectURL(blob);
-
       const link = document.createElement("a");
 
       let filename = "BranchWiseVendorMapping.xlsx";
 
-      const disposition =
-        response.headers["content-disposition"];
-
+      const disposition = response.headers["content-disposition"];
       if (disposition) {
-        const match = disposition.match(
-          /filename="?([^"]+)"?/
-        );
-
+        const match = disposition.match(/filename="?([^"]+)"?/);
         if (match && match[1]) {
           filename = match[1];
         }
@@ -64,33 +112,20 @@ export default function BranchReport() {
 
       link.href = url;
       link.download = filename;
-
       document.body.appendChild(link);
-
       link.click();
-
       document.body.removeChild(link);
-
       window.URL.revokeObjectURL(url);
 
-      message.success(
-        "Branch Wise Vendor Mapping downloaded successfully."
-      );
-
+      message.success("Branch Wise Vendor Mapping downloaded successfully.");
     } catch (error: any) {
-
       console.error(error);
 
       if (error.response?.status === 404) {
-        message.warning(
-          "No records found for the selected filters."
-        );
+        message.warning("No records found for the selected filters.");
       } else {
-        message.error(
-          "Failed to download report."
-        );
+        message.error("Failed to download report.");
       }
-
     } finally {
       setLoading(false);
     }
@@ -98,41 +133,29 @@ export default function BranchReport() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
-
       <ReportFilters
         reportType="branch"
-
         principalEmployer={principalEmployer}
         setPrincipalEmployer={setPrincipalEmployer}
-
         state={state}
         setState={setState}
-
         branch={branch}
         setBranch={setBranch}
-
         vendor={vendor}
         setVendor={setVendor}
-
         natureOfService={natureOfService}
         setNatureOfService={setNatureOfService}
-
         periodicity={periodicity}
         setPeriodicity={setPeriodicity}
-
         auditMonth={auditMonth}
         setAuditMonth={setAuditMonth}
-
         loading={loading}
-
         statesOptions={statesOptions}
         branchesOptions={branchesOptions}
         vendorsOptions={vendorsOptions}
         servicesOptions={servicesOptions}
-
         onGenerate={generateReport}
       />
-
     </div>
   );
 }
