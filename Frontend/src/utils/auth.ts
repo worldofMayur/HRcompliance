@@ -25,6 +25,7 @@ export const isAuthenticated = () => {
 
 export const logoutUser = () => {
   clearAuthData();
+  localStorage.removeItem("principal_employer_name");
 
   window.dispatchEvent(new Event("auth-changed"));
 };

@@ -164,7 +164,17 @@ class LoginView(APIView):
                         None
                     )
                     else None
-                )
+                ),
+
+                "principal_employer_name": (
+                    user.principal_employer.name
+                    if getattr(
+                        user,
+                        "principal_employer",
+                        None
+                    )
+                    else None
+                ),
             })
 
         except Exception as e:

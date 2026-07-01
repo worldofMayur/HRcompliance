@@ -179,30 +179,18 @@ export default function ReportFilters({
 
             <Select
               className="w-full"
-              placeholder="Select Nature of Service"
-              value={natureOfService || undefined}
-              onChange={setNatureOfService}
+              value={
+                principalEmployer ||
+                localStorage.getItem("principal_employer_id") ||
+                undefined
+              }
+              disabled
             >
-              <Option value="Security">
-                Security
+              <Option
+                value={localStorage.getItem("principal_employer_id") || ""}
+              >
+                {localStorage.getItem("principal_employer_name") || ""}
               </Option>
-
-              <Option value="Housekeeping">
-                Housekeeping
-              </Option>
-
-              <Option value="Maintenance">
-                Maintenance
-              </Option>
-
-              <Option value="Cafeteria">
-                Cafeteria
-              </Option>
-
-              <Option value="Manpower">
-                Manpower
-              </Option>
-
             </Select>
 
           </div>

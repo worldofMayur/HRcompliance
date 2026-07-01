@@ -56,6 +56,13 @@ export default function SignInForm() {
         localStorage.setItem("principal_employer_id", String(data.principal_employer_id));
       }
 
+      if (data.principal_employer_name) {
+        localStorage.setItem(
+          "principal_employer_name",
+          data.principal_employer_name
+        );
+      }
+
       if (isChecked) {
         localStorage.setItem("remember_me", "true");
       } else {
