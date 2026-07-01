@@ -32,11 +32,11 @@ export default function ReportsDashboard() {
 
       {/* Main Layout */}
 
-      <div className="grid gap-5 items-start xl:grid-cols-[3fr_1fr]">
+      <div className="grid gap-5 xl:grid-cols-[75%_25%]">
 
         {/* Dashboard */}
 
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 min-h-[750px]">
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 min-h-[900px]">
 
           <h2 className="text-xl font-semibold">
             Dashboard
@@ -50,13 +50,13 @@ export default function ReportsDashboard() {
 
         </div>
 
-        {/* Right Sidebar */}
+        {/* Sidebar */}
 
-        <div className="sticky top-6 space-y-5 self-start">
+        <div className="sticky top-6 self-start">
 
           {/* Report Type */}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+          <div className="mb-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
 
             <label className="mb-2 block text-sm font-medium">
               Report Type
@@ -65,7 +65,9 @@ export default function ReportsDashboard() {
             <Select
               className="w-full"
               value={selectedReport}
-              onChange={(value) => setSelectedReport(value)}
+              onChange={(value) =>
+                setSelectedReport(value)
+              }
             >
               <Option value="branch">
                 Branch Wise Vendor Mapping
@@ -78,23 +80,28 @@ export default function ReportsDashboard() {
               <Option value="exception">
                 Exceptional Approval Report
               </Option>
+
             </Select>
 
           </div>
 
-          {/* Reports */}
+          {/* Report */}
 
-          {selectedReport === "branch" && (
-            <BranchReport />
-          )}
+          <div className="space-y-5">
 
-          {selectedReport === "compliance" && (
-            <ComplianceReport />
-          )}
+            {selectedReport === "branch" && (
+              <BranchReport />
+            )}
 
-          {selectedReport === "exception" && (
-            <ExceptionalReport />
-          )}
+            {selectedReport === "compliance" && (
+              <ComplianceReport />
+            )}
+
+            {selectedReport === "exception" && (
+              <ExceptionalReport />
+            )}
+
+          </div>
 
         </div>
 
