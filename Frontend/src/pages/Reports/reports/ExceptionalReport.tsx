@@ -20,12 +20,11 @@ export default function ExceptionalReport() {
   const [vendorsOptions, setVendorsOptions] = useState<any[]>([]);
   const [auditPeriodsOptions, setAuditPeriodsOptions] = useState<any[]>([]);
 
-  // Load States - Using Exceptional dedicated endpoint
+  // Load States - EXCEPTIONAL
   useEffect(() => {
     loadStates();
   }, []);
 
-  // Load Branches when State changes
   useEffect(() => {
     setBranch([]);
     setVendor([]);
@@ -39,7 +38,6 @@ export default function ExceptionalReport() {
     }
   }, [state]);
 
-  // Load Vendors when Branch changes
   useEffect(() => {
     setVendor([]);
     setAuditMonth([]);
@@ -51,7 +49,6 @@ export default function ExceptionalReport() {
     }
   }, [state, branch]);
 
-  // Load Audit Periods when Vendor changes
   useEffect(() => {
     setAuditMonth([]);
     setAuditPeriodsOptions([]);
@@ -181,7 +178,7 @@ export default function ExceptionalReport() {
         statesOptions={statesOptions}
         branchesOptions={branchesOptions}
         vendorsOptions={vendorsOptions}
-        servicesOptions={[]} 
+        servicesOptions={[]}
         auditPeriodsOptions={auditPeriodsOptions}
         onGenerate={generateReport}
       />
