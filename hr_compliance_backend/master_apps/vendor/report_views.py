@@ -15,6 +15,9 @@ from master_apps.principle_employee.models import PrincipalEmployer
 from master_apps.vendor.mapping_models import VendorBranchMapping
 
 
+# ===================================================================
+# MAIN EXCEL REPORT
+# ===================================================================
 class BranchWiseVendorReportAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -38,7 +41,7 @@ class BranchWiseVendorReportAPIView(APIView):
         queryset = (
             VendorBranchMapping.objects
             .filter(principal_employer=pe)
-            .select_related("vendor", "branch")          # Removed unnecessary principal_employer
+            .select_related("vendor", "branch")
             .order_by("branch__state", "branch__short_name", "vendor__name")
         )
 
@@ -101,7 +104,7 @@ class BranchWiseVendorReportAPIView(APIView):
 
         # Report Info
         worksheet["A4"] = "Principal Employer"
-        worksheet["B4"] = pe.name                    # Using .name as per original
+        worksheet["B4"] = pe.name
 
         worksheet["D4"] = "Generated On"
         worksheet["E4"] = datetime.now().strftime("%d-%b-%Y %I:%M %p")
@@ -155,37 +158,34 @@ class BranchWiseVendorReportAPIView(APIView):
 
             row += 1
 
-        # Apply borders to all data
+        # Apply borders
         for r in worksheet.iter_rows(
             min_row=6, max_row=worksheet.max_row, min_col=1, max_col=10
         ):
             for cell in r:
                 cell.border = thin_border
 
-        # Safe Auto-adjust column widths (handles merged cells)
+        # Safe column width adjustment
         for col in range(1, 11):
             max_length = 0
             column_letter = get_column_letter(col)
-
             for r in range(1, worksheet.max_row + 1):
                 value = worksheet.cell(row=r, column=col).value
                 if value:
                     max_length = max(max_length, len(str(value)))
-
             worksheet.column_dimensions[column_letter].width = min(max_length + 4, 40)
 
-        # Freeze panes and auto-filter
+        # Freeze panes + Auto filter
         worksheet.freeze_panes = "A7"
         worksheet.auto_filter.ref = f"A6:J{worksheet.max_row}"
 
         # ===========================
-        # Save and Return Response
+        # Return Excel Response
         # ===========================
         output = BytesIO()
         workbook.save(output)
         output.seek(0)
 
-        # Improved filename with PE short name (if available)
         pe_identifier = getattr(pe, 'short_name', getattr(pe, 'name', 'Report'))
         filename = f"BranchWiseVendorMapping_{pe_identifier}_{datetime.now().strftime('%Y%m%d')}.xlsx"
 
@@ -196,3 +196,108 @@ class BranchWiseVendorReportAPIView(APIView):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         return response
+
+
+# ===================================================================
+# DROPDOWN FILTER APIS FOR REPORTS
+# ===================================================================
+class PEReportStatesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .values_list("branch__state", flat=True)
+            .distinct()
+            .order_by("branch__state")
+        )
+
+        return Response([
+            {"id": state, "name": state}
+            for state in states if state
+        ])
+
+
+class PEReportBranchesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = request.GET.getlist("states")
+        queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+
+        branches = (
+            queryset.values("branch_id", "branch__short_name")
+            .distinct()
+            .order_by("branch__short_name")
+        )
+
+        return Response([
+            {
+                "id": item["branch_id"],
+                "name": item["branch__short_name"],
+            }
+            for item in branches
+        ])
+
+
+class PEReportVendorsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        vendors = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .values("vendor_id", "vendor__name")
+            .distinct()
+            .order_by("vendor__name")
+        )
+
+        return Response([
+            {
+                "id": item["vendor_id"],
+                "name": item["vendor__name"],
+            }
+            for item in vendors
+        ])
+
+
+class PEReportServicesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        services = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .values_list("vendor__nature_of_services", flat=True)
+            .distinct()
+            .order_by("vendor__nature_of_services")
+        )
+
+        return Response([
+            {"id": service, "name": service}
+            for service in services if service
+        ])

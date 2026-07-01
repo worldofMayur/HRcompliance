@@ -20,11 +20,6 @@ from .mapping_views import (
     VendorBranchMappingUpdateAPIView,
     AuditorMappingDetailsAPIView,
     VendorMappingMetaAPIView,
-
-    PEReportStatesAPIView,
-    PEReportBranchesAPIView,
-    PEReportVendorsAPIView,
-    PEReportServicesAPIView,
 )
 
 from .compliance_views import (
@@ -32,7 +27,14 @@ from .compliance_views import (
     FrozenAuditPeriodsAPIView,
 )
 
-from .report_views import BranchWiseVendorReportAPIView
+# Updated Report Views Import
+from .report_views import (
+    BranchWiseVendorReportAPIView,
+    PEReportStatesAPIView,
+    PEReportBranchesAPIView,
+    PEReportVendorsAPIView,
+    PEReportServicesAPIView,
+)
 
 from . import compliance_views
 
