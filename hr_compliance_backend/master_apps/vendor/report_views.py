@@ -646,3 +646,308 @@ class ExceptionalApprovalReportAPIView(APIView):
         wb.save(response)
 
         return response
+
+
+# ===================================================================
+# EXCEPTIONAL APPROVAL - DEDICATED FILTER APIS
+# ===================================================================
+
+class PEExceptionalStatesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        # Only AuditEntries with Exceptional Approval status
+        exceptional_entries = AuditEntry.objects.filter(
+            status__in=[
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied",
+            ]
+        )
+
+        branch_ids = exceptional_entries.values_list("branch_id", flat=True).distinct()
+
+        states = (
+            PrincipalEmployerBranch.objects
+            .filter(id__in=branch_ids)
+            .values_list("state", flat=True)
+            .distinct()
+            .order_by("state")
+        )
+
+        return Response([
+            {"id": state, "name": state}
+            for state in states if state
+        ])
+
+
+class PEExceptionalBranchesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = request.GET.getlist("states") or request.GET.getlist("states[]")
+
+        # Base exceptional entries
+        queryset = AuditEntry.objects.filter(
+            status__in=[
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied",
+            ]
+        )
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+
+        branch_ids = queryset.values_list("branch_id", flat=True).distinct()
+
+        branches = (
+            PrincipalEmployerBranch.objects
+            .filter(id__in=branch_ids)
+            .values("id", "short_name", "state")
+            .distinct()
+            .order_by("state", "short_name")
+        )
+
+        return Response([
+            {
+                "id": item["id"],
+                "name": f'{item["short_name"]} - {item["state"]}',
+            }
+            for item in branches
+        ])
+
+
+class PEExceptionalVendorsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = request.GET.getlist("states") or request.GET.getlist("states[]")
+        branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
+
+        queryset = AuditEntry.objects.filter(
+            status__in=[
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied",
+            ]
+        )
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        vendor_ids = queryset.values_list("vendor_id", flat=True).distinct()
+
+        # Get vendor info via mapping
+        vendors = (
+            VendorBranchMapping.objects
+            .filter(vendor_id__in=vendor_ids, principal_employer=pe)
+            .values("vendor_id", "vendor__name")
+            .distinct()
+            .order_by("vendor__name")
+        )
+
+        return Response([
+            {
+                "id": item["vendor_id"],
+                "name": item["vendor__name"],
+            }
+            for item in vendors
+        ])
+
+
+# ===================================================================
+# EXCEPTIONAL APPROVAL REPORT - MAIN VIEW (Polished)
+# ===================================================================
+class ExceptionalApprovalReportAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "Principal Employer not found"}, status=404)
+
+        data = request.data
+
+        states = data.get("states", [])
+        branches = data.get("branches", [])
+        vendors = data.get("vendors", [])
+        audit_periods = data.get("audit_periods", [])
+
+        # Base queryset - only exceptional approvals
+        queryset = AuditEntry.objects.select_related(
+            "branch",
+            "vendor",
+            "auditor",
+            "checklist",
+            "checklist__document",
+        ).filter(
+            status__in=[
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied",
+            ],
+            branch__principalemployerbranch__principal_employer=pe,  # ensure PE ownership
+        ).order_by("-audit_period", "branch__state", "branch__short_name")
+
+        # Apply filters
+        if states and "all" not in states:
+            queryset = queryset.filter(branch__state__in=states)
+
+        if branches and "all" not in branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if audit_periods and "all" not in audit_periods:
+            queryset = queryset.filter(audit_period__in=audit_periods)
+
+        if not queryset.exists():
+            return Response({"message": "No exceptional approval records found."}, status=404)
+
+        # ===========================
+        # Create Excel Workbook
+        # ===========================
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Exceptional Approval Report"
+
+        # Styles (same as BranchWise report)
+        title_font = Font(bold=True, size=16, color="FFFFFF")
+        header_font = Font(bold=True, color="FFFFFF")
+
+        title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
+        header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
+
+        thin_border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin")
+        )
+
+        center_alignment = Alignment(horizontal="center", vertical="center")
+
+        # Title
+        worksheet.merge_cells("A1:K1")
+        cell = worksheet["A1"]
+        cell.value = "Compliance Clearance System"
+        cell.font = title_font
+        cell.fill = title_fill
+        cell.alignment = center_alignment
+
+        worksheet.merge_cells("A2:K2")
+        cell = worksheet["A2"]
+        cell.value = "Exceptional Approval Report"
+        cell.font = Font(bold=True, size=14, color="FFFFFF")
+        cell.fill = title_fill
+        cell.alignment = center_alignment
+
+        # Report Info
+        worksheet["A4"] = "Principal Employer"
+        worksheet["B4"] = pe.name
+
+        worksheet["D4"] = "Generated On"
+        worksheet["E4"] = datetime.now().strftime("%d-%b-%Y %I:%M %p")
+
+        worksheet["G4"] = "Total Records"
+        worksheet["H4"] = queryset.count()
+
+        # Headers
+        headers = [
+            "State",
+            "Branch",
+            "Branch Address",
+            "Vendor",
+            "Audit Period",
+            "Audit Date",
+            "Exceptional Approval Document",
+            "Audit Particulars",
+            "Auditor Observation",
+            "Auditor Recommendation",
+            "Status"
+        ]
+
+        row = 6
+        for col, header in enumerate(headers, start=1):
+            cell = worksheet.cell(row=row, column=col)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_alignment
+            cell.border = thin_border
+
+        row = 7
+
+        # Data Rows
+        for audit in queryset:
+            worksheet.cell(row=row, column=1).value = getattr(audit.branch, 'state', '')
+            worksheet.cell(row=row, column=2).value = getattr(audit.branch, 'short_name', '')
+            worksheet.cell(row=row, column=3).value = getattr(audit.branch, 'address', '')
+            worksheet.cell(row=row, column=4).value = getattr(audit.vendor, 'name', '')
+            worksheet.cell(row=row, column=5).value = audit.audit_period
+            worksheet.cell(row=row, column=6).value = (
+                audit.audit_date.strftime("%d-%b-%Y") if getattr(audit, 'audit_date', None) else ''
+            )
+            worksheet.cell(row=row, column=7).value = getattr(getattr(audit.checklist, 'document', None), 'name', '')
+            worksheet.cell(row=row, column=8).value = getattr(getattr(audit.checklist, None, ''), 'audit_particulars', '')
+            worksheet.cell(row=row, column=9).value = getattr(audit, 'observation', '')
+            worksheet.cell(row=row, column=10).value = getattr(audit, 'recommendation', '')
+            worksheet.cell(row=row, column=11).value = audit.status
+
+            row += 1
+
+        # Apply borders
+        for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=11):
+            for cell in r:
+                cell.border = thin_border
+
+        # Auto column width
+        for col in range(1, 12):
+            max_length = 0
+            column_letter = get_column_letter(col)
+            for r in range(1, worksheet.max_row + 1):
+                value = worksheet.cell(row=r, column=col).value
+                if value:
+                    max_length = max(max_length, len(str(value)))
+            worksheet.column_dimensions[column_letter].width = min(max_length + 4, 45)
+
+        # Freeze panes + Auto filter
+        worksheet.freeze_panes = "A7"
+        worksheet.auto_filter.ref = f"A6:K{worksheet.max_row}"
+
+        # ===========================
+        # Return Response
+        # ===========================
+        output = BytesIO()
+        workbook.save(output)
+        output.seek(0)
+
+        pe_identifier = getattr(pe, 'short_name', getattr(pe, 'name', 'PE'))
+        filename = f"ExceptionalApprovalReport_{pe_identifier}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+
+        response = HttpResponse(
+            output.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response

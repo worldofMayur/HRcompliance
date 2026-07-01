@@ -27,7 +27,7 @@ from .compliance_views import (
     FrozenAuditPeriodsAPIView,
 )
 
-# Updated Report Views Import
+# Report Views Import
 from .report_views import (
     BranchWiseVendorReportAPIView,
     PEReportStatesAPIView,
@@ -35,6 +35,11 @@ from .report_views import (
     PEReportVendorsAPIView,
     PEReportServicesAPIView,
     PEReportAuditPeriodsAPIView,
+    
+    # Exceptional Report - Dedicated APIs
+    PEExceptionalStatesAPIView,
+    PEExceptionalBranchesAPIView,
+    PEExceptionalVendorsAPIView,
     PEExceptionalAuditPeriodsAPIView,
     ExceptionalApprovalReportAPIView,
 )
@@ -47,7 +52,6 @@ urlpatterns = [
     # =========================
     # VENDOR CRUD
     # =========================
-
     path("create/", VendorCreateAPIView.as_view()),
     path("list/", VendorListAPIView.as_view()),
     path("<int:pk>/update/", VendorUpdateAPIView.as_view()),
@@ -66,23 +70,25 @@ urlpatterns = [
     # =========================
     # REPORTS
     # =========================
-
     path(
         "reports/branch-wise/",
         BranchWiseVendorReportAPIView.as_view(),
     ),
+
+    # Branch Wise Report Filters
     path("reports/states/", PEReportStatesAPIView.as_view()),
     path("reports/branches/", PEReportBranchesAPIView.as_view()),
     path("reports/vendors/", PEReportVendorsAPIView.as_view()),
     path("reports/services/", PEReportServicesAPIView.as_view()),
-    path(
-    "reports/audit-periods/",
-        PEReportAuditPeriodsAPIView.as_view(),
-    ),
-    path(
-        "reports/exception-periods/",
-        PEExceptionalAuditPeriodsAPIView.as_view(),
-    ),
+    path("reports/audit-periods/", PEReportAuditPeriodsAPIView.as_view()),
+
+    # Exceptional Approval Report Filters (Dedicated)
+    path("reports/exception-states/", PEExceptionalStatesAPIView.as_view()),
+    path("reports/exception-branches/", PEExceptionalBranchesAPIView.as_view()),
+    path("reports/exception-vendors/", PEExceptionalVendorsAPIView.as_view()),
+    path("reports/exception/audit-periods/", PEExceptionalAuditPeriodsAPIView.as_view()),
+
+    # Exceptional Approval Report Generation
     path(
         "reports/exceptional-approval/",
         ExceptionalApprovalReportAPIView.as_view(),
@@ -91,7 +97,6 @@ urlpatterns = [
     # =========================
     # MAPPING
     # =========================
-
     path(
         "mapping/create/",
         VendorBranchMappingCreateAPIView.as_view(),
@@ -120,7 +125,6 @@ urlpatterns = [
     # =========================
     # PE DROPDOWN
     # =========================
-
     path(
         "pe/branches/",
         PEBranchDropdownAPIView.as_view(),
@@ -129,7 +133,6 @@ urlpatterns = [
     # =========================
     # VENDOR DROPDOWNS
     # =========================
-
     path(
         "mapped-pe/",
         VendorMappedPEAPIView.as_view(),
@@ -153,7 +156,6 @@ urlpatterns = [
     # =========================
     # COMPLIANCE
     # =========================
-
     path(
         "submit-compliance/",
         VendorSubmitComplianceAPIView.as_view(),

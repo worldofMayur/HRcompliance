@@ -10,7 +10,7 @@ export default function ExceptionalReport() {
   const [state, setState] = useState<string[]>([]);
   const [branch, setBranch] = useState<string[]>([]);
   const [vendor, setVendor] = useState<string[]>([]);
-  const [auditMonth, setAuditMonth] = useState<string[]>([]); // Changed to array for consistency
+  const [auditMonth, setAuditMonth] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ export default function ExceptionalReport() {
   const [vendorsOptions, setVendorsOptions] = useState<any[]>([]);
   const [auditPeriodsOptions, setAuditPeriodsOptions] = useState<any[]>([]);
 
-  // Load States
+  // Load States - Using Exceptional dedicated endpoint
   useEffect(() => {
     loadStates();
   }, []);
@@ -63,7 +63,7 @@ export default function ExceptionalReport() {
 
   const loadStates = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/states/");
+      const res = await api.get("/api/vendor/reports/exception-states/");
       setStatesOptions(res.data);
     } catch (error) {
       console.error("Failed to load states", error);
@@ -73,7 +73,7 @@ export default function ExceptionalReport() {
 
   const loadBranches = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/branches/", {
+      const res = await api.get("/api/vendor/reports/exception-branches/", {
         params: { states: state },
       });
       setBranchesOptions(res.data);
@@ -84,7 +84,7 @@ export default function ExceptionalReport() {
 
   const loadVendors = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/vendors/", {
+      const res = await api.get("/api/vendor/reports/exception-vendors/", {
         params: {
           states: state,
           branches: branch,
@@ -98,8 +98,7 @@ export default function ExceptionalReport() {
 
   const loadAuditPeriods = async () => {
     try {
-      const res = await api.get(
-        "/api/vendor/reports/exception-periods/", {
+      const res = await api.get("/api/vendor/reports/exception/audit-periods/", {
         params: {
           states: state,
           branches: branch,
@@ -182,8 +181,8 @@ export default function ExceptionalReport() {
         statesOptions={statesOptions}
         branchesOptions={branchesOptions}
         vendorsOptions={vendorsOptions}
-        servicesOptions={[]}           // Not used in this report
-        auditPeriodsOptions={auditPeriodsOptions}   // Pass audit periods
+        servicesOptions={[]} 
+        auditPeriodsOptions={auditPeriodsOptions}
         onGenerate={generateReport}
       />
     </div>
