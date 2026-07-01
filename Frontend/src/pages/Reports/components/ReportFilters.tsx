@@ -92,12 +92,15 @@ export default function ReportFilters({
 
             <Select
               className="w-full"
-              value={principalEmployer || "1"}
-              onChange={setPrincipalEmployer}
+              value={
+                localStorage.getItem("principal_employer_id") || undefined
+              }
               disabled
             >
-              <Option value="1">
-                Sample PE
+              <Option
+                value={localStorage.getItem("principal_employer_id") || ""}
+              >
+                {localStorage.getItem("principal_employer_name") || "Principal Employer"}
               </Option>
             </Select>
 
@@ -179,18 +182,30 @@ export default function ReportFilters({
 
             <Select
               className="w-full"
-              value={
-                principalEmployer ||
-                localStorage.getItem("principal_employer_id") ||
-                undefined
-              }
-              disabled
+              placeholder="Select Nature of Service"
+              value={natureOfService || undefined}
+              onChange={setNatureOfService}
             >
-              <Option
-                value={localStorage.getItem("principal_employer_id") || ""}
-              >
-                {localStorage.getItem("principal_employer_name") || ""}
+              <Option value="Security">
+                Security
               </Option>
+
+              <Option value="Housekeeping">
+                Housekeeping
+              </Option>
+
+              <Option value="Maintenance">
+                Maintenance
+              </Option>
+
+              <Option value="Cafeteria">
+                Cafeteria
+              </Option>
+
+              <Option value="Manpower">
+                Manpower
+              </Option>
+
             </Select>
 
           </div>
