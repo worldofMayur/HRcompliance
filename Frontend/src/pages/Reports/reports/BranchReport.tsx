@@ -24,11 +24,36 @@ export default function BranchReport() {
   const [servicesOptions, setServicesOptions] = useState<any[]>([]);
 
   // Load initial data
-  useEffect(() => {
+useEffect(() => {
     loadStates();
-    loadVendors();
-    loadServices();
-  }, []);
+}, []);
+
+useEffect(() => {
+    if (state.length > 0) {
+        loadBranches();
+    } else {
+        setBranchesOptions([]);
+        setBranch([]);
+    }
+}, [state]);
+
+useEffect(() => {
+    if (branch.length > 0) {
+        loadVendors();
+    } else {
+        setVendorsOptions([]);
+        setVendor([]);
+    }
+}, [branch]);
+
+useEffect(() => {
+    if (vendor.length > 0) {
+        loadServices();
+    } else {
+        setServicesOptions([]);
+        setNatureOfService([]);
+    }
+}, [vendor]);
 
   // Reload branches when states change
   useEffect(() => {
