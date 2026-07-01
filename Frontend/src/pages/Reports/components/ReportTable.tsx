@@ -37,7 +37,7 @@ export default function ReportTable({
   }
 
   return (
-    <div className="flex h-[420px] flex-col rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+    <div className="flex h-full flex-col rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
 
       {/* Header */}
 

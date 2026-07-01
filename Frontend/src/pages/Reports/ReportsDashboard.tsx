@@ -87,7 +87,7 @@ export default function ReportsDashboard() {
 
           {/* Report Area */}
 
-          <div className="flex-1 overflow-hidden">
+          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
 
             {selectedReport === "branch" && (
               <BranchReport />

@@ -14,18 +14,13 @@ export default function BranchReport() {
   const [auditMonth, setAuditMonth] = useState("");
 
   const [loading, setLoading] = useState(false);
-
   const [data, setData] = useState<any[]>([]);
 
   const generateReport = async () => {
-
     setLoading(true);
 
     try {
-
-      // ===========================
       // Replace with Backend API
-      // ===========================
 
       console.log({
         principalEmployer,
@@ -35,7 +30,6 @@ export default function BranchReport() {
       });
 
       setTimeout(() => {
-
         setData([
           {
             state: "Maharashtra",
@@ -51,59 +45,47 @@ export default function BranchReport() {
         ]);
 
         setLoading(false);
-
       }, 800);
-
     } catch (error) {
-
       console.error(error);
-
       setLoading(false);
-
     }
-
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
+
+      {/* Filters */}
 
       <ReportFilters
-
         reportType="branch"
-
         principalEmployer={principalEmployer}
         setPrincipalEmployer={setPrincipalEmployer}
-
         state={state}
         setState={setState}
-
         branch={branch}
         setBranch={setBranch}
-
         vendor={vendor}
         setVendor={setVendor}
-
         periodicity={periodicity}
         setPeriodicity={setPeriodicity}
-
         auditMonth={auditMonth}
         setAuditMonth={setAuditMonth}
-
         onGenerate={generateReport}
-
       />
 
-      <ReportTable
+      {/* Table */}
 
-        columns={REPORT_COLUMNS.branch}
+      <div className="flex-1 min-h-0 overflow-hidden">
 
-        data={data}
+        <ReportTable
+          columns={REPORT_COLUMNS.branch}
+          data={data}
+          loading={loading}
+        />
 
-        loading={loading}
-
-      />
+      </div>
 
     </div>
   );
-
 }
