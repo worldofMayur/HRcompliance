@@ -38,22 +38,28 @@ useEffect(() => {
 }, [state]);
 
 useEffect(() => {
-  if (branch.length > 0) {
+  if (state.length > 0 && branch.length > 0) {
     loadVendors();
   } else {
     setVendorsOptions([]);
     setVendor([]);
+    setServicesOptions([]);
+    setNatureOfService([]);
   }
-}, [branch]);
+}, [state, branch]);
 
 useEffect(() => {
-  if (vendor.length > 0) {
+  if (
+    state.length > 0 &&
+    branch.length > 0 &&
+    vendor.length > 0
+  ) {
     loadServices();
   } else {
     setServicesOptions([]);
     setNatureOfService([]);
   }
-}, [vendor]);
+}, [state, branch, vendor]);
 
   const loadStates = async () => {
     try {

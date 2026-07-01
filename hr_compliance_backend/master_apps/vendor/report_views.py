@@ -245,10 +245,23 @@ class PEReportBranchesAPIView(APIView):
             .order_by("branch__short_name")
         )
 
+        branches = (
+            queryset.values(
+                "branch_id",
+                "branch__short_name",
+                "branch__state",
+            )
+            .distinct()
+            .order_by(
+                "branch__state",
+                "branch__short_name",
+            )
+        )
+
         return Response([
             {
                 "id": item["branch_id"],
-                "name": item["branch__short_name"],
+                "name": f'{item["branch__short_name"]} - {item["branch__state"]}',
             }
             for item in branches
         ])
@@ -263,10 +276,28 @@ class PEReportVendorsAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
+
+        if states:
+            queryset = queryset.filter(
+                branch__state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
         vendors = (
-            VendorBranchMapping.objects
-            .filter(principal_employer=pe)
-            .values("vendor_id", "vendor__name")
+            queryset.values(
+                "vendor_id",
+                "vendor__name"
+            )
             .distinct()
             .order_by("vendor__name")
         )
@@ -289,15 +320,44 @@ class PEReportServicesAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
+
+        if states:
+            queryset = queryset.filter(
+                branch__state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
         services = (
-            VendorBranchMapping.objects
-            .filter(principal_employer=pe)
-            .values_list("vendor__nature_of_services", flat=True)
+            queryset.values_list(
+                "vendor__nature_of_services",
+                flat=True
+            )
             .distinct()
-            .order_by("vendor__nature_of_services")
+            .order_by(
+                "vendor__nature_of_services"
+            )
         )
 
         return Response([
-            {"id": service, "name": service}
-            for service in services if service
+            {
+                "id": item,
+                "name": item,
+            }
+            for item in services if item
         ])
