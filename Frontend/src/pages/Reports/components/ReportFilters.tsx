@@ -75,10 +75,10 @@ export default function ReportFilters({
         <div>
           <label className="mb-1 block text-sm font-semibold">State</label>
           <MultiSelectCheckbox
-            options={statesOptions}
-            value={state}
-            onChange={setState}
-            placeholder="Search states..."
+              options={statesOptions}
+              value={state}
+              onChange={setState}
+              placeholder="Select States"
           />
         </div>
 
@@ -86,10 +86,10 @@ export default function ReportFilters({
           <div>
             <label className="mb-1 block text-sm font-semibold">Branch</label>
             <MultiSelectCheckbox
-              options={branchesOptions}
-              value={branch}
-              onChange={setBranch}
-              placeholder="Search branches..."
+                options={branchesOptions}
+                value={branch}
+                onChange={setBranch}
+                placeholder="Select Branches"
             />
           </div>
         )}
@@ -97,10 +97,10 @@ export default function ReportFilters({
         <div>
           <label className="mb-1 block text-sm font-semibold">Vendor</label>
           <MultiSelectCheckbox
-            options={vendorsOptions}
-            value={vendor}
-            onChange={setVendor}
-            placeholder="Search vendors..."
+              options={vendorsOptions}
+              value={vendor}
+              onChange={setVendor}
+              placeholder="Select Vendors"
           />
         </div>
 
@@ -110,10 +110,10 @@ export default function ReportFilters({
               Nature of Service
             </label>
             <MultiSelectCheckbox
-              options={servicesOptions}
-              value={natureOfService}
-              onChange={setNatureOfService}
-              placeholder="Search services..."
+                options={servicesOptions}
+                value={natureOfService}
+                onChange={setNatureOfService}
+                placeholder="Select Services"
             />
           </div>
         )}

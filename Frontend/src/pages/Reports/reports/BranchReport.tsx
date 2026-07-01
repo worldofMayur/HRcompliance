@@ -25,45 +25,35 @@ export default function BranchReport() {
 
   // Load initial data
 useEffect(() => {
-    loadStates();
+  loadStates();
 }, []);
 
 useEffect(() => {
-    if (state.length > 0) {
-        loadBranches();
-    } else {
-        setBranchesOptions([]);
-        setBranch([]);
-    }
+  if (state.length > 0) {
+    loadBranches();
+  } else {
+    setBranchesOptions([]);
+    setBranch([]);
+  }
 }, [state]);
 
 useEffect(() => {
-    if (branch.length > 0) {
-        loadVendors();
-    } else {
-        setVendorsOptions([]);
-        setVendor([]);
-    }
+  if (branch.length > 0) {
+    loadVendors();
+  } else {
+    setVendorsOptions([]);
+    setVendor([]);
+  }
 }, [branch]);
 
 useEffect(() => {
-    if (vendor.length > 0) {
-        loadServices();
-    } else {
-        setServicesOptions([]);
-        setNatureOfService([]);
-    }
+  if (vendor.length > 0) {
+    loadServices();
+  } else {
+    setServicesOptions([]);
+    setNatureOfService([]);
+  }
 }, [vendor]);
-
-  // Reload branches when states change
-  useEffect(() => {
-    if (state.length > 0) {
-      loadBranches();
-    } else {
-      setBranchesOptions([]);
-      setBranch([]); // Clear branches when no state selected
-    }
-  }, [state]);
 
   const loadStates = async () => {
     try {
@@ -79,34 +69,58 @@ useEffect(() => {
 
   const loadBranches = async () => {
     try {
-      const params = state.includes("all") ? {} : { states: state };
-      const res = await api.get("/api/vendor/reports/branches/", { params });
-      
-      const allOption = { id: "all", name: "All Branches" };
-      setBranchesOptions([allOption, ...res.data]);
+      const res = await api.get(
+        "/api/vendor/reports/branches/",
+        {
+          params: {
+            states: state,
+          },
+        }
+      );
+
+      setBranchesOptions(res.data);
+
     } catch (error) {
-      console.error("Failed to load branches", error);
-      message.error("Failed to load branches");
+      console.error(error);
     }
   };
 
   const loadVendors = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/vendors/");
-      const allOption = { id: "all", name: "All Vendors" };
-      setVendorsOptions([allOption, ...res.data]);
+      const res = await api.get(
+        "/api/vendor/reports/vendors/",
+        {
+          params: {
+            states: state,
+            branches: branch,
+          },
+        }
+      );
+
+      setVendorsOptions(res.data);
+
     } catch (error) {
-      console.error("Failed to load vendors", error);
+      console.error(error);
     }
   };
 
   const loadServices = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/services/");
-      const allOption = { id: "all", name: "All Services" };
-      setServicesOptions([allOption, ...res.data]);
+      const res = await api.get(
+        "/api/vendor/reports/services/",
+        {
+          params: {
+            states: state,
+            branches: branch,
+            vendors: vendor,
+          },
+        }
+      );
+
+      setServicesOptions(res.data);
+
     } catch (error) {
-      console.error("Failed to load services", error);
+      console.error(error);
     }
   };
 
