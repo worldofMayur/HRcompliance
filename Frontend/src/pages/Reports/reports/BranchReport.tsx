@@ -10,6 +10,7 @@ export default function BranchReport() {
   const [state, setState] = useState("");
   const [branch, setBranch] = useState("");
   const [vendor, setVendor] = useState("");
+  const [natureOfService, setNatureOfService] = useState("");
   const [periodicity, setPeriodicity] = useState("");
   const [auditMonth, setAuditMonth] = useState("");
 
@@ -27,6 +28,7 @@ export default function BranchReport() {
         state,
         branch,
         vendor,
+        natureOfService,
       });
 
       setTimeout(() => {
@@ -35,7 +37,7 @@ export default function BranchReport() {
             state: "Maharashtra",
             branch: "Mumbai",
             vendor: "ABC Security",
-            service: "Security",
+            service: natureOfService || "Security",
             agreement_from: "01-Jan-2025",
             agreement_to: "31-Dec-2025",
             contact_person: "Rahul",
@@ -55,35 +57,39 @@ export default function BranchReport() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
 
-      {/* Filters */}
-
       <ReportFilters
         reportType="branch"
+
         principalEmployer={principalEmployer}
         setPrincipalEmployer={setPrincipalEmployer}
+
         state={state}
         setState={setState}
+
         branch={branch}
         setBranch={setBranch}
+
         vendor={vendor}
         setVendor={setVendor}
+
+        natureOfService={natureOfService}
+        setNatureOfService={setNatureOfService}
+
         periodicity={periodicity}
         setPeriodicity={setPeriodicity}
+
         auditMonth={auditMonth}
         setAuditMonth={setAuditMonth}
+
         onGenerate={generateReport}
       />
 
-      {/* Table */}
-
       <div className="flex-1 min-h-0 overflow-hidden">
-
         <ReportTable
           columns={REPORT_COLUMNS.branch}
           data={data}
           loading={loading}
         />
-
       </div>
 
     </div>

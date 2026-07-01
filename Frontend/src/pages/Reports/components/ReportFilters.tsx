@@ -18,6 +18,9 @@ interface Props {
   vendor: string;
   setVendor: (value: string) => void;
 
+  natureOfService: string;
+  setNatureOfService: (value: string) => void;
+
   periodicity: string;
   setPeriodicity: (value: string) => void;
 
@@ -42,6 +45,9 @@ export default function ReportFilters({
   vendor,
   setVendor,
 
+  natureOfService,
+  setNatureOfService,
+
   periodicity,
   setPeriodicity,
 
@@ -62,15 +68,13 @@ export default function ReportFilters({
         </div>
 
         <div>
-
           <h2 className="text-lg font-semibold">
             Report Filters
           </h2>
 
           <p className="text-xs text-gray-500">
-            Select filters and generate report
+            Select the required filters.
           </p>
-
         </div>
 
       </div>
@@ -79,17 +83,18 @@ export default function ReportFilters({
 
         {(reportType === "branch" ||
           reportType === "exception") && (
+
           <div>
 
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="mb-1 block text-sm font-semibold">
               Principal Employer
             </label>
 
             <Select
               className="w-full"
-              placeholder="Select Principal Employer"
-              value={principalEmployer || undefined}
+              value={principalEmployer || "1"}
               onChange={setPrincipalEmployer}
+              disabled
             >
               <Option value="1">
                 Sample PE
@@ -97,11 +102,12 @@ export default function ReportFilters({
             </Select>
 
           </div>
+
         )}
 
         <div>
 
-          <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <label className="mb-1 block text-sm font-semibold">
             State
           </label>
 
@@ -120,9 +126,10 @@ export default function ReportFilters({
 
         {(reportType === "branch" ||
           reportType === "exception") && (
+
           <div>
 
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="mb-1 block text-sm font-semibold">
               Branch
             </label>
 
@@ -138,11 +145,12 @@ export default function ReportFilters({
             </Select>
 
           </div>
+
         )}
 
         <div>
 
-          <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <label className="mb-1 block text-sm font-semibold">
             Vendor
           </label>
 
@@ -159,10 +167,53 @@ export default function ReportFilters({
 
         </div>
 
-        {reportType === "compliance" && (
+        {/* Nature of Service */}
+
+        {reportType === "branch" && (
+
           <div>
 
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="mb-1 block text-sm font-semibold">
+              Nature of Service
+            </label>
+
+            <Select
+              className="w-full"
+              placeholder="Select Nature of Service"
+              value={natureOfService || undefined}
+              onChange={setNatureOfService}
+            >
+              <Option value="Security">
+                Security
+              </Option>
+
+              <Option value="Housekeeping">
+                Housekeeping
+              </Option>
+
+              <Option value="Maintenance">
+                Maintenance
+              </Option>
+
+              <Option value="Cafeteria">
+                Cafeteria
+              </Option>
+
+              <Option value="Manpower">
+                Manpower
+              </Option>
+
+            </Select>
+
+          </div>
+
+        )}
+
+        {reportType === "compliance" && (
+
+          <div>
+
+            <label className="mb-1 block text-sm font-semibold">
               Audit Periodicity
             </label>
 
@@ -172,32 +223,22 @@ export default function ReportFilters({
               value={periodicity || undefined}
               onChange={setPeriodicity}
             >
-              <Option value="Monthly">
-                Monthly
-              </Option>
-
-              <Option value="Quarterly">
-                Quarterly
-              </Option>
-
-              <Option value="Half Yearly">
-                Half Yearly
-              </Option>
-
-              <Option value="Yearly">
-                Yearly
-              </Option>
-
+              <Option value="Monthly">Monthly</Option>
+              <Option value="Quarterly">Quarterly</Option>
+              <Option value="Half Yearly">Half Yearly</Option>
+              <Option value="Yearly">Yearly</Option>
             </Select>
 
           </div>
+
         )}
 
         {(reportType === "compliance" ||
           reportType === "exception") && (
+
           <div>
 
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="mb-1 block text-sm font-semibold">
               Audit Month
             </label>
 
@@ -222,6 +263,7 @@ export default function ReportFilters({
             </Select>
 
           </div>
+
         )}
 
       </div>
@@ -235,7 +277,7 @@ export default function ReportFilters({
           icon={<SearchOutlined />}
           onClick={onGenerate}
         >
-          Generate Report
+          Download Report
         </Button>
 
       </div>
