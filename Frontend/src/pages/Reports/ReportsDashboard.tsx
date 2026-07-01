@@ -87,7 +87,7 @@ export default function ReportsDashboard() {
 
           {/* Report */}
 
-          {/* <div className="space-y-5">
+          <div className="space-y-5">
 
             {selectedReport === "branch" && (
               <BranchReport />
@@ -101,7 +101,7 @@ export default function ReportsDashboard() {
               <ExceptionalReport />
             )}
 
-          </div> */}
+          </div>
 
         </div>
 
