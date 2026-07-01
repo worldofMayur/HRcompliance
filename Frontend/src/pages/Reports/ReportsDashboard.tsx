@@ -13,73 +13,94 @@ export default function ReportsDashboard() {
   const [selectedReport, setSelectedReport] =
     useState<ReportType>("branch");
 
-  return (
-    <div className="space-y-5">
+return (
+  <div className="space-y-5">
 
-      <div className="rounded-xl border border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+    {/* Header */}
 
-  <div className="flex items-end justify-between gap-6">
-
-    <div>
+    <div className="rounded-xl border border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
 
       <h1 className="text-2xl font-bold">
         Reports & Dashboard
       </h1>
 
       <p className="mt-1 text-sm text-gray-500">
-        Generate reports using the filters below.
+        Dashboard analytics and report generation.
       </p>
 
     </div>
 
-    <div className="w-80">
+    {/* Main Layout */}
 
-      <label className="mb-2 block text-sm font-medium">
-        Report Type
-      </label>
+    <div className="grid grid-cols-12 gap-5">
 
-      <Select
-        className="w-full"
-        value={selectedReport}
-        onChange={(value) => setSelectedReport(value)}
-      >
-        <Option value="branch">
-          Branch Wise Vendor Mapping
-        </Option>
+      {/* LEFT SIDE (70%) */}
 
-        <Option value="compliance">
-          Vendor Compliance Status
-        </Option>
+      <div className="col-span-12 xl:col-span-8">
 
-        <Option value="exception">
-          Exceptional Approval Report
-        </Option>
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
 
-      </Select>
+          <h2 className="text-xl font-semibold">
+            Dashboard
+          </h2>
+
+          <p className="mt-2 text-gray-500">
+            KPI Cards, Charts, Compliance Trend,
+            Monthly Statistics and Analytics will be
+            displayed here.
+          </p>
+
+        </div>
+
+      </div>
+
+      {/* RIGHT SIDE (30%) */}
+
+      <div className="col-span-12 xl:col-span-4 space-y-5">
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+
+          <label className="mb-2 block text-sm font-medium">
+            Report Type
+          </label>
+
+          <Select
+            className="w-full"
+            value={selectedReport}
+            onChange={(value) => setSelectedReport(value)}
+          >
+            <Option value="branch">
+              Branch Wise Vendor Mapping
+            </Option>
+
+            <Option value="compliance">
+              Vendor Compliance Status
+            </Option>
+
+            <Option value="exception">
+              Exceptional Approval Report
+            </Option>
+
+          </Select>
+
+        </div>
+
+        {selectedReport === "branch" && (
+          <BranchReport />
+        )}
+
+        {selectedReport === "compliance" && (
+          <ComplianceReport />
+        )}
+
+        {selectedReport === "exception" && (
+          <ExceptionalReport />
+        )}
+
+      </div>
 
     </div>
 
   </div>
-
-</div>
-
-      {/* Dashboard Placeholder */}
-
-
-      {/* Selected Report */}
-
-      {selectedReport === "branch" && (
-        <BranchReport />
-      )}
-
-      {selectedReport === "compliance" && (
-        <ComplianceReport />
-      )}
-
-      {selectedReport === "exception" && (
-        <ExceptionalReport />
-      )}
-
-    </div>
-  );
+);
 }

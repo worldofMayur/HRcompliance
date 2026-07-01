@@ -81,7 +81,9 @@ export default function ReportTable({
 
       ) : (
 
-        <div className="overflow-x-auto">
+      <div className="overflow-x-auto">
+
+        <div className="min-w-[900px]">
 
           <Table>
 
@@ -131,6 +133,8 @@ export default function ReportTable({
           </Table>
 
         </div>
+
+      </div>
 
       )}
 
