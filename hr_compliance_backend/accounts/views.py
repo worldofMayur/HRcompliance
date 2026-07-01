@@ -135,46 +135,42 @@ class LoginView(APIView):
             # JWT TOKENS
             refresh = RefreshToken.for_user(user)
 
+            principal_employer = getattr(
+                user,
+                "principalemployer_profile",
+                None
+            )
+
+            print("PE PROFILE:", principal_employer)
+
+            if principal_employer:
+                print("PE ID:", principal_employer.id)
+                print("PE NAME:", principal_employer.name)
+            else:
+                print("❌ No Principal Employer linked")
+
             print("✅ LOGIN SUCCESS")
 
             return Response({
-                "access":
-                    str(refresh.access_token),
-
-                "refresh":
-                    str(refresh),
-
-                "is_authenticated":
-                    True,
-
-                "username":
-                    user.username,
-
-                "email":
-                    user.email,
-
-                "role":
-                    user.role,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "is_authenticated": True,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
 
                 "principal_employer_id": (
-                    user.principal_employer.id
-                    if getattr(
-                        user,
-                        "principal_employer",
-                        None
-                    )
+                    principal_employer.id
+                    if principal_employer
                     else None
                 ),
 
                 "principal_employer_name": (
-                    user.principal_employer.name
-                    if getattr(
-                        user,
-                        "principal_employer",
-                        None
-                    )
+                    principal_employer.name
+                    if principal_employer
                     else None
                 ),
+            
             })
 
         except Exception as e:
