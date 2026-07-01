@@ -694,9 +694,12 @@ class PEExceptionalBranchesAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
-        states = request.GET.getlist("states") or request.GET.getlist("states[]")
+        states = (
+            request.GET.getlist("states")
+            or request.GET.getlist("states[]")
+        )
 
-        # Base exceptional entries
+        # Get exceptional audit entries
         queryset = AuditEntry.objects.filter(
             status__in=[
                 "Exceptional Approval - Delayed Complied",
@@ -709,6 +712,7 @@ class PEExceptionalBranchesAPIView(APIView):
 
         branch_ids = queryset.values_list("branch_id", flat=True).distinct()
 
+        # Get branch details
         branches = (
             PrincipalEmployerBranch.objects
             .filter(id__in=branch_ids)
@@ -792,7 +796,7 @@ class ExceptionalApprovalReportAPIView(APIView):
         vendors = data.get("vendors", [])
         audit_periods = data.get("audit_periods", [])
 
-        # Base queryset - only exceptional approvals
+        # Main queryset
         queryset = AuditEntry.objects.select_related(
             "branch",
             "vendor",
@@ -803,11 +807,10 @@ class ExceptionalApprovalReportAPIView(APIView):
             status__in=[
                 "Exceptional Approval - Delayed Complied",
                 "Exceptional Approval- Not Complied",
-            ],
-            branch__principalemployerbranch__principal_employer=pe,  # ensure PE ownership
-        ).order_by("-audit_period", "branch__state", "branch__short_name")
+            ]
+        )
 
-        # Apply filters
+        # Filters
         if states and "all" not in states:
             queryset = queryset.filter(branch__state__in=states)
 
@@ -821,69 +824,49 @@ class ExceptionalApprovalReportAPIView(APIView):
             queryset = queryset.filter(audit_period__in=audit_periods)
 
         if not queryset.exists():
-            return Response({"message": "No exceptional approval records found."}, status=404)
+            return Response({"message": "No records found matching your filters."}, status=404)
 
         # ===========================
-        # Create Excel Workbook
+        # Excel Generation
         # ===========================
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = "Exceptional Approval Report"
 
-        # Styles (same as BranchWise report)
         title_font = Font(bold=True, size=16, color="FFFFFF")
         header_font = Font(bold=True, color="FFFFFF")
-
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
         header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
-
-        thin_border = Border(
-            left=Side(style="thin"),
-            right=Side(style="thin"),
-            top=Side(style="thin"),
-            bottom=Side(style="thin")
-        )
-
+        thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
+                             top=Side(style="thin"), bottom=Side(style="thin"))
         center_alignment = Alignment(horizontal="center", vertical="center")
 
         # Title
         worksheet.merge_cells("A1:K1")
-        cell = worksheet["A1"]
-        cell.value = "Compliance Clearance System"
-        cell.font = title_font
-        cell.fill = title_fill
-        cell.alignment = center_alignment
+        worksheet["A1"] = "Compliance Clearance System"
+        worksheet["A1"].font = title_font
+        worksheet["A1"].fill = title_fill
+        worksheet["A1"].alignment = center_alignment
 
         worksheet.merge_cells("A2:K2")
-        cell = worksheet["A2"]
-        cell.value = "Exceptional Approval Report"
-        cell.font = Font(bold=True, size=14, color="FFFFFF")
-        cell.fill = title_fill
-        cell.alignment = center_alignment
+        worksheet["A2"] = "Exceptional Approval Report"
+        worksheet["A2"].font = Font(bold=True, size=14, color="FFFFFF")
+        worksheet["A2"].fill = title_fill
+        worksheet["A2"].alignment = center_alignment
 
-        # Report Info
+        # Info Row
         worksheet["A4"] = "Principal Employer"
         worksheet["B4"] = pe.name
-
         worksheet["D4"] = "Generated On"
         worksheet["E4"] = datetime.now().strftime("%d-%b-%Y %I:%M %p")
-
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
         # Headers
         headers = [
-            "State",
-            "Branch",
-            "Branch Address",
-            "Vendor",
-            "Audit Period",
-            "Audit Date",
-            "Exceptional Approval Document",
-            "Audit Particulars",
-            "Auditor Observation",
-            "Auditor Recommendation",
-            "Status"
+            "State", "Branch", "Branch Address", "Vendor", "Audit Period",
+            "Audit Date", "Document", "Audit Particulars", "Observation",
+            "Recommendation", "Status"
         ]
 
         row = 6
@@ -897,46 +880,42 @@ class ExceptionalApprovalReportAPIView(APIView):
 
         row = 7
 
-        # Data Rows
         for audit in queryset:
-            worksheet.cell(row=row, column=1).value = getattr(audit.branch, 'state', '')
-            worksheet.cell(row=row, column=2).value = getattr(audit.branch, 'short_name', '')
-            worksheet.cell(row=row, column=3).value = getattr(audit.branch, 'address', '')
-            worksheet.cell(row=row, column=4).value = getattr(audit.vendor, 'name', '')
-            worksheet.cell(row=row, column=5).value = audit.audit_period
-            worksheet.cell(row=row, column=6).value = (
-                audit.audit_date.strftime("%d-%b-%Y") if getattr(audit, 'audit_date', None) else ''
-            )
-            worksheet.cell(row=row, column=7).value = getattr(getattr(audit.checklist, 'document', None), 'name', '')
-            worksheet.cell(row=row, column=8).value = getattr(getattr(audit.checklist, None, ''), 'audit_particulars', '')
-            worksheet.cell(row=row, column=9).value = getattr(audit, 'observation', '')
-            worksheet.cell(row=row, column=10).value = getattr(audit, 'recommendation', '')
-            worksheet.cell(row=row, column=11).value = audit.status
+            ws_row = [
+                getattr(audit.branch, 'state', ''),
+                getattr(audit.branch, 'short_name', ''),
+                getattr(audit.branch, 'address', ''),
+                getattr(audit.vendor, 'name', ''),
+                audit.audit_period,
+                audit.audit_date.strftime("%d-%b-%Y") if getattr(audit, 'audit_date', None) else '',
+                getattr(getattr(audit.checklist, 'document', None), 'name', ''),
+                getattr(getattr(audit.checklist, None, ''), 'audit_particulars', ''),
+                getattr(audit, 'observation', ''),
+                getattr(audit, 'recommendation', ''),
+                audit.status
+            ]
+
+            for col, value in enumerate(ws_row, start=1):
+                cell = worksheet.cell(row=row, column=col)
+                cell.value = value
+                cell.border = thin_border
 
             row += 1
 
-        # Apply borders
-        for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=11):
-            for cell in r:
-                cell.border = thin_border
-
-        # Auto column width
+        # Column widths
         for col in range(1, 12):
-            max_length = 0
             column_letter = get_column_letter(col)
+            max_length = 0
             for r in range(1, worksheet.max_row + 1):
                 value = worksheet.cell(row=r, column=col).value
                 if value:
                     max_length = max(max_length, len(str(value)))
             worksheet.column_dimensions[column_letter].width = min(max_length + 4, 45)
 
-        # Freeze panes + Auto filter
         worksheet.freeze_panes = "A7"
         worksheet.auto_filter.ref = f"A6:K{worksheet.max_row}"
 
-        # ===========================
-        # Return Response
-        # ===========================
+        # Response
         output = BytesIO()
         workbook.save(output)
         output.seek(0)
