@@ -24,6 +24,13 @@ from master_apps.auditor.models import AuditEntry
 from master_apps.vendor.mapping_models import VendorBranchMapping
 from master_apps.principle_employee.models import PrincipalEmployerBranch
 
+from master_apps.vendor.compliance_models import (
+    VendorComplianceSubmission,
+    WorkflowStatus,
+)
+
+from master_apps.vendor.models import Vendor
+
 
 # ===================================================================
 # MAIN EXCEL REPORT
@@ -558,59 +565,71 @@ class PEExceptionalStatesAPIView(APIView):
         ])
 
 
+import traceback
+
 class PEExceptionalBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
             pe = PrincipalEmployer.objects.get(user=request.user)
+
+            states = (
+                request.GET.getlist("states")
+                or request.GET.getlist("states[]")
+            )
+
+            submissions = VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                workflow_status=WorkflowStatus.FROZEN,
+                has_exceptional_approval=True,
+            )
+
+            if states:
+                submissions = submissions.filter(
+                    state__in=states
+                )
+
+            branch_ids = (
+                submissions.values_list(
+                    "branch_id",
+                    flat=True,
+                )
+                .distinct()
+            )
+
+            branches = (
+                PrincipalEmployerBranch.objects.filter(
+                    id__in=branch_ids
+                )
+                .values(
+                    "id",
+                    "short_name",
+                    "state",
+                )
+                .order_by(
+                    "state",
+                    "short_name",
+                )
+            )
+
+            return Response([
+                {
+                    "id": b["id"],
+                    "name": f'{b["short_name"]} - {b["state"]}',
+                }
+                for b in branches
+            ])
+
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
-        states = (
-            request.GET.getlist("states")
-            or request.GET.getlist("states[]")
-        )
-
-        submissions = VendorComplianceSubmission.objects.filter(
-            principal_employer=pe,
-            workflow_status=WorkflowStatus.FROZEN,
-            has_exceptional_approval=True,
-        )
-
-        if states:
-            submissions = submissions.filter(
-                state__in=states
-            )
-
-        branch_ids = submissions.values_list(
-            "branch_id",
-            flat=True,
-        ).distinct()
-
-        branches = (
-            PrincipalEmployerBranch.objects.filter(
-                id__in=branch_ids
-            )
-            .values(
-                "id",
-                "short_name",
-                "state",
-            )
-            .order_by(
-                "state",
-                "short_name",
-            )
-        )
-
-        return Response([
-            {
-                "id": b["id"],
-                "name": f'{b["short_name"]} - {b["state"]}',
-            }
-            for b in branches
-        ])
-
+        except Exception as e:
+            traceback.print_exc()
+            print("ERROR:", e)
+            return Response({"error": str(e)}, status=500)
+            
+                       
 class PEExceptionalVendorsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
