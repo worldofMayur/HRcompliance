@@ -27,28 +27,12 @@ interface Props {
   auditMonth: string;
   setAuditMonth: (value: string) => void;
 
-  statesOptions: {
-    id: string;
-    name: string;
-  }[];
-
-  branchesOptions: {
-    id: string;
-    name: string;
-  }[];
-
-  vendorsOptions: {
-    id: string;
-    name: string;
-  }[];
-
-  servicesOptions: {
-    id: string;
-    name: string;
-  }[];
+  statesOptions: { id: string; name: string }[];
+  branchesOptions: { id: string; name: string }[];
+  vendorsOptions: { id: string; name: string }[];
+  servicesOptions: { id: string; name: string }[];
 
   loading?: boolean;
-
   onGenerate: () => void;
 }
 
@@ -76,48 +60,31 @@ export default function ReportFilters({
   auditMonth,
   setAuditMonth,
 
-  loading,
-
   statesOptions,
   branchesOptions,
   vendorsOptions,
   servicesOptions,
 
+  loading,
   onGenerate,
 }: Props) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-
       {/* Header */}
-
       <div className="mb-5 flex items-center gap-3">
-
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg">
           🔍
         </div>
-
         <div>
-          <h2 className="text-lg font-semibold">
-            Report Filters
-          </h2>
-
-          <p className="text-xs text-gray-500">
-            Select the required filters.
-          </p>
+          <h2 className="text-lg font-semibold">Report Filters</h2>
+          <p className="text-xs text-gray-500">Select the required filters.</p>
         </div>
-
       </div>
 
       <div className="space-y-4">
-
         {/* State */}
-
         <div>
-
-          <label className="mb-1 block text-sm font-semibold">
-            State
-          </label>
-
+          <label className="mb-1 block text-sm font-semibold">State</label>
           <Select
             mode="multiple"
             allowClear
@@ -125,38 +92,23 @@ export default function ReportFilters({
             maxTagCount="responsive"
             optionFilterProp="children"
             className="w-full"
-            placeholder="All States"
+            placeholder="Select States"
             value={state}
             onChange={setState}
           >
-          <Option value="all">
-            All States
-          </Option>
-
-          {(statesOptions ?? []).map((item) => (
-            <Option
-              key={item.id}
-              value={item.name}
-            >
-              {item.name}
-            </Option>
-          ))}
-
+            <Option value="all">All States</Option>
+            {(statesOptions ?? []).map((item) => (
+              <Option key={item.id} value={item.id}>
+                {item.name}
+              </Option>
+            ))}
           </Select>
-
         </div>
 
         {/* Branch */}
-
-        {(reportType === "branch" ||
-          reportType === "exception") && (
-
+        {(reportType === "branch" || reportType === "exception") && (
           <div>
-
-            <label className="mb-1 block text-sm font-semibold">
-              Branch
-            </label>
-
+            <label className="mb-1 block text-sm font-semibold">Branch</label>
             <Select
               mode="multiple"
               allowClear
@@ -164,37 +116,23 @@ export default function ReportFilters({
               maxTagCount="responsive"
               optionFilterProp="children"
               className="w-full"
-              placeholder="All Branches"
+              placeholder="Select Branches"
               value={branch}
               onChange={setBranch}
             >
-            <Option value="all">
-              All Branches
-            </Option>
-
-            {(branchesOptions ?? []).map((item) => (
-              <Option
-                key={item.id}
-                value={String(item.id)}
-              >
-                {item.name}
-              </Option>
-            ))}
-
+              <Option value="all">All Branches</Option>
+              {(branchesOptions ?? []).map((item) => (
+                <Option key={item.id} value={item.id}>
+                  {item.name}
+                </Option>
+              ))}
             </Select>
-
           </div>
-
         )}
 
         {/* Vendor */}
-
         <div>
-
-          <label className="mb-1 block text-sm font-semibold">
-            Vendor
-          </label>
-
+          <label className="mb-1 block text-sm font-semibold">Vendor</label>
           <Select
             mode="multiple"
             allowClear
@@ -202,34 +140,25 @@ export default function ReportFilters({
             maxTagCount="responsive"
             optionFilterProp="children"
             className="w-full"
-            placeholder="All Vendors"
+            placeholder="Select Vendors"
             value={vendor}
             onChange={setVendor}
           >
-            {/* Replace with API data later */}
-          {(vendorsOptions ?? []).map((item) => (
-            <Option
-              key={item.id}
-              value={String(item.id)}
-            >
-              {item.name}
-            </Option>
-          ))}
-
+            <Option value="all">All Vendors</Option>
+            {(vendorsOptions ?? []).map((item) => (
+              <Option key={item.id} value={item.id}>
+                {item.name}
+              </Option>
+            ))}
           </Select>
-
         </div>
 
         {/* Nature of Service */}
-
         {reportType === "branch" && (
-
           <div>
-
             <label className="mb-1 block text-sm font-semibold">
               Nature of Service
             </label>
-
             <Select
               mode="multiple"
               allowClear
@@ -237,35 +166,26 @@ export default function ReportFilters({
               maxTagCount="responsive"
               optionFilterProp="children"
               className="w-full"
-              placeholder="All Services"
+              placeholder="Select Services"
               value={natureOfService}
               onChange={setNatureOfService}
             >
-            {(servicesOptions ?? []).map((item) => (
-              <Option
-                key={item.id}
-                value={item.name}
-              >
-                {item.name}
-              </Option>
-            ))}
-
+              <Option value="all">All Services</Option>
+              {(servicesOptions ?? []).map((item) => (
+                <Option key={item.id} value={item.id}>
+                  {item.name}
+                </Option>
+              ))}
             </Select>
-
           </div>
-
         )}
 
-        {/* Compliance Report */}
-
+        {/* Compliance Specific Fields */}
         {reportType === "compliance" && (
-
           <div>
-
             <label className="mb-1 block text-sm font-semibold">
               Audit Periodicity
             </label>
-
             <Select
               className="w-full"
               placeholder="Select Periodicity"
@@ -277,61 +197,55 @@ export default function ReportFilters({
               <Option value="Half Yearly">Half Yearly</Option>
               <Option value="Yearly">Yearly</Option>
             </Select>
-
           </div>
-
         )}
 
-        {(reportType === "compliance" ||
-          reportType === "exception") && (
-
+        {(reportType === "compliance" || reportType === "exception") && (
           <div>
-
             <label className="mb-1 block text-sm font-semibold">
               Audit Month
             </label>
-
             <Select
               className="w-full"
               placeholder="Select Audit Month"
               value={auditMonth || undefined}
               onChange={setAuditMonth}
             >
-              <Option value="January">January</Option>
-              <Option value="February">February</Option>
-              <Option value="March">March</Option>
-              <Option value="April">April</Option>
-              <Option value="May">May</Option>
-              <Option value="June">June</Option>
-              <Option value="July">July</Option>
-              <Option value="August">August</Option>
-              <Option value="September">September</Option>
-              <Option value="October">October</Option>
-              <Option value="November">November</Option>
-              <Option value="December">December</Option>
+              {[
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+              ].map((month) => (
+                <Option key={month} value={month}>
+                  {month}
+                </Option>
+              ))}
             </Select>
-
           </div>
-
         )}
-
       </div>
 
       <div className="mt-6">
-
-      <Button
-        type="primary"
-        size="large"
-        block
-        loading={loading}
-        icon={<SearchOutlined />}
-        onClick={onGenerate}
-      >
-        Download Report
-      </Button>
-
+        <Button
+          type="primary"
+          size="large"
+          block
+          loading={loading}
+          icon={<SearchOutlined />}
+          onClick={onGenerate}
+        >
+          Download Report
+        </Button>
       </div>
-
     </div>
   );
 }

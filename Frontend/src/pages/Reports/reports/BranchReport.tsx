@@ -23,22 +23,29 @@ export default function BranchReport() {
   const [vendorsOptions, setVendorsOptions] = useState<any[]>([]);
   const [servicesOptions, setServicesOptions] = useState<any[]>([]);
 
-  // Load States, Vendors, and Services on mount
+  // Load initial data
   useEffect(() => {
     loadStates();
     loadVendors();
     loadServices();
   }, []);
 
-  // Load Branches when State selection changes
+  // Reload branches when states change
   useEffect(() => {
-    loadBranches();
+    if (state.length > 0) {
+      loadBranches();
+    } else {
+      setBranchesOptions([]);
+      setBranch([]); // Clear branches when no state selected
+    }
   }, [state]);
 
   const loadStates = async () => {
     try {
       const res = await api.get("/api/vendor/reports/states/");
-      setStatesOptions(res.data);
+      // Add "All States" option
+      const allOption = { id: "all", name: "All States" };
+      setStatesOptions([allOption, ...res.data]);
     } catch (error) {
       console.error("Failed to load states", error);
       message.error("Failed to load states");
@@ -47,9 +54,11 @@ export default function BranchReport() {
 
   const loadBranches = async () => {
     try {
-      const params = state.length > 0 ? { states: state } : {};
+      const params = state.includes("all") ? {} : { states: state };
       const res = await api.get("/api/vendor/reports/branches/", { params });
-      setBranchesOptions(res.data);
+      
+      const allOption = { id: "all", name: "All Branches" };
+      setBranchesOptions([allOption, ...res.data]);
     } catch (error) {
       console.error("Failed to load branches", error);
       message.error("Failed to load branches");
@@ -59,20 +68,20 @@ export default function BranchReport() {
   const loadVendors = async () => {
     try {
       const res = await api.get("/api/vendor/reports/vendors/");
-      setVendorsOptions(res.data);
+      const allOption = { id: "all", name: "All Vendors" };
+      setVendorsOptions([allOption, ...res.data]);
     } catch (error) {
       console.error("Failed to load vendors", error);
-      message.error("Failed to load vendors");
     }
   };
 
   const loadServices = async () => {
     try {
       const res = await api.get("/api/vendor/reports/services/");
-      setServicesOptions(res.data);
+      const allOption = { id: "all", name: "All Services" };
+      setServicesOptions([allOption, ...res.data]);
     } catch (error) {
       console.error("Failed to load services", error);
-      message.error("Failed to load services");
     }
   };
 
@@ -80,17 +89,17 @@ export default function BranchReport() {
     setLoading(true);
 
     try {
+      const payload = {
+        states: state.includes("all") ? [] : state,
+        branches: branch.includes("all") ? [] : branch,
+        vendors: vendor.includes("all") ? [] : vendor,
+        services: natureOfService.includes("all") ? [] : natureOfService,
+      };
+
       const response = await api.post(
         "/api/vendor/reports/branch-wise/",
-        {
-          states: state.includes("all") ? [] : state,
-          branches: branch.includes("all") ? [] : branch,
-          vendors: vendor,
-          services: natureOfService,
-        },
-        {
-          responseType: "blob",
-        }
+        payload,
+        { responseType: "blob" }
       );
 
       const blob = new Blob([response.data], {
@@ -101,13 +110,10 @@ export default function BranchReport() {
       const link = document.createElement("a");
 
       let filename = "BranchWiseVendorMapping.xlsx";
-
       const disposition = response.headers["content-disposition"];
       if (disposition) {
         const match = disposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) {
-          filename = match[1];
-        }
+        if (match && match[1]) filename = match[1];
       }
 
       link.href = url;
@@ -117,10 +123,9 @@ export default function BranchReport() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      message.success("Branch Wise Vendor Mapping downloaded successfully.");
+      message.success("Report downloaded successfully.");
     } catch (error: any) {
       console.error(error);
-
       if (error.response?.status === 404) {
         message.warning("No records found for the selected filters.");
       } else {
