@@ -10,7 +10,6 @@ export default function ExceptionalReport() {
   const [state, setState] = useState<string[]>([]);
   const [branch, setBranch] = useState<string[]>([]);
   const [vendor, setVendor] = useState<string[]>([]);
-  const [auditMonth, setAuditMonth] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(false);
 
@@ -19,6 +18,7 @@ export default function ExceptionalReport() {
   const [branchesOptions, setBranchesOptions] = useState<any[]>([]);
   const [vendorsOptions, setVendorsOptions] = useState<any[]>([]);
   const [auditPeriodsOptions, setAuditPeriodsOptions] = useState<any[]>([]);
+  const [auditMonth, setAuditMonth] = useState<string[]>([]);
 
   // Load States - EXCEPTIONAL
   useEffect(() => {

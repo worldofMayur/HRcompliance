@@ -479,10 +479,6 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
-        queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe
-        )
-
         states = (
             request.GET.getlist("states")
             or request.GET.getlist("states[]")
@@ -496,6 +492,10 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
         vendors = (
             request.GET.getlist("vendors")
             or request.GET.getlist("vendors[]")
+        )
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
         )
 
         if states:
@@ -516,12 +516,7 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
         branch_ids = queryset.values_list(
             "branch_id",
             flat=True
-        )
-
-        print("States:", states)
-        print("Branches:", branches)
-        print("Vendors:", vendors)
-        print("Branch IDs:", list(branch_ids))
+        ).distinct()
 
         periods = (
             AuditEntry.objects.filter(
@@ -529,17 +524,15 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
                 status__in=[
                     "Exceptional Approval - Delayed Complied",
                     "Exceptional Approval- Not Complied",
-                ],
+                ]
             )
             .values_list(
                 "audit_period",
-                flat=True,
+                flat=True
             )
             .distinct()
             .order_by("-audit_period")
         )
-
-        print("Audit Periods:", list(periods))
 
         return Response([
             {
@@ -548,7 +541,6 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
             }
             for period in periods
         ])
-
 
 # ===================================================================
 # EXCEPTIONAL APPROVAL - DEDICATED FILTER APIS
@@ -601,36 +593,44 @@ class PEExceptionalBranchesAPIView(APIView):
             or request.GET.getlist("states[]")
         )
 
-        # Get exceptional audit entries
-        queryset = AuditEntry.objects.filter(
-            status__in=[
-                "Exceptional Approval - Delayed Complied",
-                "Exceptional Approval- Not Complied",
-            ]
+        # Get branch IDs having exceptional audits
+        audit_branch_ids = (
+            AuditEntry.objects.filter(
+                status__in=[
+                    "Exceptional Approval - Delayed Complied",
+                    "Exceptional Approval- Not Complied",
+                ]
+            )
+            .values_list("branch_id", flat=True)
+            .distinct()
         )
+
+        # Get mapped branches for this PE
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe,
+            branch_id__in=audit_branch_ids,
+        ).select_related("branch")
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
 
-        branch_ids = queryset.values_list("branch_id", flat=True).distinct()
-
-        # Get branch details
         branches = (
-            PrincipalEmployerBranch.objects
-            .filter(id__in=branch_ids)
-            .values("id", "short_name", "state")
+            queryset.values(
+                "branch_id",
+                "branch__short_name",
+                "branch__state",
+            )
             .distinct()
-            .order_by("state", "short_name")
+            .order_by("branch__state", "branch__short_name")
         )
 
         return Response([
             {
-                "id": item["id"],
-                "name": f'{item["short_name"]} - {item["state"]}',
+                "id": item["branch_id"],
+                "name": f'{item["branch__short_name"]} - {item["branch__state"]}',
             }
             for item in branches
         ])
-
 
 class PEExceptionalVendorsAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -641,28 +641,48 @@ class PEExceptionalVendorsAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response([])
 
-        states = request.GET.getlist("states") or request.GET.getlist("states[]")
-        branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
+        states = (
+            request.GET.getlist("states")
+            or request.GET.getlist("states[]")
+        )
 
-        queryset = AuditEntry.objects.filter(
-            status__in=[
-                "Exceptional Approval - Delayed Complied",
-                "Exceptional Approval- Not Complied",
-            ]
+        branches = (
+            request.GET.getlist("branches")
+            or request.GET.getlist("branches[]")
+        )
+
+        # Branches that have Exceptional Approval audits
+        audit_branch_ids = (
+            AuditEntry.objects.filter(
+                status__in=[
+                    "Exceptional Approval - Delayed Complied",
+                    "Exceptional Approval- Not Complied",
+                ]
+            )
+            .values_list("branch_id", flat=True)
+            .distinct()
+        )
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe,
+            branch_id__in=audit_branch_ids,
         )
 
         if states:
-            queryset = queryset.filter(branch__state__in=states)
+            queryset = queryset.filter(
+                branch__state__in=states
+            )
+
         if branches:
-            queryset = queryset.filter(branch_id__in=branches)
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
 
-        vendor_ids = queryset.values_list("vendor_id", flat=True).distinct()
-
-        # Get vendor info via mapping
         vendors = (
-            VendorBranchMapping.objects
-            .filter(vendor_id__in=vendor_ids, principal_employer=pe)
-            .values("vendor_id", "vendor__name")
+            queryset.values(
+                "vendor_id",
+                "vendor__name",
+            )
             .distinct()
             .order_by("vendor__name")
         )
@@ -674,7 +694,6 @@ class PEExceptionalVendorsAPIView(APIView):
             }
             for item in vendors
         ])
-
 
 # ===================================================================
 # EXCEPTIONAL APPROVAL REPORT - MAIN VIEW (Polished)

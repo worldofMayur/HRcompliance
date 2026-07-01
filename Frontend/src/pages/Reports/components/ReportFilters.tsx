@@ -23,13 +23,14 @@ interface Props {
   periodicity: string;
   setPeriodicity: (value: string) => void;
 
-  auditMonth: string;
-  setAuditMonth: (value: string) => void;
+  auditMonth: string[];
+  setAuditMonth: (value: string[]) => void;
 
   statesOptions: { id: string; name: string }[];
   branchesOptions: { id: string; name: string }[];
   vendorsOptions: { id: string; name: string }[];
   servicesOptions: { id: string; name: string }[];
+  auditPeriodsOptions: { id: string; name: string }[];
 
   loading?: boolean;
   onGenerate: () => void;
@@ -55,6 +56,7 @@ export default function ReportFilters({
   branchesOptions,
   vendorsOptions,
   servicesOptions,
+  auditPeriodsOptions,
   loading,
   onGenerate,
 }: Props) {
@@ -132,12 +134,19 @@ export default function ReportFilters({
           </div>
         )}
 
-        {(reportType === "compliance" || reportType === "exception") && (
+        {reportType === "exception" && (
           <div>
             <label className="mb-1 block text-sm font-semibold">
               Audit Month
             </label>
-            {/* Keep your original Select here */}
+
+              <MultiSelectCheckbox
+                options={auditPeriodsOptions}
+                value={auditMonth}
+                onChange={setAuditMonth}
+                placeholder="Select Audit Months"
+                allLabel="All Audit Months"
+              />
           </div>
         )}
       </div>
