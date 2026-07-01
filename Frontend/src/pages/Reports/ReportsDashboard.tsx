@@ -13,32 +13,30 @@ export default function ReportsDashboard() {
   const [selectedReport, setSelectedReport] =
     useState<ReportType>("branch");
 
-return (
-  <div className="space-y-5">
+  return (
+    <div className="flex h-[calc(100vh-110px)] flex-col gap-5">
 
-    {/* Header */}
+      {/* Header */}
 
-    <div className="rounded-xl border border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-xl border border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
 
-      <h1 className="text-2xl font-bold">
-        Reports & Dashboard
-      </h1>
+        <h1 className="text-2xl font-bold">
+          Reports & Dashboard
+        </h1>
 
-      <p className="mt-1 text-sm text-gray-500">
-        Dashboard analytics and report generation.
-      </p>
+        <p className="mt-1 text-sm text-gray-500">
+          Dashboard analytics and report generation.
+        </p>
 
-    </div>
+      </div>
 
-    {/* Main Layout */}
+      {/* Main Layout */}
 
-    <div className="grid gap-5 xl:grid-cols-[3fr_1fr]">
+      <div className="grid flex-1 gap-5 overflow-hidden xl:grid-cols-[3fr_1fr]">
 
-      {/* LEFT SIDE (70%) */}
+        {/* Dashboard Area */}
 
-      <div>
-
-        <div className="min-h-[750px] rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 overflow-auto">
 
           <h2 className="text-xl font-semibold">
             Dashboard
@@ -46,61 +44,69 @@ return (
 
           <p className="mt-2 text-gray-500">
             KPI Cards, Charts, Compliance Trend,
-            Monthly Statistics and Analytics will be
-            displayed here.
+            Monthly Statistics and Analytics will
+            be displayed here.
           </p>
 
-        </div>
-
-      </div>
-
-      {/* RIGHT SIDE (30%) */}
-
-      <div className="space-y-5 xl:sticky xl:top-6 self-start xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto">
-
-        <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-
-          <label className="mb-2 block text-sm font-medium">
-            Report Type
-          </label>
-
-          <Select
-            className="w-full"
-            value={selectedReport}
-            onChange={(value) => setSelectedReport(value)}
-          >
-            <Option value="branch">
-              Branch Wise Vendor Mapping
-            </Option>
-
-            <Option value="compliance">
-              Vendor Compliance Status
-            </Option>
-
-            <Option value="exception">
-              Exceptional Approval Report
-            </Option>
-
-          </Select>
+          {/* Future Dashboard Widgets */}
 
         </div>
 
-        {selectedReport === "branch" && (
-          <BranchReport />
-        )}
+        {/* Right Sidebar */}
 
-        {selectedReport === "compliance" && (
-          <ComplianceReport />
-        )}
+        <div className="flex flex-col gap-5 overflow-hidden">
 
-        {selectedReport === "exception" && (
-          <ExceptionalReport />
-        )}
+          {/* Report Type */}
+
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+
+            <label className="mb-2 block text-sm font-medium">
+              Report Type
+            </label>
+
+            <Select
+              className="w-full"
+              value={selectedReport}
+              onChange={(value) => setSelectedReport(value)}
+            >
+              <Option value="branch">
+                Branch Wise Vendor Mapping
+              </Option>
+
+              <Option value="compliance">
+                Vendor Compliance Status
+              </Option>
+
+              <Option value="exception">
+                Exceptional Approval Report
+              </Option>
+
+            </Select>
+
+          </div>
+
+          {/* Report Area */}
+
+          <div className="flex-1 overflow-hidden">
+
+            {selectedReport === "branch" && (
+              <BranchReport />
+            )}
+
+            {selectedReport === "compliance" && (
+              <ComplianceReport />
+            )}
+
+            {selectedReport === "exception" && (
+              <ExceptionalReport />
+            )}
+
+          </div>
+
+        </div>
 
       </div>
 
     </div>
-
-  </div>
-);
+  );
 }
