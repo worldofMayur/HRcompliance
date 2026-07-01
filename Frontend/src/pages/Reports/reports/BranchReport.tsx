@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import ReportFilters from "../components/ReportFilters";
-import ReportTable from "../components/ReportTable";
 
 import { REPORT_COLUMNS } from "../data/reportConfig";
 
@@ -83,14 +82,6 @@ export default function BranchReport() {
 
         onGenerate={generateReport}
       />
-
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ReportTable
-          columns={REPORT_COLUMNS.branch}
-          data={data}
-          loading={loading}
-        />
-      </div>
 
     </div>
   );
