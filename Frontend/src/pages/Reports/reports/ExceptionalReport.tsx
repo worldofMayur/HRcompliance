@@ -98,7 +98,8 @@ export default function ExceptionalReport() {
 
   const loadAuditPeriods = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/exception/audit-periods/", {
+      const res = await api.get(
+        "/api/vendor/reports/exception-periods/", {
         params: {
           states: state,
           branches: branch,

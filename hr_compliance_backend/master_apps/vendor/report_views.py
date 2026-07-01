@@ -519,17 +519,28 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
             flat=True
         )
 
+        print("States:", states)
+        print("Branches:", branches)
+        print("Vendors:", vendors)
+        print("Branch IDs:", list(branch_ids))
+
         periods = (
             AuditEntry.objects.filter(
-                branch_id__in=branch_ids
+                branch_id__in=branch_ids,
+                status__in=[
+                    "Exceptional Approval - Delayed Complied",
+                    "Exceptional Approval- Not Complied",
+                ],
             )
             .values_list(
                 "audit_period",
-                flat=True
+                flat=True,
             )
             .distinct()
             .order_by("-audit_period")
         )
+
+        print("Audit Periods:", list(periods))
 
         return Response([
             {
