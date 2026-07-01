@@ -20,6 +20,11 @@ from .mapping_views import (
     VendorBranchMappingUpdateAPIView,
     AuditorMappingDetailsAPIView,
     VendorMappingMetaAPIView,
+
+    PEReportStatesAPIView,
+    PEReportBranchesAPIView,
+    PEReportVendorsAPIView,
+    PEReportServicesAPIView,
 )
 
 from .compliance_views import (
@@ -61,6 +66,10 @@ urlpatterns = [
         "reports/branch-wise/",
         BranchWiseVendorReportAPIView.as_view(),
     ),
+    path("reports/states/", PEReportStatesAPIView.as_view()),
+    path("reports/branches/", PEReportBranchesAPIView.as_view()),
+    path("reports/vendors/", PEReportVendorsAPIView.as_view()),
+    path("reports/services/", PEReportServicesAPIView.as_view()),
 
     # =========================
     # MAPPING

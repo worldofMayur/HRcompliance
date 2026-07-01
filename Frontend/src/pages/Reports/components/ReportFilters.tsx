@@ -27,6 +27,26 @@ interface Props {
   auditMonth: string;
   setAuditMonth: (value: string) => void;
 
+  statesOptions: {
+    id: string;
+    name: string;
+  }[];
+
+  branchesOptions: {
+    id: string;
+    name: string;
+  }[];
+
+  vendorsOptions: {
+    id: string;
+    name: string;
+  }[];
+
+  servicesOptions: {
+    id: string;
+    name: string;
+  }[];
+
   loading?: boolean;
 
   onGenerate: () => void;
@@ -58,6 +78,10 @@ export default function ReportFilters({
 
   loading,
 
+  statesOptions,
+  branchesOptions,
+  vendorsOptions,
+  servicesOptions,
 
   onGenerate,
 }: Props) {
@@ -105,14 +129,15 @@ export default function ReportFilters({
             value={state}
             onChange={setState}
           >
-            <Option value="all">
-              All States
-            </Option>
+          <Option value="all">
+            All States
+          </Option>
 
-            {/* Replace with API data later */}
-            <Option value="1">
-              Maharashtra
+          {statesOptions.map((item) => (
+            <Option key={item.id} value={item.name}>
+              {item.name}
             </Option>
+          ))}
 
           </Select>
 
@@ -140,14 +165,15 @@ export default function ReportFilters({
               value={branch}
               onChange={setBranch}
             >
-              <Option value="all">
-                All Branches
-              </Option>
+            <Option value="all">
+              All Branches
+            </Option>
 
-              {/* Replace with API data later */}
-              <Option value="1">
-                Mumbai
+            {branchesOptions.map((item) => (
+              <Option key={item.id} value={String(item.id)}>
+                {item.name}
               </Option>
+            ))}
 
             </Select>
 
@@ -175,9 +201,11 @@ export default function ReportFilters({
             onChange={setVendor}
           >
             {/* Replace with API data later */}
-            <Option value="1">
-              Vendor A
+          {vendorsOptions.map((item) => (
+            <Option key={item.id} value={String(item.id)}>
+              {item.name}
             </Option>
+          ))}
 
           </Select>
 
@@ -204,25 +232,11 @@ export default function ReportFilters({
               value={natureOfService}
               onChange={setNatureOfService}
             >
-              <Option value="Security">
-                Security
+            {servicesOptions.map((item) => (
+              <Option key={item.id} value={item.name}>
+                {item.name}
               </Option>
-
-              <Option value="Housekeeping">
-                Housekeeping
-              </Option>
-
-              <Option value="Maintenance">
-                Maintenance
-              </Option>
-
-              <Option value="Cafeteria">
-                Cafeteria
-              </Option>
-
-              <Option value="Manpower">
-                Manpower
-              </Option>
+            ))}
 
             </Select>
 

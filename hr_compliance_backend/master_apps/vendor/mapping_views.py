@@ -691,3 +691,150 @@ class AuditorMappingDetailsAPIView(APIView):
             "end_date": virtual._virtual_end_date or virtual.end_date,
             "auditor_id": virtual._virtual_auditor_id,
         })
+
+    
+
+from django.db.models import F
+
+# ==========================================================
+# REPORTS - PE STATES
+# ==========================================================
+class PEReportStatesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response([])
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .values_list("branch__state", flat=True)
+            .distinct()
+            .order_by("branch__state")
+        )
+
+        return Response([
+            {"id": s, "name": s}
+            for s in states if s
+        ])
+
+
+# ==========================================================
+# REPORTS - PE BRANCHES
+# ==========================================================
+class PEReportBranchesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response([])
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = request.GET.getlist("states")
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+
+        branches = (
+            queryset
+            .values(
+                "branch_id",
+                "branch__short_name",
+                "branch__state"
+            )
+            .distinct()
+            .order_by("branch__short_name")
+        )
+
+        return Response([
+            {
+                "id": b["branch_id"],
+                "name": b["branch__short_name"],
+                "state": b["branch__state"],
+            }
+            for b in branches
+        ])
+
+
+# ==========================================================
+# REPORTS - PE VENDORS
+# ==========================================================
+class PEReportVendorsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response([])
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        vendors = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .values(
+                "vendor_id",
+                "vendor__name"
+            )
+            .distinct()
+            .order_by("vendor__name")
+        )
+
+        return Response([
+            {
+                "id": v["vendor_id"],
+                "name": v["vendor__name"],
+            }
+            for v in vendors
+        ])
+
+
+# ==========================================================
+# REPORTS - PE SERVICES
+# ==========================================================
+class PEReportServicesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response([])
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        services = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .values_list(
+                "vendor__nature_of_services",
+                flat=True
+            )
+            .distinct()
+            .order_by("vendor__nature_of_services")
+        )
+
+        return Response([
+            {
+                "id": s,
+                "name": s,
+            }
+            for s in services if s
+        ])
