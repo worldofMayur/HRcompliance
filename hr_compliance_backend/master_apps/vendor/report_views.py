@@ -494,13 +494,14 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
             or request.GET.getlist("vendors[]")
         )
 
-        queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            workflow_status=WorkflowStatus.FROZEN,
         )
 
         if states:
             queryset = queryset.filter(
-                branch__state__in=states
+                state__in=states
             )
 
         if branches:
@@ -513,25 +514,28 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
                 vendor_id__in=vendors
             )
 
-        branch_ids = queryset.values_list(
-            "branch_id",
-            flat=True
-        ).distinct()
-
-        periods = (
+        exceptional_pairs = set(
             AuditEntry.objects.filter(
-                branch_id__in=branch_ids,
                 status__in=[
                     "Exceptional Approval - Delayed Complied",
                     "Exceptional Approval- Not Complied",
                 ]
+            ).values_list(
+                "branch_id",
+                "audit_period"
             )
-            .values_list(
-                "audit_period",
-                flat=True
-            )
-            .distinct()
-            .order_by("-audit_period")
+        )
+
+        periods = sorted(
+            {
+                submission.audit_period
+                for submission in queryset
+                if (
+                    submission.branch_id,
+                    submission.audit_period
+                ) in exceptional_pairs
+            },
+            reverse=True,
         )
 
         return Response([
@@ -593,26 +597,42 @@ class PEExceptionalBranchesAPIView(APIView):
             or request.GET.getlist("states[]")
         )
 
-        # Get branch IDs having exceptional audits
-        audit_branch_ids = (
-            AuditEntry.objects.filter(
-                status__in=[
-                    "Exceptional Approval - Delayed Complied",
-                    "Exceptional Approval- Not Complied",
-                ]
-            )
-            .values_list("branch_id", flat=True)
-            .distinct()
+        # Branches having frozen compliance submissions
+        # Frozen audit submissions
+        frozen_submissions = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            workflow_status=WorkflowStatus.FROZEN,
         )
 
-        # Get mapped branches for this PE
+        # Audit entries having exceptional approval
+        exceptional_entries = AuditEntry.objects.filter(
+            status__in=[
+                "Exceptional Approval - Delayed Complied",
+                "Exceptional Approval- Not Complied",
+            ]
+        ).values_list(
+            "branch_id",
+            "audit_period",
+        )
+
+        # Keep only frozen submissions that have exceptional audits
+        branch_ids = []
+
+        for submission in frozen_submissions:
+            if (submission.branch_id, submission.audit_period) in exceptional_entries:
+                branch_ids.append(submission.branch_id)
+
+        branch_ids = list(set(branch_ids))
+
         queryset = VendorBranchMapping.objects.filter(
             principal_employer=pe,
-            branch_id__in=audit_branch_ids,
-        ).select_related("branch")
+            branch_id__in=branch_ids,
+        )
 
         if states:
-            queryset = queryset.filter(branch__state__in=states)
+            queryset = queryset.filter(
+                branch__state__in=states
+            )
 
         branches = (
             queryset.values(
@@ -621,7 +641,10 @@ class PEExceptionalBranchesAPIView(APIView):
                 "branch__state",
             )
             .distinct()
-            .order_by("branch__state", "branch__short_name")
+            .order_by(
+                "branch__state",
+                "branch__short_name",
+            )
         )
 
         return Response([
@@ -651,21 +674,33 @@ class PEExceptionalVendorsAPIView(APIView):
             or request.GET.getlist("branches[]")
         )
 
-        # Branches that have Exceptional Approval audits
-        audit_branch_ids = (
+        # Frozen compliance submissions
+        frozen_submissions = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            workflow_status=WorkflowStatus.FROZEN,
+        )
+
+        # Exceptional audit entries
+        exceptional_pairs = set(
             AuditEntry.objects.filter(
                 status__in=[
                     "Exceptional Approval - Delayed Complied",
                     "Exceptional Approval- Not Complied",
                 ]
-            )
-            .values_list("branch_id", flat=True)
-            .distinct()
+            ).values_list("branch_id", "audit_period")
         )
 
+        # Keep only vendor mappings whose frozen submission has an exceptional audit
+        mapping_ids = []
+
+        for submission in frozen_submissions:
+            if (submission.branch_id, submission.audit_period) in exceptional_pairs:
+                mapping_ids.append(
+                    (submission.vendor_id, submission.branch_id)
+                )
+
         queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe,
-            branch_id__in=audit_branch_ids,
+            principal_employer=pe
         )
 
         if states:
@@ -678,22 +713,20 @@ class PEExceptionalVendorsAPIView(APIView):
                 branch_id__in=branches
             )
 
-        vendors = (
-            queryset.values(
-                "vendor_id",
-                "vendor__name",
-            )
-            .distinct()
-            .order_by("vendor__name")
-        )
+        queryset = [
+            m for m in queryset
+            if (m.vendor_id, m.branch_id) in mapping_ids
+        ]
 
-        return Response([
-            {
-                "id": item["vendor_id"],
-                "name": item["vendor__name"],
+        vendor_map = {}
+
+        for mapping in queryset:
+            vendor_map[mapping.vendor_id] = {
+                "id": mapping.vendor_id,
+                "name": mapping.vendor.name,
             }
-            for item in vendors
-        ])
+
+        return Response(list(vendor_map.values()))
 
 # ===================================================================
 # EXCEPTIONAL APPROVAL REPORT - MAIN VIEW (Polished)
