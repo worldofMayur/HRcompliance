@@ -12,6 +12,15 @@ interface Props {
   onChange: (value: any[]) => void;
   placeholder?: string;
   loading?: boolean;
+  allLabel?: string;
+}
+
+interface Props {
+  options: Option[];
+  value: (string | number)[];
+  onChange: (value: any[]) => void;
+  placeholder?: string;
+  loading?: boolean;
 }
 
 export default function MultiSelectCheckbox({
@@ -20,11 +29,12 @@ export default function MultiSelectCheckbox({
   onChange,
   placeholder = "Select",
   loading = false,
+  allLabel = "All",
 }: Props) {
   const allOptions: DefaultOptionType[] = [
     {
       value: "__all__",
-      label: "All",
+      label: allLabel,
     },
     ...options.map((item) => ({
       value: String(item.id),

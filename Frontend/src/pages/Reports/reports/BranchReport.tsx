@@ -29,44 +29,48 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  setBranch([]);
+  setVendor([]);
+  setNatureOfService([]);
+
+  setBranchesOptions([]);
+  setVendorsOptions([]);
+  setServicesOptions([]);
+
   if (state.length > 0) {
     loadBranches();
-  } else {
-    setBranchesOptions([]);
-    setBranch([]);
   }
 }, [state]);
 
 useEffect(() => {
+  setVendor([]);
+  setNatureOfService([]);
+  setVendorsOptions([]);
+  setServicesOptions([]);
+
   if (state.length > 0 && branch.length > 0) {
     loadVendors();
-  } else {
-    setVendorsOptions([]);
-    setVendor([]);
-    setServicesOptions([]);
-    setNatureOfService([]);
   }
-}, [state, branch]);
+}, [branch]);
 
 useEffect(() => {
+  setNatureOfService([]);
+  setServicesOptions([]);
+
   if (
     state.length > 0 &&
     branch.length > 0 &&
     vendor.length > 0
   ) {
     loadServices();
-  } else {
-    setServicesOptions([]);
-    setNatureOfService([]);
   }
-}, [state, branch, vendor]);
+}, [vendor]);
 
   const loadStates = async () => {
     try {
       const res = await api.get("/api/vendor/reports/states/");
       // Add "All States" option
-      const allOption = { id: "all", name: "All States" };
-      setStatesOptions([allOption, ...res.data]);
+      setStatesOptions(res.data);
     } catch (error) {
       console.error("Failed to load states", error);
       message.error("Failed to load states");

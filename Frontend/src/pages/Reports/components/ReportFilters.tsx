@@ -74,34 +74,37 @@ export default function ReportFilters({
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-semibold">State</label>
-          <MultiSelectCheckbox
+            <MultiSelectCheckbox
               options={statesOptions}
               value={state}
               onChange={setState}
               placeholder="Select States"
-          />
+              allLabel="All States"
+            />
         </div>
 
         {(reportType === "branch" || reportType === "exception") && (
           <div>
             <label className="mb-1 block text-sm font-semibold">Branch</label>
-            <MultiSelectCheckbox
+              <MultiSelectCheckbox
                 options={branchesOptions}
                 value={branch}
                 onChange={setBranch}
                 placeholder="Select Branches"
-            />
+                allLabel="All Branches"
+              />
           </div>
         )}
 
         <div>
           <label className="mb-1 block text-sm font-semibold">Vendor</label>
-          <MultiSelectCheckbox
+            <MultiSelectCheckbox
               options={vendorsOptions}
               value={vendor}
               onChange={setVendor}
               placeholder="Select Vendors"
-          />
+              allLabel="All Vendors"
+            />
         </div>
 
         {reportType === "branch" && (
@@ -109,12 +112,13 @@ export default function ReportFilters({
             <label className="mb-1 block text-sm font-semibold">
               Nature of Service
             </label>
-            <MultiSelectCheckbox
+              <MultiSelectCheckbox
                 options={servicesOptions}
                 value={natureOfService}
                 onChange={setNatureOfService}
                 placeholder="Select Services"
-            />
+                allLabel="All Nature of Services"
+              />
           </div>
         )}
 
