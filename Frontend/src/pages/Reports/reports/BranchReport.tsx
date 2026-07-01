@@ -16,6 +16,10 @@ export default function BranchReport() {
   const [auditMonth, setAuditMonth] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [statesOptions] = useState<any[]>([]);
+  const [branchesOptions] = useState<any[]>([]);
+  const [vendorsOptions] = useState<any[]>([]);
+  const [servicesOptions] = useState<any[]>([]);
 
   const generateReport = async () => {
     setLoading(true);
@@ -120,6 +124,11 @@ export default function BranchReport() {
         setAuditMonth={setAuditMonth}
 
         loading={loading}
+
+        statesOptions={statesOptions}
+        branchesOptions={branchesOptions}
+        vendorsOptions={vendorsOptions}
+        servicesOptions={servicesOptions}
 
         onGenerate={generateReport}
       />

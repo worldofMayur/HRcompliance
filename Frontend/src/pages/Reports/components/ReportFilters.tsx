@@ -133,8 +133,11 @@ export default function ReportFilters({
             All States
           </Option>
 
-          {statesOptions.map((item) => (
-            <Option key={item.id} value={item.name}>
+          {(statesOptions ?? []).map((item) => (
+            <Option
+              key={item.id}
+              value={item.name}
+            >
               {item.name}
             </Option>
           ))}
@@ -169,8 +172,11 @@ export default function ReportFilters({
               All Branches
             </Option>
 
-            {branchesOptions.map((item) => (
-              <Option key={item.id} value={String(item.id)}>
+            {(branchesOptions ?? []).map((item) => (
+              <Option
+                key={item.id}
+                value={String(item.id)}
+              >
                 {item.name}
               </Option>
             ))}
@@ -201,8 +207,11 @@ export default function ReportFilters({
             onChange={setVendor}
           >
             {/* Replace with API data later */}
-          {vendorsOptions.map((item) => (
-            <Option key={item.id} value={String(item.id)}>
+          {(vendorsOptions ?? []).map((item) => (
+            <Option
+              key={item.id}
+              value={String(item.id)}
+            >
               {item.name}
             </Option>
           ))}
@@ -232,8 +241,11 @@ export default function ReportFilters({
               value={natureOfService}
               onChange={setNatureOfService}
             >
-            {servicesOptions.map((item) => (
-              <Option key={item.id} value={item.name}>
+            {(servicesOptions ?? []).map((item) => (
+              <Option
+                key={item.id}
+                value={item.name}
+              >
                 {item.name}
               </Option>
             ))}
