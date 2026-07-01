@@ -1,8 +1,7 @@
 import { Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
-import MultiSelectCheckbox from "../components/MultiSelectCheckbox";
-
+import MultiSelectCheckbox from "../../../components/MultiSelectCheckbox";
 interface Props {
   reportType: "branch" | "compliance" | "exception";
 
