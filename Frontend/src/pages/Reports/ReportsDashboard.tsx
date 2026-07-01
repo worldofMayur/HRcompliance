@@ -14,7 +14,7 @@ export default function ReportsDashboard() {
     useState<ReportType>("branch");
 
   return (
-    <div className="flex h-[calc(100vh-110px)] flex-col gap-5">
+    <div className="space-y-5">
 
       {/* Header */}
 
@@ -32,11 +32,11 @@ export default function ReportsDashboard() {
 
       {/* Main Layout */}
 
-      <div className="grid flex-1 gap-5 overflow-hidden xl:grid-cols-[3fr_1fr]">
+      <div className="grid gap-5 items-start xl:grid-cols-[3fr_1fr]">
 
-        {/* Dashboard Area */}
+        {/* Dashboard */}
 
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 overflow-auto">
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 min-h-[750px]">
 
           <h2 className="text-xl font-semibold">
             Dashboard
@@ -44,17 +44,15 @@ export default function ReportsDashboard() {
 
           <p className="mt-2 text-gray-500">
             KPI Cards, Charts, Compliance Trend,
-            Monthly Statistics and Analytics will
-            be displayed here.
+            Monthly Statistics and Analytics
+            will be displayed here.
           </p>
-
-          {/* Future Dashboard Widgets */}
 
         </div>
 
         {/* Right Sidebar */}
 
-        <div className="flex flex-col gap-5 overflow-hidden">
+        <div className="sticky top-6 space-y-5 self-start">
 
           {/* Report Type */}
 
@@ -80,28 +78,23 @@ export default function ReportsDashboard() {
               <Option value="exception">
                 Exceptional Approval Report
               </Option>
-
             </Select>
 
           </div>
 
-          {/* Report Area */}
+          {/* Reports */}
 
-          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+          {selectedReport === "branch" && (
+            <BranchReport />
+          )}
 
-            {selectedReport === "branch" && (
-              <BranchReport />
-            )}
+          {selectedReport === "compliance" && (
+            <ComplianceReport />
+          )}
 
-            {selectedReport === "compliance" && (
-              <ComplianceReport />
-            )}
-
-            {selectedReport === "exception" && (
-              <ExceptionalReport />
-            )}
-
-          </div>
+          {selectedReport === "exception" && (
+            <ExceptionalReport />
+          )}
 
         </div>
 
