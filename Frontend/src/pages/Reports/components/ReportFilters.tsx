@@ -9,23 +9,25 @@ interface Props {
   principalEmployer: string;
   setPrincipalEmployer: (value: string) => void;
 
-  state: string;
-  setState: (value: string) => void;
+  state: string[];
+  setState: (value: string[]) => void;
 
-  branch: string;
-  setBranch: (value: string) => void;
+  branch: string[];
+  setBranch: (value: string[]) => void;
 
-  vendor: string;
-  setVendor: (value: string) => void;
+  vendor: string[];
+  setVendor: (value: string[]) => void;
 
-  natureOfService: string;
-  setNatureOfService: (value: string) => void;
+  natureOfService: string[];
+  setNatureOfService: (value: string[]) => void;
 
   periodicity: string;
   setPeriodicity: (value: string) => void;
 
   auditMonth: string;
   setAuditMonth: (value: string) => void;
+
+  loading?: boolean;
 
   onGenerate: () => void;
 }
@@ -54,6 +56,9 @@ export default function ReportFilters({
   auditMonth,
   setAuditMonth,
 
+  loading,
+
+
   onGenerate,
 }: Props) {
   return (
@@ -81,32 +86,7 @@ export default function ReportFilters({
 
       <div className="space-y-4">
 
-        {(reportType === "branch" ||
-          reportType === "exception") && (
-
-          <div>
-
-            <label className="mb-1 block text-sm font-semibold">
-              Principal Employer
-            </label>
-
-            <Select
-              className="w-full"
-              value={
-                localStorage.getItem("principal_employer_id") || undefined
-              }
-              disabled
-            >
-              <Option
-                value={localStorage.getItem("principal_employer_id") || ""}
-              >
-                {localStorage.getItem("principal_employer_name") || "Principal Employer"}
-              </Option>
-            </Select>
-
-          </div>
-
-        )}
+        {/* State */}
 
         <div>
 
@@ -115,17 +95,30 @@ export default function ReportFilters({
           </label>
 
           <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            maxTagCount="responsive"
+            optionFilterProp="children"
             className="w-full"
-            placeholder="Select State"
-            value={state || undefined}
+            placeholder="All States"
+            value={state}
             onChange={setState}
           >
+            <Option value="all">
+              All States
+            </Option>
+
+            {/* Replace with API data later */}
             <Option value="1">
               Maharashtra
             </Option>
+
           </Select>
 
         </div>
+
+        {/* Branch */}
 
         {(reportType === "branch" ||
           reportType === "exception") && (
@@ -137,19 +130,32 @@ export default function ReportFilters({
             </label>
 
             <Select
+              mode="multiple"
+              allowClear
+              showSearch
+              maxTagCount="responsive"
+              optionFilterProp="children"
               className="w-full"
-              placeholder="Select Branch"
-              value={branch || undefined}
+              placeholder="All Branches"
+              value={branch}
               onChange={setBranch}
             >
+              <Option value="all">
+                All Branches
+              </Option>
+
+              {/* Replace with API data later */}
               <Option value="1">
                 Mumbai
               </Option>
+
             </Select>
 
           </div>
 
         )}
+
+        {/* Vendor */}
 
         <div>
 
@@ -158,14 +164,21 @@ export default function ReportFilters({
           </label>
 
           <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            maxTagCount="responsive"
+            optionFilterProp="children"
             className="w-full"
-            placeholder="Select Vendor"
-            value={vendor || undefined}
+            placeholder="All Vendors"
+            value={vendor}
             onChange={setVendor}
           >
+            {/* Replace with API data later */}
             <Option value="1">
               Vendor A
             </Option>
+
           </Select>
 
         </div>
@@ -181,9 +194,14 @@ export default function ReportFilters({
             </label>
 
             <Select
+              mode="multiple"
+              allowClear
+              showSearch
+              maxTagCount="responsive"
+              optionFilterProp="children"
               className="w-full"
-              placeholder="Select Nature of Service"
-              value={natureOfService || undefined}
+              placeholder="All Services"
+              value={natureOfService}
               onChange={setNatureOfService}
             >
               <Option value="Security">
@@ -211,6 +229,8 @@ export default function ReportFilters({
           </div>
 
         )}
+
+        {/* Compliance Report */}
 
         {reportType === "compliance" && (
 
@@ -273,15 +293,16 @@ export default function ReportFilters({
 
       <div className="mt-6">
 
-        <Button
-          type="primary"
-          size="large"
-          block
-          icon={<SearchOutlined />}
-          onClick={onGenerate}
-        >
-          Download Report
-        </Button>
+      <Button
+        type="primary"
+        size="large"
+        block
+        loading={loading}
+        icon={<SearchOutlined />}
+        onClick={onGenerate}
+      >
+        Download Report
+      </Button>
 
       </div>
 
