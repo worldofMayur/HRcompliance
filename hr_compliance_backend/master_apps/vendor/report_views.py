@@ -55,7 +55,6 @@ class BranchWiseVendorReportAPIView(APIView):
             .order_by("branch__state", "branch__short_name", "vendor__name")
         )
 
-        # Optional Filters
         if states and "all" not in states:
             queryset = queryset.filter(branch__state__in=states)
 
@@ -551,103 +550,6 @@ class PEExceptionalAuditPeriodsAPIView(APIView):
         ])
 
 
-class ExceptionalApprovalReportAPIView(APIView):
-
-    def post(self, request):
-
-        states = request.data.get("states", [])
-        branches = request.data.get("branches", [])
-        vendors = request.data.get("vendors", [])
-        audit_period = request.data.get("audit_period", "")
-
-        queryset = AuditEntry.objects.select_related(
-            "checklist",
-            "checklist__document",
-            "auditor",
-        ).filter(
-            status__in=[
-                "Exceptional Approval - Delayed Complied",
-                "Exceptional Approval- Not Complied",
-            ]
-        )
-
-        if audit_period:
-            queryset = queryset.filter(audit_period=audit_period)
-
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Exceptional Approval Report"
-
-        headers = [
-            "State",
-            "Branch Short Name",
-            "Branch Address",
-            "Audit Periodicity",
-            "Vendor Name",
-            "Audit Month",
-            "Exceptional Approval Document",
-            "Audit Particulars",
-            "Exceptional Approval Auditor Observation",
-            "Exceptional Approval Auditor Recommendation",
-        ]
-
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col)
-            cell.value = header
-            cell.font = Font(bold=True)
-
-        row = 2
-
-        for audit in queryset:
-
-            try:
-                mapping = VendorBranchMapping.objects.select_related(
-                    "vendor",
-                    "branch",
-                ).get(
-                    branch_id=audit.branch_id
-                )
-
-            except VendorBranchMapping.DoesNotExist:
-                continue
-
-            branch = mapping.branch
-
-            if states and branch.state not in states:
-                continue
-
-            if branches and str(branch.id) not in branches:
-                continue
-
-            if vendors and str(mapping.vendor.id) not in vendors:
-                continue
-
-            ws.cell(row=row, column=1).value = branch.state
-            ws.cell(row=row, column=2).value = branch.short_name
-            ws.cell(row=row, column=3).value = branch.address
-            ws.cell(row=row, column=4).value = mapping.frequency
-            ws.cell(row=row, column=5).value = mapping.vendor.name
-            ws.cell(row=row, column=6).value = audit.audit_period
-            ws.cell(row=row, column=7).value = audit.checklist.document.name
-            ws.cell(row=row, column=8).value = audit.checklist.audit_particulars
-            ws.cell(row=row, column=9).value = audit.observation
-            ws.cell(row=row, column=10).value = audit.recommendation
-
-            row += 1
-
-        response = HttpResponse(
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-        response[
-            "Content-Disposition"
-        ] = 'attachment; filename="ExceptionalApprovalReport.xlsx"'
-
-        wb.save(response)
-
-        return response
-
-
 # ===================================================================
 # EXCEPTIONAL APPROVAL - DEDICATED FILTER APIS
 # ===================================================================
@@ -798,8 +700,6 @@ class ExceptionalApprovalReportAPIView(APIView):
 
         # Main queryset
         queryset = AuditEntry.objects.select_related(
-            "branch",
-            "vendor",
             "auditor",
             "checklist",
             "checklist__document",
@@ -811,14 +711,8 @@ class ExceptionalApprovalReportAPIView(APIView):
         )
 
         # Filters
-        if states and "all" not in states:
-            queryset = queryset.filter(branch__state__in=states)
-
         if branches and "all" not in branches:
             queryset = queryset.filter(branch_id__in=branches)
-
-        if vendors:
-            queryset = queryset.filter(vendor_id__in=vendors)
 
         if audit_periods and "all" not in audit_periods:
             queryset = queryset.filter(audit_period__in=audit_periods)
@@ -881,18 +775,41 @@ class ExceptionalApprovalReportAPIView(APIView):
         row = 7
 
         for audit in queryset:
+
+            try:
+                mapping = VendorBranchMapping.objects.select_related(
+                    "branch",
+                    "vendor",
+                ).get(
+                    branch_id=audit.branch_id,
+                    principal_employer=pe
+                )
+            except VendorBranchMapping.DoesNotExist:
+                continue
+
+            branch = mapping.branch
+            vendor = mapping.vendor
+
+            if states and "all" not in states:
+                if branch.state not in states:
+                    continue
+
+            if vendors and "all" not in vendors:
+                if str(vendor.id) not in vendors:
+                    continue
+
             ws_row = [
-                getattr(audit.branch, 'state', ''),
-                getattr(audit.branch, 'short_name', ''),
-                getattr(audit.branch, 'address', ''),
-                getattr(audit.vendor, 'name', ''),
+                branch.state,
+                branch.short_name,
+                branch.address,
+                vendor.name,
                 audit.audit_period,
-                audit.audit_date.strftime("%d-%b-%Y") if getattr(audit, 'audit_date', None) else '',
-                getattr(getattr(audit.checklist, 'document', None), 'name', ''),
-                getattr(getattr(audit.checklist, None, ''), 'audit_particulars', ''),
-                getattr(audit, 'observation', ''),
-                getattr(audit, 'recommendation', ''),
-                audit.status
+                "",
+                getattr(audit.checklist.document, "name", ""),
+                getattr(audit.checklist, "audit_particulars", ""),
+                audit.observation,
+                audit.recommendation,
+                audit.status,
             ]
 
             for col, value in enumerate(ws_row, start=1):
@@ -901,6 +818,7 @@ class ExceptionalApprovalReportAPIView(APIView):
                 cell.border = thin_border
 
             row += 1
+
 
         # Column widths
         for col in range(1, 12):
