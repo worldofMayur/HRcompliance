@@ -387,7 +387,7 @@ class PEReportServicesAPIView(APIView):
         ])
 
 
-from auditor.models import AuditEntry
+from master_apps.auditor.models import AuditEntry
 from master_apps.vendor.mapping_models import VendorBranchMapping
 
 
