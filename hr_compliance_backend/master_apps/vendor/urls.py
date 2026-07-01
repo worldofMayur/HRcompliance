@@ -34,6 +34,7 @@ from .report_views import (
     PEReportBranchesAPIView,
     PEReportVendorsAPIView,
     PEReportServicesAPIView,
+    PEReportAuditPeriodsAPIView,
 )
 
 from . import compliance_views
@@ -72,6 +73,10 @@ urlpatterns = [
     path("reports/branches/", PEReportBranchesAPIView.as_view()),
     path("reports/vendors/", PEReportVendorsAPIView.as_view()),
     path("reports/services/", PEReportServicesAPIView.as_view()),
+    path(
+    "reports/audit-periods/",
+        PEReportAuditPeriodsAPIView.as_view(),
+    ),
 
     # =========================
     # MAPPING

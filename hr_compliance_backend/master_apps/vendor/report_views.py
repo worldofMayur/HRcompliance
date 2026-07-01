@@ -385,3 +385,76 @@ class PEReportServicesAPIView(APIView):
             }
             for item in services if item
         ])
+
+
+from auditor.models import AuditEntry
+from master_apps.vendor.mapping_models import VendorBranchMapping
+
+
+class PEReportAuditPeriodsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = (
+            request.GET.getlist("states")
+            or request.GET.getlist("states[]")
+        )
+
+        branches = (
+            request.GET.getlist("branches")
+            or request.GET.getlist("branches[]")
+        )
+
+        vendors = (
+            request.GET.getlist("vendors")
+            or request.GET.getlist("vendors[]")
+        )
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
+
+        if states:
+            queryset = queryset.filter(
+                branch__state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        branch_ids = queryset.values_list(
+            "branch_id",
+            flat=True
+        )
+
+        audit_periods = (
+            AuditEntry.objects.filter(
+                branch_id__in=branch_ids
+            )
+            .values_list(
+                "audit_period",
+                flat=True
+            )
+            .distinct()
+            .order_by("-audit_period")
+        )
+
+        return Response([
+            {
+                "id": period,
+                "name": period,
+            }
+            for period in audit_periods
+        ])
