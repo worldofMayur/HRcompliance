@@ -58,32 +58,34 @@ export default function ExceptionalReport() {
     }
   };
 
-  return (
-    <div className="space-y-6">
+return (
+  <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
 
-      <ReportFilters
-        reportType="exception"
+    <ReportFilters
+      reportType="exception"
 
-        principalEmployer={principalEmployer}
-        setPrincipalEmployer={setPrincipalEmployer}
+      principalEmployer={principalEmployer}
+      setPrincipalEmployer={setPrincipalEmployer}
 
-        state={state}
-        setState={setState}
+      state={state}
+      setState={setState}
 
-        branch={branch}
-        setBranch={setBranch}
+      branch={branch}
+      setBranch={setBranch}
 
-        vendor={vendor}
-        setVendor={setVendor}
+      vendor={vendor}
+      setVendor={setVendor}
 
-        periodicity={periodicity}
-        setPeriodicity={setPeriodicity}
+      periodicity={periodicity}
+      setPeriodicity={setPeriodicity}
 
-        auditMonth={auditMonth}
-        setAuditMonth={setAuditMonth}
+      auditMonth={auditMonth}
+      setAuditMonth={setAuditMonth}
 
-        onGenerate={generateReport}
-      />
+      onGenerate={generateReport}
+    />
+
+    <div className="flex-1 min-h-0 overflow-hidden">
 
       <ReportTable
         columns={REPORT_COLUMNS.exception}
@@ -92,5 +94,7 @@ export default function ExceptionalReport() {
       />
 
     </div>
-  );
+
+  </div>
+);
 }

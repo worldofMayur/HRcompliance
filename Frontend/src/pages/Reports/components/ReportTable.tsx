@@ -79,7 +79,7 @@ export default function ReportTable({
 
       {/* Content */}
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-h-0 overflow-auto">
 
         {data.length === 0 ? (
 
@@ -91,7 +91,7 @@ export default function ReportTable({
 
         ) : (
 
-          <div className="min-w-[1000px]">
+          <div className="min-w-max">
 
             <Table>
 
