@@ -1001,100 +1001,91 @@ class ComplianceReportAPIView(APIView):
         data_row = 7
 
         for mapping in queryset:
-            documents = mapping.documents.all() or [None]
+            # Base row - One row per Vendor + Branch
+            worksheet.cell(row=data_row, column=1).value = mapping.branch.state
+            worksheet.cell(row=data_row, column=2).value = mapping.branch.short_name
+            worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '-')
+            worksheet.cell(row=data_row, column=4).value = mapping.get_frequency_display()
 
-            for document in documents:
-                worksheet.cell(row=data_row, column=1).value = mapping.branch.state
-                worksheet.cell(row=data_row, column=2).value = mapping.branch.short_name
-                worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '-')
-                worksheet.cell(row=data_row, column=4).value = mapping.get_frequency_display()
+            # Get all submissions for this mapping (all documents)
+            submission_qs = VendorComplianceSubmission.objects.filter(
+                vendor=mapping.vendor,
+                branch=mapping.branch,
+            )
+            if audit_periods:
+                submission_qs = submission_qs.filter(audit_period__in=audit_periods)
 
-                submission_qs = VendorComplianceSubmission.objects.filter(
-                    vendor=mapping.vendor, branch=mapping.branch
-                )
-                if document and document != None:
-                    submission_qs = submission_qs.filter(document=document)
-                if audit_periods:
-                    submission_qs = submission_qs.filter(audit_period__in=audit_periods)
+            for submission in submission_qs.order_by("audit_period"):
+                audit = AuditEntry.objects.filter(
+                    branch_id=mapping.branch.id,
+                    audit_period=submission.audit_period,
+                ).order_by("-created_at").first()
 
-                for submission in submission_qs.order_by("audit_period"):
-                    audit = AuditEntry.objects.filter(
-                        branch_id=mapping.branch.id,
-                        audit_period=submission.audit_period,
-                    ).order_by("-created_at").first()
-
-                    # Debug
-                    print(f"DEBUG - Document: {document.name if document else 'None'} | "
-                          f"Period: {submission.audit_period} | Workflow: {submission.workflow_status} | "
-                          f"CC Issued: {getattr(submission, 'is_cc_issued', False)} | "
-                          f"Audit Status: {audit.status if audit else 'None'}")
-
-                    # Determine status
-                    status = "Pending"
-                    if getattr(submission, 'is_cc_issued', False):
-                        status = "CC Issued"
-                    elif submission.workflow_status == WorkflowStatus.FROZEN:
-                        status = "Frozen"
-                    elif submission.workflow_status == WorkflowStatus.REUPLOAD_REQUESTED:
-                        status = "Reupload Requested"
-                    elif submission.workflow_status == WorkflowStatus.UNDER_REVIEW:
-                        status = "Under Scrutiny"
-                    elif submission.workflow_status == WorkflowStatus.EXCEPTIONAL_APPROVAL:
-                        status = "Exceptional Approval"
-                    elif audit and audit.status:
-                        status = audit.status
+                # Determine status
+                status = "Pending"
+                if getattr(submission, 'is_cc_issued', False):
+                    status = "CC Issued"
+                elif submission.workflow_status == WorkflowStatus.FROZEN:
+                    status = "Frozen"
+                elif submission.workflow_status == WorkflowStatus.REUPLOAD_REQUESTED:
+                    status = "Reupload Requested"
+                elif submission.workflow_status == WorkflowStatus.UNDER_REVIEW:
+                    status = "Under Scrutiny"
+                elif submission.workflow_status == WorkflowStatus.EXCEPTIONAL_APPROVAL:
+                    status = "Exceptional Approval"
+                elif audit and audit.status:
+                    status = audit.status
+                else:
+                    wf = str(submission.workflow_status).upper() if submission.workflow_status else ""
+                    if wf in ["SUBMITTED", "SUBMIT"]:
+                        status = "Document Submitted"
+                    elif wf == "COMPLIED":
+                        status = "Complied"
+                    elif "PENDING" in wf:
+                        status = "Documents Pending"
+                    elif "REVIEW" in wf:
+                        status = "Under Review"
                     else:
-                        wf = str(submission.workflow_status).upper() if submission.workflow_status else ""
-                        if wf in ["SUBMITTED", "SUBMIT"]:
-                            status = "Document Submitted"
-                        elif wf == "COMPLIED":
-                            status = "Complied"
-                        elif "PENDING" in wf:
-                            status = "Documents Pending"
-                        elif "REVIEW" in wf:
-                            status = "Under Review"
-                        else:
-                            status = str(submission.workflow_status) or "Pending"
+                        status = str(submission.workflow_status) or "Pending"
 
-                    # === FIXED FREQUENCY PROPAGATION ===
-                    frequency = getattr(mapping, 'frequency', 'MONTHLY')
-                    period_str = str(submission.audit_period).strip().lower()
+                # Frequency-based month filling
+                frequency = getattr(mapping, 'frequency', 'MONTHLY')
+                period_str = str(submission.audit_period).strip().lower()
+                months_to_fill = []
 
-                    months_to_fill = []
+                base_month_num = None
+                for i, m in enumerate(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"], 1):
+                    if m in period_str:
+                        base_month_num = i
+                        break
+                if not base_month_num:
+                    match = re.search(r'(\d{4})[-/](\d{1,2})', str(submission.audit_period))
+                    if match:
+                        base_month_num = int(match.group(2))
 
-                    # Find base month
-                    base_month_num = None
-                    for i, m in enumerate(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"], 1):
-                        if m in period_str:
-                            base_month_num = i
-                            break
-                    if not base_month_num:
-                        match = re.search(r'(\d{4})[-/](\d{1,2})', str(submission.audit_period))
-                        if match:
-                            base_month_num = int(match.group(2))
+                if base_month_num:
+                    if frequency == "MONTHLY":
+                        months_to_fill = [base_month_num]
+                    elif frequency == "QUARTERLY":
+                        q_start = ((base_month_num - 1) // 3) * 3 + 1
+                        months_to_fill = [q_start, q_start+1, q_start+2]
+                    elif frequency == "HALF_YEARLY":
+                        h_start = 1 if base_month_num <= 6 else 7
+                        months_to_fill = list(range(h_start, h_start + 6))
+                    elif frequency == "ANNUALLY":
+                        months_to_fill = list(range(1, 13))
+                    else:
+                        months_to_fill = [base_month_num]
 
-                    if base_month_num:
-                        if frequency == "MONTHLY":
-                            months_to_fill = [base_month_num]
-                        elif frequency == "QUARTERLY":
-                            quarter_start = ((base_month_num - 1) // 3) * 3 + 1
-                            months_to_fill = [quarter_start, quarter_start+1, quarter_start+2]
-                        elif frequency == "HALF_YEARLY":
-                            half_start = 1 if base_month_num <= 6 else 7
-                            months_to_fill = list(range(half_start, half_start + 6))
-                        elif frequency == "ANNUALLY":
-                            months_to_fill = list(range(1, 13))
-                        else:
-                            months_to_fill = [base_month_num]
-
-                    # Fill months
-                    for m_num in months_to_fill:
+                # Fill all months with same status
+                for m_num in months_to_fill:
+                    if 1 <= m_num <= 12:
                         month_name = datetime(2026, m_num, 1).strftime("%b")[:3]
                         col = month_to_col.get(month_name)
                         if col:
                             worksheet.cell(row=data_row, column=col).value = status
 
-                data_row += 1
+            data_row += 1
 
         # Formatting
         for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=16):
