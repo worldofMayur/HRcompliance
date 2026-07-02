@@ -995,9 +995,8 @@ class ComplianceReportAPIView(APIView):
             cell.alignment = center
 
         month_to_col = {
-            "Jan": 5, "Feb": 6, "Mar": 7, "March": 7, "Apr": 8, "April": 8,
-            "May": 9, "Jun": 10, "June": 10, "Jul": 11, "July": 11,
-            "Aug": 12, "Sep": 13, "Sept": 13, "Oct": 14, "Nov": 15, "Dec": 16
+            "Jan": 5, "Feb": 6, "Mar": 7, "April": 8, "May": 9, "June": 10,
+            "July": 11, "Aug": 12, "Sept": 13, "Oct": 14, "Nov": 15, "Dec": 16
         }
 
         data_row = 7
@@ -1006,6 +1005,7 @@ class ComplianceReportAPIView(APIView):
             documents = mapping.documents.all() or [None]
 
             for document in documents:
+                # Base row
                 worksheet.cell(row=data_row, column=1).value = mapping.branch.state
                 worksheet.cell(row=data_row, column=2).value = mapping.branch.short_name
                 worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '-')
@@ -1025,15 +1025,14 @@ class ComplianceReportAPIView(APIView):
                         audit_period=submission.audit_period,
                     ).order_by("-created_at").first()
 
-                    # Debug (you can remove later)
+                    # Debug
                     print(f"DEBUG - Document: {document.name if document else 'None'} | "
                           f"Period: {submission.audit_period} | Workflow: {submission.workflow_status} | "
                           f"CC Issued: {getattr(submission, 'is_cc_issued', False)} | "
                           f"Audit Status: {audit.status if audit else 'None'}")
 
-                    # ==================== IMPROVED STATUS LOGIC ====================
+                    # Determine status
                     status = "Pending"
-
                     if getattr(submission, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif submission.workflow_status == WorkflowStatus.FROZEN:
@@ -1056,20 +1055,51 @@ class ComplianceReportAPIView(APIView):
                             status = "Documents Pending"
                         elif "REVIEW" in wf:
                             status = "Under Review"
-                        elif "NC" in wf or "NON" in wf:
-                            status = "NC to resolve by vendor"
                         else:
                             status = str(submission.workflow_status) or "Pending"
-                    # ===============================================================
 
-                    # Fill month column
+                    # === KEY FIX: Fill according to Frequency ===
+                    frequency = mapping.frequency
                     period_str = str(submission.audit_period).strip()
-                    for m in ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]:
+
+                    months_to_fill = []
+
+                    # Extract base month
+                    base_month = None
+                    for m in ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]:
                         if m.lower() in period_str.lower():
-                            col = month_to_col.get(m, month_to_col.get(m[:3]))
-                            if col:
-                                worksheet.cell(row=data_row, column=col).value = status
+                            base_month = m[:3]
                             break
+                    if not base_month:
+                        try:
+                            match = re.search(r'(\d{4})[-/](\d{1,2})', period_str)
+                            if match:
+                                month_num = int(match.group(2))
+                                base_month = datetime(2026, month_num, 1).strftime("%b")[:3]
+                        except:
+                            pass
+
+                    if base_month:
+                        if frequency == "MONTHLY":
+                            months_to_fill = [base_month]
+                        elif frequency == "QUARTERLY":
+                            # Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar
+                            q_map = {"Apr": ["Apr","May","Jun"], "Jul": ["Jul","Aug","Sep"],
+                                     "Oct": ["Oct","Nov","Dec"], "Jan": ["Jan","Feb","Mar"]}
+                            months_to_fill = q_map.get(base_month, [base_month])
+                        elif frequency == "HALF_YEARLY":
+                            months_to_fill = ["Apr","May","Jun","Jul","Aug","Sep"] if base_month in ["Apr","May","Jun"] else \
+                                             ["Oct","Nov","Dec","Jan","Feb","Mar"]
+                        elif frequency == "ANNUALLY":
+                            months_to_fill = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                        else:
+                            months_to_fill = [base_month]
+
+                    # Fill all relevant months with same status
+                    for m in months_to_fill:
+                        col = month_to_col.get(m)
+                        if col:
+                            worksheet.cell(row=data_row, column=col).value = status
 
                 data_row += 1
 
