@@ -956,10 +956,8 @@ class ComplianceReportAPIView(APIView):
         header_font = Font(bold=True, color="FFFFFF")
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
         header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
-        thin_border = Border(
-            left=Side(style="thin"), right=Side(style="thin"),
-            top=Side(style="thin"), bottom=Side(style="thin")
-        )
+        thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
+                             top=Side(style="thin"), bottom=Side(style="thin"))
         center = Alignment(horizontal="center", vertical="center")
 
         # Title
@@ -1008,16 +1006,13 @@ class ComplianceReportAPIView(APIView):
             documents = mapping.documents.all() or [None]
 
             for document in documents:
-                # Base row
                 worksheet.cell(row=data_row, column=1).value = mapping.branch.state
                 worksheet.cell(row=data_row, column=2).value = mapping.branch.short_name
                 worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '-')
                 worksheet.cell(row=data_row, column=4).value = mapping.get_frequency_display()
 
-                # Submissions
                 submission_qs = VendorComplianceSubmission.objects.filter(
-                    vendor=mapping.vendor,
-                    branch=mapping.branch,
+                    vendor=mapping.vendor, branch=mapping.branch
                 )
                 if document and document != None:
                     submission_qs = submission_qs.filter(document=document)
@@ -1030,18 +1025,15 @@ class ComplianceReportAPIView(APIView):
                         audit_period=submission.audit_period,
                     ).order_by("-created_at").first()
 
-                    # ==================== DEBUG PRINT ====================
+                    # Debug (you can remove later)
                     print(f"DEBUG - Document: {document.name if document else 'None'} | "
-                          f"Period: {submission.audit_period} | "
-                          f"Workflow: {submission.workflow_status} | "
+                          f"Period: {submission.audit_period} | Workflow: {submission.workflow_status} | "
                           f"CC Issued: {getattr(submission, 'is_cc_issued', False)} | "
                           f"Audit Status: {audit.status if audit else 'None'}")
-                    # ====================================================
 
-                    audit_status = audit.status if audit else ""
-
-                    # Enhanced Status Logic
+                    # ==================== IMPROVED STATUS LOGIC ====================
                     status = "Pending"
+
                     if getattr(submission, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif submission.workflow_status == WorkflowStatus.FROZEN:
@@ -1052,48 +1044,36 @@ class ComplianceReportAPIView(APIView):
                         status = "Under Scrutiny"
                     elif submission.workflow_status == WorkflowStatus.EXCEPTIONAL_APPROVAL:
                         status = "Exceptional Approval"
-                    elif audit_status:
-                        status = audit_status
+                    elif audit and audit.status:
+                        status = audit.status
                     else:
-                        wf = str(submission.workflow_status).lower() if submission.workflow_status else ""
-                        if "submit" in wf or "submitted" in wf:
+                        wf = str(submission.workflow_status).upper() if submission.workflow_status else ""
+                        if wf == "SUBMITTED":
                             status = "Document Submitted"
-                        elif "pending" in wf:
+                        elif wf == "COMPLIED":
+                            status = "Complied"
+                        elif "PENDING" in wf:
                             status = "Documents Pending"
-                        elif "review" in wf:
+                        elif "REVIEW" in wf:
                             status = "Under Review"
-                        elif "non" in wf or "nc" in wf:
+                        elif "NC" in wf or "NON" in wf:
                             status = "NC to resolve by vendor"
                         else:
-                            status = str(submission.workflow_status) if submission.workflow_status else "Pending"
+                            status = str(submission.workflow_status) or "Pending"
+                    # ===============================================================
 
-                    # Month detection & fill
+                    # Fill month column
                     period_str = str(submission.audit_period).strip()
-                    month_name = None
                     for m in ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]:
                         if m.lower() in period_str.lower():
-                            month_name = m
-                            break
-
-                    if not month_name:
-                        try:
-                            match = re.search(r'(\d{4})[-/](\d{1,2})', period_str)
-                            if match:
-                                _, month_num = match.groups()
-                                dt = datetime(2026, int(month_num), 1)
-                                month_name = dt.strftime("%b")
-                        except:
-                            pass
-
-                    if month_name:
-                        for key, col in month_to_col.items():
-                            if key.lower() in month_name.lower() or key.lower()[:3] == month_name.lower()[:3]:
+                            col = month_to_col.get(m, month_to_col.get(m[:3]))
+                            if col:
                                 worksheet.cell(row=data_row, column=col).value = status
-                                break
+                            break
 
                 data_row += 1
 
-        # Formatting (same as before)
+        # Formatting
         for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=16):
             for cell in r:
                 cell.border = thin_border
