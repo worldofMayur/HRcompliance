@@ -42,6 +42,8 @@ from .report_views import (
     PEExceptionalVendorsAPIView,
     PEExceptionalAuditPeriodsAPIView,
     ExceptionalApprovalReportAPIView,
+    PEComplianceVendorsAPIView,
+    PEComplianceAuditPeriodsAPIView,
 )
 
 from . import compliance_views
@@ -87,6 +89,19 @@ urlpatterns = [
     path("reports/exception-branches/", PEExceptionalBranchesAPIView.as_view()),
     path("reports/exception-vendors/", PEExceptionalVendorsAPIView.as_view()),
     path("reports/exception/audit-periods/", PEExceptionalAuditPeriodsAPIView.as_view()),
+    path(
+    "reports/compliance-vendors/",
+        PEComplianceVendorsAPIView.as_view(),
+    ),
+
+    path(
+        "reports/compliance-audit-periods/",
+        PEComplianceAuditPeriodsAPIView.as_view(),
+    ),
+    path(
+        "reports/compliance-periodicities/",
+        PECompliancePeriodicitiesAPIView.as_view(),
+    ),
 
     # Exceptional Approval Report Generation
     path(

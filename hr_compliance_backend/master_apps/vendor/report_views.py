@@ -336,6 +336,14 @@ class PEReportVendorsAPIView(APIView):
         ])
 
 
+class PEComplianceVendorsAPIView(PEReportVendorsAPIView):
+    """
+    Compliance report uses the same vendor filtering
+    as Branch report.
+    """
+    pass
+
+
 class PEReportServicesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -473,6 +481,57 @@ class PEReportAuditPeriodsAPIView(APIView):
                 "name": period,
             }
             for period in audit_periods
+        ])
+
+
+class PEComplianceAuditPeriodsAPIView(PEReportAuditPeriodsAPIView):
+    """
+    Compliance report uses the same audit period logic.
+    """
+    pass
+
+
+class PECompliancePeriodicitiesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response([])
+
+        states = request.GET.getlist("states") or request.GET.getlist("states[]")
+        branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
+        vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        periodicities = (
+            queryset.values_list(
+                "frequency",
+                flat=True
+            )
+            .distinct()
+            .order_by("frequency")
+        )
+
+        return Response([
+            {
+                "id": p,
+                "name": p.replace("_", " ").title(),
+            }
+            for p in periodicities if p
         ])
 
 
@@ -628,8 +687,8 @@ class PEExceptionalBranchesAPIView(APIView):
             traceback.print_exc()
             print("ERROR:", e)
             return Response({"error": str(e)}, status=500)
-            
-                       
+
+
 class PEExceptionalVendorsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
