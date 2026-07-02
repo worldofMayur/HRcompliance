@@ -46,6 +46,7 @@ from .report_views import (
     PEComplianceAuditPeriodsAPIView,
     PECompliancePeriodicitiesAPIView,
     ComplianceReportAPIView,
+    DocumentWiseComplianceReportAPIView,
 )
 
 from . import compliance_views
@@ -150,6 +151,8 @@ urlpatterns = [
         "pe/branches/",
         PEBranchDropdownAPIView.as_view(),
     ),
+
+    path("reports/document-wise/", DocumentWiseComplianceReportAPIView.as_view()),
 
     # =========================
     # VENDOR DROPDOWNS

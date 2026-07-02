@@ -1114,3 +1114,176 @@ class ComplianceReportAPIView(APIView):
         )
         response["Content-Disposition"] = 'attachment; filename="Vendor_Wise_Compliance_Clearance_Status.xlsx"'
         return response
+
+
+
+# ===================================================================
+# NEW: DOCUMENT WISE COMPLIANCE STATUS REPORT
+# ===================================================================
+class DocumentWiseComplianceReportAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "Principal Employer not found"}, status=404)
+
+        data = request.data
+
+        states = data.get("states", []) or data.get("states[]", [])
+        branches = data.get("branches", []) or data.get("branches[]", [])
+        vendors = data.get("vendors", []) or data.get("vendors[]", [])
+        documents = data.get("documents", []) or data.get("documents[]", [])
+        audit_periods = data.get("audit_periods", []) or data.get("audit_periods[]", [])
+
+        queryset = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .select_related("vendor", "branch")
+            .prefetch_related("documents")
+        )
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Document Wise Compliance"
+
+        # Styles
+        title_font = Font(bold=True, size=16, color="FFFFFF")
+        header_font = Font(bold=True, color="FFFFFF")
+        title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
+        header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
+        thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
+                             top=Side(style="thin"), bottom=Side(style="thin"))
+        center = Alignment(horizontal="center", vertical="center")
+
+        # Title
+        worksheet.merge_cells("A1:I1")
+        worksheet["A1"] = "Compliance Clearance System"
+        worksheet["A1"].font = title_font
+        worksheet["A1"].fill = title_fill
+        worksheet["A1"].alignment = center
+
+        worksheet.merge_cells("A2:I2")
+        worksheet["A2"] = "Document Wise Compliance Status"
+        worksheet["A2"].font = Font(bold=True, size=14, color="FFFFFF")
+        worksheet["A2"].fill = title_fill
+        worksheet["A2"].alignment = center
+
+        worksheet["A4"] = "Principal Employer"
+        worksheet["B4"] = pe.name
+        worksheet["D4"] = "Generated On"
+        worksheet["E4"] = datetime.now().strftime("%d-%b-%Y %I:%M %p")
+        worksheet["G4"] = "Total Records"
+        worksheet["H4"] = 0  # Will update later
+
+        headers = [
+            "State", "Branch Short Name", "Vendor Name", "Audit Frequency",
+            "Audit Period", "Document Name", "Compliance Status", "Auditor Observation"
+        ]
+
+        for col, header in enumerate(headers, start=1):
+            cell = worksheet.cell(row=6, column=col)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.border = thin_border
+            cell.alignment = center
+
+        row = 7
+        count = 0
+
+        for mapping in queryset:
+            docs = mapping.documents.all()
+            if not docs.exists():
+                continue
+
+            for doc in docs:
+                if documents and str(doc.id) not in documents:
+                    continue
+
+                submissions = VendorComplianceSubmission.objects.filter(
+                    vendor=mapping.vendor,
+                    branch=mapping.branch,
+                    document=doc,
+                )
+                if audit_periods:
+                    submissions = submissions.filter(audit_period__in=audit_periods)
+
+                for sub in submissions:
+                    audit = AuditEntry.objects.filter(
+                        branch_id=mapping.branch.id,
+                        audit_period=sub.audit_period,
+                    ).order_by("-created_at").first()
+
+                    status = "Pending"
+                    if getattr(sub, 'is_cc_issued', False):
+                        status = "CC Issued"
+                    elif sub.workflow_status == WorkflowStatus.FROZEN:
+                        status = "Frozen"
+                    elif sub.workflow_status == WorkflowStatus.UNDER_REVIEW:
+                        status = "Under Scrutiny"
+                    elif audit and audit.status:
+                        status = audit.status
+                    else:
+                        wf = str(sub.workflow_status).upper() if sub.workflow_status else ""
+                        status = "Document Submitted" if "SUBMIT" in wf else str(sub.workflow_status) or "Pending"
+
+                    ws_row = [
+                        mapping.branch.state,
+                        mapping.branch.short_name,
+                        mapping.vendor.name,
+                        mapping.get_frequency_display(),
+                        sub.audit_period,
+                        doc.name,
+                        status,
+                        getattr(audit, 'observation', '') if audit else ''
+                    ]
+
+                    for col, value in enumerate(ws_row, start=1):
+                        cell = worksheet.cell(row=row, column=col)
+                        cell.value = value
+                        cell.border = thin_border
+
+                    row += 1
+                    count += 1
+
+        worksheet["H4"] = count
+
+        # Formatting
+        for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=8):
+            for cell in r:
+                cell.border = thin_border
+
+        for col in range(1, 9):
+            max_length = 0
+            letter = get_column_letter(col)
+            for r in range(1, worksheet.max_row + 1):
+                value = worksheet.cell(row=r, column=col).value
+                if value:
+                    max_length = max(max_length, len(str(value)))
+            worksheet.column_dimensions[letter].width = min(max_length + 4, 40)
+
+        worksheet.freeze_panes = "A7"
+        worksheet.auto_filter.ref = f"A6:H{worksheet.max_row}"
+
+        output = BytesIO()
+        workbook.save(output)
+        output.seek(0)
+
+        response = HttpResponse(
+            output.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="Document_Wise_Compliance_{datetime.now().strftime("%Y%m%d")}.xlsx"'
+        return response
