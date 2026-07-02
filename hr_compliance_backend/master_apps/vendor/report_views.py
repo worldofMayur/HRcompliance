@@ -1117,9 +1117,6 @@ class ComplianceReportAPIView(APIView):
 
 
 
-# ===================================================================
-# NEW: DOCUMENT WISE COMPLIANCE STATUS REPORT
-# ===================================================================
 class DocumentWiseComplianceReportAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1185,7 +1182,7 @@ class DocumentWiseComplianceReportAPIView(APIView):
         worksheet["D4"] = "Generated On"
         worksheet["E4"] = datetime.now().strftime("%d-%b-%Y %I:%M %p")
         worksheet["G4"] = "Total Records"
-        worksheet["H4"] = 0  # Will update later
+        worksheet["H4"] = 0
 
         headers = [
             "State", "Branch Short Name", "Vendor Name", "Audit Frequency",
@@ -1205,13 +1202,12 @@ class DocumentWiseComplianceReportAPIView(APIView):
 
         for mapping in queryset:
             docs = mapping.documents.all()
-            if not docs.exists():
-                continue
 
             for doc in docs:
-                if documents and str(doc.id) not in documents:
+                if documents and str(doc.id) not in map(str, documents):
                     continue
 
+                # Get ALL submissions for this document (even if none)
                 submissions = VendorComplianceSubmission.objects.filter(
                     vendor=mapping.vendor,
                     branch=mapping.branch,
@@ -1220,24 +1216,43 @@ class DocumentWiseComplianceReportAPIView(APIView):
                 if audit_periods:
                     submissions = submissions.filter(audit_period__in=audit_periods)
 
+                if not submissions.exists():
+                    # Show document even if no submission
+                    ws_row = [
+                        mapping.branch.state,
+                        mapping.branch.short_name,
+                        mapping.vendor.name,
+                        mapping.get_frequency_display(),
+                        "-",  # No audit period
+                        doc.name,
+                        "",   # Blank status
+                        ""    # Blank observation
+                    ]
+                    for col, value in enumerate(ws_row, start=1):
+                        cell = worksheet.cell(row=row, column=col)
+                        cell.value = value
+                        cell.border = thin_border
+                    row += 1
+                    count += 1
+                    continue
+
                 for sub in submissions:
                     audit = AuditEntry.objects.filter(
                         branch_id=mapping.branch.id,
                         audit_period=sub.audit_period,
                     ).order_by("-created_at").first()
 
-                    status = "Pending"
+                    # Use Auditor Selected Status (Priority)
+                    status = audit.status if audit and audit.status else "Pending"
+
                     if getattr(sub, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif sub.workflow_status == WorkflowStatus.FROZEN:
                         status = "Frozen"
+                    elif sub.workflow_status == WorkflowStatus.REUPLOAD_REQUESTED:
+                        status = "Reupload Requested"
                     elif sub.workflow_status == WorkflowStatus.UNDER_REVIEW:
                         status = "Under Scrutiny"
-                    elif audit and audit.status:
-                        status = audit.status
-                    else:
-                        wf = str(sub.workflow_status).upper() if sub.workflow_status else ""
-                        status = "Document Submitted" if "SUBMIT" in wf else str(sub.workflow_status) or "Pending"
 
                     ws_row = [
                         mapping.branch.state,
@@ -1272,7 +1287,7 @@ class DocumentWiseComplianceReportAPIView(APIView):
                 value = worksheet.cell(row=r, column=col).value
                 if value:
                     max_length = max(max_length, len(str(value)))
-            worksheet.column_dimensions[letter].width = min(max_length + 4, 40)
+            worksheet.column_dimensions[letter].width = min(max_length + 4, 45)
 
         worksheet.freeze_panes = "A7"
         worksheet.auto_filter.ref = f"A6:H{worksheet.max_row}"
