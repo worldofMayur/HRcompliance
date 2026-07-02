@@ -921,43 +921,33 @@ class ComplianceReportAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-
         if request.user.role != "PE":
             return Response({"error": "Unauthorized"}, status=403)
 
         pe = PrincipalEmployer.objects.get(user=request.user)
 
         data = request.data
-
         states = data.get("states", [])
         branches = data.get("branches", [])
         vendors = data.get("vendors", [])
-        periodicity = data.get("periodicity")
+        periodicity = data.get("periodicity")          # Note: you had "periodicities" earlier
         audit_periods = data.get("audit_periods", [])
 
         queryset = (
             VendorBranchMapping.objects
             .filter(principal_employer=pe)
-            .select_related(
-                "vendor",
-                "branch",
-                "auditor",
-            )
+            .select_related("vendor", "branch", "auditor")
+            .prefetch_related("documents")
         )
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
-
         if branches:
             queryset = queryset.filter(branch_id__in=branches)
-
         if vendors:
             queryset = queryset.filter(vendor_id__in=vendors)
-
         if periodicity:
-            queryset = queryset.filter(
-                frequency=periodicity
-            )
+            queryset = queryset.filter(frequency=periodicity)
 
         workbook = Workbook()
         worksheet = workbook.active
@@ -966,46 +956,20 @@ class ComplianceReportAPIView(APIView):
         # ===========================
         # Styles
         # ===========================
-
-        title_font = Font(
-            bold=True,
-            size=16,
-            color="FFFFFF"
-        )
-
-        header_font = Font(
-            bold=True,
-            color="FFFFFF"
-        )
-
-        title_fill = PatternFill(
-            fill_type="solid",
-            fgColor="1F4E78"
-        )
-
-        header_fill = PatternFill(
-            fill_type="solid",
-            fgColor="4472C4"
-        )
-
+        title_font = Font(bold=True, size=16, color="FFFFFF")
+        header_font = Font(bold=True, color="FFFFFF")
+        title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
+        header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
         thin_border = Border(
-            left=Side(style="thin"),
-            right=Side(style="thin"),
-            top=Side(style="thin"),
-            bottom=Side(style="thin"),
+            left=Side(style="thin"), right=Side(style="thin"),
+            top=Side(style="thin"), bottom=Side(style="thin")
         )
-
-        center = Alignment(
-            horizontal="center",
-            vertical="center"
-        )
+        center = Alignment(horizontal="center", vertical="center")
 
         # ===========================
-        # Report Title
+        # Report Title & Header
         # ===========================
-
         worksheet.merge_cells("A1:Q1")
-
         cell = worksheet["A1"]
         cell.value = "Compliance Clearance System"
         cell.font = title_font
@@ -1013,48 +977,26 @@ class ComplianceReportAPIView(APIView):
         cell.alignment = center
 
         worksheet.merge_cells("A2:Q2")
-
         cell = worksheet["A2"]
         cell.value = "Vendor Compliance Status Report"
-        cell.font = Font(
-            bold=True,
-            size=14,
-            color="FFFFFF"
-        )
+        cell.font = Font(bold=True, size=14, color="FFFFFF")
         cell.fill = title_fill
         cell.alignment = center
 
         worksheet["A4"] = "Principal Employer"
         worksheet["B4"] = pe.name
-
         worksheet["D4"] = "Generated On"
         worksheet["E4"] = datetime.now().strftime("%d-%b-%Y %I:%M %p")
-
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
         headers = [
-            "State",
-            "Branch",
-            "Vendor",
-            "Document",
-            "Frequency",
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
+            "State", "Branch", "Vendor", "Document", "Frequency",
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         ]
 
         row = 6
-
         for col, header in enumerate(headers, start=1):
             cell = worksheet.cell(row=row, column=col)
             cell.value = header
@@ -1063,56 +1005,63 @@ class ComplianceReportAPIView(APIView):
             cell.border = thin_border
             cell.alignment = center
 
-        # ===========================
-        # Data Rows + Status Logic
-        # ===========================
+        # Month column mapping: "Mar" -> column 8, etc.
+        month_to_col = {
+            "Jan": 6, "Feb": 7, "Mar": 8, "Apr": 9, "May": 10,
+            "Jun": 11, "Jul": 12, "Aug": 13, "Sep": 14,
+            "Oct": 15, "Nov": 16, "Dec": 17
+        }
 
-        row = 7
+        # ===========================
+        # Data Rows - Core Logic
+        # ===========================
+        data_row = 7
 
         for mapping in queryset:
-
             documents = mapping.documents.all()
-
             if not documents.exists():
                 documents = [None]
 
             for document in documents:
+                # Base row info
+                base_data = {
+                    1: mapping.branch.state,
+                    2: mapping.branch.short_name,
+                    3: mapping.vendor.name,
+                    4: document.name if document else "-",
+                    5: mapping.get_frequency_display(),
+                }
 
-                # === Step 3A: Get latest submission ===
-                submission = None
+                # Write base columns
+                for col, value in base_data.items():
+                    worksheet.cell(row=data_row, column=col).value = value
+
+                # === Fetch ALL submissions for this document ===
+                submission_qs = VendorComplianceSubmission.objects.filter(
+                    vendor=mapping.vendor,
+                    branch=mapping.branch,
+                )
                 if document:
-                    submission_queryset = VendorComplianceSubmission.objects.filter(
-                        vendor=mapping.vendor,
-                        branch=mapping.branch,
-                        document=document,
-                    )
+                    submission_qs = submission_qs.filter(document=document)
+                if audit_periods:
+                    submission_qs = submission_qs.filter(audit_period__in=audit_periods)
 
-                    if audit_periods:
-                        submission_queryset = submission_queryset.filter(
-                            audit_period__in=audit_periods
-                        )
+                submissions = submission_qs.order_by("audit_period").distinct()
 
-                    submission = submission_queryset.order_by("-submitted_at").first()
-
-                # === Step 3B: Get latest auditor status ===
-                audit_status = ""
-                if submission:
-                    audit = (
-                        AuditEntry.objects
-                        .filter(
-                            branch_id=mapping.branch.id,
-                            audit_period=submission.audit_period,
-                        )
-                        .order_by("-created_at")
-                        .first()
-                    )
+                # Process each submission and fill relevant month columns
+                for submission in submissions:
+                    # Get audit status
+                    audit_status = ""
+                    audit = AuditEntry.objects.filter(
+                        branch_id=mapping.branch.id,
+                        audit_period=submission.audit_period,
+                    ).order_by("-created_at").first()
 
                     if audit:
                         audit_status = audit.status
 
-                # === Step 3C: Determine final status ===
-                status = ""
-                if submission:
+                    # Determine final status
+                    status = ""
                     if submission.is_cc_issued:
                         status = "CC Issued"
                     elif submission.workflow_status == WorkflowStatus.FROZEN:
@@ -1126,57 +1075,56 @@ class ComplianceReportAPIView(APIView):
                     elif audit_status:
                         status = audit_status
                     else:
-                        status = submission.workflow_status
+                        status = str(submission.workflow_status) if submission.workflow_status else "Pending"
 
-                # === Write row data ===
-                worksheet.cell(row=row, column=1).value = mapping.branch.state
-                worksheet.cell(row=row, column=2).value = mapping.branch.short_name
-                worksheet.cell(row=row, column=3).value = mapping.vendor.name
+                    # Determine which month(s) to fill
+                    # Assuming audit_period format like "2026-03", "Mar 2026", or similar
+                    period_str = str(submission.audit_period)
+                    month_name = None
 
-                worksheet.cell(row=row, column=4).value = (
-                    document.name if document else "-"
-                )
+                    # Try to extract month
+                    for m in month_to_col.keys():
+                        if m.lower() in period_str.lower():
+                            month_name = m
+                            break
+                    if not month_name and len(period_str) >= 7:
+                        # Try YYYY-MM format
+                        try:
+                            from datetime import datetime
+                            dt = datetime.strptime(period_str[:7], "%Y-%m")
+                            month_name = dt.strftime("%b")
+                        except:
+                            pass
 
-                worksheet.cell(row=row, column=5).value = mapping.get_frequency_display()
+                    if month_name and month_name in month_to_col:
+                        col = month_to_col[month_name]
+                        worksheet.cell(row=data_row, column=col).value = status
 
-                # Status will be used in next step for month columns
-                # (We'll populate Jan–Dec in the next step)
-
-                row += 1
+                data_row += 1
 
         # ===========================
-        # Borders
+        # Formatting
         # ===========================
-
         for r in worksheet.iter_rows(
-            min_row=6,
-            max_row=worksheet.max_row,
-            min_col=1,
-            max_col=17,
+            min_row=6, max_row=worksheet.max_row, min_col=1, max_col=17
         ):
             for cell in r:
                 cell.border = thin_border
 
-        # ===========================
-        # Auto Width
-        # ===========================
-
         for col in range(1, 18):
             max_length = 0
             letter = get_column_letter(col)
-
             for r in range(1, worksheet.max_row + 1):
                 value = worksheet.cell(row=r, column=col).value
                 if value:
                     max_length = max(max_length, len(str(value)))
-
             worksheet.column_dimensions[letter].width = min(max_length + 4, 35)
 
         worksheet.freeze_panes = "A7"
         worksheet.auto_filter.ref = f"A6:Q{worksheet.max_row}"
 
         # ===========================
-        # Save and Return
+        # Return Response
         # ===========================
         output = BytesIO()
         workbook.save(output)
