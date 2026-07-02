@@ -1117,7 +1117,7 @@ class ComplianceReportAPIView(APIView):
 
 
 
-cfrom io import BytesIO
+from io import BytesIO
 from datetime import datetime
 import re
 
