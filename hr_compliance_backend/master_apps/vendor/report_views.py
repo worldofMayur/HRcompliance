@@ -932,7 +932,7 @@ class ComplianceReportAPIView(APIView):
         states = data.get("states", [])
         branches = data.get("branches", [])
         vendors = data.get("vendors", [])
-        periodicities = data.get("periodicities", [])
+        periodicity = data.get("periodicity")
         audit_periods = data.get("audit_periods", [])
 
         queryset = (
@@ -954,18 +954,230 @@ class ComplianceReportAPIView(APIView):
         if vendors:
             queryset = queryset.filter(vendor_id__in=vendors)
 
-        if periodicities:
+        if periodicity:
             queryset = queryset.filter(
-                frequency__in=periodicities
+                frequency=periodicity
             )
 
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = "Vendor Compliance Status"
 
-        worksheet["A1"] = "Vendor Compliance Status Report"
-        worksheet["A2"] = f"Generated On : {datetime.now().strftime('%d-%b-%Y %I:%M %p')}"
+        # ===========================
+        # Styles
+        # ===========================
 
+        title_font = Font(
+            bold=True,
+            size=16,
+            color="FFFFFF"
+        )
+
+        header_font = Font(
+            bold=True,
+            color="FFFFFF"
+        )
+
+        title_fill = PatternFill(
+            fill_type="solid",
+            fgColor="1F4E78"
+        )
+
+        header_fill = PatternFill(
+            fill_type="solid",
+            fgColor="4472C4"
+        )
+
+        thin_border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin"),
+        )
+
+        center = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+        # ===========================
+        # Report Title
+        # ===========================
+
+        worksheet.merge_cells("A1:Q1")
+
+        cell = worksheet["A1"]
+        cell.value = "Compliance Clearance System"
+        cell.font = title_font
+        cell.fill = title_fill
+        cell.alignment = center
+
+        worksheet.merge_cells("A2:Q2")
+
+        cell = worksheet["A2"]
+        cell.value = "Vendor Compliance Status Report"
+        cell.font = Font(
+            bold=True,
+            size=14,
+            color="FFFFFF"
+        )
+        cell.fill = title_fill
+        cell.alignment = center
+
+        worksheet["A4"] = "Principal Employer"
+        worksheet["B4"] = pe.name
+
+        worksheet["D4"] = "Generated On"
+        worksheet["E4"] = datetime.now().strftime("%d-%b-%Y %I:%M %p")
+
+        worksheet["G4"] = "Total Records"
+        worksheet["H4"] = queryset.count()
+
+        headers = [
+            "State",
+            "Branch",
+            "Vendor",
+            "Document",
+            "Frequency",
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+
+        row = 6
+
+        for col, header in enumerate(headers, start=1):
+            cell = worksheet.cell(row=row, column=col)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.border = thin_border
+            cell.alignment = center
+
+        # ===========================
+        # Data Rows + Status Logic
+        # ===========================
+
+        row = 7
+
+        for mapping in queryset:
+
+            documents = mapping.documents.all()
+
+            if not documents.exists():
+                documents = [None]
+
+            for document in documents:
+
+                # === Step 3A: Get latest submission ===
+                submission = None
+                if document:
+                    submission_queryset = VendorComplianceSubmission.objects.filter(
+                        vendor=mapping.vendor,
+                        branch=mapping.branch,
+                        document=document,
+                    )
+
+                    if audit_periods:
+                        submission_queryset = submission_queryset.filter(
+                            audit_period__in=audit_periods
+                        )
+
+                    submission = submission_queryset.order_by("-submitted_at").first()
+
+                # === Step 3B: Get latest auditor status ===
+                audit_status = ""
+                if submission:
+                    audit = (
+                        AuditEntry.objects
+                        .filter(
+                            branch_id=mapping.branch.id,
+                            audit_period=submission.audit_period,
+                        )
+                        .order_by("-created_at")
+                        .first()
+                    )
+
+                    if audit:
+                        audit_status = audit.status
+
+                # === Step 3C: Determine final status ===
+                status = ""
+                if submission:
+                    if submission.is_cc_issued:
+                        status = "CC Issued"
+                    elif submission.workflow_status == WorkflowStatus.FROZEN:
+                        status = "Frozen"
+                    elif submission.workflow_status == WorkflowStatus.REUPLOAD_REQUESTED:
+                        status = "Reupload Requested"
+                    elif submission.workflow_status == WorkflowStatus.UNDER_REVIEW:
+                        status = "Under Review"
+                    elif submission.workflow_status == WorkflowStatus.EXCEPTIONAL_APPROVAL:
+                        status = "Exceptional Approval"
+                    elif audit_status:
+                        status = audit_status
+                    else:
+                        status = submission.workflow_status
+
+                # === Write row data ===
+                worksheet.cell(row=row, column=1).value = mapping.branch.state
+                worksheet.cell(row=row, column=2).value = mapping.branch.short_name
+                worksheet.cell(row=row, column=3).value = mapping.vendor.name
+
+                worksheet.cell(row=row, column=4).value = (
+                    document.name if document else "-"
+                )
+
+                worksheet.cell(row=row, column=5).value = mapping.get_frequency_display()
+
+                # Status will be used in next step for month columns
+                # (We'll populate Jan–Dec in the next step)
+
+                row += 1
+
+        # ===========================
+        # Borders
+        # ===========================
+
+        for r in worksheet.iter_rows(
+            min_row=6,
+            max_row=worksheet.max_row,
+            min_col=1,
+            max_col=17,
+        ):
+            for cell in r:
+                cell.border = thin_border
+
+        # ===========================
+        # Auto Width
+        # ===========================
+
+        for col in range(1, 18):
+            max_length = 0
+            letter = get_column_letter(col)
+
+            for r in range(1, worksheet.max_row + 1):
+                value = worksheet.cell(row=r, column=col).value
+                if value:
+                    max_length = max(max_length, len(str(value)))
+
+            worksheet.column_dimensions[letter].width = min(max_length + 4, 35)
+
+        worksheet.freeze_panes = "A7"
+        worksheet.auto_filter.ref = f"A6:Q{worksheet.max_row}"
+
+        # ===========================
+        # Save and Return
+        # ===========================
         output = BytesIO()
         workbook.save(output)
         output.seek(0)
@@ -974,9 +1186,5 @@ class ComplianceReportAPIView(APIView):
             output.read(),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
-        response["Content-Disposition"] = (
-            'attachment; filename="VendorComplianceStatus.xlsx"'
-        )
-
+        response["Content-Disposition"] = 'attachment; filename="Vendor_Compliance_Status_Report.xlsx"'
         return response
