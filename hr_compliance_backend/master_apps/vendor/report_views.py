@@ -1235,7 +1235,7 @@ class DocumentWiseComplianceReportAPIView(APIView):
                     submissions = submissions.filter(audit_period__in=audit_periods)
 
                 if not submissions.exists():
-                    # Show unuploaded document
+                    # Show document with EMPTY status & observation
                     ws_row = [
                         mapping.branch.state,
                         mapping.branch.short_name,
@@ -1243,8 +1243,8 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         mapping.get_frequency_display(),
                         "-",
                         doc.name,
-                        "Document Not Submitted",
-                        ""
+                        "",   # Empty Compliance Status
+                        ""    # Empty Auditor Observation
                     ]
                     for col, value in enumerate(ws_row, start=1):
                         cell = worksheet.cell(row=row, column=col)
@@ -1260,11 +1260,10 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         audit_period=sub.audit_period,
                     ).order_by("-created_at").first()
 
-                    # === PRIORITY: Auditor's Selected Status ===
-                    status = "Pending"
-                    if audit and audit.status:
-                        status = audit.status  # This is what you want (Complied, Not Complied, Exceptional etc.)
-                    elif getattr(sub, 'is_cc_issued', False):
+                    # Auditor's actual status has highest priority
+                    status = audit.status if audit and audit.status else "Pending"
+
+                    if getattr(sub, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif sub.workflow_status == WorkflowStatus.FROZEN:
                         status = "Frozen"
@@ -1272,12 +1271,6 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         status = "Reupload Requested"
                     elif sub.workflow_status == WorkflowStatus.UNDER_REVIEW:
                         status = "Under Scrutiny"
-                    else:
-                        wf = str(sub.workflow_status).upper() if sub.workflow_status else ""
-                        if wf in ["SUBMITTED", "SUBMIT"]:
-                            status = "Document Submitted"
-                        elif "PENDING" in wf:
-                            status = "Documents Pending"
 
                     # Split period into individual months
                     frequency = mapping.frequency
@@ -1333,11 +1326,10 @@ class DocumentWiseComplianceReportAPIView(APIView):
         return response
 
     def _get_months_from_period(self, period_str: str, frequency: str):
-        """Return list of individual months (e.g., Jul-Sep → Jul, Aug, Sep)"""
+        """Return list of individual months for the period."""
         period_str = period_str.lower()
         months = []
 
-        # Extract base month number
         base_month = None
         month_map = {"jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,
                      "jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12}
