@@ -56,7 +56,6 @@ class BranchWiseVendorReportAPIView(APIView):
         vendors = data.get("vendors", [])
         services = data.get("services", [])
 
-        # Base queryset
         queryset = (
             VendorBranchMapping.objects
             .filter(principal_employer=pe)
@@ -76,36 +75,28 @@ class BranchWiseVendorReportAPIView(APIView):
         if services:
             queryset = queryset.filter(vendor__nature_of_services__in=services)
 
-        # Empty report check
         if not queryset.exists():
             return Response({"message": "No records found matching your filters."}, status=404)
 
         # ===========================
-        # Create Workbook
+        # Workbook Setup
         # ===========================
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = "Branch Wise Vendor Mapping"
 
-        # ===========================
         # Styles
-        # ===========================
         title_font = Font(bold=True, size=16, color="FFFFFF")
         header_font = Font(bold=True, color="FFFFFF")
-
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
         header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
-
         thin_border = Border(
-            left=Side(style="thin"),
-            right=Side(style="thin"),
-            top=Side(style="thin"),
-            bottom=Side(style="thin")
+            left=Side(style="thin"), right=Side(style="thin"),
+            top=Side(style="thin"), bottom=Side(style="thin")
         )
-
         center_alignment = Alignment(horizontal="center", vertical="center")
 
-        # Enhanced Title (Two rows)
+        # Title
         worksheet.merge_cells("A1:J1")
         cell = worksheet["A1"]
         cell.value = "Compliance Clearance System"
@@ -115,7 +106,7 @@ class BranchWiseVendorReportAPIView(APIView):
 
         worksheet.merge_cells("A2:J2")
         cell = worksheet["A2"]
-        cell.value = "Branch Wise Vendor Mapping Report"
+        cell.value = "Branch wise Vendor Mapping"
         cell.font = Font(bold=True, size=14, color="FFFFFF")
         cell.fill = title_fill
         cell.alignment = center_alignment
@@ -130,18 +121,18 @@ class BranchWiseVendorReportAPIView(APIView):
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
-        # Headers
+        # === Exact Headers from your screenshot ===
         headers = [
             "State",
-            "Branch",
+            "Branch Short Name",
             "Branch Address",
-            "Vendor",
-            "Nature of Service",
-            "Agreement From",
-            "Agreement To",
-            "Contact Person",
-            "Mobile",
-            "Email"
+            "Vendor Name",
+            "Nature of Services",
+            "Service Start Date",
+            "Service End Date",
+            "Vendor Contact Name",
+            "Vendor Mobile No.",
+            "Vendor Email ID"
         ]
 
         row = 6
@@ -153,59 +144,54 @@ class BranchWiseVendorReportAPIView(APIView):
             cell.alignment = center_alignment
             cell.border = thin_border
 
-        row = 7
-
         # Data Rows
+        row = 7
         for mapping in queryset:
             worksheet.cell(row=row, column=1).value = mapping.branch.state
             worksheet.cell(row=row, column=2).value = mapping.branch.short_name
-            worksheet.cell(row=row, column=3).value = mapping.branch.address
+            worksheet.cell(row=row, column=3).value = getattr(mapping.branch, 'address', '')
+            
             worksheet.cell(row=row, column=4).value = mapping.vendor.name
             worksheet.cell(row=row, column=5).value = mapping.vendor.nature_of_services
 
             worksheet.cell(row=row, column=6).value = (
-                mapping.start_date.strftime("%d-%b-%Y") if mapping.start_date else ""
+                mapping.start_date.strftime("%d-%b-%Y") if getattr(mapping, 'start_date', None) else ""
             )
             worksheet.cell(row=row, column=7).value = (
-                mapping.end_date.strftime("%d-%b-%Y") if mapping.end_date else ""
+                mapping.end_date.strftime("%d-%b-%Y") if getattr(mapping, 'end_date', None) else ""
             )
 
-            worksheet.cell(row=row, column=8).value = mapping.vendor.contact_person
-            worksheet.cell(row=row, column=9).value = mapping.vendor.mobile
-            worksheet.cell(row=row, column=10).value = mapping.vendor.email
+            worksheet.cell(row=row, column=8).value = getattr(mapping.vendor, 'contact_person', '')
+            worksheet.cell(row=row, column=9).value = getattr(mapping.vendor, 'mobile', '')
+            worksheet.cell(row=row, column=10).value = getattr(mapping.vendor, 'email', '')
 
             row += 1
 
-        # Apply borders
-        for r in worksheet.iter_rows(
-            min_row=6, max_row=worksheet.max_row, min_col=1, max_col=10
-        ):
+        # Borders
+        for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=10):
             for cell in r:
                 cell.border = thin_border
 
-        # Safe column width adjustment
+        # Auto column width
         for col in range(1, 11):
             max_length = 0
-            column_letter = get_column_letter(col)
+            letter = get_column_letter(col)
             for r in range(1, worksheet.max_row + 1):
                 value = worksheet.cell(row=r, column=col).value
                 if value:
                     max_length = max(max_length, len(str(value)))
-            worksheet.column_dimensions[column_letter].width = min(max_length + 4, 40)
+            worksheet.column_dimensions[letter].width = min(max_length + 4, 40)
 
-        # Freeze panes + Auto filter
         worksheet.freeze_panes = "A7"
         worksheet.auto_filter.ref = f"A6:J{worksheet.max_row}"
 
-        # ===========================
-        # Return Excel Response
-        # ===========================
+        # Response
         output = BytesIO()
         workbook.save(output)
         output.seek(0)
 
-        pe_identifier = getattr(pe, 'short_name', getattr(pe, 'name', 'Report'))
-        filename = f"BranchWiseVendorMapping_{pe_identifier}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        pe_identifier = getattr(pe, 'short_name', getattr(pe, 'name', 'PE'))
+        filename = f"Branch_Wise_Vendor_Mapping_{pe_identifier}_{datetime.now().strftime('%Y%m%d')}.xlsx"
 
         response = HttpResponse(
             output.read(),
@@ -214,7 +200,6 @@ class BranchWiseVendorReportAPIView(APIView):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         return response
-
 
 # ===================================================================
 # DROPDOWN FILTER APIS FOR REPORTS
@@ -777,7 +762,6 @@ class ExceptionalApprovalReportAPIView(APIView):
             ]
         )
 
-        # Filters
         if branches and "all" not in branches:
             queryset = queryset.filter(branch_id__in=branches)
 
@@ -798,18 +782,20 @@ class ExceptionalApprovalReportAPIView(APIView):
         header_font = Font(bold=True, color="FFFFFF")
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
         header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
-        thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
-                             top=Side(style="thin"), bottom=Side(style="thin"))
+        thin_border = Border(
+            left=Side(style="thin"), right=Side(style="thin"),
+            top=Side(style="thin"), bottom=Side(style="thin")
+        )
         center_alignment = Alignment(horizontal="center", vertical="center")
 
         # Title
-        worksheet.merge_cells("A1:K1")
+        worksheet.merge_cells("A1:L1")
         worksheet["A1"] = "Compliance Clearance System"
         worksheet["A1"].font = title_font
         worksheet["A1"].fill = title_fill
         worksheet["A1"].alignment = center_alignment
 
-        worksheet.merge_cells("A2:K2")
+        worksheet.merge_cells("A2:L2")
         worksheet["A2"] = "Exceptional Approval Report"
         worksheet["A2"].font = Font(bold=True, size=14, color="FFFFFF")
         worksheet["A2"].fill = title_fill
@@ -823,11 +809,19 @@ class ExceptionalApprovalReportAPIView(APIView):
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
-        # Headers
+        # Headers - Updated as per your requirement
         headers = [
-            "State", "Branch", "Branch Address", "Vendor", "Audit Period",
-            "Audit Date", "Document", "Audit Particulars", "Observation",
-            "Recommendation", "Status"
+            "State",
+            "Branch Short Name",
+            "Branch Address",
+            "Vendor",
+            "Audit Period",          # Changed from Audit Date
+            "Audit Frequency",       # Changed from Audit Periodicity
+            "Document",
+            "Audit Particulars",
+            "Observation",
+            "Recommendation",
+            "Status"
         ]
 
         row = 6
@@ -842,11 +836,9 @@ class ExceptionalApprovalReportAPIView(APIView):
         row = 7
 
         for audit in queryset:
-
             try:
                 mapping = VendorBranchMapping.objects.select_related(
-                    "branch",
-                    "vendor",
+                    "branch", "vendor"
                 ).get(
                     branch_id=audit.branch_id,
                     principal_employer=pe
@@ -868,12 +860,12 @@ class ExceptionalApprovalReportAPIView(APIView):
             ws_row = [
                 branch.state,
                 branch.short_name,
-                branch.address,
+                getattr(branch, 'address', ''),
                 vendor.name,
-                audit.audit_period,
-                "",
-                getattr(audit.checklist.document, "name", ""),
-                getattr(audit.checklist, "audit_particulars", ""),
+                audit.audit_period,           # Audit Period
+                mapping.get_frequency_display(),  # Audit Frequency
+                getattr(getattr(audit.checklist, 'document', None), 'name', ''),
+                getattr(audit.checklist, 'audit_particulars', ''),
                 audit.observation,
                 audit.recommendation,
                 audit.status,
@@ -885,7 +877,6 @@ class ExceptionalApprovalReportAPIView(APIView):
                 cell.border = thin_border
 
             row += 1
-
 
         # Column widths
         for col in range(1, 12):
@@ -906,7 +897,7 @@ class ExceptionalApprovalReportAPIView(APIView):
         output.seek(0)
 
         pe_identifier = getattr(pe, 'short_name', getattr(pe, 'name', 'PE'))
-        filename = f"ExceptionalApprovalReport_{pe_identifier}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        filename = f"Exceptional_Approval_Report_{pe_identifier}_{datetime.now().strftime('%Y%m%d')}.xlsx"
 
         response = HttpResponse(
             output.read(),
@@ -960,9 +951,7 @@ class ComplianceReportAPIView(APIView):
         worksheet = workbook.active
         worksheet.title = "Vendor Compliance Status"
 
-        # ===========================
         # Styles
-        # ===========================
         title_font = Font(bold=True, size=16, color="FFFFFF")
         header_font = Font(bold=True, color="FFFFFF")
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
@@ -973,9 +962,7 @@ class ComplianceReportAPIView(APIView):
         )
         center = Alignment(horizontal="center", vertical="center")
 
-        # ===========================
         # Title
-        # ===========================
         worksheet.merge_cells("A1:R1")
         worksheet["A1"] = "Compliance Clearance System"
         worksheet["A1"].font = title_font
@@ -995,9 +982,7 @@ class ComplianceReportAPIView(APIView):
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
-        # ===========================
-        # Headers (Exact match to your image)
-        # ===========================
+        # Headers
         headers = [
             "State", "Branch Short Name", "Branch Address", "Audit Periodicity",
             "Jan'26", "Feb'26", "March'26", "April'26", "May'26", "June'26",
@@ -1012,7 +997,7 @@ class ComplianceReportAPIView(APIView):
             cell.border = thin_border
             cell.alignment = center
 
-        # Month column mapping
+        # Month mapping
         month_to_col = {
             "Jan": 5, "Feb": 6, "Mar": 7, "March": 7, "Apr": 8, "April": 8,
             "May": 9, "Jun": 10, "June": 10, "Jul": 11, "July": 11,
@@ -1027,13 +1012,13 @@ class ComplianceReportAPIView(APIView):
                 documents = [None]
 
             for document in documents:
-                # Base row data
+                # Base row
                 worksheet.cell(row=data_row, column=1).value = mapping.branch.state
                 worksheet.cell(row=data_row, column=2).value = mapping.branch.short_name
-                worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '')
+                worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '-')
                 worksheet.cell(row=data_row, column=4).value = mapping.get_frequency_display()
 
-                # Fetch submissions
+                # Submissions
                 submission_qs = VendorComplianceSubmission.objects.filter(
                     vendor=mapping.vendor,
                     branch=mapping.branch,
@@ -1044,7 +1029,6 @@ class ComplianceReportAPIView(APIView):
                     submission_qs = submission_qs.filter(audit_period__in=audit_periods)
 
                 for submission in submission_qs.order_by("audit_period"):
-                    # Get latest audit
                     audit = AuditEntry.objects.filter(
                         branch_id=mapping.branch.id,
                         audit_period=submission.audit_period,
@@ -1052,7 +1036,9 @@ class ComplianceReportAPIView(APIView):
 
                     audit_status = audit.status if audit else ""
 
-                    # Determine status
+                    # === Enhanced Status Logic ===
+                    status = "Pending"
+
                     if getattr(submission, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif submission.workflow_status == WorkflowStatus.FROZEN:
@@ -1060,19 +1046,34 @@ class ComplianceReportAPIView(APIView):
                     elif submission.workflow_status == WorkflowStatus.REUPLOAD_REQUESTED:
                         status = "Reupload Requested"
                     elif submission.workflow_status == WorkflowStatus.UNDER_REVIEW:
-                        status = "Under Review"
+                        status = "Under Scrutiny"
                     elif submission.workflow_status == WorkflowStatus.EXCEPTIONAL_APPROVAL:
                         status = "Exceptional Approval"
                     elif audit_status:
                         status = audit_status
                     else:
-                        status = str(submission.workflow_status) if submission.workflow_status else "Pending"
+                        # More readable mapping
+                        wf = str(submission.workflow_status).lower() if submission.workflow_status else ""
+                        if "submit" in wf or "submitted" in wf:
+                            status = "Document Submitted"
+                        elif "pending" in wf:
+                            status = "Documents Pending"
+                        elif "review" in wf:
+                            status = "Under Review"
+                        elif "approve" in wf:
+                            status = "Approved"
+                        elif "complied" in wf:
+                            status = "Complied"
+                        elif "non" in wf or "nc" in wf:
+                            status = "NC to resolve by vendor"
+                        else:
+                            status = str(submission.workflow_status) if submission.workflow_status else "Pending"
 
-                    # Robust month detection
+                    # Month detection
                     period_str = str(submission.audit_period).strip()
                     month_name = None
 
-                    for m in month_to_col:
+                    for m in ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]:
                         if m.lower() in period_str.lower():
                             month_name = m
                             break
@@ -1088,15 +1089,13 @@ class ComplianceReportAPIView(APIView):
                         except:
                             pass
 
-                    if month_name and month_name in month_to_col or any(k in month_name for k in month_to_col):
-                        col = month_to_col.get(month_name, None)
-                        if not col:
-                            for k, v in month_to_col.items():
-                                if k.lower() in month_name.lower():
-                                    col = v
-                                    break
-                        if col:
-                            worksheet.cell(row=data_row, column=col).value = status
+                    if month_name:
+                        # Normalize month name
+                        month_key = month_name[:3] if month_name else ""
+                        for key, col in month_to_col.items():
+                            if key.lower() == month_key.lower() or key.lower() in month_name.lower():
+                                worksheet.cell(row=data_row, column=col).value = status
+                                break
 
                 data_row += 1
 
