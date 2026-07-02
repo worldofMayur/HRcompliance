@@ -951,7 +951,6 @@ class ComplianceReportAPIView(APIView):
         worksheet = workbook.active
         worksheet.title = "Vendor Compliance Status"
 
-        # Styles
         title_font = Font(bold=True, size=16, color="FFFFFF")
         header_font = Font(bold=True, color="FFFFFF")
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
@@ -995,8 +994,8 @@ class ComplianceReportAPIView(APIView):
             cell.alignment = center
 
         month_to_col = {
-            "Jan": 5, "Feb": 6, "Mar": 7, "April": 8, "May": 9, "June": 10,
-            "July": 11, "Aug": 12, "Sept": 13, "Oct": 14, "Nov": 15, "Dec": 16
+            "Jan": 5, "Feb": 6, "Mar": 7, "Apr": 8, "May": 9, "Jun": 10,
+            "Jul": 11, "Aug": 12, "Sep": 13, "Oct": 14, "Nov": 15, "Dec": 16
         }
 
         data_row = 7
@@ -1005,7 +1004,6 @@ class ComplianceReportAPIView(APIView):
             documents = mapping.documents.all() or [None]
 
             for document in documents:
-                # Base row
                 worksheet.cell(row=data_row, column=1).value = mapping.branch.state
                 worksheet.cell(row=data_row, column=2).value = mapping.branch.short_name
                 worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '-')
@@ -1047,7 +1045,7 @@ class ComplianceReportAPIView(APIView):
                         status = audit.status
                     else:
                         wf = str(submission.workflow_status).upper() if submission.workflow_status else ""
-                        if wf == "SUBMITTED":
+                        if wf in ["SUBMITTED", "SUBMIT"]:
                             status = "Document Submitted"
                         elif wf == "COMPLIED":
                             status = "Complied"
@@ -1058,46 +1056,41 @@ class ComplianceReportAPIView(APIView):
                         else:
                             status = str(submission.workflow_status) or "Pending"
 
-                    # === KEY FIX: Fill according to Frequency ===
-                    frequency = mapping.frequency
-                    period_str = str(submission.audit_period).strip()
+                    # === FIXED FREQUENCY PROPAGATION ===
+                    frequency = getattr(mapping, 'frequency', 'MONTHLY')
+                    period_str = str(submission.audit_period).strip().lower()
 
                     months_to_fill = []
 
-                    # Extract base month
-                    base_month = None
-                    for m in ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]:
-                        if m.lower() in period_str.lower():
-                            base_month = m[:3]
+                    # Find base month
+                    base_month_num = None
+                    for i, m in enumerate(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"], 1):
+                        if m in period_str:
+                            base_month_num = i
                             break
-                    if not base_month:
-                        try:
-                            match = re.search(r'(\d{4})[-/](\d{1,2})', period_str)
-                            if match:
-                                month_num = int(match.group(2))
-                                base_month = datetime(2026, month_num, 1).strftime("%b")[:3]
-                        except:
-                            pass
+                    if not base_month_num:
+                        match = re.search(r'(\d{4})[-/](\d{1,2})', str(submission.audit_period))
+                        if match:
+                            base_month_num = int(match.group(2))
 
-                    if base_month:
+                    if base_month_num:
                         if frequency == "MONTHLY":
-                            months_to_fill = [base_month]
+                            months_to_fill = [base_month_num]
                         elif frequency == "QUARTERLY":
-                            # Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar
-                            q_map = {"Apr": ["Apr","May","Jun"], "Jul": ["Jul","Aug","Sep"],
-                                     "Oct": ["Oct","Nov","Dec"], "Jan": ["Jan","Feb","Mar"]}
-                            months_to_fill = q_map.get(base_month, [base_month])
+                            quarter_start = ((base_month_num - 1) // 3) * 3 + 1
+                            months_to_fill = [quarter_start, quarter_start+1, quarter_start+2]
                         elif frequency == "HALF_YEARLY":
-                            months_to_fill = ["Apr","May","Jun","Jul","Aug","Sep"] if base_month in ["Apr","May","Jun"] else \
-                                             ["Oct","Nov","Dec","Jan","Feb","Mar"]
+                            half_start = 1 if base_month_num <= 6 else 7
+                            months_to_fill = list(range(half_start, half_start + 6))
                         elif frequency == "ANNUALLY":
-                            months_to_fill = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                            months_to_fill = list(range(1, 13))
                         else:
-                            months_to_fill = [base_month]
+                            months_to_fill = [base_month_num]
 
-                    # Fill all relevant months with same status
-                    for m in months_to_fill:
-                        col = month_to_col.get(m)
+                    # Fill months
+                    for m_num in months_to_fill:
+                        month_name = datetime(2026, m_num, 1).strftime("%b")[:3]
+                        col = month_to_col.get(month_name)
                         if col:
                             worksheet.cell(row=data_row, column=col).value = status
 
