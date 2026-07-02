@@ -1179,10 +1179,8 @@ class DocumentWiseComplianceReportAPIView(APIView):
         header_font = Font(bold=True, color="FFFFFF")
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
         header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
-        thin_border = Border(
-            left=Side(style="thin"), right=Side(style="thin"),
-            top=Side(style="thin"), bottom=Side(style="thin")
-        )
+        thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
+                             top=Side(style="thin"), bottom=Side(style="thin"))
         center = Alignment(horizontal="center", vertical="center")
 
         # Title
@@ -1236,8 +1234,8 @@ class DocumentWiseComplianceReportAPIView(APIView):
                 if audit_periods:
                     submissions = submissions.filter(audit_period__in=audit_periods)
 
-                # Show document even if no submission
                 if not submissions.exists():
+                    # Show unuploaded document
                     ws_row = [
                         mapping.branch.state,
                         mapping.branch.short_name,
@@ -1262,7 +1260,6 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         audit_period=sub.audit_period,
                     ).order_by("-created_at").first()
 
-                    # Auditor's actual status has priority
                     status = audit.status if audit and audit.status else "Pending"
 
                     if getattr(sub, 'is_cc_issued', False):
@@ -1274,24 +1271,29 @@ class DocumentWiseComplianceReportAPIView(APIView):
                     elif sub.workflow_status == WorkflowStatus.UNDER_REVIEW:
                         status = "Under Scrutiny"
 
-                    ws_row = [
-                        mapping.branch.state,
-                        mapping.branch.short_name,
-                        mapping.vendor.name,
-                        mapping.get_frequency_display(),
-                        sub.audit_period,
-                        doc.name,
-                        status,
-                        getattr(audit, 'observation', '') if audit else ''
-                    ]
+                    # === SPLIT PERIOD INTO INDIVIDUAL MONTHS ===
+                    frequency = mapping.frequency
+                    period_str = str(sub.audit_period).strip()
 
-                    for col, value in enumerate(ws_row, start=1):
-                        cell = worksheet.cell(row=row, column=col)
-                        cell.value = value
-                        cell.border = thin_border
+                    months = self._get_months_from_period(period_str, frequency)
 
-                    row += 1
-                    count += 1
+                    for month in months:
+                        ws_row = [
+                            mapping.branch.state,
+                            mapping.branch.short_name,
+                            mapping.vendor.name,
+                            mapping.get_frequency_display(),
+                            month,
+                            doc.name,
+                            status,
+                            getattr(audit, 'observation', '') if audit else ''
+                        ]
+                        for col, value in enumerate(ws_row, start=1):
+                            cell = worksheet.cell(row=row, column=col)
+                            cell.value = value
+                            cell.border = thin_border
+                        row += 1
+                        count += 1
 
         worksheet["H4"] = count
 
@@ -1322,3 +1324,48 @@ class DocumentWiseComplianceReportAPIView(APIView):
         )
         response["Content-Disposition"] = f'attachment; filename="Document_Wise_Compliance_{datetime.now().strftime("%Y%m%d")}.xlsx"'
         return response
+
+    def _get_months_from_period(self, period_str: str, frequency: str):
+        """Return list of individual months for the period."""
+        period_str = period_str.lower()
+        months = []
+
+        # Try to extract base month
+        base_month = None
+        month_map = {
+            "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+            "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12
+        }
+
+        for m, num in month_map.items():
+            if m in period_str:
+                base_month = num
+                break
+
+        if not base_month:
+            match = re.search(r'(\d{4})[-/](\d{1,2})', period_str)
+            if match:
+                base_month = int(match.group(2))
+
+        if not base_month:
+            return [period_str]  # Fallback
+
+        if frequency == "MONTHLY":
+            months = [datetime(2026, base_month, 1).strftime("%b %Y")]
+        elif frequency == "QUARTERLY":
+            q_start = ((base_month - 1) // 3) * 3 + 1
+            for i in range(3):
+                m = q_start + i
+                months.append(datetime(2026, m, 1).strftime("%b %Y"))
+        elif frequency == "HALF_YEARLY":
+            h_start = 1 if base_month <= 6 else 7
+            for i in range(6):
+                m = h_start + i
+                months.append(datetime(2026, m, 1).strftime("%b %Y"))
+        elif frequency == "ANNUALLY":
+            for m in range(1, 13):
+                months.append(datetime(2026, m, 1).strftime("%b %Y"))
+        else:
+            months = [datetime(2026, base_month, 1).strftime("%b %Y")]
+
+        return months
