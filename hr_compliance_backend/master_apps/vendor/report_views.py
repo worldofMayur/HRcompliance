@@ -1243,7 +1243,7 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         mapping.get_frequency_display(),
                         "-",
                         doc.name,
-                        "",
+                        "Document Not Submitted",
                         ""
                     ]
                     for col, value in enumerate(ws_row, start=1):
@@ -1260,9 +1260,11 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         audit_period=sub.audit_period,
                     ).order_by("-created_at").first()
 
-                    status = audit.status if audit and audit.status else "Pending"
-
-                    if getattr(sub, 'is_cc_issued', False):
+                    # === PRIORITY: Auditor's Selected Status ===
+                    status = "Pending"
+                    if audit and audit.status:
+                        status = audit.status  # This is what you want (Complied, Not Complied, Exceptional etc.)
+                    elif getattr(sub, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif sub.workflow_status == WorkflowStatus.FROZEN:
                         status = "Frozen"
@@ -1270,11 +1272,16 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         status = "Reupload Requested"
                     elif sub.workflow_status == WorkflowStatus.UNDER_REVIEW:
                         status = "Under Scrutiny"
+                    else:
+                        wf = str(sub.workflow_status).upper() if sub.workflow_status else ""
+                        if wf in ["SUBMITTED", "SUBMIT"]:
+                            status = "Document Submitted"
+                        elif "PENDING" in wf:
+                            status = "Documents Pending"
 
-                    # === SPLIT PERIOD INTO INDIVIDUAL MONTHS ===
+                    # Split period into individual months
                     frequency = mapping.frequency
                     period_str = str(sub.audit_period).strip()
-
                     months = self._get_months_from_period(period_str, frequency)
 
                     for month in months:
@@ -1326,16 +1333,14 @@ class DocumentWiseComplianceReportAPIView(APIView):
         return response
 
     def _get_months_from_period(self, period_str: str, frequency: str):
-        """Return list of individual months for the period."""
+        """Return list of individual months (e.g., Jul-Sep → Jul, Aug, Sep)"""
         period_str = period_str.lower()
         months = []
 
-        # Try to extract base month
+        # Extract base month number
         base_month = None
-        month_map = {
-            "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
-            "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12
-        }
+        month_map = {"jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,
+                     "jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12}
 
         for m, num in month_map.items():
             if m in period_str:
@@ -1348,20 +1353,18 @@ class DocumentWiseComplianceReportAPIView(APIView):
                 base_month = int(match.group(2))
 
         if not base_month:
-            return [period_str]  # Fallback
+            return [period_str]
 
         if frequency == "MONTHLY":
             months = [datetime(2026, base_month, 1).strftime("%b %Y")]
         elif frequency == "QUARTERLY":
             q_start = ((base_month - 1) // 3) * 3 + 1
             for i in range(3):
-                m = q_start + i
-                months.append(datetime(2026, m, 1).strftime("%b %Y"))
+                months.append(datetime(2026, q_start + i, 1).strftime("%b %Y"))
         elif frequency == "HALF_YEARLY":
             h_start = 1 if base_month <= 6 else 7
             for i in range(6):
-                m = h_start + i
-                months.append(datetime(2026, m, 1).strftime("%b %Y"))
+                months.append(datetime(2026, h_start + i, 1).strftime("%b %Y"))
         elif frequency == "ANNUALLY":
             for m in range(1, 13):
                 months.append(datetime(2026, m, 1).strftime("%b %Y"))
