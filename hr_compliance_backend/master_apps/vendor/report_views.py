@@ -809,14 +809,14 @@ class ExceptionalApprovalReportAPIView(APIView):
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
-        # Headers - Updated as per your requirement
+        # Updated Headers - Audit Frequency BEFORE Audit Period
         headers = [
             "State",
             "Branch Short Name",
             "Branch Address",
             "Vendor",
-            "Audit Period",          # Changed from Audit Date
-            "Audit Frequency",       # Changed from Audit Periodicity
+            "Audit Frequency",       # Moved before Audit Period
+            "Audit Period",          # Now after Frequency
             "Document",
             "Audit Particulars",
             "Observation",
@@ -862,8 +862,8 @@ class ExceptionalApprovalReportAPIView(APIView):
                 branch.short_name,
                 getattr(branch, 'address', ''),
                 vendor.name,
-                audit.audit_period,           # Audit Period
-                mapping.get_frequency_display(),  # Audit Frequency
+                mapping.get_frequency_display(),   # Audit Frequency
+                audit.audit_period,                # Audit Period
                 getattr(getattr(audit.checklist, 'document', None), 'name', ''),
                 getattr(audit.checklist, 'audit_particulars', ''),
                 audit.observation,
