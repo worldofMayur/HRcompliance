@@ -44,6 +44,7 @@ from .report_views import (
     ExceptionalApprovalReportAPIView,
     PEComplianceVendorsAPIView,
     PEComplianceAuditPeriodsAPIView,
+    PECompliancePeriodicitiesAPIView,
 )
 
 from . import compliance_views
