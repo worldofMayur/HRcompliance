@@ -937,7 +937,6 @@ class ComplianceReportAPIView(APIView):
         periodicities = data.get("periodicities", []) or data.get("periodicity", [])
         audit_periods = data.get("audit_periods", []) or data.get("audit_periods[]", [])
 
-        # Handle single value vs list
         if isinstance(periodicities, str):
             periodicities = [periodicities]
 
@@ -961,7 +960,9 @@ class ComplianceReportAPIView(APIView):
         worksheet = workbook.active
         worksheet.title = "Vendor Compliance Status"
 
+        # ===========================
         # Styles
+        # ===========================
         title_font = Font(bold=True, size=16, color="FFFFFF")
         header_font = Font(bold=True, color="FFFFFF")
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
@@ -972,15 +973,17 @@ class ComplianceReportAPIView(APIView):
         )
         center = Alignment(horizontal="center", vertical="center")
 
+        # ===========================
         # Title
-        worksheet.merge_cells("A1:Q1")
+        # ===========================
+        worksheet.merge_cells("A1:R1")
         worksheet["A1"] = "Compliance Clearance System"
         worksheet["A1"].font = title_font
         worksheet["A1"].fill = title_fill
         worksheet["A1"].alignment = center
 
-        worksheet.merge_cells("A2:Q2")
-        worksheet["A2"] = "Vendor Compliance Status Report"
+        worksheet.merge_cells("A2:R2")
+        worksheet["A2"] = "Vendor Wise Compliance Clearance Status"
         worksheet["A2"].font = Font(bold=True, size=14, color="FFFFFF")
         worksheet["A2"].fill = title_fill
         worksheet["A2"].alignment = center
@@ -992,10 +995,13 @@ class ComplianceReportAPIView(APIView):
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
+        # ===========================
+        # Headers (Exact match to your image)
+        # ===========================
         headers = [
-            "State", "Branch", "Vendor", "Document", "Frequency",
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
-            "Sep", "Oct", "Nov", "Dec"
+            "State", "Branch Short Name", "Branch Address", "Audit Periodicity",
+            "Jan'26", "Feb'26", "March'26", "April'26", "May'26", "June'26",
+            "July'26", "Aug'26", "Sept'26", "Oct'26", "Nov'26", "Dec'26"
         ]
 
         for col, header in enumerate(headers, start=1):
@@ -1006,11 +1012,11 @@ class ComplianceReportAPIView(APIView):
             cell.border = thin_border
             cell.alignment = center
 
-        # Month mapping
+        # Month column mapping
         month_to_col = {
-            "Jan": 6, "Feb": 7, "Mar": 8, "Apr": 9, "May": 10,
-            "Jun": 11, "Jul": 12, "Aug": 13, "Sep": 14,
-            "Oct": 15, "Nov": 16, "Dec": 17
+            "Jan": 5, "Feb": 6, "Mar": 7, "March": 7, "Apr": 8, "April": 8,
+            "May": 9, "Jun": 10, "June": 10, "Jul": 11, "July": 11,
+            "Aug": 12, "Sep": 13, "Sept": 13, "Oct": 14, "Nov": 15, "Dec": 16
         }
 
         data_row = 7
@@ -1021,14 +1027,13 @@ class ComplianceReportAPIView(APIView):
                 documents = [None]
 
             for document in documents:
-                # Write base row data
+                # Base row data
                 worksheet.cell(row=data_row, column=1).value = mapping.branch.state
                 worksheet.cell(row=data_row, column=2).value = mapping.branch.short_name
-                worksheet.cell(row=data_row, column=3).value = mapping.vendor.name
-                worksheet.cell(row=data_row, column=4).value = document.name if document else "-"
-                worksheet.cell(row=data_row, column=5).value = mapping.get_frequency_display()
+                worksheet.cell(row=data_row, column=3).value = getattr(mapping.branch, 'address', '')
+                worksheet.cell(row=data_row, column=4).value = mapping.get_frequency_display()
 
-                # Fetch ALL submissions
+                # Fetch submissions
                 submission_qs = VendorComplianceSubmission.objects.filter(
                     vendor=mapping.vendor,
                     branch=mapping.branch,
@@ -1039,7 +1044,7 @@ class ComplianceReportAPIView(APIView):
                     submission_qs = submission_qs.filter(audit_period__in=audit_periods)
 
                 for submission in submission_qs.order_by("audit_period"):
-                    # Audit status
+                    # Get latest audit
                     audit = AuditEntry.objects.filter(
                         branch_id=mapping.branch.id,
                         audit_period=submission.audit_period,
@@ -1047,8 +1052,8 @@ class ComplianceReportAPIView(APIView):
 
                     audit_status = audit.status if audit else ""
 
-                    # Final status logic
-                    if submission.is_cc_issued:
+                    # Determine status
+                    if getattr(submission, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif submission.workflow_status == WorkflowStatus.FROZEN:
                         status = "Frozen"
@@ -1063,42 +1068,44 @@ class ComplianceReportAPIView(APIView):
                     else:
                         status = str(submission.workflow_status) if submission.workflow_status else "Pending"
 
-                    # === Robust Month Detection ===
+                    # Robust month detection
                     period_str = str(submission.audit_period).strip()
                     month_name = None
 
-                    # Direct month name match
                     for m in month_to_col:
                         if m.lower() in period_str.lower():
                             month_name = m
                             break
 
-                    # YYYY-MM format
                     if not month_name:
                         try:
                             import re
                             match = re.search(r'(\d{4})[-/](\d{1,2})', period_str)
                             if match:
-                                year, month_num = match.groups()
-                                dt = datetime(int(year), int(month_num), 1)
+                                _, month_num = match.groups()
+                                dt = datetime(2026, int(month_num), 1)
                                 month_name = dt.strftime("%b")
                         except:
                             pass
 
-                    # Fill the column
-                    if month_name and month_name in month_to_col:
-                        col = month_to_col[month_name]
-                        worksheet.cell(row=data_row, column=col).value = status
+                    if month_name and month_name in month_to_col or any(k in month_name for k in month_to_col):
+                        col = month_to_col.get(month_name, None)
+                        if not col:
+                            for k, v in month_to_col.items():
+                                if k.lower() in month_name.lower():
+                                    col = v
+                                    break
+                        if col:
+                            worksheet.cell(row=data_row, column=col).value = status
 
                 data_row += 1
 
-        # Final formatting
-        for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=17):
+        # Formatting
+        for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=16):
             for cell in r:
-                if cell.value is not None:  # Only border cells with content or header
-                    cell.border = thin_border
+                cell.border = thin_border
 
-        for col in range(1, 18):
+        for col in range(1, 17):
             max_length = 0
             letter = get_column_letter(col)
             for r in range(1, worksheet.max_row + 1):
@@ -1108,7 +1115,7 @@ class ComplianceReportAPIView(APIView):
             worksheet.column_dimensions[letter].width = min(max_length + 4, 35)
 
         worksheet.freeze_panes = "A7"
-        worksheet.auto_filter.ref = f"A6:Q{worksheet.max_row}"
+        worksheet.auto_filter.ref = f"A6:P{worksheet.max_row}"
 
         # Response
         output = BytesIO()
@@ -1119,5 +1126,5 @@ class ComplianceReportAPIView(APIView):
             output.read(),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        response["Content-Disposition"] = 'attachment; filename="Vendor_Compliance_Status_Report.xlsx"'
+        response["Content-Disposition"] = 'attachment; filename="Vendor_Wise_Compliance_Clearance_Status.xlsx"'
         return response
