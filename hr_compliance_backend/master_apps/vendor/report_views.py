@@ -29,6 +29,8 @@ from master_apps.vendor.compliance_models import (
     WorkflowStatus,
 )
 
+from master_apps.auditor.models import AuditSession
+
 from master_apps.vendor.models import Vendor
 
 
@@ -957,6 +959,24 @@ class ComplianceReportAPIView(APIView):
                 frequency__in=periodicities
             )
 
-        return Response({
-            "count": queryset.count()
-        })
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Vendor Compliance Status"
+
+        worksheet["A1"] = "Vendor Compliance Status Report"
+        worksheet["A2"] = f"Generated On : {datetime.now().strftime('%d-%b-%Y %I:%M %p')}"
+
+        output = BytesIO()
+        workbook.save(output)
+        output.seek(0)
+
+        response = HttpResponse(
+            output.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        response["Content-Disposition"] = (
+            'attachment; filename="VendorComplianceStatus.xlsx"'
+        )
+
+        return response
