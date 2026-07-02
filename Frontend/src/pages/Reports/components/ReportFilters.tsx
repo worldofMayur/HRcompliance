@@ -17,20 +17,20 @@ interface Props {
   vendor: string[];
   setVendor: (value: string[]) => void;
 
-  natureOfService: string[];
-  setNatureOfService: (value: string[]) => void;
+  natureOfService?: string[];
+  setNatureOfService?: (value: string[]) => void;
 
-  periodicity: string;
-  setPeriodicity: (value: string) => void;
+  periodicity?: string;
+  setPeriodicity?: (value: string) => void;
 
-  auditMonth: string[];
-  setAuditMonth: (value: string[]) => void;
+  auditMonth?: string[];
+  setAuditMonth?: (value: string[]) => void;
 
-  statesOptions: { id: string; name: string }[];
-  branchesOptions: { id: string; name: string }[];
-  vendorsOptions: { id: string; name: string }[];
-  servicesOptions: { id: string; name: string }[];
-  auditPeriodsOptions: { id: string; name: string }[];
+  statesOptions?: { id: string; name: string }[];
+  branchesOptions?: { id: string; name: string }[];
+  vendorsOptions?: { id: string; name: string }[];
+  servicesOptions?: { id: string; name: string }[];
+  auditPeriodsOptions?: { id: string; name: string }[];
 
   loading?: boolean;
   onGenerate: () => void;
@@ -60,6 +60,7 @@ export default function ReportFilters({
   loading,
   onGenerate,
 }: Props) {
+const noop = (_: string[]) => {};
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
       {/* Header */}
@@ -77,7 +78,7 @@ export default function ReportFilters({
         <div>
           <label className="mb-1 block text-sm font-semibold">State</label>
             <MultiSelectCheckbox
-              options={statesOptions}
+              options={statesOptions ?? []}
               value={state}
               onChange={setState}
               placeholder="Select States"
@@ -85,23 +86,30 @@ export default function ReportFilters({
             />
         </div>
 
-        {(reportType === "branch" || reportType === "exception") && (
+        {(
+          reportType === "branch" ||
+          reportType === "compliance" ||
+          reportType === "exception"
+        ) && (
           <div>
-            <label className="mb-1 block text-sm font-semibold">Branch</label>
-              <MultiSelectCheckbox
-                options={branchesOptions}
-                value={branch}
-                onChange={setBranch}
-                placeholder="Select Branches"
-                allLabel="All Branches"
-              />
+            <label className="mb-1 block text-sm font-semibold">
+              Branch
+            </label>
+
+            <MultiSelectCheckbox
+              options={branchesOptions ?? []}
+              value={branch}
+              onChange={setBranch}
+              placeholder="Select Branches"
+              allLabel="All Branches"
+            />
           </div>
         )}
 
         <div>
           <label className="mb-1 block text-sm font-semibold">Vendor</label>
             <MultiSelectCheckbox
-              options={vendorsOptions}
+              options={vendorsOptions ?? []}
               value={vendor}
               onChange={setVendor}
               placeholder="Select Vendors"
@@ -115,9 +123,9 @@ export default function ReportFilters({
               Nature of Service
             </label>
               <MultiSelectCheckbox
-                options={servicesOptions}
-                value={natureOfService}
-                onChange={setNatureOfService}
+                options={servicesOptions ?? []}
+                value={natureOfService ?? []}
+                onChange={setNatureOfService ?? noop}
                 placeholder="Select Services"
                 allLabel="All Nature of Services"
               />
@@ -130,23 +138,38 @@ export default function ReportFilters({
             <label className="mb-1 block text-sm font-semibold">
               Audit Periodicity
             </label>
-            {/* Keep your original Select here */}
+
+            <MultiSelectCheckbox
+              options={[
+                { id: "MONTHLY", name: "Monthly" },
+                { id: "QUARTERLY", name: "Quarterly" },
+                { id: "HALF_YEARLY", name: "Half Yearly" },
+                { id: "ANNUALLY", name: "Annually" },
+              ]}
+              value={periodicity ? [periodicity] : []}
+              onChange={(value) =>
+                setPeriodicity?.(value[0] || "")
+              }
+              placeholder="Select Audit Periodicity"
+              allLabel="All Periodicity"
+            />
           </div>
         )}
 
-        {reportType === "exception" && (
+        {(reportType === "compliance" ||
+          reportType === "exception") && (
           <div>
             <label className="mb-1 block text-sm font-semibold">
               Audit Month
             </label>
 
-              <MultiSelectCheckbox
-                options={auditPeriodsOptions}
-                value={auditMonth}
-                onChange={setAuditMonth}
-                placeholder="Select Audit Months"
-                allLabel="All Audit Months"
-              />
+            <MultiSelectCheckbox
+              options={auditPeriodsOptions ?? []}
+              value={auditMonth ?? []}
+              onChange={setAuditMonth ?? noop}
+              placeholder="Select Audit Months"
+              allLabel="All Audit Months"
+            />
           </div>
         )}
       </div>

@@ -4,6 +4,12 @@ import { message } from "antd";
 import api from "../../../utils/api";
 import ReportFilters from "../components/ReportFilters";
 
+  // Dropdown Options
+interface DropdownOption {
+  id: string;
+  name: string;
+}
+
 export default function BranchReport() {
   const [principalEmployer, setPrincipalEmployer] = useState("");
 
@@ -13,15 +19,14 @@ export default function BranchReport() {
   const [natureOfService, setNatureOfService] = useState<string[]>([]);
 
   const [periodicity, setPeriodicity] = useState("");
-  const [auditMonth, setAuditMonth] = useState("");
+  const [auditMonth, setAuditMonth] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(false);
 
-  // Dropdown Options
-  const [statesOptions, setStatesOptions] = useState<any[]>([]);
-  const [branchesOptions, setBranchesOptions] = useState<any[]>([]);
-  const [vendorsOptions, setVendorsOptions] = useState<any[]>([]);
-  const [servicesOptions, setServicesOptions] = useState<any[]>([]);
+  const [statesOptions, setStatesOptions] = useState<DropdownOption[]>([]);
+  const [branchesOptions, setBranchesOptions] = useState<DropdownOption[]>([]);
+  const [vendorsOptions, setVendorsOptions] = useState<DropdownOption[]>([]);
+  const [servicesOptions, setServicesOptions] = useState<DropdownOption[]>([]);
 
   // Load initial data
 useEffect(() => {
@@ -51,7 +56,7 @@ useEffect(() => {
   if (state.length > 0 && branch.length > 0) {
     loadVendors();
   }
-}, [branch]);
+}, [state, branch]);
 
 useEffect(() => {
   setNatureOfService([]);
@@ -64,7 +69,7 @@ useEffect(() => {
   ) {
     loadServices();
   }
-}, [vendor]);
+}, [state, branch, vendor]);
 
   const loadStates = async () => {
     try {
@@ -91,7 +96,7 @@ useEffect(() => {
       setBranchesOptions(res.data);
 
     } catch (error) {
-      console.error(error);
+      console.error("Failed to load branches", error);
     }
   };
 
@@ -110,7 +115,7 @@ useEffect(() => {
       setVendorsOptions(res.data);
 
     } catch (error) {
-      console.error(error);
+      console.error("Failed to load vendors", error);
     }
   };
 
@@ -130,7 +135,7 @@ useEffect(() => {
       setServicesOptions(res.data);
 
     } catch (error) {
-      console.error(error);
+      console.error("Failed to load services", error);
     }
   };
 
@@ -174,7 +179,7 @@ useEffect(() => {
 
       message.success("Report downloaded successfully.");
     } catch (error: any) {
-      console.error(error);
+      console.error("Failed to generate branch report", error);
       if (error.response?.status === 404) {
         message.warning("No records found for the selected filters.");
       } else {
