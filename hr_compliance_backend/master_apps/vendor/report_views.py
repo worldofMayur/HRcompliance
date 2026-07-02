@@ -982,7 +982,6 @@ class ComplianceReportAPIView(APIView):
         worksheet["G4"] = "Total Records"
         worksheet["H4"] = queryset.count()
 
-        # Headers
         headers = [
             "State", "Branch Short Name", "Branch Address", "Audit Periodicity",
             "Jan'26", "Feb'26", "March'26", "April'26", "May'26", "June'26",
@@ -997,7 +996,6 @@ class ComplianceReportAPIView(APIView):
             cell.border = thin_border
             cell.alignment = center
 
-        # Month mapping
         month_to_col = {
             "Jan": 5, "Feb": 6, "Mar": 7, "March": 7, "Apr": 8, "April": 8,
             "May": 9, "Jun": 10, "June": 10, "Jul": 11, "July": 11,
@@ -1007,9 +1005,7 @@ class ComplianceReportAPIView(APIView):
         data_row = 7
 
         for mapping in queryset:
-            documents = mapping.documents.all()
-            if not documents.exists():
-                documents = [None]
+            documents = mapping.documents.all() or [None]
 
             for document in documents:
                 # Base row
@@ -1034,11 +1030,18 @@ class ComplianceReportAPIView(APIView):
                         audit_period=submission.audit_period,
                     ).order_by("-created_at").first()
 
+                    # ==================== DEBUG PRINT ====================
+                    print(f"DEBUG - Document: {document.name if document else 'None'} | "
+                          f"Period: {submission.audit_period} | "
+                          f"Workflow: {submission.workflow_status} | "
+                          f"CC Issued: {getattr(submission, 'is_cc_issued', False)} | "
+                          f"Audit Status: {audit.status if audit else 'None'}")
+                    # ====================================================
+
                     audit_status = audit.status if audit else ""
 
-                    # === Enhanced Status Logic ===
+                    # Enhanced Status Logic
                     status = "Pending"
-
                     if getattr(submission, 'is_cc_issued', False):
                         status = "CC Issued"
                     elif submission.workflow_status == WorkflowStatus.FROZEN:
@@ -1052,7 +1055,6 @@ class ComplianceReportAPIView(APIView):
                     elif audit_status:
                         status = audit_status
                     else:
-                        # More readable mapping
                         wf = str(submission.workflow_status).lower() if submission.workflow_status else ""
                         if "submit" in wf or "submitted" in wf:
                             status = "Document Submitted"
@@ -1060,19 +1062,14 @@ class ComplianceReportAPIView(APIView):
                             status = "Documents Pending"
                         elif "review" in wf:
                             status = "Under Review"
-                        elif "approve" in wf:
-                            status = "Approved"
-                        elif "complied" in wf:
-                            status = "Complied"
                         elif "non" in wf or "nc" in wf:
                             status = "NC to resolve by vendor"
                         else:
                             status = str(submission.workflow_status) if submission.workflow_status else "Pending"
 
-                    # Month detection
+                    # Month detection & fill
                     period_str = str(submission.audit_period).strip()
                     month_name = None
-
                     for m in ["Jan", "Feb", "Mar", "April", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]:
                         if m.lower() in period_str.lower():
                             month_name = m
@@ -1080,7 +1077,6 @@ class ComplianceReportAPIView(APIView):
 
                     if not month_name:
                         try:
-                            import re
                             match = re.search(r'(\d{4})[-/](\d{1,2})', period_str)
                             if match:
                                 _, month_num = match.groups()
@@ -1090,16 +1086,14 @@ class ComplianceReportAPIView(APIView):
                             pass
 
                     if month_name:
-                        # Normalize month name
-                        month_key = month_name[:3] if month_name else ""
                         for key, col in month_to_col.items():
-                            if key.lower() == month_key.lower() or key.lower() in month_name.lower():
+                            if key.lower() in month_name.lower() or key.lower()[:3] == month_name.lower()[:3]:
                                 worksheet.cell(row=data_row, column=col).value = status
                                 break
 
                 data_row += 1
 
-        # Formatting
+        # Formatting (same as before)
         for r in worksheet.iter_rows(min_row=6, max_row=worksheet.max_row, min_col=1, max_col=16):
             for cell in r:
                 cell.border = thin_border
@@ -1116,7 +1110,6 @@ class ComplianceReportAPIView(APIView):
         worksheet.freeze_panes = "A7"
         worksheet.auto_filter.ref = f"A6:P{worksheet.max_row}"
 
-        # Response
         output = BytesIO()
         workbook.save(output)
         output.seek(0)
