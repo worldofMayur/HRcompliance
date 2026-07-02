@@ -1235,7 +1235,7 @@ class DocumentWiseComplianceReportAPIView(APIView):
                     submissions = submissions.filter(audit_period__in=audit_periods)
 
                 if not submissions.exists():
-                    # Show document with EMPTY status & observation
+                    # Empty row for unsubmitted document
                     ws_row = [
                         mapping.branch.state,
                         mapping.branch.short_name,
@@ -1243,8 +1243,8 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         mapping.get_frequency_display(),
                         "-",
                         doc.name,
-                        "",   # Empty Compliance Status
-                        ""    # Empty Auditor Observation
+                        "",   # Empty
+                        ""    # Empty
                     ]
                     for col, value in enumerate(ws_row, start=1):
                         cell = worksheet.cell(row=row, column=col)
@@ -1260,17 +1260,8 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         audit_period=sub.audit_period,
                     ).order_by("-created_at").first()
 
-                    # Auditor's actual status has highest priority
+                    # STRICTLY USE AUDITOR STATUS
                     status = audit.status if audit and audit.status else "Pending"
-
-                    if getattr(sub, 'is_cc_issued', False):
-                        status = "CC Issued"
-                    elif sub.workflow_status == WorkflowStatus.FROZEN:
-                        status = "Frozen"
-                    elif sub.workflow_status == WorkflowStatus.REUPLOAD_REQUESTED:
-                        status = "Reupload Requested"
-                    elif sub.workflow_status == WorkflowStatus.UNDER_REVIEW:
-                        status = "Under Scrutiny"
 
                     # Split period into individual months
                     frequency = mapping.frequency
@@ -1326,7 +1317,6 @@ class DocumentWiseComplianceReportAPIView(APIView):
         return response
 
     def _get_months_from_period(self, period_str: str, frequency: str):
-        """Return list of individual months for the period."""
         period_str = period_str.lower()
         months = []
 
