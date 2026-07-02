@@ -116,36 +116,70 @@ export default function ComplianceReport() {
     }
   };
 
-  const generateReport = async () => {
-    setLoading(true);
+const generateReport = async () => {
+  setLoading(true);
 
-    try {
-      console.log({
-        vendor,
-        state,
-        branch,
-        periodicity,
-        auditMonth,
-      });
+  try {
+    const payload = {
+      states: state.includes("all") ? [] : state,
+      branches: branch.includes("all") ? [] : branch,
+      vendors: vendor.includes("all") ? [] : vendor,
+      periodicities: periodicity ? [periodicity] : [],
+      audit_periods: auditMonth.includes("all") ? [] : auditMonth,
+    };
 
-      setTimeout(() => {
-        setData([
-          {
-            state: "Maharashtra",
-            branch: "Mumbai",
-            vendor: "ABC Security",
-            audit_month: "June",
-            status: "Completed",
-            clearance_date: "25-Jun-2026",
-          },
-        ]);
-        setLoading(false);
-      }, 800);
-    } catch (error) {
-      console.error(error);
-      setLoading(false);
+    const response = await api.post(
+      "/api/vendor/reports/compliance/",
+      payload,
+      {
+        responseType: "blob",
+      }
+    );
+
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    let filename = "VendorComplianceStatus.xlsx";
+
+    const disposition =
+      response.headers["content-disposition"];
+
+    if (disposition) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+
+      if (match && match[1]) {
+        filename = match[1];
+      }
     }
-  };
+
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+
+    message.success("Report downloaded successfully.");
+  } catch (error: any) {
+    console.error(error);
+
+    if (error.response?.status === 404) {
+      message.warning("No records found.");
+    } else {
+      message.error("Failed to download report.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">

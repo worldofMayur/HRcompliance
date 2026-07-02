@@ -913,3 +913,50 @@ class ExceptionalApprovalReportAPIView(APIView):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         return response
+
+
+class ComplianceReportAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        pe = PrincipalEmployer.objects.get(user=request.user)
+
+        data = request.data
+
+        states = data.get("states", [])
+        branches = data.get("branches", [])
+        vendors = data.get("vendors", [])
+        periodicities = data.get("periodicities", [])
+        audit_periods = data.get("audit_periods", [])
+
+        queryset = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .select_related(
+                "vendor",
+                "branch",
+                "auditor",
+            )
+        )
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if periodicities:
+            queryset = queryset.filter(
+                frequency__in=periodicities
+            )
+
+        return Response({
+            "count": queryset.count()
+        })
