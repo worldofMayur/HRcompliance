@@ -89,7 +89,7 @@ export default function ComplianceReport() {
 
   const loadVendors = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/compliance-vendors/", {
+      const res = await api.get("/api/vendor/reports/vendors/", {
         params: {
           states: state,
           branches: branch,
@@ -103,7 +103,7 @@ export default function ComplianceReport() {
 
   const loadAuditPeriods = async () => {
     try {
-      const res = await api.get("/api/vendor/reports/compliance-audit-periods/", {
+      const res = await api.get("/api/vendor/reports/audit-periods/", {
         params: {
           states: state,
           branches: branch,
