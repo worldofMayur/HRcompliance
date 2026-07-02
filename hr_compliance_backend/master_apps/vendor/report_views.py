@@ -1117,6 +1117,25 @@ class ComplianceReportAPIView(APIView):
 
 
 
+cfrom io import BytesIO
+from datetime import datetime
+import re
+
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.principle_employee.models import PrincipalEmployer
+from master_apps.vendor.mapping_models import VendorBranchMapping
+from master_apps.vendor.compliance_models import VendorComplianceSubmission, WorkflowStatus
+from master_apps.auditor.models import AuditEntry
+
+
 class DocumentWiseComplianceReportAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1160,8 +1179,10 @@ class DocumentWiseComplianceReportAPIView(APIView):
         header_font = Font(bold=True, color="FFFFFF")
         title_fill = PatternFill(fill_type="solid", fgColor="1F4E78")
         header_fill = PatternFill(fill_type="solid", fgColor="4472C4")
-        thin_border = Border(left=Side(style="thin"), right=Side(style="thin"),
-                             top=Side(style="thin"), bottom=Side(style="thin"))
+        thin_border = Border(
+            left=Side(style="thin"), right=Side(style="thin"),
+            top=Side(style="thin"), bottom=Side(style="thin")
+        )
         center = Alignment(horizontal="center", vertical="center")
 
         # Title
@@ -1204,10 +1225,9 @@ class DocumentWiseComplianceReportAPIView(APIView):
             docs = mapping.documents.all()
 
             for doc in docs:
-                if documents and str(doc.id) not in map(str, documents):
+                if documents and str(doc.id) not in [str(d) for d in documents]:
                     continue
 
-                # Get ALL submissions for this document (even if none)
                 submissions = VendorComplianceSubmission.objects.filter(
                     vendor=mapping.vendor,
                     branch=mapping.branch,
@@ -1216,17 +1236,17 @@ class DocumentWiseComplianceReportAPIView(APIView):
                 if audit_periods:
                     submissions = submissions.filter(audit_period__in=audit_periods)
 
+                # Show document even if no submission
                 if not submissions.exists():
-                    # Show document even if no submission
                     ws_row = [
                         mapping.branch.state,
                         mapping.branch.short_name,
                         mapping.vendor.name,
                         mapping.get_frequency_display(),
-                        "-",  # No audit period
+                        "-",
                         doc.name,
-                        "",   # Blank status
-                        ""    # Blank observation
+                        "",
+                        ""
                     ]
                     for col, value in enumerate(ws_row, start=1):
                         cell = worksheet.cell(row=row, column=col)
@@ -1242,7 +1262,7 @@ class DocumentWiseComplianceReportAPIView(APIView):
                         audit_period=sub.audit_period,
                     ).order_by("-created_at").first()
 
-                    # Use Auditor Selected Status (Priority)
+                    # Auditor's actual status has priority
                     status = audit.status if audit and audit.status else "Pending"
 
                     if getattr(sub, 'is_cc_issued', False):

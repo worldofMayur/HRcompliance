@@ -26,11 +26,12 @@ export default function DocumentWiseReport() {
   const [documentsOptions, setDocumentsOptions] = useState<DropdownOption[]>([]);
   const [auditPeriodsOptions, setAuditPeriodsOptions] = useState<DropdownOption[]>([]);
 
-  // Load States
+  // Load Initial Data
   useEffect(() => {
     loadStates();
   }, []);
 
+  // Cascade Loading
   useEffect(() => {
     setBranch([]);
     setVendor([]);
@@ -187,16 +188,15 @@ export default function DocumentWiseReport() {
         setVendor={setVendor}
         auditMonth={auditMonth}
         setAuditMonth={setAuditMonth}
+        documentName={documentName}
+        setDocumentName={setDocumentName}
+        documentsOptions={documentsOptions}
         loading={loading}
         statesOptions={statesOptions}
         branchesOptions={branchesOptions}
         vendorsOptions={vendorsOptions}
         auditPeriodsOptions={auditPeriodsOptions}
         onGenerate={generateReport}
-        // Pass document options
-        documentsOptions={documentsOptions}
-        documentName={documentName}
-        setDocumentName={setDocumentName}
       />
     </div>
   );
