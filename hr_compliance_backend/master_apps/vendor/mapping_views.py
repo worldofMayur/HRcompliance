@@ -553,6 +553,17 @@ class VendorMappedDocumentsAPIView(APIView):
                 .first()
             )
 
+            already_uploaded = (
+                submission is not None
+                and submission.workflow_status != WorkflowStatus.REUPLOAD_REQUESTED
+            )
+
+            uploaded_file_name = (
+                submission.original_filename
+                if submission and submission.original_filename
+                else ""
+            )
+
             print(
                 "DOC DEBUG",
                 {
@@ -571,8 +582,11 @@ class VendorMappedDocumentsAPIView(APIView):
                 "name": doc.name,
                 "audit_period": period,
 
-                # NEW
                 "submission_id": submission.id if submission else None,
+
+                # ADD THESE
+                "already_uploaded": already_uploaded,
+                "uploaded_file_name": uploaded_file_name,
 
                 "is_reuploaded":
                     submission.is_reuploaded

@@ -25,10 +25,17 @@ interface Branch {
 interface DocumentType {
   id: number;
   name: string;
+
   audit_period?: string;
   workflow_status?: string;
   reupload_remark?: string;
   is_reuploaded?: boolean;
+
+  // NEW
+  already_uploaded?: boolean;
+  uploaded_file_name?: string;
+
+  submission_id?: number;
 }
 
 interface DocumentRow {
@@ -44,6 +51,8 @@ interface DocumentRow {
   is_reuploaded?: boolean;
   isFrozen?: boolean;
   submission_id?: number;
+  isUploaded?: boolean;
+  uploadedFileName?: string;
 }
 
 export default function VendorCompliancePage() {
@@ -354,6 +363,10 @@ const rows: DocumentRow[] = filteredDocs.map(
       doc.is_reuploaded || false,
 
     fileList: [],
+    isUploaded: doc.already_uploaded || false,
+
+    uploadedFileName:
+        doc.uploaded_file_name || "",
 
     // ✅ ONLY failed documents reuploadable
     canReupload:
@@ -1052,7 +1065,9 @@ if (effectiveReuploadMode) {
                     `}
                   >
                   {record.fileList.length > 0 ? (
-                    "Uploaded"
+                      "Uploaded"
+                  ) : record.isUploaded ? (
+                      "Already Submitted"
                   ) : effectiveReuploadMode ? (
 
                     record.canReupload ? (
@@ -1074,13 +1089,15 @@ if (effectiveReuploadMode) {
                 ">
                 <Upload
                     disabled={
-                      frozenPeriods.includes(selectedPeriod) ||
+                        (record.isUploaded && !record.canReupload) ||
 
-                      (
-                        effectiveReuploadMode &&
-                        !record.isAdditional &&
-                        !record.canReupload
-                      )
+                        frozenPeriods.includes(selectedPeriod) ||
+
+                        (
+                            effectiveReuploadMode &&
+                            !record.isAdditional &&
+                            !record.canReupload
+                        )
                     }
                     beforeUpload={(file) => {
                       const alreadyExists =
@@ -1110,13 +1127,15 @@ if (effectiveReuploadMode) {
                   <Button
                     size="small"
                     disabled={
-                      frozenPeriods.includes(selectedPeriod) ||
+                        (record.isUploaded && !record.canReupload) ||
 
-                      (
-                        effectiveReuploadMode &&
-                        !record.isAdditional &&
-                        !record.canReupload
-                      )
+                        frozenPeriods.includes(selectedPeriod) ||
+
+                        (
+                            effectiveReuploadMode &&
+                            !record.isAdditional &&
+                            !record.canReupload
+                        )
                     }
                     className={`
                       rounded-lg border-none
@@ -1207,12 +1226,27 @@ if (effectiveReuploadMode) {
                       ✕
                     </button>
                   </div>
-                  ) : (
-                    <p className="
-                      text-xs
-                      text-gray-400
-                    ">Upload PDF, JPG or PNG</p>
-                  )}
+                    ) : record.isUploaded ? (
+
+                      <div className="mt-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                        <p className="text-[11px] font-medium text-green-700">
+                          ✓ Already Submitted
+                        </p>
+
+                        {record.uploadedFileName && (
+                          <p className="mt-1 text-[10px] text-green-600 truncate">
+                            {record.uploadedFileName}
+                          </p>
+                        )}
+                      </div>
+
+                    ) : (
+
+                      <p className="text-xs text-gray-400">
+                        Upload PDF, JPG or PNG
+                      </p>
+
+                    )}
                 </div>
               </div>
             ))}
