@@ -15,6 +15,7 @@ import "antd/dist/reset.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import api from "../../utils/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 import {
   Table,
@@ -1505,7 +1506,7 @@ finally {
                 {branchData.existingDocument && !branchData.document && (
                   <div className="flex items-center justify-between text-sm bg-white px-4 py-1.5 rounded-lg border">
                     <a
-                      href={`https://apii.complianceclearance.com${branchData.existingDocument}`}
+                      href={`${API_BASE}${branchData.existingDocument}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 underline"
@@ -1790,7 +1791,7 @@ finally {
                       <td className="px-5 py-3 text-sm">
                         {branch.document ? (
                           <a
-                            href={`https://apii.complianceclearance.com${branch.document}`}
+                            href={`${API_BASE}${branch.document}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 underline"

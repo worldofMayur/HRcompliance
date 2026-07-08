@@ -10,6 +10,7 @@ SafetyCertificateOutlined,
 SearchOutlined,
 FileDoneOutlined,
 } from "@ant-design/icons";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function FreezeAuditReports() {
 
@@ -59,7 +60,7 @@ export default function FreezeAuditReports() {
 
       const res = await axios.get(
 
-        "https://apii.complianceclearance.com/api/auditor/freeze-audit-reports/",
+        "${API_BASE}/api/auditor/freeze-audit-reports/",
 
         authHeader
       );
@@ -96,7 +97,7 @@ export default function FreezeAuditReports() {
       const response =
         await axios.get(
 
-          `https://apii.complianceclearance.com/api/auditor/download-cc-pdf/${id}/`,
+          `${API_BASE}/api/auditor/download-cc-pdf/${id}/`,
 
           {
             ...authHeader,

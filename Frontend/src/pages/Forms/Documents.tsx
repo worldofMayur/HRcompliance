@@ -20,7 +20,6 @@ import {
 /* =========================
    CONSTANTS
 ========================= */
-const API_URL = "https://apii.complianceclearance.com/api/document-master";
 const PAGE_SIZE = 8;
 
 /* =========================

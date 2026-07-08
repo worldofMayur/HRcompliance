@@ -9,6 +9,7 @@ import {
 } from "@ant-design/icons";
 
 import ComponentCard from "../../components/common/ComponentCard";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 interface Notification {
   id: number;
@@ -88,7 +89,7 @@ export default function PENotifications() {
 
       const res = await fetch(
 
-        "https://apii.complianceclearance.com/api/auditor/vendor/notifications/",
+        `${API_BASE}/api/auditor/vendor/notifications/`,
 
         {
           headers: {
@@ -212,10 +213,10 @@ const downloadCC = async (
     const token =
       localStorage.getItem("access_token");
 
-    const safeUrl = pdfUrl.replace(
-      "http://apii.complianceclearance.com",
-      "https://apii.complianceclearance.com"
-    );
+      const safeUrl = pdfUrl.replace(
+          "http://apii.complianceclearance.com",
+          API_BASE
+      );
 
     console.log("PDF URL:", safeUrl);
 
@@ -288,7 +289,7 @@ const downloadCC = async (
       const response =
         await fetch(
 
-          `https://apii.complianceclearance.com/api/auditor/audit/documents-zip/${branchId}/?audit_period=${encodeURIComponent(
+          `${API_BASE}/api/auditor/audit/documents-zip/${branchId}/?audit_period=${encodeURIComponent(
             auditPeriod
           )}`,
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ComponentCard from "../components/common/ComponentCard";
 import { useNavigate } from "react-router-dom";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 interface Notification {
   id: number;
@@ -46,7 +47,7 @@ const fetchNotifications = async (silent = false) => {
     const token = localStorage.getItem("access_token");
 
     const res = await fetch(
-      "https://apii.complianceclearance.com/api/auditor/vendor/notifications/",
+      `${API_BASE}/api/auditor/vendor/notifications/`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -88,7 +89,7 @@ const fetchNotifications = async (silent = false) => {
       const token = localStorage.getItem("access_token");
 
       await fetch(
-        `https://apii.complianceclearance.com/api/auditor/vendor/notifications/${id}/read/`,
+        `${API_BASE}/api/auditor/vendor/notifications/${id}/read/`,
         {
           method: "PATCH",
           headers: {
@@ -136,7 +137,7 @@ useEffect(() => {
           const token = localStorage.getItem("access_token");
 
           await fetch(
-            `https://apii.complianceclearance.com/api/auditor/vendor/notifications/${n.id}/read/`,
+            `${API_BASE}/api/auditor/vendor/notifications/${n.id}/read/`,
             {
               method: "PATCH",
               headers: {
@@ -271,10 +272,10 @@ const handleDownloadPDF = async (
     const token =
       localStorage.getItem("access_token");
 
-      const safeUrl = url.replace(
-        "http://apii.complianceclearance.com",
-        "https://apii.complianceclearance.com"
-      );
+    const safeUrl = url.replace(
+      "http://apii.complianceclearance.com",
+      API_BASE
+    );
 
       console.log("PDF URL:", safeUrl);
 

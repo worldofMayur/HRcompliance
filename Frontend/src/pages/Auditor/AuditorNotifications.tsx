@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import { useNavigate } from "react-router-dom";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 import {
   BellOutlined,
@@ -69,7 +70,7 @@ const fetchNotifications = async (
         localStorage.getItem("access_token");
 
       const res = await fetch(
-        "https://apii.complianceclearance.com/api/auditor/vendor/notifications/",
+        "${API_BASE}/api/auditor/vendor/notifications/",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -145,7 +146,7 @@ const fetchNotifications = async (
 
       // ✅ FIXED URL
       await fetch(
-        `https://apii.complianceclearance.com/api/auditor/vendor/notifications/${id}/read/`,
+        `${API_BASE}/api/auditor/vendor/notifications/${id}/read/`,
         {
           method: "PATCH",
           headers: {
@@ -191,7 +192,7 @@ const fetchNotifications = async (
 
           // ✅ FIXED URL
           await fetch(
-            `https://apii.complianceclearance.com/api/auditor/vendor/notifications/${n.id}/read/`,
+            `${API_BASE}/api/auditor/vendor/notifications/${n.id}/read/`,
             {
               method: "PATCH",
               headers: {

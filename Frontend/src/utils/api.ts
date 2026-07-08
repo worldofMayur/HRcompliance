@@ -1,5 +1,5 @@
 import axios from "axios";
-
+const API_BASE = import.meta.env.VITE_API_URL;
 import {
   getAccessToken,
   refreshAccessToken,
@@ -7,7 +7,7 @@ import {
 } from "./auth";
 
 const api = axios.create({
-  baseURL: "https://apii.complianceclearance.com",
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 // ================= REQUEST =================

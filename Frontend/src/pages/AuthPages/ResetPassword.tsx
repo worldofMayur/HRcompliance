@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function ResetPassword() {
   const { uid, token } = useParams();
@@ -13,8 +14,8 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const validate = async () => {
-      const res = await fetch(
-        "https://apii.complianceclearance.com/api/auth/validate-reset-token/",
+    const res = await fetch(
+      `${API_BASE}/api/auth/validate-reset-token/`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -43,7 +44,7 @@ export default function ResetPassword() {
     setSubmitting(true);
 
     const res = await fetch(
-      "https://apii.complianceclearance.com/api/auth/reset-password/",
+      `${API_BASE}/api/auth/validate-reset-token/`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
