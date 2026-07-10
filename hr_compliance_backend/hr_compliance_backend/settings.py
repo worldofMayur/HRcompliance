@@ -197,7 +197,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ==========================================================
 # FRONTEND URL (for email reset links)
 # ==========================================================
-FRONTEND_URL = "https://vendor.complianceclearance.com"
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "https://demo.complianceclearance.com",
+)
 
 SIMPLE_JWT = {
     # ACCESS TOKEN
