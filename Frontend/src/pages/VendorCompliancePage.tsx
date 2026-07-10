@@ -792,8 +792,9 @@ if (effectiveReuploadMode) {
             <label className="text-xs font-semibold text-gray-500 mb-1">Principal Employer</label>
             <select value={selectedPE} onChange={(e) => setSelectedPE(e.target.value)} className="border rounded-xl px-3 py-2 text-sm">
               <option value="">Select PE</option>
-              {[...peList].sort((a, b) =>
-                (a.short_name || "").localeCompare(b.short_name || "")
+              {[...peList]
+              .sort((a, b) =>
+                a.short_name.localeCompare(b.short_name)
               )
               .map(pe => <option key={pe.id} value={pe.id}>{pe.short_name}</option>)}
             </select>
@@ -815,8 +816,9 @@ if (effectiveReuploadMode) {
               className="border rounded-xl px-3 py-2 text-sm"
             >
               <option value="">Select State</option>
-             {[...states].sort((a, b) =>
-                (a.name || "").localeCompare(b.name || "")
+             {[...states]
+              .sort((a, b) =>
+                a.name.localeCompare(b.name)
               )
               .map(s =><option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
@@ -842,8 +844,9 @@ if (effectiveReuploadMode) {
               className="border rounded-xl px-3 py-2 text-sm"
             >
               <option value="">Select Branch</option>
-             {[...branches].sort((a, b) =>
-                (a.name || "").localeCompare(b.name || "")
+             {[...branches]
+              .sort((a, b) =>
+                a.name.localeCompare(b.name)
               )
               .map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
