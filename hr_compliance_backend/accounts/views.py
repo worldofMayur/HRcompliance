@@ -231,91 +231,61 @@ class LogoutAPIView(APIView):
 # =========================================================
 # RESET PASSWORD
 # =========================================================
+# =========================================================
+# RESET PASSWORD (Minimal Fix)
+# =========================================================
 class ResetPasswordAPIView(APIView):
-
-    # ✅ PUBLIC API
     permission_classes = [AllowAny]
 
     def post(self, request):
+        print("\n=== RESET PASSWORD API CALLED ===")
 
         uid = request.data.get("uid")
         token = request.data.get("token")
         password = request.data.get("password")
 
-        if not uid or not token or not password:
+        print("UID:", uid)
+        print("TOKEN:", token)
+        print("PASSWORD RECEIVED:", bool(password))
 
-            return Response(
-                {"error": "Invalid request"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if not uid or not token or not password:
+            print("❌ Missing fields")
+            return Response({"error": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user_id = force_str(
-                urlsafe_base64_decode(uid)
-            )
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+            print("✅ User Found:", user.email)
+        except Exception as e:
+            print("❌ User lookup failed:", str(e))
+            return Response({"error": "Invalid or expired link"}, status=status.HTTP_400_BAD_REQUEST)
 
-            user = User.objects.get(
-                pk=user_id
-            )
+        if getattr(user, "reset_password_used", False):
+            print("❌ Link already used")
+            return Response({"error": "Reset link already used"}, status=status.HTTP_400_BAD_REQUEST)
 
-        except Exception:
+        token_generator = PasswordResetTokenGenerator()
+        token_valid = token_generator.check_token(user, token)
+        print("Token Valid:", token_valid)
 
-            return Response(
-                {
-                    "error":
-                    "Invalid or expired link"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if not token_valid:
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if getattr(
-            user,
-            "reset_password_used",
-            False
-        ):
+        try:
+            print("Setting new password...")
+            user.set_password(password)           # Important
+            user.reset_password_used = True
+            user.save()                           # ← FULL SAVE (this is the fix)
 
-            return Response(
-                {
-                    "error":
-                    "Reset link already used"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            print("✅ Password saved")
+            print("Immediate check:", user.check_password(password))
+        except Exception as e:
+            print("❌ Save error:", str(e))
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        token_generator = (
-            PasswordResetTokenGenerator()
-        )
-
-        if not token_generator.check_token(
-            user,
-            token
-        ):
-
-            return Response(
-                {
-                    "error":
-                    "Invalid or expired token"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        user.set_password(password)
-
-        user.reset_password_used = True
-
-        user.save(update_fields=[
-            "password",
-            "reset_password_used"
-        ])
-
-        return Response(
-            {
-                "message":
-                "Password reset successful"
-            },
-            status=status.HTTP_200_OK
-        )
-
+        print("✅ RESET SUCCESSFUL")
+        return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+        
 
 # =========================================================
 # VALIDATE RESET TOKEN
