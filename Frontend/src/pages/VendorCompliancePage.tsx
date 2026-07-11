@@ -203,7 +203,10 @@ export default function VendorCompliancePage() {
   }, [selectedPE, selectedBranch, selectedPeriod]);
   const loadMappedPE = async () => {
     try {
-      const res = await axios.get("${API_BASE}/api/vendor/mapped-pe/", authHeader);
+      const res = await axios.get(
+        `${API_BASE}/api/vendor/mapped-pe/`,
+        authHeader
+      );
       setPeList(res.data);
     } catch (err) { console.error(err); }
   };
