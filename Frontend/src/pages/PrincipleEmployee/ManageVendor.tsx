@@ -64,7 +64,7 @@ useEffect(() => {
 
 const fetchAuditors = async () => {
   try {
-    const res = await fetch(`${API_BASE}/auditor/list/`, {
+    const res = await fetch(`${API_BASE}/api/auditor/list/`, {
       headers,
     });
 
@@ -78,8 +78,8 @@ const fetchAuditors = async () => {
 
 const fetchDocuments = async () => {
   try {
-    const res = await fetch(`${API_BASE}/document-master/list/`, {
-      headers,
+const res = await fetch(`${API_BASE}/api/document-master/list/`, {
+        headers,
     });
     const data = await res.json();
     setDocuments(data);
@@ -103,8 +103,8 @@ const calculateStatus = (endDate) => {
 
 const fetchVendors = async () => {
   try {
-    const res = await fetch(`${API_BASE}/vendor/mapping/list/`, {
-      headers,
+const res = await fetch(`${API_BASE}/api/vendor/mapping/list/`, {
+        headers,
     });
     const data = await res.json();
 
