@@ -59,9 +59,7 @@ export default function FreezeAuditReports() {
       setLoading(true);
 
       const res = await axios.get(
-
-        '${API_BASE}//api/auditor/freeze-audit-reports/",
-
+        `${API_BASE}/api/auditor/freeze-audit-reports/`,
         authHeader
       );
 
