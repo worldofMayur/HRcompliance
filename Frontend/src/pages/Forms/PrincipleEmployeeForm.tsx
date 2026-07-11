@@ -640,24 +640,35 @@ const handleSubmit = async () => {
 
   try {
 
-    if (isEditMode) {
-      const formData = new FormData();
+      if (isEditMode) {
 
-      Object.entries(formData).forEach(([k, v]) => {   // ← Use original formData
-        const key = k.replace(/([A-Z])/g, "_$1").toLowerCase();
-        formData.append(key, v);   // ← Note: this was using wrong variable name
-      });
+        const payload = new FormData();
 
-      documents.forEach((d) => formData.append("document", d));  // ← Add this
+        // Send all fields properly
+        Object.keys(formData).forEach(key => {
+          const value = formData[key as keyof typeof formData];
+          const apiKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+          
+          if (value !== undefined && value !== null) {
+            payload.append(apiKey, value);
+          }
+        });
 
-      await api.put(
-        `/api/principal-employer/${editingId}/update/`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }  // Important
-      );
+        // Add new documents
+        documents.forEach(doc => {
+          payload.append("document", doc);
+        });
 
-      alert("Updated successfully");
-    } else {
+        await api.put(
+          `/api/principal-employer/${editingId}/update/`,
+          payload,
+          { 
+            headers: { "Content-Type": "multipart/form-data" } 
+          }
+        );
+
+        alert("Updated successfully");
+      } else {
 
       const payload = new FormData();
 
