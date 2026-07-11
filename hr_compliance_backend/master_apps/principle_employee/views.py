@@ -42,7 +42,9 @@ User = get_user_model()
 # ==========================================================
 class PrincipalEmployerListAPIView(APIView):
     def get(self, request):
-        queryset = PrincipalEmployer.objects.all().order_by("-created_at")
+        queryset = PrincipalEmployer.objects.filter(
+            is_deleted=False
+        ).order_by("-created_at")
         serializer = PrincipalEmployerSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -293,33 +295,62 @@ class PrincipalEmployerUpdateAPIView(APIView):
 # ==========================================================
 # DELETE PRINCIPAL EMPLOYER
 # ==========================================================
+from django.db.models.deletion import ProtectedError
+
+from django.db.models.deletion import ProtectedError
+
 class PrincipalEmployerDeleteAPIView(APIView):
     def delete(self, request, pk):
         try:
             with transaction.atomic():
 
-                pe = get_object_or_404(PrincipalEmployer, pk=pk)
-
-                # Delete linked user
-                if pe.user:
-                    pe.user.delete()
-
-                # Delete media folder
-                pe_folder = os.path.join(
-                    settings.MEDIA_ROOT,
-                    "principle_employee",
-                    pe.short_name.replace(" ", "_"),
+                pe = get_object_or_404(
+                    PrincipalEmployer,
+                    pk=pk
                 )
 
-                if os.path.exists(pe_folder):
-                    shutil.rmtree(pe_folder)
+                user = pe.user
 
-                pe.delete()
+                try:
+                    # Try hard delete
+                    pe.delete()
 
-                return Response(
-                    {"message": "Principal Employer deleted successfully"},
-                    status=status.HTTP_200_OK,
-                )
+                    # Delete linked user if safe
+                    if user:
+                        try:
+                            user.delete()
+                        except ProtectedError:
+                            pass
+
+                    # Delete media folder ONLY after successful delete
+                    pe_folder = os.path.join(
+                        settings.MEDIA_ROOT,
+                        "principle_employee",
+                        pe.short_name.replace(" ", "_"),
+                    )
+
+                    if os.path.exists(pe_folder):
+                        shutil.rmtree(pe_folder)
+
+                    return Response(
+                        {
+                            "message": "Principal Employer deleted successfully"
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+                except ProtectedError:
+
+                    # Soft delete
+                    pe.is_deleted = True
+                    pe.save(update_fields=["is_deleted"])
+
+                    return Response(
+                        {
+                            "message": "Principal Employer is already in use and has been deactivated."
+                        },
+                        status=status.HTTP_200_OK,
+                    )
 
         except Exception as e:
             return Response(
@@ -327,7 +358,7 @@ class PrincipalEmployerDeleteAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
+            
 class PrincipalEmployerBranchCreateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
