@@ -640,23 +640,36 @@ const handleSubmit = async () => {
 
   try {
 
-    if (isEditMode) {
+      if (isEditMode) {
 
-      const payload: any = {};
+        const payload = new FormData();
 
-      Object.entries(formData).forEach(([k, v]) => {
-        payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
-      });
+        payload.append("name", formData.name);
+        payload.append("short_name", formData.shortName);
+        payload.append("ho_address", formData.hoAddress);
+        payload.append("contact_person", formData.contactPerson);
+        payload.append("mobile", formData.mobile);
+        payload.append("email", formData.email);
+        payload.append("start_date", formData.startDate);
+        payload.append("end_date", formData.endDate || "");
+        payload.append("nature_of_business", formData.natureOfBusiness);
+        payload.append("establishment_type", formData.establishmentType);
+        payload.append("rules_applicable", formData.rulesApplicable);
 
-      await api.put(
-        `/api/principal-employer/${editingId}/update/`,
-        payload
-      );
+        documents.forEach((file) => {
+            payload.append("document", file);
+        });
 
+        await api.put(
+          `/api/principal-employer/${editingId}/update/`,
+          payload,
+          { 
+            headers: { "Content-Type": "multipart/form-data" } 
+          }
+        );
 
-      alert("Updated successfully");
-
-    } else {
+        alert("Updated successfully");
+      } else {
 
       const payload = new FormData();
 

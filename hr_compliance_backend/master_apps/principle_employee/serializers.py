@@ -19,16 +19,16 @@ class PrincipalEmployerDocumentSerializer(serializers.ModelSerializer):
 
 class PrincipalEmployerSerializer(serializers.ModelSerializer):
     documents = PrincipalEmployerDocumentSerializer(
-        many=True, read_only=True
+        many=True,
+        read_only=True
     )
 
-    # ✅ ADD THIS (CRITICAL)
     status = serializers.CharField(read_only=True)
 
     class Meta:
         model = PrincipalEmployer
         fields = "__all__"
-        read_only_fields = ["status"]  # ✅ PROTECT STATUS
+        read_only_fields = ["status"]
 
     # =========================
     # MOBILE VALIDATION
@@ -41,35 +41,20 @@ class PrincipalEmployerSerializer(serializers.ModelSerializer):
         return value
 
     # =========================
-    # CROSS FIELD VALIDATION
+    # VALIDATION
     # =========================
     def validate(self, data):
-        required_fields = [
-            "name",
-            "short_name",
-            "ho_address",
-            "contact_person",
-            "mobile",
-            "email",
+
+        # Use existing values during update
+        start = data.get(
             "start_date",
-            "nature_of_business",
-            "establishment_type",
-            "rules_applicable",
-        ]
+            getattr(self.instance, "start_date", None)
+        )
 
-        missing = [
-            field for field in required_fields
-            if not data.get(field)
-        ]
-
-        if missing:
-            raise serializers.ValidationError({
-                field: "This field is required"
-                for field in missing
-            })
-
-        start = data.get("start_date")
-        end = data.get("end_date")
+        end = data.get(
+            "end_date",
+            getattr(self.instance, "end_date", None)
+        )
 
         if start and end and end < start:
             raise serializers.ValidationError({
@@ -77,7 +62,6 @@ class PrincipalEmployerSerializer(serializers.ModelSerializer):
             })
 
         return data
-
 
 # =========================
 # BRANCH SERIALIZER

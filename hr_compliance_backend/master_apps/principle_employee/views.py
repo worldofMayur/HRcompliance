@@ -239,37 +239,55 @@ class PrincipalEmployerCreateAPIView(APIView):
 # UPDATE PRINCIPAL EMPLOYER
 # ==========================================================
 class PrincipalEmployerUpdateAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
     def put(self, request, pk):
-        pe = get_object_or_404(PrincipalEmployer, pk=pk)
+
+        pe = get_object_or_404(
+            PrincipalEmployer,
+            pk=pk
+        )
 
         email = request.data.get("email")
         mobile = request.data.get("mobile")
 
-        # 🔥 DUPLICATE CHECK DURING UPDATE
         if email and PrincipalEmployer.objects.exclude(pk=pk).filter(email=email).exists():
             return Response(
-                {"error": "Another Principal Employer already uses this email"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Email already in use"},
+                status=400
             )
 
         if mobile and PrincipalEmployer.objects.exclude(pk=pk).filter(mobile=mobile).exists():
             return Response(
-                {"error": "Another Principal Employer already uses this mobile"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Mobile already in use"},
+                status=400
             )
 
-        data = request.data.copy()
-        data.pop("documents", None)
-        data.pop("created_at", None)
-        data.pop("id", None)
+        serializer = PrincipalEmployerSerializer(
+            pe,
+            data=request.data,
+            partial=True
+        )
 
-        serializer = PrincipalEmployerSerializer(pe, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+        updated_pe = serializer.save()
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        documents = request.FILES.getlist("document")
+
+        if documents:
+            for file in documents:
+                PrincipalEmployerDocument.objects.create(
+                    principal_employer=updated_pe,
+                    document=file
+                )
+
+        updated_pe.refresh_from_db()
+
+        return Response(
+            PrincipalEmployerSerializer(updated_pe).data,
+            status=200
+        )
 
 
 # ==========================================================

@@ -241,22 +241,33 @@ const filteredAuditors =
 
       if (editingId) {
 
+        const payload = new FormData();
+
+        payload.append("name", formData.name);
+        payload.append("company", formData.company);
+        payload.append("short_name", formData.shortName);
+        payload.append("ho_address", formData.hoAddress);
+        payload.append("mobile", formData.mobile);
+        payload.append("email", formData.email);
+        payload.append("start_date", formData.startDate);
+        payload.append("end_date", formData.endDate);
+
+        // Upload new documents during edit
+        documents.forEach((file) => {
+          payload.append("documents", file);
+        });
+
         await api.put(
           `/api/auditor/${editingId}/update/`,
+          payload,
           {
-            name: formData.name,
-            company: formData.company,
-            short_name: formData.shortName,
-            ho_address: formData.hoAddress,
-            mobile: formData.mobile,
-            email: formData.email,
-            start_date: formData.startDate,
-            end_date: formData.endDate,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           }
         );
 
         alert("Auditor updated successfully");
-
       } else {
 
         const payload = new FormData();
