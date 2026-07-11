@@ -699,8 +699,8 @@ formData.append(
     // ================= API ENDPOINT =================
 
     const endpoint = effectiveReuploadMode
-      ? "${API_BASE}/api/vendor/reupload-compliance/"
-      : "${API_BASE}/api/vendor/submit-compliance/";
+      ? `${API_BASE}/api/vendor/reupload-compliance/`
+      : `${API_BASE}/api/vendor/submit-compliance/`;
 
     // ================= API CALL =================
 
