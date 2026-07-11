@@ -35,36 +35,33 @@ export default function ResetPassword() {
     validate();
   }, [uid, token, navigate]);
 
-  const handleSubmit = async () => {
-    if (password !== confirm) {
-      alert("Passwords do not match");
-      return;
+const handleSubmit = async () => {
+  if (password !== confirm) {
+    alert("Passwords do not match");
+    return;
+  }
+
+  setSubmitting(true);
+
+  const res = await fetch(
+    `${API_BASE}/api/auth/reset-password/`,   // ← Change this line
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid, token, password }),
     }
+  );
 
-    alert("Calling RESET PASSWORD API");
+  const data = await res.json();
+  setSubmitting(false);
 
-    setSubmitting(true);
-
-    const res = await fetch(
-      `${API_BASE}/api/auth/validate-reset-token/`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, token, password }),
-      }
-    );
-
-    const data = await res.json();
-
-    setSubmitting(false);
-
-    if (!res.ok) {
-      alert(data.error);
-    } else {
-      alert("Password set successfully");
-      navigate("/signin");
-    }
-  };
+  if (!res.ok) {
+    alert(data.error || "Failed to reset password");
+  } else {
+    alert("Password set successfully");
+    navigate("/signin");
+  }
+};
 
   if (loading) {
     return (
