@@ -641,21 +641,22 @@ const handleSubmit = async () => {
   try {
 
     if (isEditMode) {
+      const formData = new FormData();
 
-      const payload: any = {};
-
-      Object.entries(formData).forEach(([k, v]) => {
-        payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
+      Object.entries(formData).forEach(([k, v]) => {   // ← Use original formData
+        const key = k.replace(/([A-Z])/g, "_$1").toLowerCase();
+        formData.append(key, v);   // ← Note: this was using wrong variable name
       });
+
+      documents.forEach((d) => formData.append("document", d));  // ← Add this
 
       await api.put(
         `/api/principal-employer/${editingId}/update/`,
-        payload
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }  // Important
       );
 
-
       alert("Updated successfully");
-
     } else {
 
       const payload = new FormData();
