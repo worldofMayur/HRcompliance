@@ -242,44 +242,52 @@ class PrincipalEmployerUpdateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def put(self, request, pk):
-        pe = get_object_or_404(PrincipalEmployer, pk=pk)
+
+        pe = get_object_or_404(
+            PrincipalEmployer,
+            pk=pk
+        )
 
         email = request.data.get("email")
         mobile = request.data.get("mobile")
 
         if email and PrincipalEmployer.objects.exclude(pk=pk).filter(email=email).exists():
-            return Response({"error": "Email already in use"}, status=400)
+            return Response(
+                {"error": "Email already in use"},
+                status=400
+            )
 
         if mobile and PrincipalEmployer.objects.exclude(pk=pk).filter(mobile=mobile).exists():
-            return Response({"error": "Mobile already in use"}, status=400)
+            return Response(
+                {"error": "Mobile already in use"},
+                status=400
+            )
 
-        # Handle documents separately
+        serializer = PrincipalEmployerSerializer(
+            pe,
+            data=request.data,
+            partial=True
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        updated_pe = serializer.save()
+
         documents = request.FILES.getlist("document")
 
-        data = request.data.copy()
-        print("========== UPDATE PE ==========")
-        print("REQUEST DATA:", request.data)
-        print("DATA:", data)
-        print("FILES:", request.FILES)
-        data.pop("documents", None)
+        if documents:
+            for file in documents:
+                PrincipalEmployerDocument.objects.create(
+                    principal_employer=updated_pe,
+                    document=file
+                )
 
-        serializer = PrincipalEmployerSerializer(pe, data=data, partial=True)
+        updated_pe.refresh_from_db()
 
-        if serializer.is_valid():
-            updated_pe = serializer.save()
-
-            # Save new documents if uploaded
-            if documents:
-                for file in documents:
-                    doc_serializer = PrincipalEmployerDocumentSerializer(
-                        data={"principal_employer": updated_pe.id, "document": file}
-                    )
-                    if doc_serializer.is_valid():
-                        doc_serializer.save()
-
-            return Response(PrincipalEmployerSerializer(updated_pe).data)
-
-        return Response(serializer.errors, status=400)
+        return Response(
+            PrincipalEmployerSerializer(updated_pe).data,
+            status=200
+        )
 
 
 # ==========================================================

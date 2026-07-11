@@ -644,19 +644,20 @@ const handleSubmit = async () => {
 
         const payload = new FormData();
 
-        // Send all fields properly
-        Object.keys(formData).forEach(key => {
-          const value = formData[key as keyof typeof formData];
-          const apiKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-          
-          if (value !== undefined && value !== null) {
-            payload.append(apiKey, value);
-          }
-        });
+        payload.append("name", formData.name);
+        payload.append("short_name", formData.shortName);
+        payload.append("ho_address", formData.hoAddress);
+        payload.append("contact_person", formData.contactPerson);
+        payload.append("mobile", formData.mobile);
+        payload.append("email", formData.email);
+        payload.append("start_date", formData.startDate);
+        payload.append("end_date", formData.endDate || "");
+        payload.append("nature_of_business", formData.natureOfBusiness);
+        payload.append("establishment_type", formData.establishmentType);
+        payload.append("rules_applicable", formData.rulesApplicable);
 
-        // Add new documents
-        documents.forEach(doc => {
-          payload.append("document", doc);
+        documents.forEach((file) => {
+            payload.append("document", file);
         });
 
         await api.put(

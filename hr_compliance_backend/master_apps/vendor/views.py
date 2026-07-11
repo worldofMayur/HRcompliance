@@ -220,16 +220,18 @@ class VendorListAPIView(APIView):
 # ============================
 # UPDATE VENDOR
 # ============================
+from rest_framework.parsers import MultiPartParser, FormParser
+
 class VendorUpdateAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
     def put(self, request, pk):
+
         vendor = get_object_or_404(Vendor, pk=pk)
 
         email = request.data.get("email")
         mobile = request.data.get("mobile")
 
-        # ==========================
-        # DUPLICATE CHECK (UPDATE)
-        # ==========================
         if email and Vendor.objects.exclude(pk=pk).filter(email=email).exists():
             return Response(
                 {"error": "Another vendor already uses this email"},
@@ -242,26 +244,31 @@ class VendorUpdateAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        data = request.data.copy()
-        data.pop("documents", None)
-        data.pop("id", None)
-        data.pop("created_at", None)
-
         serializer = VendorSerializer(
             vendor,
-            data=data,
-            partial=True
+            data=request.data,
+            partial=True,
         )
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"message": "Vendor updated successfully"},
-                status=status.HTTP_200_OK,
-            )
+        serializer.is_valid(raise_exception=True)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        updated_vendor = serializer.save()
 
+        documents = request.FILES.getlist("document")
+
+        if documents:
+            for file in documents:
+                VendorDocument.objects.create(
+                    vendor=updated_vendor,
+                    document=file,
+                )
+
+        updated_vendor.refresh_from_db()
+
+        return Response(
+            VendorSerializer(updated_vendor).data,
+            status=status.HTTP_200_OK,
+        )
 
 # ============================
 # DELETE VENDOR

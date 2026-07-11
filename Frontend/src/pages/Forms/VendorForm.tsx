@@ -233,21 +233,52 @@ const fetchVendors = async () => {
     setLoading(true);
 
     if (isEditMode) {
-      const payload: any = {};
-      Object.entries(formData).forEach(([k, v]) => {
-        payload[k.replace(/([A-Z])/g, "_$1").toLowerCase()] = v;
+
+      const payload = new FormData();
+
+      payload.append("name", formData.name);
+      payload.append("short_name", formData.shortName);
+      payload.append("ho_address", formData.hoAddress);
+      payload.append("contact_person", formData.contactPerson);
+      payload.append("mobile", formData.mobile);
+      payload.append("email", formData.email);
+      payload.append("nature_of_services", formData.natureOfServices);
+
+      // Upload new documents if selected
+      documents.forEach((file) => {
+        payload.append("document", file);
       });
 
       await api.put(
         `/api/vendor/${editingId}/update/`,
-        payload
+        payload,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       alert("Vendor updated successfully");
+
+      // Reset form
+      setFormData({
+        name: "",
+        shortName: "",
+        hoAddress: "",
+        contactPerson: "",
+        mobile: "",
+        email: "",
+        natureOfServices: "",
+      });
+
+      setDocuments([]);
       setIsEditMode(false);
       setEditingId(null);
       setSelectedRows([]);
-      fetchVendors();
+
+      await fetchVendors();
+
       setLoading(false);
       return;
     }
