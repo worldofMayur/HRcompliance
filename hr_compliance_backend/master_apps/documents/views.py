@@ -25,38 +25,49 @@ class DocumentMasterListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        try:
+            # For superadmin / PE
+            if request.user.role in ["SUPERADMIN", "PE"]:
+                docs = DocumentMaster.objects.filter(is_active=True).order_by("name")
+            else:
+                # For Vendor / Auditor - show only common or their PE documents
+                pe = getattr(request.user, 'principalemployer_profile', None) or \
+                     getattr(request.user, 'vendor_profile', None)
+                
+                docs = DocumentMaster.objects.filter(
+                    is_active=True
+                ).filter(
+                    Q(principal_employer__isnull=True) | 
+                    Q(principal_employer=pe)
+                ).order_by("name")
 
-        pe = PrincipalEmployer.objects.filter(user=request.user).first()
+            serializer = DocumentMasterSerializer(docs, many=True)
+            return Response(serializer.data)
 
-        if pe:
-            docs = DocumentMaster.objects.filter(
-                Q(principal_employer__isnull=True) |
-                Q(principal_employer=pe),
-                is_active=True
-            )
-        else:
-            # 🔥 IMPORTANT: return ALL documents if no PE linked
-            docs = DocumentMaster.objects.filter(is_active=True)
-
-        docs = docs.order_by("name")
-
-        serializer = DocumentMasterSerializer(docs, many=True)
-        return Response(serializer.data)
+        except Exception as e:
+            print("Document List Error:", str(e))
+            return Response({"error": str(e)}, status=500)
 
 
 # =========================
 # CREATE DOCUMENT
 # =========================
 class DocumentMasterCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
+        print("Document Create Payload:", request.data)
+
         serializer = DocumentMasterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"message": "Document created successfully"},
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            doc = serializer.save()
+            print("Document created:", doc.name)
+            return Response({"message": "Document created successfully"}, status=201)
+        
+        print("Validation Errors:", serializer.errors)
+        return Response({
+            "error": serializer.errors
+        }, status=400)
 
 
 # =========================
