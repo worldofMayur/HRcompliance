@@ -23,6 +23,8 @@ from master_apps.vendor.utils import (
     apply_mapping_for_period,
     audit_period_to_date,
 )
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import AuditorDocument
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 
@@ -2106,16 +2108,40 @@ class AuditorListAPIView(APIView):
 
 
 # ================= UPDATE =================
+from rest_framework.parsers import MultiPartParser, FormParser
+
 class AuditorUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
 
     def put(self, request, pk):
         auditor = get_object_or_404(Auditor, pk=pk)
-        serializer = AuditorSerializer(auditor, data=request.data, partial=True)
+
+        serializer = AuditorSerializer(
+            auditor,
+            data=request.data,
+            partial=True
+        )
 
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Auditor updated successfully"})
+            updated_auditor = serializer.save()
+
+            # Save newly uploaded documents
+            documents = request.FILES.getlist("documents")
+
+            if documents:
+                for file in documents:
+                    AuditorDocument.objects.create(
+                        auditor=updated_auditor,
+                        document=file
+                    )
+
+            return Response(
+                {
+                    "message": "Auditor updated successfully"
+                },
+                status=200
+            )
 
         return Response(serializer.errors, status=400)
 
