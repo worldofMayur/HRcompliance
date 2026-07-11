@@ -226,10 +226,19 @@ const filteredAuditors =
 
   const handleSubmit = async () => {
 
-    if (Object.values(formData).some((v) => !v)) {
-      alert("All fields are required");
-      return;
-    }
+      if (
+        !formData.name.trim() ||
+        !formData.company.trim() ||
+        !formData.shortName.trim() ||
+        !formData.hoAddress.trim() ||
+        !formData.mobile.trim() ||
+        !formData.email.trim() ||
+        !formData.startDate ||
+        !formData.endDate
+      ) {
+        alert("All fields are required");
+        return;
+      }
 
     if (new Date(formData.startDate) > new Date(formData.endDate)) {
       alert("Start date cannot be after end date");
