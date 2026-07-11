@@ -70,7 +70,7 @@ const fetchNotifications = async (
         localStorage.getItem("access_token");
 
       const res = await fetch(
-        '${API_BASE}//api/auditor/vendor/notifications/",
+        `${API_BASE}/api/auditor/vendor/notifications/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
