@@ -98,6 +98,7 @@ export default function Auditor() {
     email: "",
     startDate: "",
     endDate: "",
+    showAuditorGuidelines: true,
   });
 
   const [documents, setDocuments] = useState([]);
@@ -251,6 +252,10 @@ const filteredAuditors =
         payload.append("email", formData.email);
         payload.append("start_date", formData.startDate);
         payload.append("end_date", formData.endDate);
+        payload.append(
+          "show_auditor_guidelines",
+          String(formData.showAuditorGuidelines)
+        );
 
         // Upload new documents during edit
         documents.forEach((file) => {
@@ -281,6 +286,11 @@ const filteredAuditors =
         payload.append("start_date", formData.startDate);
         payload.append("end_date", formData.endDate);
 
+        payload.append(
+          "show_auditor_guidelines",
+          String(formData.showAuditorGuidelines)
+        );
+
         documents.forEach((d) => payload.append("documents", d));
 
         await api.post(
@@ -309,6 +319,7 @@ const filteredAuditors =
         email: "",
         startDate: "",
         endDate: "",
+        showAuditorGuidelines: true,
       });
 
       fetchAuditors();
@@ -344,6 +355,8 @@ const handleEditSelected = () => {
     email: a.email,
     startDate: a.start_date,
     endDate: a.end_date,
+    showAuditorGuidelines:
+      a.show_auditor_guidelines ?? true,
   });
 
   setStartDateObj(
@@ -516,6 +529,20 @@ const handleEditSelected = () => {
             <div className="xl:col-span-2">
               <Label>Work Location</Label>
               <Input name="hoAddress" value={formData.hoAddress} onChange={handleChange} />
+            </div>
+
+            <div className="xl:col-span-3">
+              <Checkbox
+                checked={formData.showAuditorGuidelines}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    showAuditorGuidelines: e.target.checked,
+                  }))
+                }
+              >
+                Show Auditor Guidelines
+              </Checkbox>
             </div>
 
           </div>

@@ -2680,6 +2680,8 @@ class AuditChecklistAPIView(APIView):
 
             "has_documents": True,
 
+            "show_auditor_guidelines": auditor.show_auditor_guidelines,
+
             "checklist": response
 
         })
