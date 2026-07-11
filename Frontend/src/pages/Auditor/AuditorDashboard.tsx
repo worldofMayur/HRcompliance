@@ -34,14 +34,18 @@ export default function AuditorDashboard() {
   const [remarksData, setRemarksData] = useState<any[]>([]);
   const [auditPeriod, setAuditPeriod] = useState("");
   const [frequencyBase, setFrequencyBase] = useState("");
-const [mappingStartDate, setMappingStartDate] = useState<any>(null);
-const [mappingEndDate, setMappingEndDate] = useState<any>(null);
-const [compliancePeriods, setCompliancePeriods] = useState<any[]>([]);
-const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
+  const [mappingStartDate, setMappingStartDate] = useState<any>(null);
+  const [mappingEndDate, setMappingEndDate] = useState<any>(null);
+  const [compliancePeriods, setCompliancePeriods] = useState<any[]>([]);
+  const [frozenPeriods, setFrozenPeriods] = useState<string[]>([]);
   const [minimizedPopups, setMinimizedPopups] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [showAuditorGuidelines, setShowAuditorGuidelines] =
+    useState(true);
+
 
   const [auditSessionStatus, setAuditSessionStatus] =
     useState("");
@@ -657,6 +661,10 @@ const loadChecklist = async (
     // NORMAL FLOW
     // ======================================
 
+    setShowAuditorGuidelines(
+      checklistRes.data?.show_auditor_guidelines ?? true
+    );
+
     const apiData =
       checklistRes.data?.checklist || [];
 
@@ -1086,18 +1094,24 @@ if (exceptionalFiles) {
           </div>
         ),
       },
-    {
-      title: "Guidelines For Auditor",
-      width: 350,
-      dataIndex: "auditor_guide",
-      render: (text: any) => (
-        <div className="space-y-1">
-          {Array.isArray(text)
-            ? text.map((t, i) => <div key={i}>• {t}</div>)
-            : <div>• {text}</div>}
-        </div>
-      ),
-    },
+    ...(showAuditorGuidelines
+      ? [
+          {
+            title: "Guidelines For Auditor",
+            width: 350,
+            dataIndex: "auditor_guide",
+            render: (text: any) => (
+              <div className="space-y-1">
+                {Array.isArray(text)
+                  ? text.map((t: any, i: number) => (
+                      <div key={i}>• {t}</div>
+                    ))
+                  : <div>• {text}</div>}
+              </div>
+            ),
+          },
+        ]
+      : []),
 
     {
       title: "Compliance Status",

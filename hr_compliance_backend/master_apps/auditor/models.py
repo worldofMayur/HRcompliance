@@ -33,6 +33,10 @@ class Auditor(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
 
+    show_auditor_guidelines = models.BooleanField(
+        default=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
