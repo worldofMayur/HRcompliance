@@ -238,11 +238,20 @@ class ResetPasswordAPIView(APIView):
 
     def post(self, request):
 
+        print("\n==============================")
+        print("RESET PASSWORD API CALLED")
+        print("==============================")
+
         uid = request.data.get("uid")
         token = request.data.get("token")
         password = request.data.get("password")
 
+        print("UID:", uid)
+        print("TOKEN:", token)
+        print("PASSWORD RECEIVED:", bool(password))
+
         if not uid or not token or not password:
+            print("❌ Missing uid/token/password")
 
             return Response(
                 {"error": "Invalid request"},
@@ -254,19 +263,26 @@ class ResetPasswordAPIView(APIView):
                 urlsafe_base64_decode(uid)
             )
 
+            print("Decoded User ID:", user_id)
+
             user = User.objects.get(
                 pk=user_id
             )
 
-        except Exception:
+            print("✅ User Found:", user.email)
+
+        except Exception as e:
+
+            print("❌ User lookup failed:", str(e))
 
             return Response(
                 {
-                    "error":
-                    "Invalid or expired link"
+                    "error": "Invalid or expired link"
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        print("Reset Password Used:", user.reset_password_used)
 
         if getattr(
             user,
@@ -274,44 +290,69 @@ class ResetPasswordAPIView(APIView):
             False
         ):
 
+            print("❌ Reset link already used")
+
             return Response(
                 {
-                    "error":
-                    "Reset link already used"
+                    "error": "Reset link already used"
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        token_generator = (
-            PasswordResetTokenGenerator()
-        )
+        token_generator = PasswordResetTokenGenerator()
 
-        if not token_generator.check_token(
+        token_valid = token_generator.check_token(
             user,
             token
-        ):
+        )
+
+        print("Token Valid:", token_valid)
+
+        if not token_valid:
+
+            print("❌ Invalid token")
 
             return Response(
                 {
-                    "error":
-                    "Invalid or expired token"
+                    "error": "Invalid or expired token"
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user.set_password(password)
+        try:
 
-        user.reset_password_used = True
+            print("Setting password...")
 
-        user.save(update_fields=[
-            "password",
-            "reset_password_used"
-        ])
+            user.set_password(password)
+
+            user.reset_password_used = True
+
+            user.save(update_fields=[
+                "password",
+                "reset_password_used"
+            ])
+
+            print("✅ Password saved successfully")
+            print("Password Check Immediately:",
+                  user.check_password(password))
+
+        except Exception as e:
+
+            print("❌ Error while saving password:", str(e))
+
+            return Response(
+                {
+                    "error": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        print("✅ RESET PASSWORD COMPLETED")
+        print("==============================\n")
 
         return Response(
             {
-                "message":
-                "Password reset successful"
+                "message": "Password reset successful"
             },
             status=status.HTTP_200_OK
         )
