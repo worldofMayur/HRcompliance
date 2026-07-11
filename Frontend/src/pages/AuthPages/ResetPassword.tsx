@@ -41,6 +41,8 @@ export default function ResetPassword() {
       return;
     }
 
+    alert("Calling RESET PASSWORD API");
+
     setSubmitting(true);
 
     const res = await fetch(
