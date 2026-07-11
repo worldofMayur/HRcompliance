@@ -257,6 +257,10 @@ class PrincipalEmployerUpdateAPIView(APIView):
         documents = request.FILES.getlist("document")
 
         data = request.data.copy()
+        print("========== UPDATE PE ==========")
+        print("REQUEST DATA:", request.data)
+        print("DATA:", data)
+        print("FILES:", request.FILES)
         data.pop("documents", None)
 
         serializer = PrincipalEmployerSerializer(pe, data=data, partial=True)
