@@ -102,8 +102,14 @@ export default function BranchVendorDashboard() {
         </Card>
 
         {/* Vendors Working in All Branches */}
-        <Card
-          style={{ height: 390 }}
+            <Card
+            style={{ height: 390 }}
+            styles={{
+                body: {
+                height: 320,
+                overflow: "hidden",
+                },
+            }}
           title={
             <Space>
               <span>🌐</span>
@@ -119,7 +125,13 @@ export default function BranchVendorDashboard() {
 
         {/* Nature of Service */}
         <Card
-          style={{ height: 390 }}
+        style={{ height: 390 }}
+        styles={{
+            body: {
+            height: 320,
+            overflow: "hidden",
+            },
+        }}
           title={
             <Space>
               <span>🧩</span>
@@ -134,9 +146,24 @@ export default function BranchVendorDashboard() {
 
       </div>
 
-      <div className="text-center mt-6 text-gray-500 text-sm">
-        Updated: {lastUpdated.toLocaleString("en-IN")}
-      </div>
+        <div className="mt-3 flex justify-end">
+        <Text
+            type="secondary"
+            style={{
+            fontSize: 12,
+            }}
+        >
+            Updated:{" "}
+            {lastUpdated.toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+            })}
+        </Text>
+        </div>
     </>
   );
 }

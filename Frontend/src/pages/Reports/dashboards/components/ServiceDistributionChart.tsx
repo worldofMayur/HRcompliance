@@ -100,18 +100,18 @@ export default function ServiceDistributionChart({ data }: Props) {
     },
 
     legend: {
-      position: "bottom",
+    position: "right",
 
-      horizontalAlign: "center",
+    horizontalAlign: "center",
 
-      fontSize: "14px",
+    fontSize: "13px",
 
-      fontWeight: 500,
+    fontWeight: 500,
 
-      itemMargin: {
-        horizontal: 10,
-        vertical: 6,
-      },
+    itemMargin: {
+        horizontal: 8,
+        vertical: 4,
+    },
 
       formatter: (seriesName, opts) => {
         const value =
@@ -167,7 +167,7 @@ export default function ServiceDistributionChart({ data }: Props) {
       options={options}
       series={series}
       type="pie"
-      height={340}
+      height={280}
     />
   );
 }

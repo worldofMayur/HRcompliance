@@ -20,11 +20,12 @@ export default function AllBranchesVendorTable({ data, loading }: Props) {
 
   return (
     <Table
+      rowKey={(record) => `${record.state}-${record.vendor_name}`}
       columns={columns}
       dataSource={data}
       loading={loading}
       pagination={false}
-      scroll={{ y: 280 }}
+      scroll={{ y: 250 }}
       size="small"
     />
   );
