@@ -27,10 +27,10 @@ export default function ReportsDashboard() {
         </p>
       </div>
 
-      {/* Main Layout */}
-      <div className="grid gap-6 xl:grid-cols-[72%_28%]">
+      {/* Main Layout - Dashboard gets more space */}
+      <div className="grid gap-6 xl:grid-cols-[78%_22%]">
 
-        {/* ==================== MAIN DASHBOARD AREA ==================== */}
+        {/* ==================== MAIN DASHBOARD AREA (Wider) ==================== */}
         <div className="rounded-3xl border border-blue-200 bg-white p-6 shadow-lg dark:border-blue-900 dark:bg-gray-900 min-h-[680px] relative">
           
           {/* Highlight Badge */}
@@ -41,7 +41,7 @@ export default function ReportsDashboard() {
           {selectedReport === "branch" && <BranchVendorDashboard />}
         </div>
 
-        {/* ==================== SIDEBAR ==================== */}
+        {/* ==================== SIDEBAR (Narrower) ==================== */}
         <div className="space-y-6 sticky top-6 self-start">
 
           {/* Report Type Selector */}
@@ -62,7 +62,29 @@ export default function ReportsDashboard() {
             </Select>
           </Card>
 
-          {/* Report Components */}
+          {/* Report Filters Sidebar */}
+          <Card className="shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                🔍
+              </div>
+              <div>
+                <h3 className="font-semibold">Report Filters</h3>
+                <p className="text-xs text-gray-500">Select the required filters.</p>
+              </div>
+            </div>
+
+            {/* Filters will go here later */}
+            <div className="space-y-4 text-sm">
+              {/* You can move your actual filters here if needed */}
+            </div>
+
+            <button className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition">
+              🔍 Download Report
+            </button>
+          </Card>
+
+          {/* Other Report Components */}
           <div className="space-y-5">
             {selectedReport === "branch" && <BranchReport />}
             {selectedReport === "compliance" && <ComplianceReport />}
