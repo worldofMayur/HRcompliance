@@ -5,8 +5,13 @@ from rest_framework.response import Response
 
 from master_apps.principle_employee.models import PrincipalEmployer
 from master_apps.vendor.mapping_models import VendorBranchMapping
+from django.utils import timezone
+from datetime import datetime
 
 
+# =========================
+# KPI
+# =========================
 class BranchDashboardKPIAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -19,14 +24,9 @@ class BranchDashboardKPIAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response({"error": "Principal Employer not found"}, status=404)
 
-        queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe
-        )
+        queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
 
-        # -------------------------
         # Filters
-        # -------------------------
-
         states = request.GET.getlist("states") or request.GET.getlist("states[]")
         branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
         vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
@@ -34,17 +34,12 @@ class BranchDashboardKPIAPIView(APIView):
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
-
         if branches:
             queryset = queryset.filter(branch_id__in=branches)
-
         if vendors:
             queryset = queryset.filter(vendor_id__in=vendors)
-
         if services:
-            queryset = queryset.filter(
-                vendor__nature_of_services__in=services
-            )
+            queryset = queryset.filter(vendor__nature_of_services__in=services)
 
         data = {
             "total_states": queryset.values("branch__state").distinct().count(),
@@ -56,9 +51,9 @@ class BranchDashboardKPIAPIView(APIView):
         return Response(data)
 
 
-from django.db.models import Count
-
-
+# =========================
+# STATE SUMMARY
+# =========================
 class BranchDashboardStateSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -71,14 +66,9 @@ class BranchDashboardStateSummaryAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response({"error": "Principal Employer not found"}, status=404)
 
-        queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe
-        )
+        queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
 
-        # -------------------------
         # Filters
-        # -------------------------
-
         states = request.GET.getlist("states") or request.GET.getlist("states[]")
         branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
         vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
@@ -86,17 +76,12 @@ class BranchDashboardStateSummaryAPIView(APIView):
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
-
         if branches:
             queryset = queryset.filter(branch_id__in=branches)
-
         if vendors:
             queryset = queryset.filter(vendor_id__in=vendors)
-
         if services:
-            queryset = queryset.filter(
-                vendor__nature_of_services__in=services
-            )
+            queryset = queryset.filter(vendor__nature_of_services__in=services)
 
         summary = (
             queryset.values("branch__state")
@@ -111,10 +96,9 @@ class BranchDashboardStateSummaryAPIView(APIView):
         return Response(summary)
 
 
-from django.db.models import Count, Q
-from django.utils import timezone
-from datetime import datetime
-
+# =========================
+# MONTHLY TREND
+# =========================
 class BranchDashboardMonthlyTrendAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -125,17 +109,11 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
         try:
             pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
-            return Response(
-                {"error": "Principal Employer not found"},
-                status=404,
-            )
+            return Response({"error": "Principal Employer not found"}, status=404)
 
-        queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe
-        )
+        queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
 
-        # ---------------- Filters ---------------- #
-
+        # Filters
         states = request.GET.getlist("states") or request.GET.getlist("states[]")
         branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
         vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
@@ -143,25 +121,17 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
-
         if branches:
             queryset = queryset.filter(branch_id__in=branches)
-
         if vendors:
             queryset = queryset.filter(vendor_id__in=vendors)
-
         if services:
-            queryset = queryset.filter(
-                vendor__nature_of_services__in=services
-            )
+            queryset = queryset.filter(vendor__nature_of_services__in=services)
 
         today = timezone.now().date()
-
         response = []
 
-        # oldest → latest
         for i in range(5, -1, -1):
-
             month = today.month - i
             year = today.year
 
@@ -170,7 +140,6 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
                 year -= 1
 
             month_start = datetime(year, month, 1).date()
-
             if month == 12:
                 month_end = datetime(year + 1, 1, 1).date()
             else:
@@ -186,25 +155,17 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
                 .count()
             )
 
-            response.append(
-                {
-                    "month": month_start.strftime("%b"),
-                    "unique_vendors": vendor_count,
-                }
-            )
+            response.append({
+                "month": month_start.strftime("%b"),
+                "unique_vendors": vendor_count,
+            })
 
         return Response(response)
 
 
-from django.db.models import Count
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-
-from master_apps.principle_employee.models import PrincipalEmployer
-from master_apps.vendor.mapping_models import VendorBranchMapping
-
-
+# =========================
+# TOP BRANCHES (Fixed + Safe)
+# =========================
 class BranchDashboardTopBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -215,16 +176,11 @@ class BranchDashboardTopBranchesAPIView(APIView):
         try:
             pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
-            return Response(
-                {"error": "Principal Employer not found"},
-                status=404,
-            )
+            return Response({"error": "Principal Employer not found"}, status=404)
 
-        queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe
-        )
+        queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
 
-        # Filters (consistent with other endpoints)
+        # Filters
         states = request.GET.getlist("states") or request.GET.getlist("states[]")
         branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
         vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
@@ -232,17 +188,12 @@ class BranchDashboardTopBranchesAPIView(APIView):
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
-
         if branches:
             queryset = queryset.filter(branch_id__in=branches)
-
         if vendors:
             queryset = queryset.filter(vendor_id__in=vendors)
-
         if services:
-            queryset = queryset.filter(
-                vendor__nature_of_services__in=services
-            )
+            queryset = queryset.filter(vendor__nature_of_services__in=services)
 
         try:
             data = (
@@ -250,16 +201,10 @@ class BranchDashboardTopBranchesAPIView(APIView):
                     "branch__branch_name",
                     "branch__state",
                 )
-                .annotate(
-                    unique_vendors=Count(
-                        "vendor",
-                        distinct=True,
-                    )
-                )
+                .annotate(unique_vendors=Count("vendor", distinct=True))
                 .order_by("-unique_vendors")[:10]
             )
 
-            # Convert to list of dicts explicitly for safety
             result = [
                 {
                     "branch_name": item["branch__branch_name"],
@@ -272,9 +217,65 @@ class BranchDashboardTopBranchesAPIView(APIView):
             return Response(result)
 
         except Exception as e:
-            # This will help surface the real error in logs
             print(f"TopBranchesAPIView Error: {e}")
             return Response(
                 {"error": "Failed to fetch top branches", "detail": str(e)},
+                status=500,
+            )
+
+
+# =========================
+# SERVICE DISTRIBUTION
+# =========================
+class BranchDashboardServiceDistributionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "Principal Employer not found"}, status=404)
+
+        queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
+
+        # Filters
+        states = request.GET.getlist("states") or request.GET.getlist("states[]")
+        branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
+        vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
+        services = request.GET.getlist("services") or request.GET.getlist("services[]")
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+        if services:
+            queryset = queryset.filter(vendor__nature_of_services__in=services)
+
+        try:
+            data = (
+                queryset.values("vendor__nature_of_services")
+                .annotate(vendors=Count("vendor", distinct=True))
+                .order_by("-vendors")
+            )
+
+            response = [
+                {
+                    "service": item["vendor__nature_of_services"],
+                    "vendors": item["vendors"],
+                }
+                for item in data
+            ]
+
+            return Response(response)
+
+        except Exception as e:
+            print(f"ServiceDistributionAPIView Error: {e}")
+            return Response(
+                {"error": "Failed to fetch service distribution", "detail": str(e)},
                 status=500,
             )
