@@ -63,26 +63,6 @@ export default function ReportsDashboard() {
           </Card>
 
           {/* Report Filters Sidebar */}
-          <Card className="shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
-                🔍
-              </div>
-              <div>
-                <h3 className="font-semibold">Report Filters</h3>
-                <p className="text-xs text-gray-500">Select the required filters.</p>
-              </div>
-            </div>
-
-            {/* Filters will go here later */}
-            <div className="space-y-4 text-sm">
-              {/* You can move your actual filters here if needed */}
-            </div>
-
-            <button className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition">
-              🔍 Download Report
-            </button>
-          </Card>
 
           {/* Other Report Components */}
           <div className="space-y-5">
