@@ -1,10 +1,5 @@
-import { Card, Statistic, Row, Col } from "antd";
-import {
-  ApartmentOutlined,
-  BankOutlined,
-  TeamOutlined,
-  UsergroupAddOutlined,
-} from "@ant-design/icons";
+import { Card } from "antd";
+
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
@@ -96,49 +91,7 @@ export default function BranchVendorDashboard() {
 
   return (
     <>
-      {/* KPI Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} xl={6}>
-          <Card loading={loading}>
-            <Statistic
-              title="States"
-              value={kpi.total_states}
-              prefix={<ApartmentOutlined />}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={12} xl={6}>
-          <Card loading={loading}>
-            <Statistic
-              title="Branches"
-              value={kpi.total_branches}
-              prefix={<BankOutlined />}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={12} xl={6}>
-          <Card loading={loading}>
-            <Statistic
-              title="Vendor Mappings"
-              value={kpi.total_vendor_mappings}
-              prefix={<TeamOutlined />}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={12} xl={6}>
-          <Card loading={loading}>
-            <Statistic
-              title="Unique Vendors"
-              value={kpi.unique_vendors}
-              prefix={<UsergroupAddOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
-
+      
       {/* Dashboard Layout */}
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
 
