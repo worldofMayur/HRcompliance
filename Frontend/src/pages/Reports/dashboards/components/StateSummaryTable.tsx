@@ -16,6 +16,11 @@ interface Props {
 }
 
 export default function StateSummaryTable({ data, loading }: Props) {
+  // Filter out "All Branches" related rows if needed
+  const filteredData = data.filter(item => 
+    !item.branch__state?.toLowerCase().includes("all")
+  );
+
   const columns: TableProps<StateSummary>["columns"] = [
     {
       title: "State",
@@ -57,10 +62,10 @@ export default function StateSummaryTable({ data, loading }: Props) {
       size="small"
       rowKey="branch__state"
       columns={columns}
-      dataSource={data}
+      dataSource={filteredData}
       loading={loading}
       pagination={false}
-      scroll={{ y: data.length > 8 ? 280 : undefined }}
+      scroll={{ y: filteredData.length > 8 ? 280 : undefined }}
       rowClassName="hover:bg-gray-50 transition-colors"
     />
   );

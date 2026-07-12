@@ -69,9 +69,17 @@ export default function BranchVendorDashboard() {
           <MonthlyTrendChart data={monthlyTrend} />
         </Card>
 
-        {/* New Table - Vendors Working in All Branches */}
-        <Card className="mt-6" title={<Space><span>🌐</span>Vendors Working Across Multiple Branches</Space>}>
-            <AllBranchesVendorTable data={allBranchesVendors} loading={loading} />
+        {/* Vendors Working in All Branches */}
+        <Card 
+        className="mt-6" 
+        title={
+            <Space>
+            <span>🌐</span>
+            <span>Vendors Working in All Branches</span>
+            </Space>
+        }
+        >
+        <AllBranchesVendorTable data={allBranchesVendors} loading={loading} />
         </Card>
 
         {/* Service Distribution - Changed to Pie */}

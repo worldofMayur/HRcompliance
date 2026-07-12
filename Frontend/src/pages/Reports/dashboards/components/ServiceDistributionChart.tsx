@@ -8,15 +8,14 @@ interface ServiceDistribution {
 
 interface Props {
   data: ServiceDistribution[];
-  isPie?: boolean;
 }
 
-export default function ServiceDistributionChart({ data, isPie = true }: Props) {
+export default function ServiceDistributionChart({ data }: Props) {
   const totalVendors = data.reduce((sum, item) => sum + item.vendors, 0);
 
   const options = {
     chart: {
-      type: isPie ? "pie" : "donut",
+      type: "pie",
       toolbar: { show: false },
     },
 
@@ -25,6 +24,7 @@ export default function ServiceDistributionChart({ data, isPie = true }: Props) 
     legend: {
       position: "bottom" as const,
       fontSize: "14px",
+      fontWeight: 500,
       formatter: (seriesName: string, opts: any) => {
         const value = data[opts.seriesIndex]?.vendors || 0;
         const percentage = totalVendors > 0 ? ((value / totalVendors) * 100).toFixed(1) : "0";
@@ -34,10 +34,8 @@ export default function ServiceDistributionChart({ data, isPie = true }: Props) 
 
     dataLabels: {
       enabled: true,
-      style: { fontSize: "15px", fontWeight: "bold" },
-      formatter: (val: number, opts: any) => {
-        return `${val.toFixed(1)}%`;
-      },
+      style: { fontSize: "16px", fontWeight: "bold" },
+      dropShadow: { enabled: true },
     },
 
     tooltip: {
@@ -49,13 +47,6 @@ export default function ServiceDistributionChart({ data, isPie = true }: Props) 
         expandOnClick: true,
       },
     },
-
-    responsive: [
-      {
-        breakpoint: 768,
-        options: { legend: { position: "bottom" } },
-      },
-    ],
   };
 
   const series = data.map((item) => item.vendors);
@@ -64,8 +55,8 @@ export default function ServiceDistributionChart({ data, isPie = true }: Props) 
     <ReactApexChart
       options={options}
       series={series}
-      type={isPie ? "pie" : "donut"}
-      height={320}
+      type="pie"
+      height={340}
     />
   );
 }
