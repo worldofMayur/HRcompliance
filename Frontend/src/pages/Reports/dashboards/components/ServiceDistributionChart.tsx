@@ -18,21 +18,9 @@ export default function ServiceDistributionChart({ data }: Props) {
 
   const options: ApexCharts.ApexOptions = {
     chart: {
-      type: "pie",
+      type: "donut",
       toolbar: {
         show: false,
-      },
-      animations: {
-        enabled: true,
-      },
-      selection: {
-        enabled: false,
-      },
-      events: {
-        dataPointSelection: (event, chartContext) => {
-          // Remove selection immediately
-          chartContext.toggleDataPointSelection(-1);
-        },
       },
     },
 
@@ -47,26 +35,23 @@ export default function ServiceDistributionChart({ data }: Props) {
       "#13c2c2",
       "#eb2f96",
       "#fa8c16",
-      "#2f54eb",
-      "#a0d911",
     ],
 
     stroke: {
-      width: 2,
-      colors: ["#ffffff"],
+      width: 3,
+      colors: ["#fff"],
     },
 
     states: {
-      active: {
-        allowMultipleDataPointsSelection: false,
-        filter: {
-          type: "none",
-        },
-      },
       hover: {
         filter: {
           type: "lighten",
           value: 0.08,
+        },
+      },
+      active: {
+        filter: {
+          type: "none",
         },
       },
     },
@@ -75,10 +60,24 @@ export default function ServiceDistributionChart({ data }: Props) {
       pie: {
         expandOnClick: false,
 
-        offsetY: 0,
+        donut: {
+          size: "68%",
 
-        dataLabels: {
-          offset: 0,
+          labels: {
+            show: true,
+
+            total: {
+              show: true,
+              label: "Total",
+              formatter: () => totalVendors.toString(),
+            },
+
+            value: {
+              show: true,
+              fontSize: "24px",
+              fontWeight: 700,
+            },
+          },
         },
       },
     },
@@ -86,88 +85,57 @@ export default function ServiceDistributionChart({ data }: Props) {
     dataLabels: {
       enabled: true,
 
-      formatter: (val: number) => `${val.toFixed(1)}%`,
+      formatter: (val) => `${val.toFixed(1)}%`,
 
       style: {
         fontSize: "14px",
-        fontWeight: "bold",
-        colors: ["#fff"],
-      },
-
-      dropShadow: {
-        enabled: false,
+        fontWeight: 700,
       },
     },
 
     legend: {
-    position: "right",
+      position: "bottom",
 
-    horizontalAlign: "center",
+      fontSize: "13px",
 
-    fontSize: "13px",
-
-    fontWeight: 500,
-
-    itemMargin: {
+      itemMargin: {
         horizontal: 8,
-        vertical: 4,
-    },
+        vertical: 6,
+      },
 
       formatter: (seriesName, opts) => {
         const value =
           data[opts.seriesIndex]?.vendors || 0;
 
         const percent =
-          totalVendors > 0
-            ? (
-                (value / totalVendors) *
-                100
-              ).toFixed(1)
-            : "0";
+          totalVendors === 0
+            ? 0
+            : ((value / totalVendors) * 100).toFixed(1);
 
-        return `${seriesName} • ${value} Vendors (${percent}%)`;
+        return `${seriesName} • ${value} (${percent}%)`;
       },
     },
 
     tooltip: {
-      theme: "light",
-
       y: {
-        formatter: (val: number) => {
+        formatter: (val) => {
           const percent =
-            totalVendors > 0
-              ? (
-                  (val / totalVendors) *
-                  100
-                ).toFixed(1)
-              : "0";
+            totalVendors === 0
+              ? 0
+              : ((val / totalVendors) * 100).toFixed(1);
 
           return `${val} Vendors (${percent}%)`;
         },
       },
     },
-
-    responsive: [
-      {
-        breakpoint: 768,
-
-        options: {
-          legend: {
-            position: "bottom",
-          },
-        },
-      },
-    ],
   };
-
-  const series = data.map((item) => item.vendors);
 
   return (
     <ReactApexChart
       options={options}
-      series={series}
-      type="pie"
-      height={280}
+      series={data.map((d) => d.vendors)}
+      type="donut"
+      height={315}
     />
   );
 }
