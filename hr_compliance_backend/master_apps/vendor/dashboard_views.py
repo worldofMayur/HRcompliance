@@ -397,3 +397,102 @@ class ComplianceDashboardMonthlyTrendAPIView(APIView):
             })
 
         return Response(sorted(response, key=lambda x: x["month"]))
+
+
+
+from django.db.models import Count, Q
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from collections import defaultdict
+
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
+from master_apps.principle_employee.models import PrincipalEmployer
+from master_apps.vendor.constants import WorkflowStatus
+
+
+class VendorWiseComplianceAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "PE not found"}, status=404)
+
+        queryset = VendorComplianceSubmission.objects.filter(principal_employer=pe)
+
+        # Filters
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+        audit_months = request.GET.getlist("audit_months")
+
+        if states:
+            queryset = queryset.filter(state__in=states)
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+        if audit_months:
+            queryset = queryset.filter(audit_period__in=audit_months)
+
+        data = (
+            queryset.values("vendor__name", "vendor__short_name")
+            .annotate(
+                total=Count("id"),
+                cc_issued=Count("id", filter=Q(is_cc_issued=True)),
+                complied=Count("id", filter=Q(workflow_status=WorkflowStatus.COMPLIED)),
+                non_complied=Count("id", filter=Q(workflow_status=WorkflowStatus.NON_COMPLIED)),
+                exceptional=Count("id", filter=Q(workflow_status=WorkflowStatus.EXCEPTIONAL_APPROVAL)),
+                under_review=Count("id", filter=Q(workflow_status=WorkflowStatus.UNDER_REVIEW)),
+            )
+            .order_by("-total")
+        )
+
+        return Response(list(data))
+
+
+class ComplianceStatusDistributionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "PE not found"}, status=404)
+
+        queryset = VendorComplianceSubmission.objects.filter(principal_employer=pe)
+
+        # Same filters as above...
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+        audit_months = request.GET.getlist("audit_months")
+
+        if states: queryset = queryset.filter(state__in=states)
+        if branches: queryset = queryset.filter(branch_id__in=branches)
+        if vendors: queryset = queryset.filter(vendor_id__in=vendors)
+        if audit_months: queryset = queryset.filter(audit_period__in=audit_months)
+
+        total = queryset.count()
+
+        distribution = {
+            "Complied": queryset.filter(workflow_status=WorkflowStatus.COMPLIED).count(),
+            "Non Complied": queryset.filter(workflow_status=WorkflowStatus.NON_COMPLIED).count(),
+            "Exceptional Approval": queryset.filter(workflow_status=WorkflowStatus.EXCEPTIONAL_APPROVAL).count(),
+            "Under Review": queryset.filter(workflow_status=WorkflowStatus.UNDER_REVIEW).count(),
+            "Reupload Requested": queryset.filter(workflow_status=WorkflowStatus.REUPLOAD_REQUESTED).count(),
+            "CC Issued": queryset.filter(is_cc_issued=True).count(),
+        }
+
+        return Response({
+            "total": total,
+            "distribution": distribution
+        })

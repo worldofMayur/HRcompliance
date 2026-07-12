@@ -1,10 +1,12 @@
-import { Card, Typography, Space, Button } from "antd";
+import { Card, Typography, Space, Button, Row, Col } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
 import ComplianceSummaryCards from "./components/ComplianceSummaryCards";
 import ComplianceMonthlyTrendChart from "./components/ComplianceMonthlyTrendChart";
+import VendorWiseComplianceChart from "./components/VendorWiseComplianceChart";
+import CompliancePieChart from "./components/CompliancePieChart";
 
 const { Text } = Typography;
 
@@ -24,6 +26,17 @@ interface MonthlyTrend {
   nonComplied: number;
 }
 
+interface VendorWiseData {
+  vendor__name: string;
+  vendor__short_name: string;
+  total: number;
+  cc_issued: number;
+  complied: number;
+  non_complied: number;
+  exceptional: number;
+  under_review: number;
+}
+
 export default function VendorComplianceDashboard() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -38,6 +51,8 @@ export default function VendorComplianceDashboard() {
   });
 
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
+  const [vendorWise, setVendorWise] = useState<VendorWiseData[]>([]);
+  const [distribution, setDistribution] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchDashboard();
@@ -47,16 +62,17 @@ export default function VendorComplianceDashboard() {
     try {
       setLoading(true);
 
-      const [
-        summaryRes,
-        monthlyTrendRes,
-      ] = await Promise.all([
+      const [summaryRes, monthlyTrendRes, vendorRes, distRes] = await Promise.all([
         axios.get("/api/vendor/dashboard/compliance/summary/"),
         axios.get("/api/vendor/dashboard/compliance/monthly-trend/"),
+        axios.get("/api/vendor/dashboard/compliance/vendor-wise/"),
+        axios.get("/api/vendor/dashboard/compliance/status-distribution/"),
       ]);
 
       setSummary(summaryRes.data);
       setMonthlyTrend(monthlyTrendRes.data);
+      setVendorWise(vendorRes.data);
+      setDistribution(distRes.data.distribution || {});
 
       setLastUpdated(new Date());
     } catch (err) {
@@ -81,11 +97,9 @@ export default function VendorComplianceDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-
-        {/* Vendor Compliance Summary */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Summary Cards */}
         <Card
-          style={{ height: 390 }}
           loading={loading}
           title={
             <Space>
@@ -94,35 +108,50 @@ export default function VendorComplianceDashboard() {
             </Space>
           }
         >
-          <ComplianceSummaryCards
-            data={summary}
-          />
+          <ComplianceSummaryCards data={summary} />
         </Card>
 
-        {/* Monthly Compliance Trend */}
-        <Card
-          style={{ height: 390 }}
-          loading={loading}
-          title={
-            <Space>
-              <span>📈</span>
-              <span>Monthly Compliance Trend</span>
-            </Space>
-          }
-          extra={
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Audit Period
-            </Text>
-          }
-        >
-          <ComplianceMonthlyTrendChart
-            data={monthlyTrend}
-          />
-        </Card>
+        <Row gutter={[16, 16]}>
+          {/* Monthly Trend */}
+          <Col xs={24} xl={12}>
+            <Card
+              style={{ height: "100%" }}
+              loading={loading}
+              title={
+                <Space>
+                  <span>📈</span>
+                  <span>Monthly Compliance Trend</span>
+                </Space>
+              }
+              extra={
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Audit Period
+                </Text>
+              }
+            >
+              <ComplianceMonthlyTrendChart data={monthlyTrend} />
+            </Card>
+          </Col>
+
+          {/* Compliance Status Distribution */}
+          <Col xs={24} xl={12}>
+            <Card
+              style={{ height: "100%" }}
+              loading={loading}
+              title={
+                <Space>
+                  <span>🧩</span>
+                  <span>Compliance Status Distribution</span>
+                </Space>
+              }
+            >
+              <CompliancePieChart data={distribution} />
+            </Card>
+          </Col>
+        </Row>
 
         {/* Vendor Wise Compliance */}
         <Card
-          style={{ height: 390 }}
           loading={loading}
           title={
             <Space>
@@ -131,23 +160,8 @@ export default function VendorComplianceDashboard() {
             </Space>
           }
         >
-          Coming Soon...
+          <VendorWiseComplianceChart data={vendorWise} />
         </Card>
-
-        {/* Compliance Status Distribution */}
-        <Card
-          style={{ height: 390 }}
-          loading={loading}
-          title={
-            <Space>
-              <span>🧩</span>
-              <span>Compliance Status Distribution</span>
-            </Space>
-          }
-        >
-          Coming Soon...
-        </Card>
-
       </div>
 
       {/* Footer */}

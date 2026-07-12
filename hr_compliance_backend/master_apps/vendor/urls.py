@@ -34,7 +34,9 @@ from .dashboard_views import (
     BranchDashboardTopBranchesAPIView,
     BranchDashboardServiceDistributionAPIView,
     ComplianceDashboardSummaryAPIView,
-    ComplianceDashboardMonthlyTrendAPIView
+    ComplianceDashboardMonthlyTrendAPIView,
+    VendorWiseComplianceAPIView,      
+    ComplianceStatusDistributionAPIView
     )
 
 # Report Views Import
@@ -118,6 +120,8 @@ urlpatterns = [
         "dashboard/compliance/monthly-trend/",
         ComplianceDashboardMonthlyTrendAPIView.as_view(),
     ),
+    path("dashboard/compliance/vendor-wise/", VendorWiseComplianceAPIView.as_view()),
+    path("dashboard/compliance/status-distribution/", ComplianceStatusDistributionAPIView.as_view()),
 
     # Branch Wise Report Filters
     path("reports/states/", PEReportStatesAPIView.as_view()),
