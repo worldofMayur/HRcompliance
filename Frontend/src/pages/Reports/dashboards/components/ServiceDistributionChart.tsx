@@ -8,30 +8,23 @@ interface ServiceDistribution {
 
 interface Props {
   data: ServiceDistribution[];
-  onSliceClick?: (service: string) => void;
+  isPie?: boolean;
 }
 
-export default function ServiceDistributionChart({ data, onSliceClick }: Props) {
+export default function ServiceDistributionChart({ data, isPie = true }: Props) {
   const totalVendors = data.reduce((sum, item) => sum + item.vendors, 0);
 
   const options = {
     chart: {
-      type: "donut",
+      type: isPie ? "pie" : "donut",
       toolbar: { show: false },
-      events: {
-        dataPointSelection: (event: any, chartContext: any, config: any) => {
-          const selectedService = data[config.dataPointIndex]?.service;
-          if (selectedService && onSliceClick) onSliceClick(selectedService);
-        },
-      },
     },
 
     labels: data.map((item) => item.service),
 
     legend: {
-      position: "right" as const,
+      position: "bottom" as const,
       fontSize: "14px",
-      fontWeight: 500,
       formatter: (seriesName: string, opts: any) => {
         const value = data[opts.seriesIndex]?.vendors || 0;
         const percentage = totalVendors > 0 ? ((value / totalVendors) * 100).toFixed(1) : "0";
@@ -42,36 +35,27 @@ export default function ServiceDistributionChart({ data, onSliceClick }: Props) 
     dataLabels: {
       enabled: true,
       style: { fontSize: "15px", fontWeight: "bold" },
-    },
-
-    plotOptions: {
-      pie: {
-        donut: {
-          size: "72%",
-          labels: {
-            show: true,
-            name: { fontSize: "15px" },
-            total: {
-              show: true,
-              label: "Total Vendors",
-              fontSize: "15px",
-              color: "#666",
-              formatter: () => totalVendors.toLocaleString(),
-            },
-            value: {
-              show: true,
-              fontSize: "28px",
-              fontWeight: "bold",
-              color: "#1677ff",
-            },
-          },
-        },
+      formatter: (val: number, opts: any) => {
+        return `${val.toFixed(1)}%`;
       },
     },
 
     tooltip: {
       y: { formatter: (val: number) => `${val} Vendors` },
     },
+
+    plotOptions: {
+      pie: {
+        expandOnClick: true,
+      },
+    },
+
+    responsive: [
+      {
+        breakpoint: 768,
+        options: { legend: { position: "bottom" } },
+      },
+    ],
   };
 
   const series = data.map((item) => item.vendors);
@@ -80,8 +64,8 @@ export default function ServiceDistributionChart({ data, onSliceClick }: Props) 
     <ReactApexChart
       options={options}
       series={series}
-      type="donut"
-      height={340}
+      type={isPie ? "pie" : "donut"}
+      height={320}
     />
   );
 }

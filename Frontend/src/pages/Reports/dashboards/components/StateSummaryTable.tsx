@@ -13,18 +13,15 @@ interface StateSummary {
 interface Props {
   data: StateSummary[];
   loading: boolean;
-  onRowClick?: (state: string) => void;
 }
 
-export default function StateSummaryTable({ data, loading, onRowClick }: Props) {
-  console.log("Table Data:", data);
-
+export default function StateSummaryTable({ data, loading }: Props) {
   const columns: TableProps<StateSummary>["columns"] = [
     {
       title: "State",
       dataIndex: "branch__state",
       key: "state",
-      align: "left" as const,
+      align: "left",
       sorter: (a, b) => a.branch__state.localeCompare(b.branch__state),
       render: (text: string) => <Text strong>{text}</Text>,
     },
@@ -32,7 +29,7 @@ export default function StateSummaryTable({ data, loading, onRowClick }: Props) 
       title: "Branches",
       dataIndex: "branch_count",
       key: "branches",
-      align: "right" as const,
+      align: "right",
       sorter: (a, b) => a.branch_count - b.branch_count,
       render: (value: number) => value.toLocaleString(),
     },
@@ -40,7 +37,7 @@ export default function StateSummaryTable({ data, loading, onRowClick }: Props) 
       title: "Vendor Mappings",
       dataIndex: "total_vendor_mappings",
       key: "mappings",
-      align: "right" as const,
+      align: "right",
       sorter: (a, b) => a.total_vendor_mappings - b.total_vendor_mappings,
       render: (value: number) => value.toLocaleString(),
     },
@@ -48,8 +45,8 @@ export default function StateSummaryTable({ data, loading, onRowClick }: Props) 
       title: "Unique Vendors",
       dataIndex: "unique_vendors",
       key: "unique_vendors",
-      align: "right" as const,
-      defaultSortOrder: "descend" as const,
+      align: "right",
+      defaultSortOrder: "descend",
       sorter: (a, b) => a.unique_vendors - b.unique_vendors,
       render: (value: number) => <Text strong>{value.toLocaleString()}</Text>,
     },
@@ -63,11 +60,7 @@ export default function StateSummaryTable({ data, loading, onRowClick }: Props) 
       dataSource={data}
       loading={loading}
       pagination={false}
-      scroll={{ y: data.length > 8 ? 280 : undefined }} // Smart scroll
-      onRow={(record) => ({
-        onClick: () => onRowClick?.(record.branch__state),
-        style: { cursor: onRowClick ? "pointer" : "default" },
-      })}
+      scroll={{ y: data.length > 8 ? 280 : undefined }}
       rowClassName="hover:bg-gray-50 transition-colors"
     />
   );
