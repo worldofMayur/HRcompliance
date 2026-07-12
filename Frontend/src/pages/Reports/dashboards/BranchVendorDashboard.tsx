@@ -11,6 +11,7 @@ import axios from "../../../utils/api";
 import StateSummaryTable from "./components/StateSummaryTable";
 import MonthlyTrendChart from "./components/MonthlyTrendChart";
 import TopBranchesTable from "./components/TopBranchesTable";
+import ServiceDistributionChart from "./components/ServiceDistributionChart";
 
 interface KPIResponse {
   total_states: number;
@@ -37,6 +38,11 @@ interface TopBranch {
   unique_vendors: number;
 }
 
+interface ServiceDistribution {
+  service: string;
+  vendors: number;
+}
+
 export default function BranchVendorDashboard() {
   const [loading, setLoading] = useState(true);
 
@@ -50,6 +56,9 @@ export default function BranchVendorDashboard() {
   const [summary, setSummary] = useState<StateSummary[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
   const [topBranches, setTopBranches] = useState<TopBranch[]>([]);
+  const [serviceDistribution, setServiceDistribution] = useState<
+    ServiceDistribution[]
+  >([]);
 
   useEffect(() => {
     fetchDashboard();
@@ -64,17 +73,20 @@ export default function BranchVendorDashboard() {
         summaryRes,
         trendRes,
         topBranchesRes,
+        serviceRes,
       ] = await Promise.all([
         axios.get("/api/vendor/dashboard/branch/kpi/"),
         axios.get("/api/vendor/dashboard/branch/state-summary/"),
         axios.get("/api/vendor/dashboard/branch/monthly-trend/"),
         axios.get("/api/vendor/dashboard/branch/top-branches/"),
+        axios.get("/api/vendor/dashboard/branch/service-distribution/"),
       ]);
 
       setKpi(kpiRes.data);
       setSummary(summaryRes.data);
       setMonthlyTrend(trendRes.data);
       setTopBranches(topBranchesRes.data);
+      setServiceDistribution(serviceRes.data);
     } catch (err) {
       console.error("Dashboard Error:", err);
     } finally {
@@ -167,9 +179,9 @@ export default function BranchVendorDashboard() {
           title="Nature of Service Distribution"
           loading={loading}
         >
-          <div className="flex h-[350px] items-center justify-center text-gray-400">
-            Donut Chart Coming Next
-          </div>
+          <ServiceDistributionChart
+            data={serviceDistribution}
+          />
         </Card>
 
       </div>
