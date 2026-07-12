@@ -79,6 +79,8 @@ export default function BranchVendorDashboard() {
 
       setKpi(kpiRes.data);
       setSummary(summaryRes.data);
+      console.log("Summary API:", summaryRes.data);
+      setSummary(summaryRes.data);
       setMonthlyTrend(trendRes.data);
       setTopBranches(topBranchesRes.data);
       setServiceDistribution(serviceRes.data);
@@ -88,6 +90,7 @@ export default function BranchVendorDashboard() {
       setLoading(false);
     }
   };
+
 
   return (
     <>

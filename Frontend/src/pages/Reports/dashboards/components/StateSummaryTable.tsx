@@ -23,6 +23,7 @@ export default function StateSummaryTable({
   data,
   loading,
 }: any) {
+      console.log("Table Data:", data);
   return (
     <Table
       size="small"
