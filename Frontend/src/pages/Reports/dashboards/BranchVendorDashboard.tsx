@@ -7,7 +7,7 @@ import StateSummaryTable from "./components/StateSummaryTable";
 import MonthlyTrendChart from "./components/MonthlyTrendChart";
 import TopBranchesTable from "./components/TopBranchesTable";
 import ServiceDistributionChart from "./components/ServiceDistributionChart";
-import AllBranchesVendorTable from "./components/AllBranchesVendorTable"; // New Component
+import AllBranchesVendorTable from "./components/AllBranchesVendorTable";
 
 const { Text } = Typography;
 
@@ -19,7 +19,9 @@ export default function BranchVendorDashboard() {
   const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
   const [topBranches, setTopBranches] = useState<any[]>([]);
   const [serviceDistribution, setServiceDistribution] = useState<any[]>([]);
-  const [allBranchesVendors, setAllBranchesVendors] = useState<any[]>([]); // New
+
+  // New: Filter "All Branches" data for the dedicated table
+  const [allBranchesVendors, setAllBranchesVendors] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDashboard();
@@ -28,6 +30,7 @@ export default function BranchVendorDashboard() {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
+
       const [summaryRes, trendRes, topRes, serviceRes] = await Promise.all([
         axios.get("/api/vendor/dashboard/branch/state-summary/"),
         axios.get("/api/vendor/dashboard/branch/monthly-trend/"),
@@ -35,11 +38,27 @@ export default function BranchVendorDashboard() {
         axios.get("/api/vendor/dashboard/branch/service-distribution/"),
       ]);
 
+      const topData = topRes.data || [];
+
+      // Extract "All Branches" entries for the new table
+      const allBranchesData = topData
+        .filter((item: any) => 
+          item.branch_name?.toLowerCase().includes("all branches")
+        )
+        .map((item: any) => ({
+          state: item.state,
+          vendor_name: "All Vendors",           // You can improve this from backend later
+          nature_of_services: "Multiple",       // Placeholder - update from real data if available
+          total_branches: item.unique_vendors || 1,
+        }));
+
       setSummary(summaryRes.data);
       setMonthlyTrend(trendRes.data);
-      setTopBranches(topRes.data);
+      setTopBranches(topData);
       setServiceDistribution(serviceRes.data);
+      setAllBranchesVendors(allBranchesData);
       setLastUpdated(new Date());
+
     } catch (err) {
       console.error("Dashboard Error:", err);
     } finally {
@@ -59,35 +78,39 @@ export default function BranchVendorDashboard() {
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
 
-        {/* State Wise Summary */}
         <Card style={{ height: 390 }} title={<Space><span>📊</span>State Wise Vendor Summary</Space>}>
           <StateSummaryTable data={summary} loading={loading} />
         </Card>
 
-        {/* Pan India Unique Vendor Count */}
         <Card style={{ height: 390 }} title={<Space><span>📈</span>Pan India Unique Vendor Count</Space>}>
           <MonthlyTrendChart data={monthlyTrend} />
         </Card>
 
-        {/* Vendors Working in All Branches */}
-        <Card 
-        className="mt-6" 
-        title={
-            <Space>
-            <span>🌐</span>
-            <span>Vendors Working in All Branches</span>
-            </Space>
-        }
-        >
-        <AllBranchesVendorTable data={allBranchesVendors} loading={loading} />
+        <Card style={{ height: 390 }} title={<Space><span>🏢</span>Top 10 Branches by Vendor Count</Space>}>
+          <TopBranchesTable data={topBranches} loading={loading} />
         </Card>
 
-        {/* Service Distribution - Changed to Pie */}
         <Card style={{ height: 390 }} title={<Space><span>🧩</span>Nature of Service Distribution</Space>}>
-          <ServiceDistributionChart data={serviceDistribution} isPie={true} />
+          <ServiceDistributionChart data={serviceDistribution} />
         </Card>
 
       </div>
+
+      {/* Vendors Working in All Branches */}
+      <Card 
+        className="mt-6" 
+        title={
+          <Space>
+            <span>🌐</span>
+            <span>Vendors Working in All Branches</span>
+          </Space>
+        }
+      >
+        <AllBranchesVendorTable 
+          data={allBranchesVendors} 
+          loading={loading} 
+        />
+      </Card>
 
       <div className="text-center mt-6 text-gray-500 text-sm">
         Updated: {lastUpdated.toLocaleString("en-IN")}
