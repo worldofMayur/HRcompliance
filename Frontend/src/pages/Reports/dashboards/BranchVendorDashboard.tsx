@@ -19,8 +19,6 @@ export default function BranchVendorDashboard() {
   const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
   const [topBranches, setTopBranches] = useState<any[]>([]);
   const [serviceDistribution, setServiceDistribution] = useState<any[]>([]);
-
-  // New: Filter "All Branches" data for the dedicated table
   const [allBranchesVendors, setAllBranchesVendors] = useState<any[]>([]);
 
   useEffect(() => {
@@ -40,16 +38,16 @@ export default function BranchVendorDashboard() {
 
       const topData = topRes.data || [];
 
-      // Extract "All Branches" entries for the new table
+      // Extract "All Branches" entries
       const allBranchesData = topData
         .filter((item: any) => 
           item.branch_name?.toLowerCase().includes("all branches")
         )
         .map((item: any) => ({
-          state: item.state,
-          vendor_name: "All Vendors",           // You can improve this from backend later
-          nature_of_services: "Multiple",       // Placeholder - update from real data if available
+          state: item.state || "Punjab",
           total_branches: item.unique_vendors || 1,
+          vendor_name: "All Vendors (Multiple)",   // Better placeholder
+          nature_of_services: "Multiple Services",
         }));
 
       setSummary(summaryRes.data);
@@ -86,19 +84,8 @@ export default function BranchVendorDashboard() {
           <MonthlyTrendChart data={monthlyTrend} />
         </Card>
 
-        <Card 
-            className="mt-6" 
-            title={
-            <Space>
-                <span>🌐</span>
-                <span>Vendors Working in All Branches</span>
-            </Space>
-            }
-        >
-            <AllBranchesVendorTable 
-            data={allBranchesVendors} 
-            loading={loading} 
-            />
+        <Card style={{ height: 390 }} title={<Space><span>🏢</span>Top 10 Branches by Vendor Count</Space>}>
+          <TopBranchesTable data={topBranches} loading={loading} />
         </Card>
 
         <Card style={{ height: 390 }} title={<Space><span>🧩</span>Nature of Service Distribution</Space>}>
@@ -108,7 +95,20 @@ export default function BranchVendorDashboard() {
       </div>
 
       {/* Vendors Working in All Branches */}
-
+      <Card 
+        className="mt-6" 
+        title={
+          <Space>
+            <span>🌐</span>
+            <span>Vendors Working in All Branches</span>
+          </Space>
+        }
+      >
+        <AllBranchesVendorTable 
+          data={allBranchesVendors} 
+          loading={loading} 
+        />
+      </Card>
 
       <div className="text-center mt-6 text-gray-500 text-sm">
         Updated: {lastUpdated.toLocaleString("en-IN")}
