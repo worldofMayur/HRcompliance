@@ -81,7 +81,7 @@ export default function ServiceDistributionChart({ data }: Props) {
       pie: {
         expandOnClick: false,
 
-        customScale: 1.05,
+        customScale: 1.00,
 
         offsetY: -8,
 
