@@ -113,9 +113,7 @@ class BranchDashboardStateSummaryAPIView(APIView):
 
 from django.db.models import Count, Q
 from django.utils import timezone
-from dateutil.relativedelta import relativedelta
-from datetime import date
-
+from datetime import datetime
 
 class BranchDashboardMonthlyTrendAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -164,12 +162,19 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
         # oldest → latest
         for i in range(5, -1, -1):
 
-            month_start = (
-                today.replace(day=1)
-                - relativedelta(months=i)
-            )
+            month = today.month - i
+            year = today.year
 
-            month_end = month_start + relativedelta(months=1)
+            while month <= 0:
+                month += 12
+                year -= 1
+
+            month_start = datetime(year, month, 1).date()
+
+            if month == 12:
+                month_end = datetime(year + 1, 1, 1).date()
+            else:
+                month_end = datetime(year, month + 1, 1).date()
 
             vendor_count = (
                 queryset.filter(
