@@ -53,10 +53,8 @@ class BranchDashboardKPIAPIView(APIView):
 
         return Response(data)
 
+from django.db.models import Count, Q
 
-# =========================
-# STATE SUMMARY
-# =========================
 class BranchDashboardStateSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -69,7 +67,9 @@ class BranchDashboardStateSummaryAPIView(APIView):
         except PrincipalEmployer.DoesNotExist:
             return Response({"error": "Principal Employer not found"}, status=404)
 
-        queryset = VendorBranchMapping.objects.filter(principal_employer=pe)
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
 
         # Filters
         states = request.GET.getlist("states") or request.GET.getlist("states[]")
@@ -86,8 +86,10 @@ class BranchDashboardStateSummaryAPIView(APIView):
         if services:
             queryset = queryset.filter(vendor__nature_of_services__in=services)
 
+        # IMPORTANT: Exclude "All Branches" mappings when counting branches
         summary = (
-            queryset.values("branch__state")
+            queryset.exclude(branch__short_name__iexact="All Branches")   # ← Key Fix
+            .values("branch__state")
             .annotate(
                 branch_count=Count("branch", distinct=True),
                 total_vendor_mappings=Count("id"),
