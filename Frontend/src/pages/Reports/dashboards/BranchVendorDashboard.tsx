@@ -103,15 +103,38 @@ export default function BranchVendorDashboard() {
         </Col>
       </Row>
 
-      {/* State Summary Table */}
-      <div className="mt-6">
-        <Card title="State Wise Vendor Summary" loading={loading}>
-          <StateSummaryTable
-            data={summary}
-            loading={loading}
-          />
-        </Card>
-      </div>
+<div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+
+  {/* Top Left */}
+  <Card title="State Wise Vendor Summary">
+    <StateSummaryTable
+      data={summary}
+      loading={loading}
+    />
+  </Card>
+
+  {/* Top Right */}
+  <Card title="Last 6 Months Vendor Trend">
+    <div className="flex h-[350px] items-center justify-center text-gray-400">
+      Bar Chart Coming Next
+    </div>
+  </Card>
+
+  {/* Bottom Left */}
+  <Card title="Top Branches">
+    <div className="flex h-[350px] items-center justify-center text-gray-400">
+      Top Branches Table Coming Next
+    </div>
+  </Card>
+
+  {/* Bottom Right */}
+  <Card title="Nature of Service Distribution">
+    <div className="flex h-[350px] items-center justify-center text-gray-400">
+      Pie Chart Coming Next
+    </div>
+  </Card>
+
+</div>
     </>
   );
 }
