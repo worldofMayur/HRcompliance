@@ -81,7 +81,7 @@ export default function ServiceDistributionChart({ data }: Props) {
       pie: {
         expandOnClick: false,
 
-        customScale: 1.18,
+        customScale: 1.05,
 
         offsetY: -8,
 
@@ -187,7 +187,7 @@ export default function ServiceDistributionChart({ data }: Props) {
       options={options}
       series={series}
       type="pie"
-      height={320}
+      height={300}
     />
   );
 }

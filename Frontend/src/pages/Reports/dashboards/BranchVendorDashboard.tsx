@@ -127,9 +127,9 @@ export default function BranchVendorDashboard() {
         <Card
         style={{ height: 390 }}
         bodyStyle={{
-            height: 330,
-            paddingBottom: 8,
-            overflow: "hidden",
+        height: 325,
+        padding: "16px",
+        overflow: "hidden",
         }}
           title={
             <Space>
