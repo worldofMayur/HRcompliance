@@ -1,4 +1,5 @@
-import { Card, Typography, Space, Empty } from "antd";
+import { Card, Typography, Space, Button, Empty } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
@@ -91,31 +92,42 @@ export default function BranchVendorDashboard() {
     }
   };
 
-  // Handle widget clicks (for future filtering)
+  // Click Handlers for Filtering (Ready for future global filter)
   const handleStateClick = (state: string) => {
-    console.log("Filter by State:", state);
-    // TODO: Apply global filter
+    console.log("Filter applied → State:", state);
+    // TODO: Later connect to global filter + API params
   };
 
   const handleBranchClick = (branchName: string) => {
-    console.log("Filter by Branch:", branchName);
-    // TODO: Apply global filter
+    console.log("Filter applied → Branch:", branchName);
   };
 
   const handleServiceClick = (service: string) => {
-    console.log("Filter by Service:", service);
-    // TODO: Apply global filter
+    console.log("Filter applied → Service:", service);
   };
 
   const isEmpty = summary.length === 0 && topBranches.length === 0;
 
   return (
     <>
-      <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+      {/* Refresh Button */}
+      <div className="flex justify-end mb-4">
+        <Button
+          type="primary"
+          icon={<ReloadOutlined />}
+          onClick={fetchDashboard}
+          loading={loading}
+          size="middle"
+        >
+          Refresh Dashboard
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
 
         {/* State Wise Summary */}
         <Card
-          style={{ height: 380 }}
+          style={{ height: 390 }}
           title={
             <Space>
               <span>📊</span>
@@ -138,7 +150,7 @@ export default function BranchVendorDashboard() {
 
         {/* Monthly Trend */}
         <Card
-          style={{ height: 380 }}
+          style={{ height: 390 }}
           title={
             <Space>
               <span>📈</span>
@@ -147,9 +159,7 @@ export default function BranchVendorDashboard() {
           }
           loading={loading}
           extra={
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Last 6 Months
-            </Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>Last 6 Months</Text>
           }
         >
           <MonthlyTrendChart data={monthlyTrend} />
@@ -157,7 +167,7 @@ export default function BranchVendorDashboard() {
 
         {/* Top Branches */}
         <Card
-          style={{ height: 380 }}
+          style={{ height: 390 }}
           title={
             <Space>
               <span>🏢</span>
@@ -179,7 +189,7 @@ export default function BranchVendorDashboard() {
 
         {/* Service Distribution */}
         <Card
-          style={{ height: 380 }}
+          style={{ height: 390 }}
           title={
             <Space>
               <span>🧩</span>
@@ -200,15 +210,15 @@ export default function BranchVendorDashboard() {
 
       </div>
 
-      {/* Global Footer */}
+      {/* Footer */}
       <div className="text-center mt-6">
         <Text type="secondary" style={{ fontSize: 13 }}>
-          Updated: {lastUpdated.toLocaleString("en-IN", { 
-            day: 'numeric', 
-            month: 'short', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+          Updated: {lastUpdated.toLocaleString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </Text>
       </div>

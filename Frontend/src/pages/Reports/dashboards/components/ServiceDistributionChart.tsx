@@ -21,9 +21,7 @@ export default function ServiceDistributionChart({ data, onSliceClick }: Props) 
       events: {
         dataPointSelection: (event: any, chartContext: any, config: any) => {
           const selectedService = data[config.dataPointIndex]?.service;
-          if (selectedService && onSliceClick) {
-            onSliceClick(selectedService);
-          }
+          if (selectedService && onSliceClick) onSliceClick(selectedService);
         },
       },
     },
@@ -32,48 +30,37 @@ export default function ServiceDistributionChart({ data, onSliceClick }: Props) 
 
     legend: {
       position: "right" as const,
-      fontSize: "13px",
+      fontSize: "14px",
+      fontWeight: 500,
       formatter: (seriesName: string, opts: any) => {
         const value = data[opts.seriesIndex]?.vendors || 0;
-        const percentage = totalVendors > 0 
-          ? ((value / totalVendors) * 100).toFixed(1) 
-          : "0";
+        const percentage = totalVendors > 0 ? ((value / totalVendors) * 100).toFixed(1) : "0";
         return `${seriesName} — ${value} (${percentage}%)`;
       },
     },
 
     dataLabels: {
       enabled: true,
-      formatter: (val: number) => `${val.toFixed(1)}%`,
-    },
-
-    tooltip: {
-      y: {
-        formatter: (value: number) => `${value} Vendors`,
-      },
+      style: { fontSize: "15px", fontWeight: "bold" },
     },
 
     plotOptions: {
       pie: {
         donut: {
-          size: "68%",
+          size: "72%",
           labels: {
             show: true,
-            name: {
-              show: true,
-              fontSize: "14px",
-            },
+            name: { fontSize: "15px" },
             total: {
               show: true,
-              showAlways: true,
               label: "Total Vendors",
-              fontSize: "14px",
+              fontSize: "15px",
               color: "#666",
               formatter: () => totalVendors.toLocaleString(),
             },
             value: {
               show: true,
-              fontSize: "22px",
+              fontSize: "28px",
               fontWeight: "bold",
               color: "#1677ff",
             },
@@ -82,28 +69,19 @@ export default function ServiceDistributionChart({ data, onSliceClick }: Props) 
       },
     },
 
-    responsive: [
-      {
-        breakpoint: 768,
-        options: {
-          legend: {
-            position: "bottom" as const,
-          },
-        },
-      },
-    ],
+    tooltip: {
+      y: { formatter: (val: number) => `${val} Vendors` },
+    },
   };
 
   const series = data.map((item) => item.vendors);
 
   return (
-    <div className="flex justify-center">
-      <ReactApexChart
-        options={options}
-        series={series}
-        type="donut"
-        height={320}
-      />
-    </div>
+    <ReactApexChart
+      options={options}
+      series={series}
+      type="donut"
+      height={340}
+    />
   );
 }
