@@ -80,18 +80,20 @@ const ExceptionalDocumentReferenceChart: React.FC = () => {
   };
 
   return (
-    <Card
-      title="Documents Referenced for Exceptional Clearance"
-      size="small"
-      style={{ height: 430 }}
-    >
-      <ReactApexChart
-        options={options}
-        series={series}
-        type="pie"
-        height={340}
-      />
-    </Card>
+<Card
+  size="small"
+  title="Documents Referenced for Exceptional Clearance"
+  style={{
+    height: 370,
+  }}
+>
+  <ReactApexChart
+    options={options}
+    series={series}
+    type="pie"
+    height={300}
+  />
+</Card>
   );
 };
 

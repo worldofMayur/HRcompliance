@@ -59,17 +59,21 @@ const TopExceptionalVendorsChart: React.FC = () => {
   ];
 
   return (
-    <Card
-      title="📊 Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
-      style={{ marginBottom: 16 }}
-    >
-      <ReactApexChart
-        options={options}
-        series={series}
-        type="bar"
-        height={340}
-      />
-    </Card>
+<Card
+  size="small"
+  title="Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
+  style={{
+    height: 370,
+    marginBottom: 16,
+  }}
+>
+  <ReactApexChart
+    options={options}
+    series={series}
+    type="bar"
+    height={300}
+  />
+</Card>
   );
 };
 

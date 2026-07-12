@@ -7,11 +7,11 @@ import ExceptionalDocumentReferenceChart from "./components/ExceptionalDocumentR
 export default function ExceptionalApprovalDashboard() {
   return (
     <Row gutter={[16, 16]}>
-      <Col xs={24} xl={16}>
+<Col xs={24} xl={12}>
         <ExceptionalStateSummaryTable />
       </Col>
 
-      <Col xs={24} xl={8}>
+      <Col xs={24} xl={12}>
         <Space direction="vertical" size={16} style={{ width: "100%" }}>
           <TopExceptionalVendorsChart />
           <ExceptionalDocumentReferenceChart />
