@@ -8,7 +8,7 @@ import {
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
-import StateSummaryTable from "./components/StateSummaryTable";
+import StateSummaryTable from "../dashboards/components/StateSummaryTable"
 
 interface KPIResponse {
   total_states: number;
