@@ -8,9 +8,18 @@ import {
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
+import StateSummaryTable from "./components/StateSummaryTable";
+
 interface KPIResponse {
   total_states: number;
   total_branches: number;
+  total_vendor_mappings: number;
+  unique_vendors: number;
+}
+
+interface StateSummary {
+  branch__state: string;
+  branch_count: number;
   total_vendor_mappings: number;
   unique_vendors: number;
 }
@@ -25,6 +34,8 @@ export default function BranchVendorDashboard() {
     unique_vendors: 0,
   });
 
+  const [summary, setSummary] = useState<StateSummary[]>([]);
+
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -33,59 +44,74 @@ export default function BranchVendorDashboard() {
     try {
       setLoading(true);
 
-      const res = await axios.get(
-        "/api/vendor/dashboard/branch/kpi/"
-      );
+      const [kpiRes, summaryRes] = await Promise.all([
+        axios.get("/api/vendor/dashboard/branch/kpi/"),
+        axios.get("/api/vendor/dashboard/branch/state-summary/"),
+      ]);
 
-      setKpi(res.data);
+      setKpi(kpiRes.data);
+      setSummary(summaryRes.data);
     } catch (err) {
-      console.error(err);
+      console.error("Dashboard Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} sm={12} xl={6}>
-        <Card loading={loading}>
-          <Statistic
-            title="States"
-            value={kpi.total_states}
-            prefix={<ApartmentOutlined />}
-          />
-        </Card>
-      </Col>
+    <>
+      {/* KPI Cards */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} xl={6}>
+          <Card loading={loading}>
+            <Statistic
+              title="States"
+              value={kpi.total_states}
+              prefix={<ApartmentOutlined />}
+            />
+          </Card>
+        </Col>
 
-      <Col xs={24} sm={12} xl={6}>
-        <Card loading={loading}>
-          <Statistic
-            title="Branches"
-            value={kpi.total_branches}
-            prefix={<BankOutlined />}
-          />
-        </Card>
-      </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card loading={loading}>
+            <Statistic
+              title="Branches"
+              value={kpi.total_branches}
+              prefix={<BankOutlined />}
+            />
+          </Card>
+        </Col>
 
-      <Col xs={24} sm={12} xl={6}>
-        <Card loading={loading}>
-          <Statistic
-            title="Vendor Mappings"
-            value={kpi.total_vendor_mappings}
-            prefix={<TeamOutlined />}
-          />
-        </Card>
-      </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card loading={loading}>
+            <Statistic
+              title="Vendor Mappings"
+              value={kpi.total_vendor_mappings}
+              prefix={<TeamOutlined />}
+            />
+          </Card>
+        </Col>
 
-      <Col xs={24} sm={12} xl={6}>
-        <Card loading={loading}>
-          <Statistic
-            title="Unique Vendors"
-            value={kpi.unique_vendors}
-            prefix={<UsergroupAddOutlined />}
+        <Col xs={24} sm={12} xl={6}>
+          <Card loading={loading}>
+            <Statistic
+              title="Unique Vendors"
+              value={kpi.unique_vendors}
+              prefix={<UsergroupAddOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* State Summary Table */}
+      <div className="mt-6">
+        <Card title="State Wise Vendor Summary" loading={loading}>
+          <StateSummaryTable
+            data={summary}
+            loading={loading}
           />
         </Card>
-      </Col>
-    </Row>
+      </div>
+    </>
   );
 }

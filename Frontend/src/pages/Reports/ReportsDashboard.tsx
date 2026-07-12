@@ -32,7 +32,7 @@ export default function ReportsDashboard() {
       <div className="grid gap-5 xl:grid-cols-[75%_25%]">
 
         {/* Dashboard */}
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 min-h-[900px]">
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 min-h-[650px]">
         {selectedReport === "branch" && (
             <BranchVendorDashboard />
         )}
