@@ -194,3 +194,61 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
             )
 
         return Response(response)
+
+
+from django.db.models import Count
+
+class BranchDashboardTopBranchesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        )
+
+        # Filters
+        states = request.GET.getlist("states") or request.GET.getlist("states[]")
+        branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
+        vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
+        services = request.GET.getlist("services") or request.GET.getlist("services[]")
+
+        if states:
+            queryset = queryset.filter(branch__state__in=states)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if services:
+            queryset = queryset.filter(
+                vendor__nature_of_services__in=services
+            )
+
+        data = (
+            queryset.values(
+                "branch__branch_name",
+                "branch__state",
+            )
+            .annotate(
+                unique_vendors=Count(
+                    "vendor",
+                    distinct=True,
+                )
+            )
+            .order_by("-unique_vendors")[:10]
+        )
+
+        return Response(data)

@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function MonthlyTrendChart({ data }: Props) {
-  const options: ApexCharts.ApexOptions = {
+  const options = {
     chart: {
       type: "bar",
       toolbar: {

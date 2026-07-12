@@ -31,6 +31,7 @@ from .dashboard_views import (
     BranchDashboardKPIAPIView,
     BranchDashboardStateSummaryAPIView,
     BranchDashboardMonthlyTrendAPIView,
+    BranchDashboardTopBranchesAPIView,
 )
 
 # Report Views Import
@@ -96,6 +97,11 @@ urlpatterns = [
     path(
         "dashboard/branch/monthly-trend/",
         BranchDashboardMonthlyTrendAPIView.as_view(),
+    ),
+
+    path(
+        "dashboard/branch/top-branches/",
+        BranchDashboardTopBranchesAPIView.as_view(),
     ),
 
     # Branch Wise Report Filters

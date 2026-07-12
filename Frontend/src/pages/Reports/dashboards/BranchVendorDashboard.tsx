@@ -10,6 +10,7 @@ import axios from "../../../utils/api";
 
 import StateSummaryTable from "./components/StateSummaryTable";
 import MonthlyTrendChart from "./components/MonthlyTrendChart";
+import TopBranchesTable from "./components/TopBranchesTable";
 
 interface KPIResponse {
   total_states: number;
@@ -30,6 +31,12 @@ interface MonthlyTrend {
   unique_vendors: number;
 }
 
+interface TopBranch {
+  branch__branch_name: string;
+  branch__state: string;
+  unique_vendors: number;
+}
+
 export default function BranchVendorDashboard() {
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +49,7 @@ export default function BranchVendorDashboard() {
 
   const [summary, setSummary] = useState<StateSummary[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
+  const [topBranches, setTopBranches] = useState<TopBranch[]>([]);
 
   useEffect(() => {
     fetchDashboard();
@@ -51,15 +59,22 @@ export default function BranchVendorDashboard() {
     try {
       setLoading(true);
 
-      const [kpiRes, summaryRes, trendRes] = await Promise.all([
+      const [
+        kpiRes,
+        summaryRes,
+        trendRes,
+        topBranchesRes,
+      ] = await Promise.all([
         axios.get("/api/vendor/dashboard/branch/kpi/"),
         axios.get("/api/vendor/dashboard/branch/state-summary/"),
         axios.get("/api/vendor/dashboard/branch/monthly-trend/"),
+        axios.get("/api/vendor/dashboard/branch/top-branches/"),
       ]);
 
       setKpi(kpiRes.data);
       setSummary(summaryRes.data);
       setMonthlyTrend(trendRes.data);
+      setTopBranches(topBranchesRes.data);
     } catch (err) {
       console.error("Dashboard Error:", err);
     } finally {
@@ -116,7 +131,10 @@ export default function BranchVendorDashboard() {
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
 
         {/* Top Left */}
-        <Card title="State Wise Vendor Summary" loading={loading}>
+        <Card
+          title="State Wise Vendor Summary"
+          loading={loading}
+        >
           <StateSummaryTable
             data={summary}
             loading={loading}
@@ -134,16 +152,23 @@ export default function BranchVendorDashboard() {
         </Card>
 
         {/* Bottom Left */}
-        <Card title="Top Branches">
-          <div className="flex h-[350px] items-center justify-center text-gray-400">
-            Top Branches Table Coming Next
-          </div>
+        <Card
+          title="Top 10 Branches by Unique Vendor Count"
+          loading={loading}
+        >
+          <TopBranchesTable
+            data={topBranches}
+            loading={loading}
+          />
         </Card>
 
         {/* Bottom Right */}
-        <Card title="Nature of Service Distribution">
+        <Card
+          title="Nature of Service Distribution"
+          loading={loading}
+        >
           <div className="flex h-[350px] items-center justify-center text-gray-400">
-            Pie Chart Coming Next
+            Donut Chart Coming Next
           </div>
         </Card>
 
