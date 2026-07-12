@@ -86,8 +86,19 @@ export default function BranchVendorDashboard() {
           <MonthlyTrendChart data={monthlyTrend} />
         </Card>
 
-        <Card style={{ height: 390 }} title={<Space><span>🏢</span>Top 10 Branches by Vendor Count</Space>}>
-          <TopBranchesTable data={topBranches} loading={loading} />
+        <Card 
+            className="mt-6" 
+            title={
+            <Space>
+                <span>🌐</span>
+                <span>Vendors Working in All Branches</span>
+            </Space>
+            }
+        >
+            <AllBranchesVendorTable 
+            data={allBranchesVendors} 
+            loading={loading} 
+            />
         </Card>
 
         <Card style={{ height: 390 }} title={<Space><span>🧩</span>Nature of Service Distribution</Space>}>
@@ -97,20 +108,7 @@ export default function BranchVendorDashboard() {
       </div>
 
       {/* Vendors Working in All Branches */}
-      <Card 
-        className="mt-6" 
-        title={
-          <Space>
-            <span>🌐</span>
-            <span>Vendors Working in All Branches</span>
-          </Space>
-        }
-      >
-        <AllBranchesVendorTable 
-          data={allBranchesVendors} 
-          loading={loading} 
-        />
-      </Card>
+
 
       <div className="text-center mt-6 text-gray-500 text-sm">
         Updated: {lastUpdated.toLocaleString("en-IN")}
