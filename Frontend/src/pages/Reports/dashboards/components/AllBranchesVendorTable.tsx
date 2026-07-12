@@ -1,5 +1,4 @@
 import { Table } from "antd";
-import type { TableProps } from "antd";
 
 interface Props {
   data: any[];
@@ -10,11 +9,10 @@ export default function AllBranchesVendorTable({ data, loading }: Props) {
   const columns = [
     { title: "State", dataIndex: "state", key: "state", align: "left" as const },
     { 
-      title: "Total Branches", 
+      title: "Total Branches Count", 
       dataIndex: "total_branches", 
       key: "total_branches", 
-      align: "center" as const,
-      sorter: (a: any, b: any) => a.total_branches - b.total_branches 
+      align: "center" as const 
     },
     { title: "Vendor Name", dataIndex: "vendor_name", key: "vendor_name" },
     { title: "Nature of Services", dataIndex: "nature_of_services", key: "nature_of_services" },
@@ -26,9 +24,8 @@ export default function AllBranchesVendorTable({ data, loading }: Props) {
       dataSource={data}
       loading={loading}
       pagination={false}
-      scroll={{ y: 280 }}           // Vertical Scrollbar
+      scroll={{ y: 280 }}
       size="small"
-      rowKey="state"
     />
   );
 }

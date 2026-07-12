@@ -10,6 +10,7 @@ from datetime import datetime
 from django.db.models import Count, Q
 from master_apps.vendor.compliance_models import VendorComplianceSubmission
 from master_apps.vendor.constants import WorkflowStatus
+from master_apps.principle_employee.models import PrincipalEmployerBranch
 
 
 # =========================
@@ -498,3 +499,51 @@ class ComplianceStatusDistributionAPIView(APIView):
             "total": total,
             "distribution": distribution
         })
+
+
+class AllBranchesVendorAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "PE not found"}, status=404)
+
+        mappings = (
+            VendorBranchMapping.objects
+            .filter(
+                principal_employer=pe,
+                branch__short_name__iexact="All Branches"
+            )
+            .select_related("vendor", "branch")
+        )
+
+        response = []
+
+        for mapping in mappings:
+
+            total_branches = (
+                PrincipalEmployerBranch.objects
+                .filter(
+                    principal_employer=pe,
+                    state=mapping.branch.state
+                )
+                .exclude(
+                    short_name__iexact="All Branches"
+                )
+                .count()
+            )
+
+            response.append({
+                "state": mapping.branch.state,
+                "total_branches": total_branches,
+                "vendor_name": mapping.vendor.name,
+                "nature_of_services": mapping.vendor.nature_of_services,
+            })
+
+        return Response(response)

@@ -1,11 +1,10 @@
-import { Card, Typography, Space, Button, Empty } from "antd";
+import { Card, Typography, Space, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
 import StateSummaryTable from "./components/StateSummaryTable";
 import MonthlyTrendChart from "./components/MonthlyTrendChart";
-import TopBranchesTable from "./components/TopBranchesTable";
 import ServiceDistributionChart from "./components/ServiceDistributionChart";
 import AllBranchesVendorTable from "./components/AllBranchesVendorTable";
 
@@ -17,7 +16,6 @@ export default function BranchVendorDashboard() {
 
   const [summary, setSummary] = useState<any[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
-  const [topBranches, setTopBranches] = useState<any[]>([]);
   const [serviceDistribution, setServiceDistribution] = useState<any[]>([]);
   const [allBranchesVendors, setAllBranchesVendors] = useState<any[]>([]);
 
@@ -29,32 +27,23 @@ export default function BranchVendorDashboard() {
     try {
       setLoading(true);
 
-      const [summaryRes, trendRes, topRes, serviceRes] = await Promise.all([
+      const [
+        summaryRes,
+        trendRes,
+        serviceRes,
+        allBranchesRes,
+      ] = await Promise.all([
         axios.get("/api/vendor/dashboard/branch/state-summary/"),
         axios.get("/api/vendor/dashboard/branch/monthly-trend/"),
-        axios.get("/api/vendor/dashboard/branch/top-branches/"),
         axios.get("/api/vendor/dashboard/branch/service-distribution/"),
+        axios.get("/api/vendor/dashboard/branch/all-branches-vendors/"),
       ]);
-
-      const topData = topRes.data || [];
-
-      // Extract "All Branches" entries
-      const allBranchesData = topData
-        .filter((item: any) => 
-          item.branch_name?.toLowerCase().includes("all branches")
-        )
-        .map((item: any) => ({
-          state: item.state || "Punjab",
-          total_branches: item.unique_vendors || 1,
-          vendor_name: "All Vendors (Multiple)",   // Better placeholder
-          nature_of_services: "Multiple Services",
-        }));
 
       setSummary(summaryRes.data);
       setMonthlyTrend(trendRes.data);
-      setTopBranches(topData);
       setServiceDistribution(serviceRes.data);
-      setAllBranchesVendors(allBranchesData);
+      setAllBranchesVendors(allBranchesRes.data);
+
       setLastUpdated(new Date());
 
     } catch (err) {
@@ -69,44 +58,81 @@ export default function BranchVendorDashboard() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button type="primary" icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading}>
+        <Button
+          type="primary"
+          icon={<ReloadOutlined />}
+          onClick={handleRefresh}
+          loading={loading}
+        >
           Refresh Dashboard
         </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
 
-        <Card style={{ height: 390 }} title={<Space><span>📊</span>State Wise Vendor Summary</Space>}>
-          <StateSummaryTable data={summary} loading={loading} />
-        </Card>
-
-        <Card style={{ height: 390 }} title={<Space><span>📈</span>Pan India Unique Vendor Count</Space>}>
-          <MonthlyTrendChart data={monthlyTrend} />
-        </Card>
-
-        <Card 
-            className="mt-6" 
-            title={
+        {/* State Summary */}
+        <Card
+          style={{ height: 390 }}
+          title={
             <Space>
-                <span>🌐</span>
-                <span>Vendors Working in All Branches</span>
+              <span>📊</span>
+              <span>State Wise Vendor Summary</span>
             </Space>
-            }
+          }
         >
-            <AllBranchesVendorTable 
-            data={allBranchesVendors} 
-            loading={loading} 
-            />
+          <StateSummaryTable
+            data={summary}
+            loading={loading}
+          />
         </Card>
 
-        <Card style={{ height: 390 }} title={<Space><span>🧩</span>Nature of Service Distribution</Space>}>
-          <ServiceDistributionChart data={serviceDistribution} />
+        {/* Monthly Trend */}
+        <Card
+          style={{ height: 390 }}
+          title={
+            <Space>
+              <span>📈</span>
+              <span>Pan India Unique Vendor Count</span>
+            </Space>
+          }
+        >
+          <MonthlyTrendChart
+            data={monthlyTrend}
+          />
+        </Card>
+
+        {/* Vendors Working in All Branches */}
+        <Card
+          style={{ height: 390 }}
+          title={
+            <Space>
+              <span>🌐</span>
+              <span>Vendors Working in All Branches</span>
+            </Space>
+          }
+        >
+          <AllBranchesVendorTable
+            data={allBranchesVendors}
+            loading={loading}
+          />
+        </Card>
+
+        {/* Nature of Service */}
+        <Card
+          style={{ height: 390 }}
+          title={
+            <Space>
+              <span>🧩</span>
+              <span>Nature of Service Distribution</span>
+            </Space>
+          }
+        >
+          <ServiceDistributionChart
+            data={serviceDistribution}
+          />
         </Card>
 
       </div>
-
-      {/* Vendors Working in All Branches */}
-
 
       <div className="text-center mt-6 text-gray-500 text-sm">
         Updated: {lastUpdated.toLocaleString("en-IN")}
