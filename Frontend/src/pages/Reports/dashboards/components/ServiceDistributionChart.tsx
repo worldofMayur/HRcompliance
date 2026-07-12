@@ -11,42 +11,153 @@ interface Props {
 }
 
 export default function ServiceDistributionChart({ data }: Props) {
-  const totalVendors = data.reduce((sum, item) => sum + item.vendors, 0);
+  const totalVendors = data.reduce(
+    (sum, item) => sum + item.vendors,
+    0
+  );
 
-  const options = {
+  const options: ApexCharts.ApexOptions = {
     chart: {
       type: "pie",
-      toolbar: { show: false },
+      toolbar: {
+        show: false,
+      },
+      animations: {
+        enabled: true,
+      },
+      selection: {
+        enabled: false,
+      },
+      events: {
+        dataPointSelection: (event, chartContext) => {
+          // Remove selection immediately
+          chartContext.toggleDataPointSelection(-1);
+        },
+      },
     },
 
     labels: data.map((item) => item.service),
 
-    legend: {
-      position: "bottom" as const,
-      fontSize: "14px",
-      fontWeight: 500,
-      formatter: (seriesName: string, opts: any) => {
-        const value = data[opts.seriesIndex]?.vendors || 0;
-        const percentage = totalVendors > 0 ? ((value / totalVendors) * 100).toFixed(1) : "0";
-        return `${seriesName} — ${value} (${percentage}%)`;
+    colors: [
+      "#1677ff",
+      "#52c41a",
+      "#faad14",
+      "#f5222d",
+      "#722ed1",
+      "#13c2c2",
+      "#eb2f96",
+      "#fa8c16",
+      "#2f54eb",
+      "#a0d911",
+    ],
+
+    stroke: {
+      width: 2,
+      colors: ["#ffffff"],
+    },
+
+    states: {
+      active: {
+        allowMultipleDataPointsSelection: false,
+        filter: {
+          type: "none",
+        },
+      },
+      hover: {
+        filter: {
+          type: "lighten",
+          value: 0.08,
+        },
+      },
+    },
+
+    plotOptions: {
+      pie: {
+        expandOnClick: false,
+
+        offsetY: 0,
+
+        dataLabels: {
+          offset: 0,
+        },
       },
     },
 
     dataLabels: {
       enabled: true,
-      style: { fontSize: "16px", fontWeight: "bold" },
-      dropShadow: { enabled: true },
+
+      formatter: (val: number) => `${val.toFixed(1)}%`,
+
+      style: {
+        fontSize: "14px",
+        fontWeight: "bold",
+        colors: ["#fff"],
+      },
+
+      dropShadow: {
+        enabled: false,
+      },
+    },
+
+    legend: {
+      position: "bottom",
+
+      horizontalAlign: "center",
+
+      fontSize: "14px",
+
+      fontWeight: 500,
+
+      itemMargin: {
+        horizontal: 10,
+        vertical: 6,
+      },
+
+      formatter: (seriesName, opts) => {
+        const value =
+          data[opts.seriesIndex]?.vendors || 0;
+
+        const percent =
+          totalVendors > 0
+            ? (
+                (value / totalVendors) *
+                100
+              ).toFixed(1)
+            : "0";
+
+        return `${seriesName} • ${value} Vendors (${percent}%)`;
+      },
     },
 
     tooltip: {
-      y: { formatter: (val: number) => `${val} Vendors` },
-    },
+      theme: "light",
 
-    plotOptions: {
-      pie: {
-        expandOnClick: true,
+      y: {
+        formatter: (val: number) => {
+          const percent =
+            totalVendors > 0
+              ? (
+                  (val / totalVendors) *
+                  100
+                ).toFixed(1)
+              : "0";
+
+          return `${val} Vendors (${percent}%)`;
+        },
       },
     },
+
+    responsive: [
+      {
+        breakpoint: 768,
+
+        options: {
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    ],
   };
 
   const series = data.map((item) => item.vendors);
