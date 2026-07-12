@@ -46,6 +46,10 @@ export default function ReportsDashboard() {
           {selectedReport === "compliance" && (
             <VendorComplianceDashboard />
           )}
+
+          {selectedReport === "exception" && (
+            <ExceptionalReport />
+          )}
         </div>
 
         {/* ==================== SIDEBAR (Narrower) ==================== */}
@@ -72,12 +76,11 @@ export default function ReportsDashboard() {
           {/* Report Filters Sidebar */}
 
           {/* Other Report Components */}
-          <div className="space-y-5">
-            {selectedReport === "branch" && <BranchReport />}
-            {selectedReport === "compliance" && <ComplianceReport />}
-            {selectedReport === "exception" && <ExceptionalReport />}
-            {selectedReport === "document" && <DocumentWiseReport />}
-          </div>
+        <div className="space-y-5">
+          {selectedReport === "branch" && <BranchReport />}
+          {selectedReport === "compliance" && <ComplianceReport />}
+          {selectedReport === "document" && <DocumentWiseReport />}
+        </div>
 
         </div>
 
