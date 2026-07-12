@@ -8,7 +8,7 @@ from master_apps.vendor.mapping_models import VendorBranchMapping
 from django.utils import timezone
 from datetime import datetime
 from django.db.models import Count, Q
-from master_apps.documents.models import VendorComplianceSubmission
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
 from master_apps.vendor.constants import WorkflowStatus
 
 
