@@ -197,6 +197,13 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
 
 
 from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.principle_employee.models import PrincipalEmployer
+from master_apps.vendor.mapping_models import VendorBranchMapping
+
 
 class BranchDashboardTopBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -217,7 +224,7 @@ class BranchDashboardTopBranchesAPIView(APIView):
             principal_employer=pe
         )
 
-        # Filters
+        # Filters (consistent with other endpoints)
         states = request.GET.getlist("states") or request.GET.getlist("states[]")
         branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
         vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
@@ -236,80 +243,38 @@ class BranchDashboardTopBranchesAPIView(APIView):
             queryset = queryset.filter(
                 vendor__nature_of_services__in=services
             )
-
-        data = (
-            queryset.values(
-                "branch__branch_name",
-                "branch__state",
-            )
-            .annotate(
-                unique_vendors=Count(
-                    "vendor",
-                    distinct=True,
-                )
-            )
-            .order_by("-unique_vendors")[:10]
-        )
-
-        return Response(data)
-
-
-from django.db.models import Count
-
-class BranchDashboardServiceDistributionAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        if request.user.role != "PE":
-            return Response({"error": "Unauthorized"}, status=403)
 
         try:
-            pe = PrincipalEmployer.objects.get(user=request.user)
-        except PrincipalEmployer.DoesNotExist:
+            data = (
+                queryset.values(
+                    "branch__branch_name",
+                    "branch__state",
+                )
+                .annotate(
+                    unique_vendors=Count(
+                        "vendor",
+                        distinct=True,
+                    )
+                )
+                .order_by("-unique_vendors")[:10]
+            )
+
+            # Convert to list of dicts explicitly for safety
+            result = [
+                {
+                    "branch_name": item["branch__branch_name"],
+                    "state": item["branch__state"],
+                    "unique_vendors": item["unique_vendors"],
+                }
+                for item in data
+            ]
+
+            return Response(result)
+
+        except Exception as e:
+            # This will help surface the real error in logs
+            print(f"TopBranchesAPIView Error: {e}")
             return Response(
-                {"error": "Principal Employer not found"},
-                status=404,
+                {"error": "Failed to fetch top branches", "detail": str(e)},
+                status=500,
             )
-
-        queryset = VendorBranchMapping.objects.filter(
-            principal_employer=pe
-        )
-
-        # ---------------- Filters ---------------- #
-
-        states = request.GET.getlist("states") or request.GET.getlist("states[]")
-        branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
-        vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
-        services = request.GET.getlist("services") or request.GET.getlist("services[]")
-
-        if states:
-            queryset = queryset.filter(branch__state__in=states)
-
-        if branches:
-            queryset = queryset.filter(branch_id__in=branches)
-
-        if vendors:
-            queryset = queryset.filter(vendor_id__in=vendors)
-
-        if services:
-            queryset = queryset.filter(
-                vendor__nature_of_services__in=services
-            )
-
-        data = (
-            queryset.values("vendor__nature_of_services")
-            .annotate(
-                vendors=Count("vendor", distinct=True)
-            )
-            .order_by("-vendors")
-        )
-
-        response = [
-            {
-                "service": item["vendor__nature_of_services"],
-                "vendors": item["vendors"],
-            }
-            for item in data
-        ]
-
-        return Response(response)
