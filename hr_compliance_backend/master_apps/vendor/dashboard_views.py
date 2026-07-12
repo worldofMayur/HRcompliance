@@ -56,6 +56,18 @@ class BranchDashboardKPIAPIView(APIView):
 
 from django.db.models import Count, Q
 
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+from master_apps.principle_employee.models import (
+    PrincipalEmployer,
+    PrincipalEmployerBranch,
+)
+from .mapping_models import VendorBranchMapping
+
+
 class BranchDashboardStateSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -66,13 +78,18 @@ class BranchDashboardStateSummaryAPIView(APIView):
         try:
             pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
-            return Response({"error": "Principal Employer not found"}, status=404)
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
 
         queryset = VendorBranchMapping.objects.filter(
             principal_employer=pe
         )
 
+        # -------------------------------
         # Filters
+        # -------------------------------
         states = request.GET.getlist("states") or request.GET.getlist("states[]")
         branches = request.GET.getlist("branches") or request.GET.getlist("branches[]")
         vendors = request.GET.getlist("vendors") or request.GET.getlist("vendors[]")
@@ -80,27 +97,93 @@ class BranchDashboardStateSummaryAPIView(APIView):
 
         if states:
             queryset = queryset.filter(branch__state__in=states)
+
         if branches:
             queryset = queryset.filter(branch_id__in=branches)
+
         if vendors:
             queryset = queryset.filter(vendor_id__in=vendors)
-        if services:
-            queryset = queryset.filter(vendor__nature_of_services__in=services)
 
-        # IMPORTANT: Exclude "All Branches" mappings when counting branches
-        summary = (
-            queryset.exclude(branch__short_name__iexact="All Branches")   # ← Key Fix
+        if services:
+            queryset = queryset.filter(
+                vendor__nature_of_services__in=services
+            )
+
+        # ----------------------------------------------------
+        # REAL BRANCH COUNT
+        # (Exclude auto-created "All Branches")
+        # ----------------------------------------------------
+        branch_queryset = PrincipalEmployerBranch.objects.filter(
+            principal_employer=pe
+        ).exclude(
+            short_name__iexact="All Branches"
+        )
+
+        if states:
+            branch_queryset = branch_queryset.filter(
+                state__in=states
+            )
+
+        if branches:
+            branch_queryset = branch_queryset.filter(
+                id__in=branches
+            )
+
+        branch_counts = (
+            branch_queryset
+            .values("state")
+            .annotate(
+                branch_count=Count("id")
+            )
+        )
+
+        branch_count_map = {
+            row["state"]: row["branch_count"]
+            for row in branch_counts
+        }
+
+        # ----------------------------------------------------
+        # Vendor Mapping Summary
+        # (Includes "All Branches" mappings)
+        # ----------------------------------------------------
+        mapping_summary = (
+            queryset
             .values("branch__state")
             .annotate(
-                branch_count=Count("branch", distinct=True),
                 total_vendor_mappings=Count("id"),
                 unique_vendors=Count("vendor", distinct=True),
             )
-            .order_by("branch__state")
         )
 
-        return Response(summary)
+        mapping_map = {
+            row["branch__state"]: row
+            for row in mapping_summary
+        }
 
+        all_states = sorted(
+            set(branch_count_map.keys()) |
+            set(mapping_map.keys())
+        )
+
+        response = []
+
+        for state in all_states:
+            mapping = mapping_map.get(state)
+
+            response.append({
+                "branch__state": state,
+                "branch_count": branch_count_map.get(state, 0),
+                "total_vendor_mappings": (
+                    mapping["total_vendor_mappings"]
+                    if mapping else 0
+                ),
+                "unique_vendors": (
+                    mapping["unique_vendors"]
+                    if mapping else 0
+                ),
+            })
+
+        return Response(response)
 
 # =========================
 # MONTHLY TREND
@@ -527,7 +610,9 @@ class AllBranchesVendorAPIView(APIView):
 
         for mapping in mappings:
 
-            total_branches = (
+            print("STATE:", mapping.branch.state)
+
+            branches = (
                 PrincipalEmployerBranch.objects
                 .filter(
                     principal_employer=pe,
@@ -536,8 +621,14 @@ class AllBranchesVendorAPIView(APIView):
                 .exclude(
                     short_name__iexact="All Branches"
                 )
-                .count()
             )
+
+            print(
+                "BRANCHES:",
+                list(branches.values_list("short_name", flat=True))
+            )
+
+            total_branches = branches.count()
 
             response.append({
                 "state": mapping.branch.state,
