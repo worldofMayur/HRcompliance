@@ -7,6 +7,9 @@ from master_apps.principle_employee.models import PrincipalEmployer
 from master_apps.vendor.mapping_models import VendorBranchMapping
 from django.utils import timezone
 from datetime import datetime
+from django.db.models import Count, Q
+from master_apps.documents.models import VendorComplianceSubmission
+from master_apps.vendor.constants import WorkflowStatus
 
 
 # =========================
@@ -272,3 +275,75 @@ class BranchDashboardServiceDistributionAPIView(APIView):
         except Exception as e:
             print(f"ServiceDistributionAPIView Error: {e}")
             return Response({"error": "Failed to fetch service distribution", "detail": str(e)}, status=500)
+
+
+class ComplianceDashboardSummaryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "Principal Employer not found"}, status=404)
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        )
+
+        # ---------------- Filters ----------------
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+        audit_months = request.GET.getlist("audit_months")
+
+        if states:
+            queryset = queryset.filter(state__in=states)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if audit_months:
+            queryset = queryset.filter(audit_period__in=audit_months)
+
+        data = {
+
+            "ccIssued":
+                queryset.filter(
+                    is_cc_issued=True
+                ).count(),
+
+            "underReview":
+                queryset.filter(
+                    workflow_status=WorkflowStatus.UNDER_REVIEW
+                ).count(),
+
+            "reupload":
+                queryset.filter(
+                    workflow_status=WorkflowStatus.REUPLOAD_REQUESTED
+                ).count(),
+
+            "exceptional":
+                queryset.filter(
+                    workflow_status=WorkflowStatus.EXCEPTIONAL_APPROVAL
+                ).count(),
+
+            "complied":
+                queryset.filter(
+                    workflow_status=WorkflowStatus.COMPLIED
+                ).count(),
+
+            "nonComplied":
+                queryset.filter(
+                    workflow_status=WorkflowStatus.NON_COMPLIED
+                ).count(),
+        }
+
+        return Response(data)
