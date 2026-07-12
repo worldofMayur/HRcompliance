@@ -14,35 +14,54 @@ export default function MonthlyTrendChart({ data }: Props) {
   const options = {
     chart: {
       type: "bar",
-      toolbar: {
-        show: false,
-      },
+      toolbar: { show: false },
+      height: 320,
     },
     plotOptions: {
       bar: {
         borderRadius: 6,
         columnWidth: "45%",
+        dataLabels: {
+          position: "top",
+        },
       },
     },
+    colors: ["#1677ff"],
     dataLabels: {
       enabled: true,
+      offsetY: -20,
+      style: {
+        fontSize: "13px",
+        fontWeight: "bold",
+        colors: ["#333"],
+      },
+      formatter: (val: number) => val.toString(),
     },
     xaxis: {
       categories: data.map((d) => d.month),
       title: {
         text: "Months",
+        style: { fontSize: "13px" },
       },
+      axisBorder: { show: false },
     },
     yaxis: {
       title: {
         text: "Unique Vendors",
+        style: { fontSize: "13px" },
       },
       min: 0,
+      labels: {
+        formatter: (val: number) => val.toString(),
+      },
     },
     tooltip: {
       y: {
-        formatter: (val) => `${val} Vendors`,
+        formatter: (val: number) => `${val} Unique Vendors`,
       },
+    },
+    grid: {
+      borderColor: "#f0f0f0",
     },
   };
 
@@ -58,7 +77,7 @@ export default function MonthlyTrendChart({ data }: Props) {
       options={options}
       series={series}
       type="bar"
-      height={320}
+      height={300}
     />
   );
 }
