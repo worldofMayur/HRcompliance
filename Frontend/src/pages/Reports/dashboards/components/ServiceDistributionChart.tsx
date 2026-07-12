@@ -81,9 +81,9 @@ export default function ServiceDistributionChart({ data }: Props) {
       pie: {
         expandOnClick: false,
 
-        customScale: 1.00,
+        customScale: 0.95,
 
-        offsetY: -8,
+        offsetY: 10,
 
         dataLabels: {
           offset: -2,
@@ -118,10 +118,10 @@ export default function ServiceDistributionChart({ data }: Props) {
 
       fontWeight: 500,
 
-      itemMargin: {
-        horizontal: 12,
-        vertical: 6,
-      },
+    itemMargin: {
+    horizontal: 10,
+    vertical: 10,
+    },
 
       formatter: (seriesName, opts) => {
         const value =
@@ -135,7 +135,7 @@ export default function ServiceDistributionChart({ data }: Props) {
               ).toFixed(1)
             : "0";
 
-        return `${seriesName} • ${value} (${percent}%)`;
+        return `${seriesName} (${percent}%)`;
       },
     },
 
@@ -187,7 +187,7 @@ export default function ServiceDistributionChart({ data }: Props) {
       options={options}
       series={series}
       type="pie"
-      height={280}
+      height={310}
     />
   );
 }
