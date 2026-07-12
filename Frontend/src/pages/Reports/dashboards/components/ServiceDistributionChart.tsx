@@ -18,9 +18,26 @@ export default function ServiceDistributionChart({ data }: Props) {
 
   const options: ApexCharts.ApexOptions = {
     chart: {
-      type: "donut",
+      type: "pie",
+      height: 320,
+
       toolbar: {
         show: false,
+      },
+
+      animations: {
+        enabled: true,
+      },
+
+      selection: {
+        enabled: false,
+      },
+
+      events: {
+        dataPointSelection: (_event, chartContext) => {
+          // Prevent slice staying selected
+          chartContext.toggleDataPointSelection(-1);
+        },
       },
     },
 
@@ -35,23 +52,27 @@ export default function ServiceDistributionChart({ data }: Props) {
       "#13c2c2",
       "#eb2f96",
       "#fa8c16",
+      "#2f54eb",
+      "#a0d911",
     ],
 
     stroke: {
-      width: 3,
-      colors: ["#fff"],
+      width: 2,
+      colors: ["#ffffff"],
     },
 
     states: {
+      active: {
+        allowMultipleDataPointsSelection: false,
+        filter: {
+          type: "none",
+        },
+      },
+
       hover: {
         filter: {
           type: "lighten",
           value: 0.08,
-        },
-      },
-      active: {
-        filter: {
-          type: "none",
         },
       },
     },
@@ -60,24 +81,12 @@ export default function ServiceDistributionChart({ data }: Props) {
       pie: {
         expandOnClick: false,
 
-        donut: {
-          size: "68%",
+        customScale: 1.18,
 
-          labels: {
-            show: true,
+        offsetY: -8,
 
-            total: {
-              show: true,
-              label: "Total",
-              formatter: () => totalVendors.toString(),
-            },
-
-            value: {
-              show: true,
-              fontSize: "24px",
-              fontWeight: 700,
-            },
-          },
+        dataLabels: {
+          offset: -2,
         },
       },
     },
@@ -85,21 +94,32 @@ export default function ServiceDistributionChart({ data }: Props) {
     dataLabels: {
       enabled: true,
 
-      formatter: (val) => `${val.toFixed(1)}%`,
+      formatter: (val: number) => `${val.toFixed(1)}%`,
 
       style: {
-        fontSize: "14px",
-        fontWeight: 700,
+        fontSize: "15px",
+        fontWeight: "bold",
+        colors: ["#fff"],
+      },
+
+      dropShadow: {
+        enabled: false,
       },
     },
 
     legend: {
       position: "bottom",
 
+      horizontalAlign: "center",
+
+      floating: false,
+
       fontSize: "13px",
 
+      fontWeight: 500,
+
       itemMargin: {
-        horizontal: 8,
+        horizontal: 12,
         vertical: 6,
       },
 
@@ -108,34 +128,66 @@ export default function ServiceDistributionChart({ data }: Props) {
           data[opts.seriesIndex]?.vendors || 0;
 
         const percent =
-          totalVendors === 0
-            ? 0
-            : ((value / totalVendors) * 100).toFixed(1);
+          totalVendors > 0
+            ? (
+                (value / totalVendors) *
+                100
+              ).toFixed(1)
+            : "0";
 
         return `${seriesName} • ${value} (${percent}%)`;
       },
     },
 
     tooltip: {
+      theme: "light",
+
       y: {
-        formatter: (val) => {
+        formatter: (val: number) => {
           const percent =
-            totalVendors === 0
-              ? 0
-              : ((val / totalVendors) * 100).toFixed(1);
+            totalVendors > 0
+              ? (
+                  (val / totalVendors) *
+                  100
+                ).toFixed(1)
+              : "0";
 
           return `${val} Vendors (${percent}%)`;
         },
       },
     },
+
+    responsive: [
+      {
+        breakpoint: 768,
+
+        options: {
+          chart: {
+            height: 300,
+          },
+
+          legend: {
+            position: "bottom",
+          },
+
+          plotOptions: {
+            pie: {
+              customScale: 1,
+            },
+          },
+        },
+      },
+    ],
   };
+
+  const series = data.map((item) => item.vendors);
 
   return (
     <ReactApexChart
       options={options}
-      series={data.map((d) => d.vendors)}
-      type="donut"
-      height={315}
+      series={series}
+      type="pie"
+      height={320}
     />
   );
 }

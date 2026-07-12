@@ -126,11 +126,10 @@ export default function BranchVendorDashboard() {
         {/* Nature of Service */}
         <Card
         style={{ height: 390 }}
-        styles={{
-            body: {
-            height: 320,
+        bodyStyle={{
+            height: 330,
+            paddingBottom: 8,
             overflow: "hidden",
-            },
         }}
           title={
             <Space>
