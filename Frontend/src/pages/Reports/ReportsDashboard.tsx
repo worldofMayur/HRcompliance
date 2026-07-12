@@ -9,6 +9,7 @@ import ExceptionalReport from "./reports/ExceptionalReport";
 import DocumentWiseReport from "./reports/DocumentWiseReport";   // ← New Import
 
 import { ReportType } from "./data/reportConfig";
+import BranchVendorDashboard from "./dashboards/BranchVendorDashboard";
 
 export default function ReportsDashboard() {
   const [selectedReport, setSelectedReport] =
@@ -32,14 +33,9 @@ export default function ReportsDashboard() {
 
         {/* Dashboard */}
         <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 min-h-[900px]">
-          <h2 className="text-xl font-semibold">
-            Dashboard
-          </h2>
-          <p className="mt-2 text-gray-500">
-            KPI Cards, Charts, Compliance Trend,
-            Monthly Statistics and Analytics
-            will be displayed here.
-          </p>
+        {selectedReport === "branch" && (
+            <BranchVendorDashboard />
+        )}
         </div>
 
         {/* Sidebar */}

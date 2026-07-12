@@ -27,6 +27,8 @@ from .compliance_views import (
     FrozenAuditPeriodsAPIView,
 )
 
+from .dashboard_views import BranchDashboardKPIAPIView
+
 # Report Views Import
 from .report_views import (
     BranchWiseVendorReportAPIView,
@@ -78,6 +80,10 @@ urlpatterns = [
     path(
         "reports/branch-wise/",
         BranchWiseVendorReportAPIView.as_view(),
+    ),
+    path(
+        "dashboard/branch/kpi/",
+        BranchDashboardKPIAPIView.as_view(),
     ),
 
     # Branch Wise Report Filters
