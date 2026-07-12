@@ -134,7 +134,6 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
         for i in range(5, -1, -1):
             month = today.month - i
             year = today.year
-
             while month <= 0:
                 month += 12
                 year -= 1
@@ -164,7 +163,7 @@ class BranchDashboardMonthlyTrendAPIView(APIView):
 
 
 # =========================
-# TOP BRANCHES (Fixed + Safe)
+# TOP BRANCHES - FIXED
 # =========================
 class BranchDashboardTopBranchesAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -198,7 +197,7 @@ class BranchDashboardTopBranchesAPIView(APIView):
         try:
             data = (
                 queryset.values(
-                    "branch__branch_name",
+                    "branch__short_name",   # ← FIXED: short_name, not branch_name
                     "branch__state",
                 )
                 .annotate(unique_vendors=Count("vendor", distinct=True))
@@ -207,7 +206,7 @@ class BranchDashboardTopBranchesAPIView(APIView):
 
             result = [
                 {
-                    "branch_name": item["branch__branch_name"],
+                    "branch_name": item["branch__short_name"],   # Frontend-friendly name
                     "state": item["branch__state"],
                     "unique_vendors": item["unique_vendors"],
                 }
@@ -218,10 +217,7 @@ class BranchDashboardTopBranchesAPIView(APIView):
 
         except Exception as e:
             print(f"TopBranchesAPIView Error: {e}")
-            return Response(
-                {"error": "Failed to fetch top branches", "detail": str(e)},
-                status=500,
-            )
+            return Response({"error": "Failed to fetch top branches", "detail": str(e)}, status=500)
 
 
 # =========================
@@ -275,7 +271,4 @@ class BranchDashboardServiceDistributionAPIView(APIView):
 
         except Exception as e:
             print(f"ServiceDistributionAPIView Error: {e}")
-            return Response(
-                {"error": "Failed to fetch service distribution", "detail": str(e)},
-                status=500,
-            )
+            return Response({"error": "Failed to fetch service distribution", "detail": str(e)}, status=500)
