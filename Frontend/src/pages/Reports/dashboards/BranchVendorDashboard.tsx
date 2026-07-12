@@ -8,7 +8,8 @@ import {
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
-import StateSummaryTable from "../dashboards/components/StateSummaryTable"
+import StateSummaryTable from "./components/StateSummaryTable";
+import MonthlyTrendChart from "./components/MonthlyTrendChart";
 
 interface KPIResponse {
   total_states: number;
@@ -24,6 +25,11 @@ interface StateSummary {
   unique_vendors: number;
 }
 
+interface MonthlyTrend {
+  month: string;
+  unique_vendors: number;
+}
+
 export default function BranchVendorDashboard() {
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +41,7 @@ export default function BranchVendorDashboard() {
   });
 
   const [summary, setSummary] = useState<StateSummary[]>([]);
+  const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
 
   useEffect(() => {
     fetchDashboard();
@@ -44,13 +51,15 @@ export default function BranchVendorDashboard() {
     try {
       setLoading(true);
 
-      const [kpiRes, summaryRes] = await Promise.all([
+      const [kpiRes, summaryRes, trendRes] = await Promise.all([
         axios.get("/api/vendor/dashboard/branch/kpi/"),
         axios.get("/api/vendor/dashboard/branch/state-summary/"),
+        axios.get("/api/vendor/dashboard/branch/monthly-trend/"),
       ]);
 
       setKpi(kpiRes.data);
       setSummary(summaryRes.data);
+      setMonthlyTrend(trendRes.data);
     } catch (err) {
       console.error("Dashboard Error:", err);
     } finally {
@@ -103,38 +112,42 @@ export default function BranchVendorDashboard() {
         </Col>
       </Row>
 
-<div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+      {/* Dashboard Layout */}
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
 
-  {/* Top Left */}
-  <Card title="State Wise Vendor Summary">
-    <StateSummaryTable
-      data={summary}
-      loading={loading}
-    />
-  </Card>
+        {/* Top Left */}
+        <Card title="State Wise Vendor Summary" loading={loading}>
+          <StateSummaryTable
+            data={summary}
+            loading={loading}
+          />
+        </Card>
 
-  {/* Top Right */}
-  <Card title="Last 6 Months Vendor Trend">
-    <div className="flex h-[350px] items-center justify-center text-gray-400">
-      Bar Chart Coming Next
-    </div>
-  </Card>
+        {/* Top Right */}
+        <Card
+          title="Unique Active Vendors Trend (Last 6 Months)"
+          loading={loading}
+        >
+          <MonthlyTrendChart
+            data={monthlyTrend}
+          />
+        </Card>
 
-  {/* Bottom Left */}
-  <Card title="Top Branches">
-    <div className="flex h-[350px] items-center justify-center text-gray-400">
-      Top Branches Table Coming Next
-    </div>
-  </Card>
+        {/* Bottom Left */}
+        <Card title="Top Branches">
+          <div className="flex h-[350px] items-center justify-center text-gray-400">
+            Top Branches Table Coming Next
+          </div>
+        </Card>
 
-  {/* Bottom Right */}
-  <Card title="Nature of Service Distribution">
-    <div className="flex h-[350px] items-center justify-center text-gray-400">
-      Pie Chart Coming Next
-    </div>
-  </Card>
+        {/* Bottom Right */}
+        <Card title="Nature of Service Distribution">
+          <div className="flex h-[350px] items-center justify-center text-gray-400">
+            Pie Chart Coming Next
+          </div>
+        </Card>
 
-</div>
+      </div>
     </>
   );
 }
