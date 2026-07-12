@@ -3,11 +3,6 @@ import { message } from "antd";
 
 import api from "../../../utils/api";
 import ReportFilters from "../components/ReportFilters";
-import { Row, Col, Space } from "antd";
-
-import ExceptionalStateSummaryTable from "../dashboards/components/ExceptionalStateSummaryTable";
-import TopExceptionalVendorsChart from "../dashboards/components/TopExceptionalVendorsChart";
-import ExceptionalDocumentReferenceChart from "../dashboards/components/ExceptionalDocumentReferenceChart";
 
 export default function ExceptionalReport() {
   const [principalEmployer, setPrincipalEmployer] = useState("");
@@ -166,7 +161,7 @@ export default function ExceptionalReport() {
   };
 
  return (
-  <div className="flex h-full min-h-0 flex-col gap-5 overflow-auto">
+  <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
     <ReportFilters
       reportType="exception"
       principalEmployer={principalEmployer}
@@ -187,23 +182,6 @@ export default function ExceptionalReport() {
       auditPeriodsOptions={auditPeriodsOptions}
       onGenerate={generateReport}
     />
-
-    <Row gutter={16}>
-      <Col xs={24} xl={16}>
-        <ExceptionalStateSummaryTable />
-      </Col>
-
-      <Col xs={24} xl={8}>
-        <Space
-          direction="vertical"
-          size={16}
-          style={{ width: "100%" }}
-        >
-          <TopExceptionalVendorsChart />
-          <ExceptionalDocumentReferenceChart />
-        </Space>
-      </Col>
-    </Row>
   </div>
 );
 }

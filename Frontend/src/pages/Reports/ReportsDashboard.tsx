@@ -11,6 +11,7 @@ import DocumentWiseReport from "./reports/DocumentWiseReport";
 
 import { ReportType } from "./data/reportConfig";
 import BranchVendorDashboard from "./dashboards/BranchVendorDashboard";
+import ExceptionalApprovalDashboard from "./dashboards/ExceptionalApprovalDashboard";
 
 export default function ReportsDashboard() {
   const [selectedReport, setSelectedReport] = useState<ReportType>("branch");
@@ -48,7 +49,7 @@ export default function ReportsDashboard() {
           )}
 
           {selectedReport === "exception" && (
-            <ExceptionalReport />
+            <ExceptionalApprovalDashboard />
           )}
         </div>
 
