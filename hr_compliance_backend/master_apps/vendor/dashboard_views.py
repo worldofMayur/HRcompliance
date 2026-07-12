@@ -347,3 +347,53 @@ class ComplianceDashboardSummaryAPIView(APIView):
         }
 
         return Response(data)
+
+
+from collections import defaultdict
+from datetime import datetime
+
+class ComplianceDashboardMonthlyTrendAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "Principal Employer not found"}, status=404)
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        )
+
+        monthly = defaultdict(lambda: {
+            "ccIssued": 0,
+            "complied": 0,
+            "nonComplied": 0,
+        })
+
+        for row in queryset:
+
+            month = row.audit_period or "Unknown"
+
+            if row.is_cc_issued:
+                monthly[month]["ccIssued"] += 1
+
+            if row.workflow_status == WorkflowStatus.COMPLIED:
+                monthly[month]["complied"] += 1
+
+            if row.workflow_status == WorkflowStatus.NON_COMPLIED:
+                monthly[month]["nonComplied"] += 1
+
+        response = []
+
+        for month, values in monthly.items():
+            response.append({
+                "month": month,
+                **values,
+            })
+
+        return Response(sorted(response, key=lambda x: x["month"]))
