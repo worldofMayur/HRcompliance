@@ -69,9 +69,9 @@ export default function BranchVendorDashboard() {
           <MonthlyTrendChart data={monthlyTrend} />
         </Card>
 
-        {/* Top Branches */}
-        <Card style={{ height: 390 }} title={<Space><span>🏢</span>Top 10 Branches by Vendor Count</Space>}>
-          <TopBranchesTable data={topBranches} loading={loading} />
+        {/* New Table - Vendors Working in All Branches */}
+        <Card className="mt-6" title={<Space><span>🌐</span>Vendors Working Across Multiple Branches</Space>}>
+            <AllBranchesVendorTable data={allBranchesVendors} loading={loading} />
         </Card>
 
         {/* Service Distribution - Changed to Pie */}
@@ -80,11 +80,6 @@ export default function BranchVendorDashboard() {
         </Card>
 
       </div>
-
-      {/* New Table - Vendors Working in All Branches */}
-      <Card className="mt-6" title={<Space><span>🌐</span>Vendors Working Across Multiple Branches</Space>}>
-        <AllBranchesVendorTable data={allBranchesVendors} loading={loading} />
-      </Card>
 
       <div className="text-center mt-6 text-gray-500 text-sm">
         Updated: {lastUpdated.toLocaleString("en-IN")}
