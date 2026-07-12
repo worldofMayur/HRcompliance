@@ -38,7 +38,7 @@ export default function MonthlyTrendChart({ data }: Props) {
       formatter: (val: number) => val.toString(),
     },
     xaxis: {
-      categories: data.map((d) => d.month),
+      categories: data.map((d) => [d.month, `${new Date().getFullYear()}`]),
       title: {
         text: "Months",
         style: { fontSize: "13px" },
