@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Select, Card } from "antd";
+import VendorComplianceDashboard from "./dashboards/VendorComplianceDashboard";
 
 const { Option } = Select;
 
@@ -38,7 +39,13 @@ export default function ReportsDashboard() {
             📊 LIVE DASHBOARD
           </div>
 
-          {selectedReport === "branch" && <BranchVendorDashboard />}
+          {selectedReport === "branch" && (
+            <BranchVendorDashboard />
+          )}
+
+          {selectedReport === "compliance" && (
+            <VendorComplianceDashboard />
+          )}
         </div>
 
         {/* ==================== SIDEBAR (Narrower) ==================== */}
