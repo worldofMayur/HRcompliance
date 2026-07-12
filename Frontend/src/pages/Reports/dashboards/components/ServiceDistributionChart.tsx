@@ -187,7 +187,7 @@ export default function ServiceDistributionChart({ data }: Props) {
       options={options}
       series={series}
       type="pie"
-      height={300}
+      height={280}
     />
   );
 }
