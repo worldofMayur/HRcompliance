@@ -229,6 +229,8 @@ class VendorUpdateAPIView(APIView):
 
         vendor = get_object_or_404(Vendor, pk=pk)
 
+        old_email = vendor.email
+
         email = request.data.get("email")
         mobile = request.data.get("mobile")
 
@@ -253,6 +255,63 @@ class VendorUpdateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         updated_vendor = serializer.save()
+
+        # ===================================
+        # EMAIL CHANGED?
+        # ===================================
+        if old_email != updated_vendor.email and updated_vendor.user:
+
+            user = updated_vendor.user
+
+            user.email = updated_vendor.email
+
+            # Vendor username is short_name
+            # so DO NOT change username
+
+            user.reset_password_used = False
+            user.save(update_fields=["email", "reset_password_used"])
+
+                # ===================================
+            # SEND NEW PASSWORD RESET EMAIL
+            # ===================================
+
+            token = PasswordResetTokenGenerator().make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+            login_url = f"{settings.FRONTEND_URL}/signin"
+
+            html_content = render_to_string(
+                "emails/password_reset.html",
+                {
+                    "role": "Vendor",
+                    "contact_person": updated_vendor.contact_person,
+                    "company_name": updated_vendor.name,
+                    "ho_address": updated_vendor.ho_address,
+                    "username": updated_vendor.short_name,
+                    "email": updated_vendor.email,
+                    "mobile": updated_vendor.mobile,
+                    "reset_url": reset_url,
+                    "login_url": login_url,
+                    "year": now().year,
+                },
+            )
+
+            try:
+                print("Sending vendor activation email to:", updated_vendor.email)
+
+                email_obj = EmailMultiAlternatives(
+                    subject="Activate Your HR Compliance Account",
+                    body="Please activate your HR Compliance account.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[updated_vendor.email],
+                )
+
+                email_obj.attach_alternative(html_content, "text/html")
+                email_obj.send(fail_silently=False)
+
+            except Exception as e:
+                print("VENDOR UPDATE EMAIL ERROR:", str(e))
 
         documents = request.FILES.getlist("document")
 
