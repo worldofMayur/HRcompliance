@@ -250,6 +250,8 @@ class PrincipalEmployerUpdateAPIView(APIView):
             pk=pk
         )
 
+        old_email = pe.email
+
         email = request.data.get("email")
         mobile = request.data.get("mobile")
 
@@ -274,6 +276,82 @@ class PrincipalEmployerUpdateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         updated_pe = serializer.save()
+
+        documents = request.FILES.getlist("document")
+
+        updated_pe = serializer.save()
+
+        # ===================================
+        # EMAIL CHANGED?
+        # ===================================
+        if old_email != updated_pe.email and updated_pe.user:
+
+            user = updated_pe.user
+
+            user.email = updated_pe.email
+
+            # Keep username synchronized only if your username stores email.
+            # In your project username is short_name, so DON'T change username.
+
+            user.reset_password_used = False
+            user.save()
+
+            # ===================================
+            # SEND NEW PASSWORD RESET EMAIL
+            # ===================================
+
+            token = PasswordResetTokenGenerator().make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            reset_url = (
+                f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+            )
+
+            login_url = (
+                f"{settings.FRONTEND_URL}/signin"
+            )
+
+            html_content = render_to_string(
+                "emails/password_reset.html",
+                {
+                    "role": "Principal Employer",
+                    "contact_person": updated_pe.contact_person,
+                    "company_name": updated_pe.name,
+                    "username": updated_pe.short_name,
+                    "email": updated_pe.email,
+                    "mobile": updated_pe.mobile,
+                    "ho_address": updated_pe.ho_address,
+                    "nature_of_business": updated_pe.nature_of_business,
+                    "establishment_type": updated_pe.establishment_type,
+                    "rules_applicable": updated_pe.rules_applicable,
+                    "start_date": updated_pe.start_date,
+                    "end_date": updated_pe.end_date,
+                    "reset_url": reset_url,
+                    "login_url": login_url,
+                    "year": now().year,
+                },
+            )
+
+            try:
+                email_msg = EmailMultiAlternatives(
+                    subject="Activate Your HR Compliance Account",
+                    body="HTML email required",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[updated_pe.email],
+                )
+
+                email_msg.attach_alternative(
+                    html_content,
+                    "text/html"
+                )
+
+                email_msg.send(fail_silently=False)
+
+            except Exception as email_error:
+                print(
+                    "UPDATE EMAIL ERROR:",
+                    str(email_error)
+                )
 
         documents = request.FILES.getlist("document")
 
