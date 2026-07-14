@@ -461,7 +461,26 @@ const handleEditSelected = () => {
 
             <div>
               <Label>Company</Label>
-              <Input name="company" value={formData.company} onChange={handleChange} />
+
+              <Input
+                name="company"
+                value={formData.company}
+                onChange={handleChange}
+              />
+
+              <div className="mt-3">
+                <Checkbox
+                  checked={formData.showAuditorGuidelines}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      showAuditorGuidelines: e.target.checked,
+                    }))
+                  }
+                >
+                  Show Auditor Guidelines
+                </Checkbox>
+              </div>
             </div>
 
             <div>
@@ -538,20 +557,6 @@ const handleEditSelected = () => {
             <div className="xl:col-span-2">
               <Label>Work Location</Label>
               <Input name="hoAddress" value={formData.hoAddress} onChange={handleChange} />
-            </div>
-
-            <div className="xl:col-span-3">
-              <Checkbox
-                checked={formData.showAuditorGuidelines}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    showAuditorGuidelines: e.target.checked,
-                  }))
-                }
-              >
-                Show Auditor Guidelines
-              </Checkbox>
             </div>
 
           </div>
