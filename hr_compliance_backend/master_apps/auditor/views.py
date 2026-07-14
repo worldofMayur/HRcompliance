@@ -2116,6 +2116,7 @@ class AuditorUpdateAPIView(APIView):
 
     def put(self, request, pk):
         auditor = get_object_or_404(Auditor, pk=pk)
+        old_email = auditor.email
 
         serializer = AuditorSerializer(
             auditor,
@@ -2125,6 +2126,64 @@ class AuditorUpdateAPIView(APIView):
 
         if serializer.is_valid():
             updated_auditor = serializer.save()
+
+            # ===================================
+            # EMAIL CHANGED?
+            # ===================================
+            if old_email != updated_auditor.email and updated_auditor.user:
+
+                user = updated_auditor.user
+
+                user.email = updated_auditor.email
+
+                # Username is short_name, so don't change it
+
+                user.reset_password_used = False
+                user.save(update_fields=["email", "reset_password_used"])
+
+                    # ===================================
+                # SEND NEW PASSWORD RESET EMAIL
+                # ===================================
+
+                token = PasswordResetTokenGenerator().make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+                login_url = f"{settings.FRONTEND_URL}/signin"
+
+                html_content = render_to_string(
+                    "emails/password_reset.html",
+                    {
+                        "contact_person": updated_auditor.name,
+                        "role": "Auditor",
+                        "company_name": updated_auditor.company,
+                        "username": updated_auditor.short_name,
+                        "email": updated_auditor.email,
+                        "mobile": updated_auditor.mobile,
+                        "ho_address": updated_auditor.ho_address,
+                        "start_date": updated_auditor.start_date,
+                        "end_date": updated_auditor.end_date,
+                        "reset_url": reset_url,
+                        "login_url": login_url,
+                        "year": now().year,
+                    },
+                )
+
+                try:
+                    print("Sending auditor activation email to:", updated_auditor.email)
+
+                    email_obj = EmailMultiAlternatives(
+                        subject="Activate Your HR Compliance Account",
+                        body="Please activate your HR Compliance account.",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[updated_auditor.email],
+                    )
+
+                    email_obj.attach_alternative(html_content, "text/html")
+                    email_obj.send(fail_silently=False)
+
+                except Exception as e:
+                    print("AUDITOR UPDATE EMAIL ERROR:", str(e))
 
             # Save newly uploaded documents
             documents = request.FILES.getlist("documents")
