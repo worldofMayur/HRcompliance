@@ -11,7 +11,6 @@ from master_apps.principle_employee.validators import (
     validate_document_file
 )
 
-
 def vendor_document_upload_path(
     instance,
     filename

@@ -141,6 +141,54 @@ class VendorComplianceSubmission(models.Model):
     )
 
     # ===============================
+    # 📊 COMPLIANCE SUMMARY
+    # ===============================
+
+    male_employees = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    female_employees = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    gross_wages = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    net_wages = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    pf_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    esic_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    rc_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    lwf_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    # ===============================
     # 📄 MAIN FILE
     # ===============================
     main_file = models.FileField(

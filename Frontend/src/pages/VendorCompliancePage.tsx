@@ -1,6 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Upload, Input, Button, message, Select } from "antd";
+import {
+  Upload,
+  Input,
+  Button,
+  message,
+  Select,
+  Modal,
+  DatePicker,
+  InputNumber,
+} from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
 import { useLocation } from "react-router-dom";
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -89,6 +98,19 @@ export default function VendorCompliancePage() {
   const [mappingStartDate, setMappingStartDate] = useState<any>(null);
   const [mappingEndDate, setMappingEndDate] = useState<any>(null);
   const [frequencyBase, setFrequencyBase] = useState("");
+
+  const [summaryOpen, setSummaryOpen] = useState(false);
+
+  const [complianceSummary, setComplianceSummary] = useState({
+    male_employees: undefined as number | undefined,
+    female_employees: undefined as number | undefined,
+    gross_wages: undefined as number | undefined,
+    net_wages: undefined as number | undefined,
+    pf_remittance_date: "",
+    esic_remittance_date: "",
+    rc_remittance_date: "",
+    lwf_remittance_date: "",
+  });
 
   
   const docRef = useRef<any>(null);
@@ -528,7 +550,11 @@ const getPeriodOptions = () => {
   }]);
   };
 
-const handleSubmit = async () => {
+const handleSubmit = () => {
+  setSummaryOpen(true);
+};
+
+const submitCompliance = async () => {
 
   // ================= VALIDATIONS =================
 
@@ -577,6 +603,46 @@ const handleSubmit = async () => {
     formData.append("state", selectedState);
     formData.append("selected_period", selectedPeriod);
     formData.append("general_remark", generalRemark);
+
+    formData.append(
+      "male_employees",
+      String(complianceSummary.male_employees ?? "")
+    );
+
+    formData.append(
+      "female_employees",
+      String(complianceSummary.female_employees ?? "")
+    );
+
+    formData.append(
+      "gross_wages",
+      String(complianceSummary.gross_wages ?? "")
+    );
+
+    formData.append(
+      "net_wages",
+      String(complianceSummary.net_wages ?? "")
+    );
+
+    formData.append(
+      "pf_remittance_date",
+      complianceSummary.pf_remittance_date
+    );
+
+    formData.append(
+      "esic_remittance_date",
+      complianceSummary.esic_remittance_date
+    );
+
+    formData.append(
+      "rc_remittance_date",
+      complianceSummary.rc_remittance_date
+    );
+
+    formData.append(
+      "lwf_remittance_date",
+      complianceSummary.lwf_remittance_date
+    );
 
     formData.append(
       "cc_emails",
@@ -1352,7 +1418,170 @@ if (effectiveReuploadMode) {
         </div>
       )}
 
-    
+      {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
+
+      <Modal
+        title="Compliance Summary"
+        open={summaryOpen}
+        width={700}
+        onCancel={() => setSummaryOpen(false)}
+        onOk={() => {
+          if (
+            complianceSummary.male_employees === undefined ||
+            complianceSummary.female_employees === undefined ||
+            complianceSummary.gross_wages === undefined ||
+            complianceSummary.net_wages === undefined
+          ) {
+            message.error("Please fill all mandatory fields.");
+            return;
+          }
+
+          setSummaryOpen(false);
+          submitCompliance();
+        }}
+        okText="Submit Compliance"
+      >
+        <div className="grid grid-cols-2 gap-4">
+
+  <div>
+    <label className="block mb-1 font-medium">
+      Male Employees
+    </label>
+
+    <InputNumber
+      className="w-full"
+      min={0}
+      value={complianceSummary.male_employees}
+      onChange={(value) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          male_employees: value ?? undefined,
+        }))
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block mb-1 font-medium">
+      Female Employees
+    </label>
+
+    <InputNumber
+      className="w-full"
+      min={0}
+      value={complianceSummary.female_employees}
+      onChange={(value) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          female_employees: value ?? undefined,
+        }))
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block mb-1 font-medium">
+      Gross Wages
+    </label>
+
+    <InputNumber
+      className="w-full"
+      min={0}
+      value={complianceSummary.gross_wages}
+      onChange={(value) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          gross_wages: value ?? undefined,
+        }))
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block mb-1 font-medium">
+      Net Wages
+    </label>
+
+    <InputNumber
+      className="w-full"
+      min={0}
+      value={complianceSummary.net_wages}
+      onChange={(value) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          net_wages: value ?? undefined,
+        }))
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block mb-1 font-medium">
+      PF Remittance Date
+    </label>
+
+    <DatePicker
+      className="w-full"
+      onChange={(_, dateString) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          pf_remittance_date: String(dateString),
+        }))
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block mb-1 font-medium">
+      ESIC Remittance Date
+    </label>
+
+    <DatePicker
+      className="w-full"
+      onChange={(_, dateString) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          esic_remittance_date: String(dateString),
+        }))
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block mb-1 font-medium">
+      RC Remittance Date
+    </label>
+
+    <DatePicker
+      className="w-full"
+      onChange={(_, dateString) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          rc_remittance_date: String(dateString),
+        }))
+      }
+    />
+  </div>
+
+  <div>
+    <label className="block mb-1 font-medium">
+      LWF Remittance Date
+    </label>
+
+    <DatePicker
+      className="w-full"
+      onChange={(_, dateString) =>
+        setComplianceSummary(prev => ({
+          ...prev,
+          lwf_remittance_date: String(dateString),
+        }))
+      }
+    />
+  </div>
+
+</div>
+      </Modal>
+
     </div>
   );
 }

@@ -63,6 +63,16 @@ class VendorSubmitComplianceAPIView(APIView):
             WorkflowStatus.SUBMITTED
         )
         general_remark = request.data.get("general_remark")
+        male_employees = request.data.get("male_employees")
+        female_employees = request.data.get("female_employees")
+
+        gross_wages = request.data.get("gross_wages")
+        net_wages = request.data.get("net_wages")
+
+        pf_remittance_date = request.data.get("pf_remittance_date")
+        esic_remittance_date = request.data.get("esic_remittance_date")
+        rc_remittance_date = request.data.get("rc_remittance_date")
+        lwf_remittance_date = request.data.get("lwf_remittance_date")
 
         # ✅ NEW: CC EMAILS
         cc_emails = request.data.get("cc_emails")
@@ -223,11 +233,23 @@ class VendorSubmitComplianceAPIView(APIView):
                     document_id=document_id,
                     state=mapping.branch.state,
                     audit_period=selected_period,
+
+                    male_employees=male_employees,
+                    female_employees=female_employees,
+
+                    gross_wages=gross_wages,
+                    net_wages=net_wages,
+
+                    pf_remittance_date=pf_remittance_date,
+                    esic_remittance_date=esic_remittance_date,
+                    rc_remittance_date=rc_remittance_date,
+                    lwf_remittance_date=lwf_remittance_date,
+
                     main_file=file,
                     workflow_status=workflow_status,
                     original_filename=file.name,
                     general_remark=general_remark if not remark_saved else None,
-                    cc_emails=cc_emails if not remark_saved else None
+                    cc_emails=cc_emails if not remark_saved else None,
                 )
 
                 VendorComplianceFileVersion.objects.create(
