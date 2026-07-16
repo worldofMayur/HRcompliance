@@ -56,6 +56,17 @@ export default function AuditorDashboard() {
   const [manualEditMode, setManualEditMode] =
   useState(false);
 
+  const [complianceSummary, setComplianceSummary] = useState<any>({
+    male_employees: null,
+    female_employees: null,
+    gross_wages: null,
+    net_wages: null,
+    pf_remittance_date: "",
+    esic_remittance_date: "",
+    rc_remittance_date: "",
+    lwf_remittance_date: "",
+  });
+
   const isAuditLocked =
     (
       auditSessionStatus === "FROZEN"
@@ -664,6 +675,21 @@ const loadChecklist = async (
     setShowAuditorGuidelines(
       checklistRes.data?.show_auditor_guidelines ?? true
     );
+
+    setComplianceSummary(
+      checklistRes.data?.compliance_summary || {
+        male_employees: null,
+        female_employees: null,
+        gross_wages: null,
+        net_wages: null,
+        pf_remittance_date: "",
+        esic_remittance_date: "",
+        rc_remittance_date: "",
+        lwf_remittance_date: "",
+      }
+    );
+
+    console.log(checklistRes.data.compliance_summary);
 
     const apiData =
       checklistRes.data?.checklist || [];

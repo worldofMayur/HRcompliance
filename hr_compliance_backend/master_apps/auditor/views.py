@@ -2598,6 +2598,8 @@ class AuditChecklistAPIView(APIView):
             audit_period=audit_period
         )
 
+        summary = submissions.first()
+
         # ======================================
         # NO DOCUMENTS UPLOADED
         # ======================================
@@ -2740,6 +2742,17 @@ class AuditChecklistAPIView(APIView):
             "has_documents": True,
 
             "show_auditor_guidelines": auditor.show_auditor_guidelines,
+
+            "compliance_summary": {
+                "male_employees": summary.male_employees if summary else None,
+                "female_employees": summary.female_employees if summary else None,
+                "gross_wages": summary.gross_wages if summary else None,
+                "net_wages": summary.net_wages if summary else None,
+                "pf_remittance_date": summary.pf_remittance_date if summary else None,
+                "esic_remittance_date": summary.esic_remittance_date if summary else None,
+                "rc_remittance_date": summary.rc_remittance_date if summary else None,
+                "lwf_remittance_date": summary.lwf_remittance_date if summary else None,
+            },
 
             "checklist": response
 
