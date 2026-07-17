@@ -1542,11 +1542,11 @@ const canFreezeReport =
 <Modal
   open={isModalOpen}
   footer={null}
-  width="95vw"
+  width="85vw"
   closable={false}
   styles={{
     body: {
-      height: "90vh",
+      height: "80vh",
       padding: 0,
       overflow: "auto",
     }
