@@ -1611,445 +1611,283 @@ const canFreezeReport =
 >
 
   {/* 🔥 WRAPPER (IMPORTANT FOR SCROLL) */}
-  <div className="h-full flex flex-col">
+{/* 🔥 WRAPPER */}
+<div className="h-full flex flex-col bg-gray-50/40">
 
-    {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
-<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-3">
+  {/* ========== 1. COMPACT METADATA BAR ========== */}
+  <div className="shrink-0 bg-white border-b px-5 py-3">
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
+      <div>
+        <span className="text-gray-400 text-xs">PE</span>
+        <div className="font-semibold text-gray-800">
+          {peList.find(p => p.id == selectedPE)?.short_name || "-"}
+        </div>
+      </div>
+      <div>
+        <span className="text-gray-400 text-xs">Vendor</span>
+        <div className="font-semibold text-gray-800">
+          {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
+        </div>
+      </div>
+      <div>
+        <span className="text-gray-400 text-xs">State</span>
+        <div className="font-semibold text-gray-800">{selectedState || "-"}</div>
+      </div>
+      <div>
+        <span className="text-gray-400 text-xs">Branch</span>
+        <div className="font-semibold text-gray-800">
+          {branches.find(b => b.id == selectedBranch)?.name || "-"}
+        </div>
+      </div>
+      <div>
+        <span className="text-gray-400 text-xs">Period</span>
+        <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
+      </div>
 
-  <div className="flex flex-wrap gap-8 text-sm">
-
-    <div>
-      <div className="text-gray-500">PE</div>
-      <div className="font-semibold">
-        {peList.find(p => p.id == selectedPE)?.short_name}
+      <div className="ml-auto">
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
+          Mapping Active:{" "}
+          {mappingStartDate
+            ? new Date(mappingStartDate).toLocaleDateString("en-IN")
+            : "-"}{" "}
+          →{" "}
+          {mappingEndDate
+            ? new Date(mappingEndDate).toLocaleDateString("en-IN")
+            : "-"}
+        </span>
       </div>
     </div>
-
-    <div>
-      <div className="text-gray-500">Vendor</div>
-      <div className="font-semibold">
-        {vendorList.find(v => v.id == selectedVendor)?.name}
-      </div>
-    </div>
-
-    <div>
-      <div className="text-gray-500">State</div>
-      <div className="font-semibold">
-        {selectedState}
-      </div>
-    </div>
-
-    <div>
-      <div className="text-gray-500">Branch</div>
-      <div className="font-semibold">
-        {branches.find(b => b.id == selectedBranch)?.name}
-      </div>
-    </div>
-
-    <div>
-      <div className="text-gray-500">Period</div>
-      <div className="font-semibold text-blue-600">
-        {auditPeriod}
-      </div>
-    </div>
-
   </div>
 
-  <div className="mt-3">
+  {/* ========== 2. MAIN CONTENT (LEFT + RIGHT) ========== */}
+  <div className="flex-1 flex overflow-hidden">
 
-  <span
-    className="
-      inline-flex
-      items-center
-      px-3
-      py-1
-      rounded-full
-      bg-green-50
-      border
-      border-green-200
-      text-green-700
-      text-sm
-      font-medium
-    "
-  >
-    Mapping Active:
-    {" "}
-    {mappingStartDate
-      ? new Date(mappingStartDate).toLocaleDateString("en-IN")
-      : "-"}
+    {/* LEFT COLUMN — Remarks + Stats + Table */}
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-    {" "}→{" "}
-
-    {mappingEndDate
-      ? new Date(mappingEndDate).toLocaleDateString("en-IN")
-      : "-"}
-  </span>
-
-</div>
-
-<div className="mt-4 flex justify-between items-start gap-6">
-
-<div className="w-[55%]">
-    {remarksData.length > 0 && (
-
-      <>
-
-        <div className="flex items-center justify-between mb-2">
-
-          <div className="font-semibold text-amber-700">
-            Vendor Remark History
-          </div>
-
-          <div className="text-xs text-gray-500">
-            {remarksData.length} Remark(s)
-          </div>
-
-        </div>
-
-<div className="space-y-1 max-h-[70px] overflow-y-auto">
-          {remarksData.map((remark, index) => (
-
-            <Tooltip
-              key={index}
-              title={remark.remark}
-            >
-
-            <div
-              className="
-                px-2
-                py-1
-                bg-amber-50
-                border
-                border-amber-200
-                rounded-md
-              "
-            >
-
-              <div className="flex justify-between">
-
-                <span className="font-medium text-amber-700">
-                  Vendor Remark
-                </span>
-
-                <span className="text-xs text-gray-500">
-                  {remark.created_at
-                    ? new Date(
-                        remark.created_at
-                      ).toLocaleString("en-IN")
-                    : "-"}
-                </span>
-
-              </div>
-
-              <div className="text-xs text-gray-800">
-                {remark.remark}
-              </div>
-
-            </div>
-
-            </Tooltip>
-
-          ))}
-
-        </div>
-
-      </>
-
-    )}
-
-  </div>
-
-<div className="w-[42%] flex justify-end">
-  
-<div className="w-full max-w-[420px] flex flex-col gap-3">
-
-<div className="bg-white border rounded-xl shadow-sm p-4">
-
-    <div className="flex justify-between items-center mb-4">
-
-        <h3 className="font-semibold text-gray-800">
-            Compliance Summary
-        </h3>
-
-        <Button
-            size="small"
-            type="primary"
-            ghost
-            onClick={() => setIsEditingCompliance(true)}
-        >
-            Edit
-        </Button>
-
-    </div>
-
-    <div className="grid grid-cols-2 gap-x-5 gap-y-3 text-sm">
-
-        <div>
-            <div className="text-gray-500">Male Employees</div>
-            <div className="font-medium">
-                {complianceSummary.male_employees || "-"}
-            </div>
-        </div>
-
-        <div>
-            <div className="text-gray-500">Female Employees</div>
-            <div className="font-medium">
-                {complianceSummary.female_employees || "-"}
-            </div>
-        </div>
-
-        <div>
-            <div className="text-gray-500">Gross Wages</div>
-            <div className="font-medium">
-                {complianceSummary.gross_wages || "-"}
-            </div>
-        </div>
-
-        <div>
-            <div className="text-gray-500">Net Wages</div>
-            <div className="font-medium">
-                {complianceSummary.net_wages || "-"}
-            </div>
-        </div>
-
-        <div>
-            <div className="text-gray-500">PF Date</div>
-            <div className="font-medium">
-                {complianceSummary.pf_remittance_date || "-"}
-            </div>
-        </div>
-
-        <div>
-            <div className="text-gray-500">ESIC Date</div>
-            <div className="font-medium">
-                {complianceSummary.esic_remittance_date || "-"}
-            </div>
-        </div>
-
-        <div>
-            <div className="text-gray-500">RC Date</div>
-            <div className="font-medium">
-                {complianceSummary.rc_remittance_date || "-"}
-            </div>
-        </div>
-
-        <div>
-            <div className="text-gray-500">LWF Date</div>
-            <div className="font-medium">
-                {complianceSummary.lwf_remittance_date || "-"}
-            </div>
-        </div>
-
-    </div>
-
-</div>
-
-  <Button
-    type="primary"
-    icon={<DownloadOutlined />}
-    onClick={downloadZip}
-  >
-    Download Audit Documents
-  </Button>
-
-  
-
-
-    <Upload
-      disabled={
-        isAuditLocked &&
-        !manualEditMode
-      }
-      multiple={false}
-      beforeUpload={(file) => {
-
-        const exceptionalRows =
-          groupedChecklist.filter(
-            (row: any) =>
-              row.status ===
-              "Exceptional Approval - Delayed Complied"
-          );
-
-        const updatedFiles: any = {
-          ...exceptionalFiles
-        };
-
-        exceptionalRows.forEach((row: any) => {
-          updatedFiles[row.id] = file;
-        });
-
-        setExceptionalFiles(updatedFiles);
-
-        message.success(
-          `${file.name} attached`
-        );
-
-        return false;
-      }}
-      showUploadList={false}
-    >
-
-    <Button icon={<UploadOutlined />}>
-      Upload Supporting Document
-    </Button>
-
-    {selectedExceptionalFile && (
-      <div className="text-xs text-green-600 mt-1">
-        Selected: {selectedExceptionalFile.name}
-      </div>
-    )}
-
-    </Upload>
-
-</div> {/* max-w-[420px] */}
-
-</div> {/* w-[45%] */}
-
-</div> {/* flex justify-between */}
-
-</div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
-    {/* 🔥 SCROLL AREA */}
-    <div className="flex-1 overflow-y-auto p-4">
-
+      {/* Locked banner */}
       {isAuditLocked && (
-
-        <div className="mb-4 p-3 rounded-lg border border-green-300 bg-green-50 text-green-700 font-medium">
-
-          This audit report has been frozen,
-          finalized, and locked from further modifications.
+        <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
+          This audit report has been frozen, finalized, and locked from further modifications.
         </div>
       )}
 
-      {
-        !hasDocuments ? (
+      {/* Vendor Remarks (compact) */}
+      {remarksData.length > 0 && (
+        <div className="mx-4 mt-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="font-semibold text-amber-700 text-sm">Vendor Remark History</div>
+            <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
+          </div>
+          <div className="space-y-1 max-h-[72px] overflow-y-auto pr-1">
+            {remarksData.map((remark, index) => (
+              <Tooltip key={index} title={remark.remark}>
+                <div className="px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-amber-700 text-xs">Vendor Remark</span>
+                    <span className="text-[11px] text-gray-500">
+                      {remark.created_at
+                        ? new Date(remark.created_at).toLocaleString("en-IN")
+                        : "-"}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-800 truncate mt-0.5">{remark.remark}</div>
+                </div>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
+      )}
 
-          <div
-            className="
-              flex
-              items-center
-              justify-center
-              h-[300px]
-              bg-gray-50
-              rounded-xl
-              border
-              border-dashed
-              border-gray-300
-            "
-          >
+      {/* Stats bar — more highlighted */}
+      {hasDocuments && (
+        <div className="mx-4 mt-3 flex items-center gap-2.5">
+          <div className="px-3.5 py-1.5 rounded-lg bg-blue-100 text-blue-800 font-semibold text-sm shadow-sm">
+            Total: {groupedChecklist.length}
+          </div>
+          <div className="px-3.5 py-1.5 rounded-lg bg-green-100 text-green-800 font-semibold text-sm shadow-sm">
+            Complied:{" "}
+            {groupedChecklist.filter((row: any) => row.status === "Complied").length}
+          </div>
+          <div className="px-3.5 py-1.5 rounded-lg bg-red-100 text-red-800 font-semibold text-sm shadow-sm">
+            Pending:{" "}
+            {groupedChecklist.filter(
+              (row: any) => !allowedFreezeStatuses.includes(row.status)
+            ).length}
+          </div>
+        </div>
+      )}
 
+      {/* TABLE — now fills remaining height */}
+      <div className="flex-1 overflow-hidden px-4 pt-3 pb-2">
+        {!hasDocuments ? (
+          <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
             <div className="text-center">
-
               <div className="text-lg font-semibold text-gray-700">
-
                 No documents uploaded for this audit period
-
               </div>
-
               <div className="text-sm text-gray-400 mt-2">
-
                 Vendor has not submitted any compliance documents yet.
-
               </div>
-
             </div>
+          </div>
+        ) : (
+          <Table
+            rowClassName={() => "hover:bg-blue-50/70 transition-colors"}
+            columns={columns}
+            dataSource={groupedChecklist}
+            rowKey="id"
+            pagination={false}
+            bordered
+            size="small"
+            className="audit-table-highlighted"
+            scroll={{
+              y: "calc(100vh - 380px)", // fills available space cleanly
+              x: 1800,
+            }}
+          />
+        )}
+      </div>
+    </div>
 
+    {/* RIGHT SIDEBAR — Compliance Summary + Actions (always visible) */}
+    <div className="w-[380px] shrink-0 border-l bg-white flex flex-col">
+      <div className="p-4 flex flex-col gap-3 h-full overflow-y-auto">
+
+        {/* Compliance Summary Card */}
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-gray-800 text-[15px]">Compliance Summary</h3>
+            <Button
+              size="small"
+              type="primary"
+              ghost
+              onClick={() => setIsEditingCompliance(true)}
+            >
+              Edit
+            </Button>
           </div>
 
-        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <div>
+              <div className="text-gray-500 text-xs">Male Employees</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.male_employees || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs">Female Employees</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.female_employees || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs">Gross Wages</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.gross_wages || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs">Net Wages</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.net_wages || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs">PF Date</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.pf_remittance_date || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs">ESIC Date</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.esic_remittance_date || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs">RC Date</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.rc_remittance_date || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-500 text-xs">LWF Date</div>
+              <div className="font-medium text-gray-900">
+                {complianceSummary.lwf_remittance_date || "-"}
+              </div>
+            </div>
+          </div>
+        </div>
 
-          
+        {/* Action buttons */}
+        <Button
+          type="primary"
+          icon={<DownloadOutlined />}
+          onClick={downloadZip}
+          block
+          className="h-10"
+        >
+          Download Audit Documents
+        </Button>
 
-          <>
-                <div className="flex gap-3 mb-3">
+        <Upload
+          disabled={isAuditLocked && !manualEditMode}
+          multiple={false}
+          beforeUpload={(file) => {
+            const exceptionalRows = groupedChecklist.filter(
+              (row: any) =>
+                row.status === "Exceptional Approval - Delayed Complied"
+            );
 
-                  <div className="px-3 py-1 rounded bg-blue-100 text-blue-800 font-medium">
-                    Total: {groupedChecklist.length}
-                  </div>
+            const updatedFiles: any = { ...exceptionalFiles };
 
-                  <div className="px-3 py-1 rounded bg-green-100 text-green-800 font-medium">
-                    Complied: {
-                      groupedChecklist.filter(
-                        (row: any) => row.status === "Complied"
-                      ).length
-                    }
-                  </div>
+            exceptionalRows.forEach((row: any) => {
+              updatedFiles[row.id] = file;
+            });
 
-                  <div className="px-3 py-1 rounded bg-red-100 text-red-800 font-medium">
-                    Pending: {
-                      groupedChecklist.filter(
-                        (row: any) =>
-                          !allowedFreezeStatuses.includes(row.status)
-                      ).length
-                    }
-                  </div>
+            setExceptionalFiles(updatedFiles);
+            message.success(`${file.name} attached`);
+            return false;
+          }}
+          showUploadList={false}
+        >
+          <Button icon={<UploadOutlined />} block className="h-10">
+            Upload Supporting Document
+          </Button>
+        </Upload>
 
-                </div>
-
-                <Table
-                  rowClassName={() =>
-                    "hover:bg-blue-50 transition-colors"
-                  }
-                  columns={columns}
-                  dataSource={groupedChecklist}
-                  rowKey="id"
-                  pagination={false}
-                  bordered
-                  size="small"
-                  scroll={{
-                    y: 400,
-                    x: 1800
-                  }}
-                />
-
-              </>
-
-            )
-      }
-
-      {/* UPLOAD */}
+        {selectedExceptionalFile && (
+          <div className="text-xs text-green-600 -mt-1 px-1">
+            Selected: {selectedExceptionalFile.name}
+          </div>
+        )}
+      </div>
     </div>
-
-    {/* 🔹 BOTTOM BUTTONS */}
-    <div className="flex justify-end gap-3 p-4 border-t bg-white">
-
-{
-  hasDocuments && (
-
-    <Button
-      type="primary"
-      className={`
-      ${
-        canFreezeReport
-          ? "!bg-green-600"
-          : "!bg-blue-600"
-      }
-    `}
-      loading={loading}
-      disabled={
-        isAuditLocked &&
-        !manualEditMode
-      }
-      onClick={handleSubmit}
-    >
-      {
-        notificationDocs.length > 0
-
-          ? "Review Reuploaded Documents"
-
-          : canFreezeReport
-
-          ? "Freeze Report & Issue CC"
-
-          : "Save & Submit"
-      }
-    </Button>
-
-  )
-}
-
-    </div>
-
   </div>
+
+  {/* ========== 3. BOTTOM ACTION BAR ========== */}
+  <div className="shrink-0 flex justify-end gap-3 px-5 py-3 border-t bg-white">
+    {hasDocuments && (
+      <Button
+        type="primary"
+        className={`
+          h-10 px-6 font-medium
+          ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}
+        `}
+        loading={loading}
+        disabled={isAuditLocked && !manualEditMode}
+        onClick={handleSubmit}
+      >
+        {notificationDocs.length > 0
+          ? "Review Reuploaded Documents"
+          : canFreezeReport
+          ? "Freeze Report & Issue CC"
+          : "Save & Submit"}
+      </Button>
+    )}
+  </div>
+</div>
 
 </Modal>
 
