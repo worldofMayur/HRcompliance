@@ -1742,8 +1742,90 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[35%] flex justify-end">
-<div className="w-full max-w-[380px] flex flex-col gap-3">
+<div className="w-[42%] flex justify-end">
+  
+<div className="w-full max-w-[420px] flex flex-col gap-3">
+
+<div className="bg-white border rounded-xl shadow-sm p-4">
+
+    <div className="flex justify-between items-center mb-4">
+
+        <h3 className="font-semibold text-gray-800">
+            Compliance Summary
+        </h3>
+
+        <Button
+            size="small"
+            type="primary"
+            ghost
+            onClick={() => setIsEditingCompliance(true)}
+        >
+            Edit
+        </Button>
+
+    </div>
+
+    <div className="grid grid-cols-2 gap-x-5 gap-y-3 text-sm">
+
+        <div>
+            <div className="text-gray-500">Male Employees</div>
+            <div className="font-medium">
+                {complianceSummary.male_employees || "-"}
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500">Female Employees</div>
+            <div className="font-medium">
+                {complianceSummary.female_employees || "-"}
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500">Gross Wages</div>
+            <div className="font-medium">
+                {complianceSummary.gross_wages || "-"}
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500">Net Wages</div>
+            <div className="font-medium">
+                {complianceSummary.net_wages || "-"}
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500">PF Date</div>
+            <div className="font-medium">
+                {complianceSummary.pf_remittance_date || "-"}
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500">ESIC Date</div>
+            <div className="font-medium">
+                {complianceSummary.esic_remittance_date || "-"}
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500">RC Date</div>
+            <div className="font-medium">
+                {complianceSummary.rc_remittance_date || "-"}
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500">LWF Date</div>
+            <div className="font-medium">
+                {complianceSummary.lwf_remittance_date || "-"}
+            </div>
+        </div>
+
+    </div>
+
+</div>
 
   <Button
     type="primary"
