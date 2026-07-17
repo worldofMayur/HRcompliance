@@ -658,7 +658,9 @@ const submitCompliance = async () => {
     );
 
     // ================= REUPLOAD MODE =================
-
+    console.log("effectiveReuploadMode:", effectiveReuploadMode);
+    console.log("complianceId:", complianceId);
+    
     if (effectiveReuploadMode && complianceId) {
 
       formData.append(

@@ -702,6 +702,8 @@ const getRelativeTime = (date: string) => {
                   // ======================================
 
                   if (d.entries) {
+                    console.log("Notification Data:", d);
+                    console.log("Compliance ID:", d.compliance_id);
 
                     navigate("/vendor-compliance", {
 
