@@ -1782,272 +1782,271 @@ const canFreezeReport =
 </div>
     </div>
 
-    {/* RIGHT SIDEBAR — Compliance Summary + Actions (always visible) */}
-    <div className="w-[380px] shrink-0 border-l bg-white flex flex-col">
-      <div className="p-4 flex flex-col gap-3 h-full overflow-y-auto">
+{/* RIGHT SIDEBAR — Compliance Summary + Actions */}
+<div className="w-[380px] shrink-0 border-l bg-white flex flex-col">
+  <div className="p-4 flex flex-col h-full">
 
-{/* Compliance Summary Card */}
-<div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
-  <div className="flex justify-between items-center mb-4">
-    <h3 className="font-semibold text-gray-800 text-[15px]">
-      Compliance Summary
-    </h3>
+    {/* Compliance Summary Card */}
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-gray-800 text-[15px]">
+          Compliance Summary
+        </h3>
 
-    <div className="flex gap-2">
-      {isEditingCompliance ? (
-        <>
-          <Button
-            size="small"
-            type="primary"
-            onClick={handleSaveComplianceSummary}
-          >
-            Save
-          </Button>
-          <Button
-            size="small"
-            onClick={() => setIsEditingCompliance(false)}
-          >
-            Cancel
-          </Button>
-        </>
-      ) : (
-        <Button
-          size="small"
-          type="primary"
-          ghost
-          onClick={() => setIsEditingCompliance(true)}
-        >
-          Edit
+        <div className="flex gap-2">
+          {isEditingCompliance ? (
+            <>
+              <Button
+                size="small"
+                type="primary"
+                onClick={handleSaveComplianceSummary}
+              >
+                Save
+              </Button>
+              <Button
+                size="small"
+                onClick={() => setIsEditingCompliance(false)}
+              >
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="small"
+              type="primary"
+              ghost
+              onClick={() => setIsEditingCompliance(true)}
+            >
+              Edit
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-5 gap-y-4 text-sm">
+        {/* Male Employees */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">Male Employees</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              value={complianceSummary.male_employees}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  male_employees: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.male_employees || "-"}
+            </div>
+          )}
+        </div>
+
+        {/* Female Employees */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">Female Employees</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              value={complianceSummary.female_employees}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  female_employees: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.female_employees || "-"}
+            </div>
+          )}
+        </div>
+
+        {/* Gross Wages */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">Gross Wages</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              value={complianceSummary.gross_wages}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  gross_wages: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.gross_wages || "-"}
+            </div>
+          )}
+        </div>
+
+        {/* Net Wages */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">Net Wages</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              value={complianceSummary.net_wages}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  net_wages: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.net_wages || "-"}
+            </div>
+          )}
+        </div>
+
+        {/* PF Date */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">PF Date</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              type="date"
+              value={complianceSummary.pf_remittance_date}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  pf_remittance_date: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.pf_remittance_date || "-"}
+            </div>
+          )}
+        </div>
+
+        {/* ESIC Date */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">ESIC Date</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              type="date"
+              value={complianceSummary.esic_remittance_date}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  esic_remittance_date: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.esic_remittance_date || "-"}
+            </div>
+          )}
+        </div>
+
+        {/* RC Date */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">RC Date</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              type="date"
+              value={complianceSummary.rc_remittance_date}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  rc_remittance_date: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.rc_remittance_date || "-"}
+            </div>
+          )}
+        </div>
+
+        {/* LWF Date */}
+        <div>
+          <div className="text-gray-500 text-xs mb-0.5">LWF Date</div>
+          {isEditingCompliance ? (
+            <Input
+              size="small"
+              type="date"
+              value={complianceSummary.lwf_remittance_date}
+              onChange={(e) =>
+                setComplianceSummary({
+                  ...complianceSummary,
+                  lwf_remittance_date: e.target.value,
+                })
+              }
+            />
+          ) : (
+            <div className="font-semibold text-gray-900 text-[15px]">
+              {complianceSummary.lwf_remittance_date || "-"}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* Spacer - pushes buttons to bottom */}
+    <div className="flex-1" />
+
+    {/* Action buttons - stuck at bottom */}
+    <div className="flex flex-col gap-2.5 pt-4">
+      <Button
+        type="primary"
+        icon={<DownloadOutlined />}
+        onClick={downloadZip}
+        block
+        className="h-9 text-sm font-medium"
+      >
+        Download Audit Documents
+      </Button>
+
+      <Upload
+        disabled={isAuditLocked && !manualEditMode}
+        multiple={false}
+        beforeUpload={(file) => {
+          const exceptionalRows = groupedChecklist.filter(
+            (row: any) =>
+              row.status === "Exceptional Approval - Delayed Complied"
+          );
+
+          const updatedFiles: any = { ...exceptionalFiles };
+
+          exceptionalRows.forEach((row: any) => {
+            updatedFiles[row.id] = file;
+          });
+
+          setExceptionalFiles(updatedFiles);
+          message.success(`${file.name} attached`);
+          return false;
+        }}
+        showUploadList={false}
+      >
+        <Button icon={<UploadOutlined />} block className="h-9 text-sm">
+          Upload Supporting Document
         </Button>
-      )}
-    </div>
-  </div>
+      </Upload>
 
-  <div className="grid grid-cols-2 gap-x-5 gap-y-4 text-sm">
-    {/* Male Employees */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">Male Employees</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          value={complianceSummary.male_employees}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              male_employees: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.male_employees || "-"}
-        </div>
-      )}
-    </div>
-
-    {/* Female Employees */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">Female Employees</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          value={complianceSummary.female_employees}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              female_employees: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.female_employees || "-"}
-        </div>
-      )}
-    </div>
-
-    {/* Gross Wages */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">Gross Wages</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          value={complianceSummary.gross_wages}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              gross_wages: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.gross_wages || "-"}
-        </div>
-      )}
-    </div>
-
-    {/* Net Wages */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">Net Wages</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          value={complianceSummary.net_wages}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              net_wages: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.net_wages || "-"}
-        </div>
-      )}
-    </div>
-
-    {/* PF Date */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">PF Date</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          type="date"
-          value={complianceSummary.pf_remittance_date}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              pf_remittance_date: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.pf_remittance_date || "-"}
-        </div>
-      )}
-    </div>
-
-    {/* ESIC Date */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">ESIC Date</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          type="date"
-          value={complianceSummary.esic_remittance_date}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              esic_remittance_date: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.esic_remittance_date || "-"}
-        </div>
-      )}
-    </div>
-
-    {/* RC Date */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">RC Date</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          type="date"
-          value={complianceSummary.rc_remittance_date}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              rc_remittance_date: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.rc_remittance_date || "-"}
-        </div>
-      )}
-    </div>
-
-    {/* LWF Date */}
-    <div>
-      <div className="text-gray-500 text-xs mb-0.5">LWF Date</div>
-      {isEditingCompliance ? (
-        <Input
-          size="small"
-          type="date"
-          value={complianceSummary.lwf_remittance_date}
-          onChange={(e) =>
-            setComplianceSummary({
-              ...complianceSummary,
-              lwf_remittance_date: e.target.value,
-            })
-          }
-        />
-      ) : (
-        <div className="font-semibold text-gray-900 text-[15px]">
-          {complianceSummary.lwf_remittance_date || "-"}
+      {selectedExceptionalFile && (
+        <div className="text-xs text-green-600 px-1 -mt-1">
+          Selected: {selectedExceptionalFile.name}
         </div>
       )}
     </div>
   </div>
 </div>
-
-      {/* Action buttons */}
-      <div className="flex flex-col gap-2.5 mt-1">
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          onClick={downloadZip}
-          block
-          className="h-9 text-sm font-medium"
-        >
-          Download Audit Documents
-        </Button>
-
-        <Upload
-          disabled={isAuditLocked && !manualEditMode}
-          multiple={false}
-          beforeUpload={(file) => {
-            const exceptionalRows = groupedChecklist.filter(
-              (row: any) =>
-                row.status === "Exceptional Approval - Delayed Complied"
-            );
-
-            const updatedFiles: any = { ...exceptionalFiles };
-
-            exceptionalRows.forEach((row: any) => {
-              updatedFiles[row.id] = file;
-            });
-
-            setExceptionalFiles(updatedFiles);
-            message.success(`${file.name} attached`);
-            return false;
-          }}
-          showUploadList={false}
-        >
-          <Button
-            icon={<UploadOutlined />}
-            block
-            className="h-9 text-sm"
-          >
-            Upload Supporting Document
-          </Button>
-        </Upload>
-
-        {selectedExceptionalFile && (
-          <div className="text-xs text-green-600 px-1 -mt-1">
-            Selected: {selectedExceptionalFile.name}
-          </div>
-        )}
-      </div>
-      </div>
-    </div>
   </div>
 
   {/* ========== 3. BOTTOM ACTION BAR ========== */}
