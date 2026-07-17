@@ -1,23 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import {
-    Table,
-    Input,
-    InputNumber,
-    Button,
-    message,
-    Modal,
-    Tooltip,
-} from "antd";
+import { Table, Input, Button, message, Modal, Tooltip } from "antd";
 import { Upload } from "antd";
-import {
-    DownloadOutlined,
-    SyncOutlined,
-    UploadOutlined,
-    EditOutlined,
-    SaveOutlined
-} from "@ant-design/icons";
+import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
 const API_BASE = import.meta.env.VITE_API_URL;
 export default function AuditorDashboard() {
   const token = localStorage.getItem("access_token");
@@ -69,28 +55,6 @@ export default function AuditorDashboard() {
 
   const [manualEditMode, setManualEditMode] =
   useState(false);
-
-  const [complianceSummary, setComplianceSummary] = useState<any>({
-    male_employees: null,
-    female_employees: null,
-    gross_wages: null,
-    net_wages: null,
-    pf_remittance_date: "",
-    esic_remittance_date: "",
-    rc_remittance_date: "",
-    lwf_remittance_date: "",
-  });
-
-  const [isEditingCompliance, setIsEditingCompliance] = useState(false);
-  const updateCompliance = (
-      field: keyof typeof complianceSummary,
-      value: any
-  ) => {
-      setComplianceSummary(prev => ({
-          ...prev,
-          [field]: value,
-      }));
-  };
 
   const isAuditLocked =
     (
@@ -701,21 +665,6 @@ const loadChecklist = async (
       checklistRes.data?.show_auditor_guidelines ?? true
     );
 
-    setComplianceSummary(
-      checklistRes.data?.compliance_summary || {
-        male_employees: null,
-        female_employees: null,
-        gross_wages: null,
-        net_wages: null,
-        pf_remittance_date: "",
-        esic_remittance_date: "",
-        rc_remittance_date: "",
-        lwf_remittance_date: "",
-      }
-    );
-
-    console.log(checklistRes.data.compliance_summary);
-
     const apiData =
       checklistRes.data?.checklist || [];
 
@@ -859,37 +808,6 @@ const handleShowAuditor = async () => {
     };
 
   /* ================= SUBMIT ================= */
-
-
-const handleSaveComplianceSummary = async () => {
-    try {
-
-        await axios.put(
-            `${API_BASE}/api/auditor/update-compliance-summary/`,
-            {
-                branch_id: selectedBranch,
-                vendor_id: selectedVendor,
-                audit_period: auditPeriod,
-                ...complianceSummary,
-            },
-            authHeader
-        );
-
-        message.success(
-            "Compliance Summary updated successfully."
-        );
-
-        setIsEditingCompliance(false);
-
-    } catch (err) {
-
-        console.error(err);
-
-        message.error(
-            "Failed to update Compliance Summary."
-        );
-    }
-};
 
 const handleSubmit = async () => {
 
@@ -1542,14 +1460,14 @@ const canFreezeReport =
 <Modal
   open={isModalOpen}
   footer={null}
-  width="85vw"
+  width={1800}
   closable={false}
   styles={{
-    body: {
-      height: "80vh",
-      padding: 0,
-      overflow: "auto",
-    }
+  body:{
+    height:"88vh",
+    overflow:"hidden",
+    padding:0
+  }
   }}
   style={{ top: 20 }}
   title={
@@ -1676,16 +1594,10 @@ const canFreezeReport =
 >
 
   {/* 🔥 WRAPPER (IMPORTANT FOR SCROLL) */}
-<div
-        className="flex flex-col"
-        style={{
-            height: "calc(100vh - 110px)",
-        }}
-    >
-      {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
-    <div
-      className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0"
-    >
+  <div className="h-full flex flex-col">
+
+    {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
+<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-3">
 
   <div className="flex flex-wrap gap-8 text-sm">
 
@@ -1758,254 +1670,147 @@ const canFreezeReport =
 
 </div>
 
-{/* ================= 50/50 LAYOUT (Left + Right) ================= */}
-<div className="mt-4 grid grid-cols-10 gap-5 items-start">
-  {/* LEFT 50% - Vendor Remark History + Buttons */}
-  <div className="col-span-7 flex flex-col">
+<div className="mt-4 flex justify-between items-start gap-6">
 
+<div className="w-[55%]">
     {remarksData.length > 0 && (
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <div className="font-semibold text-amber-700">Vendor Remark History</div>
-          <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
+
+      <>
+
+        <div className="flex items-center justify-between mb-2">
+
+          <div className="font-semibold text-amber-700">
+            Vendor Remark History
+          </div>
+
+          <div className="text-xs text-gray-500">
+            {remarksData.length} Remark(s)
+          </div>
+
         </div>
 
-        {/* Removed max-h-16, added flex-1 to allow dynamic expansion */}
-        <div
-          className="
-          space-y-2
-          border
-          border-amber-200
-          rounded-lg
-          p-2
-          bg-amber-50
-          max-h-[220px]
-          overflow-y-auto
-          "
-          >
+<div className="space-y-1 max-h-[70px] overflow-y-auto">
           {remarksData.map((remark, index) => (
-            <Tooltip key={index} title={remark.remark}>
-              <div className="px-3 py-2 bg-white border border-amber-200 rounded-md text-sm">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="font-medium text-amber-700">Vendor Remark</span>
-                  <span className="text-gray-500">
-                    {remark.created_at ? new Date(remark.created_at).toLocaleString("en-IN") : "-"}
-                  </span>
-                </div>
-                <div className="text-gray-800">{remark.remark}</div>
+
+            <Tooltip
+              key={index}
+              title={remark.remark}
+            >
+
+            <div
+              className="
+                px-2
+                py-1
+                bg-amber-50
+                border
+                border-amber-200
+                rounded-md
+              "
+            >
+
+              <div className="flex justify-between">
+
+                <span className="font-medium text-amber-700">
+                  Vendor Remark
+                </span>
+
+                <span className="text-xs text-gray-500">
+                  {remark.created_at
+                    ? new Date(
+                        remark.created_at
+                      ).toLocaleString("en-IN")
+                    : "-"}
+                </span>
+
               </div>
+
+              <div className="text-xs text-gray-800">
+                {remark.remark}
+              </div>
+
+            </div>
+
             </Tooltip>
+
           ))}
+
         </div>
+
+      </>
+
+    )}
+
+  </div>
+
+<div className="w-[35%] flex justify-end">
+<div className="w-full max-w-[380px] flex flex-col gap-3">
+
+  <Button
+    type="primary"
+    icon={<DownloadOutlined />}
+    onClick={downloadZip}
+  >
+    Download Audit Documents
+  </Button>
+
+  
+
+
+    <Upload
+      disabled={
+        isAuditLocked &&
+        !manualEditMode
+      }
+      multiple={false}
+      beforeUpload={(file) => {
+
+        const exceptionalRows =
+          groupedChecklist.filter(
+            (row: any) =>
+              row.status ===
+              "Exceptional Approval - Delayed Complied"
+          );
+
+        const updatedFiles: any = {
+          ...exceptionalFiles
+        };
+
+        exceptionalRows.forEach((row: any) => {
+          updatedFiles[row.id] = file;
+        });
+
+        setExceptionalFiles(updatedFiles);
+
+        message.success(
+          `${file.name} attached`
+        );
+
+        return false;
+      }}
+      showUploadList={false}
+    >
+
+    <Button icon={<UploadOutlined />}>
+      Upload Supporting Document
+    </Button>
+
+    {selectedExceptionalFile && (
+      <div className="text-xs text-green-600 mt-1">
+        Selected: {selectedExceptionalFile.name}
       </div>
     )}
 
-    {/* Action Buttons - Added mt-auto to anchor to the bottom */}
-    <div className="flex flex-wrap gap-3 mt-3">
-      <Button
-        type="primary"
-        icon={<DownloadOutlined />}
-        onClick={downloadZip}
-        loading={downloading}
-      >
-        Download Audit Documents
-      </Button>
+    </Upload>
 
-      <Upload
-        disabled={isAuditLocked && !manualEditMode}
-        multiple={false}
-        beforeUpload={(file) => {
-          const exceptionalRows = groupedChecklist.filter(
-            (row: any) => row.status === "Exceptional Approval - Delayed Complied"
-          );
-          const updatedFiles = { ...exceptionalFiles };
-          exceptionalRows.forEach((row: any) => {
-            updatedFiles[row.id] = file;
-          });
-          setExceptionalFiles(updatedFiles);
-          message.success(`${file.name} attached`);
-          return false;
-        }}
-        showUploadList={false}
-      >
-        <Button icon={<UploadOutlined />}>Upload Supporting Document</Button>
-      </Upload>
+</div> {/* max-w-[420px] */}
 
-      {selectedExceptionalFile && (
-        <span className="text-xs text-green-600 ml-2">
-          Selected: {selectedExceptionalFile.name}
-        </span>
-      )}
-    </div>
-  </div>
+</div> {/* w-[45%] */}
 
-{/* RIGHT 50% - Compliance Summary (Narrow & Scrollable) */}
-<div className="col-span-3">
-      <div
-        className="
-        bg-white
-        border
-        rounded-xl
-        shadow-sm
-        h-50px
-        flex
-        flex-col
-        "
-        >
-      
-      {/* Header - Shrink-0 keeps it fixed at the top while the rest scrolls */}
-      <div className="flex flex-col items-start justify-center border-b px-3 py-2 gap-2 shrink-0 bg-white z-10">
-        <div>
-          <div className="text-base font-bold text-blue-700 leading-tight">Compliance Summary</div>
-          <div className="text-[10px] text-gray-500">Vendor submitted details</div>
-        </div>
-
-        {!isEditingCompliance ? (
-          <Button size="small" icon={<EditOutlined />} onClick={() => setIsEditingCompliance(true)} className="w-full text-xs">
-            Edit
-          </Button>
-        ) : (
-          <div className="flex gap-2 w-full">
-            <Button size="small" type="primary" icon={<SaveOutlined />} onClick={handleSaveComplianceSummary} className="flex-1 text-xs px-1">
-              Save
-            </Button>
-            <Button size="small" onClick={() => { setIsEditingCompliance(false); loadChecklist(); }} className="flex-1 text-xs px-1">
-              Cancel
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Form Content - flex-1 and overflow-y-auto add the scrollbar */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Changed to grid-cols-1 so inputs aren't crushed in the 190px width */}
-        <div className="grid grid-cols-1 gap-3 text-sm">
-
-          {/* Employee Information */}
-          <div>
-            <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Employee Info</h3>
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">Male Employees</div>
-            <InputNumber
-              className="w-full"
-              min={0}
-              controls={false}
-              value={complianceSummary.male_employees}
-              disabled={!isEditingCompliance}
-              onChange={(value) => updateCompliance("male_employees", value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">Female Employees</div>
-            <InputNumber
-              className="w-full"
-              min={0}
-              controls={false}
-              value={complianceSummary.female_employees}
-              disabled={!isEditingCompliance}
-              onChange={(value) => updateCompliance("female_employees", value)}
-            />
-          </div>
-
-          {/* Wage Details */}
-          <div className="mt-2">
-            <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Wage Details</h3>
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">Gross Wages</div>
-            <InputNumber
-              className="w-full"
-              min={0}
-              controls={false}
-              formatter={(v) => v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""}
-              parser={(v) => Number(v?.replace(/[₹,\s]/g, "") || 0)}
-              value={complianceSummary.gross_wages}
-              disabled={!isEditingCompliance}
-              onChange={(value) => updateCompliance("gross_wages", value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">Net Wages</div>
-            <InputNumber
-              className="w-full"
-              min={0}
-              controls={false}
-              formatter={(v) => v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""}
-              parser={(v) => Number(v?.replace(/[₹,\s]/g, "") || 0)}
-              value={complianceSummary.net_wages}
-              disabled={!isEditingCompliance}
-              onChange={(value) => updateCompliance("net_wages", value)}
-            />
-          </div>
-
-          {/* Remittance Dates */}
-          <div className="mt-2">
-            <div className="font-semibold text-blue-700 mb-2 border-b pb-1">Remittance Dates</div>
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">PF Date</div>
-            <Input
-              type="date"
-              className="text-xs"
-              value={complianceSummary.pf_remittance_date}
-              disabled={!isEditingCompliance}
-              onChange={(e) => updateCompliance("pf_remittance_date", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">ESIC Date</div>
-            <Input
-              type="date"
-              className="text-xs"
-              value={complianceSummary.esic_remittance_date}
-              disabled={!isEditingCompliance}
-              onChange={(e) => updateCompliance("esic_remittance_date", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">RC Date</div>
-            <Input
-              type="date"
-              className="text-xs"
-              value={complianceSummary.rc_remittance_date}
-              disabled={!isEditingCompliance}
-              onChange={(e) => updateCompliance("rc_remittance_date", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-gray-500 mb-1 text-xs">LWF Date</div>
-            <Input
-              type="date"
-              className="text-xs"
-              value={complianceSummary.lwf_remittance_date}
-              disabled={!isEditingCompliance}
-              onChange={(e) => updateCompliance("lwf_remittance_date", e.target.value)}
-            />
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
+</div> {/* flex justify-between */}
 
 </div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
     {/* 🔥 SCROLL AREA */}
-  <div className="flex-1 min-h-0 p-4"
-        style={{
-            minHeight: 0,
-        }}
-    >
+    <div className="flex-1 overflow-y-auto p-4">
 
       {isAuditLocked && (
 
@@ -2092,8 +1897,8 @@ const canFreezeReport =
                   bordered
                   size="small"
                   scroll={{
-                      y: "calc(100vh - 450px)",
-                      x: "max-content",
+                    y: 400,
+                    x: 1800
                   }}
                 />
 
