@@ -1669,7 +1669,17 @@ const canFreezeReport =
         <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
       </div>
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-3">
+        <Button
+          type="primary"
+          size="small"
+          icon={<DownloadOutlined />}
+          onClick={downloadZip}
+          className="h-8 text-xs font-medium"
+        >
+          Download Audit Documents
+        </Button>
+
         <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
           Mapping Active:{" "}
           {mappingStartDate
@@ -2003,15 +2013,6 @@ const canFreezeReport =
 
     {/* Action buttons - stuck at bottom */}
     <div className="flex flex-col gap-2.5 pt-4">
-      <Button
-        type="primary"
-        icon={<DownloadOutlined />}
-        onClick={downloadZip}
-        block
-        className="h-9 text-sm font-medium"
-      >
-        Download Audit Documents
-      </Button>
 
       <Upload
         disabled={isAuditLocked && !manualEditMode}
