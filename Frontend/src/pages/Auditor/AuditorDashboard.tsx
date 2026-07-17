@@ -1542,14 +1542,14 @@ const canFreezeReport =
 <Modal
   open={isModalOpen}
   footer={null}
-  width={1800}
+  width="95vw"
   closable={false}
   styles={{
-  body:{
-    height:"88vh",
-    overflow:"hidden",
-    padding:0
-  }
+    body: {
+      height: "90vh",
+      padding: 0,
+      overflow: "auto",
+    }
   }}
   style={{ top: 20 }}
   title={
@@ -1676,10 +1676,9 @@ const canFreezeReport =
 >
 
   {/* 🔥 WRAPPER (IMPORTANT FOR SCROLL) */}
-  <div className="h-full flex flex-col">
-
+<div className="flex flex-col h-full">
     {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
-<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-3">
+<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0">
 
   <div className="flex flex-wrap gap-8 text-sm">
 
@@ -1754,7 +1753,7 @@ const canFreezeReport =
 
 <div className="mt-4 flex justify-between items-start gap-6">
 
-<div className="w-[55%]">
+<div className="flex-1">
     {remarksData.length > 0 && (
 
       <>
@@ -1771,7 +1770,7 @@ const canFreezeReport =
 
         </div>
 
-<div className="space-y-1 max-h-[70px] overflow-y-auto">
+<div className="space-y-1 max-h-24 overflow-y-auto">
           {remarksData.map((remark, index) => (
 
             <Tooltip
@@ -1824,8 +1823,8 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[35%] flex justify-end">
-<div className="w-full max-w-[380px] flex flex-col gap-3">
+<div className="w-[380px] flex-shrink-0">
+<div className="flex flex-col gap-3">
 
 {/* Compliance Summary Card */}
 
@@ -2070,7 +2069,11 @@ const canFreezeReport =
 
 </div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
     {/* 🔥 SCROLL AREA */}
-    <div className="flex-1 overflow-y-auto p-4">
+  <div className="flex-1 p-4 overflow-hidden"
+        style={{
+            minHeight: 0,
+        }}
+    >
 
       {isAuditLocked && (
 
@@ -2157,8 +2160,8 @@ const canFreezeReport =
                   bordered
                   size="small"
                   scroll={{
-                    y: 400,
-                    x: 1800
+                      y: "calc(100vh - 380px)",
+                      x: "max-content",
                   }}
                 />
 
