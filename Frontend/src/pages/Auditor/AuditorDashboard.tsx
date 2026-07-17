@@ -1792,8 +1792,8 @@ const canFreezeReport =
 </div>
     </div>
 
-{/* RIGHT SIDEBAR — Compliance Summary + Actions */}
-<div className="w-[380px] shrink-0 border-l bg-white flex flex-col">
+{/* RIGHT SIDEBAR */}
+<div className="w-[360px] shrink-0 border-l bg-gray-50/40 flex flex-col">
   <div className="p-4 flex flex-col h-full">
 
     {/* Compliance Summary Card */}
@@ -2008,23 +2008,21 @@ const canFreezeReport =
       </div>
     </div>
 
-    {/* Spacer - pushes buttons to bottom */}
-    <div className="flex-1" />
-
-    {/* Action buttons - stuck at bottom */}
-    <div className="flex flex-col gap-2.5 pt-4">
-
-
-
-      {selectedExceptionalFile && (
-        <div className="text-xs text-green-600 px-1 -mt-1">
-          Selected: {selectedExceptionalFile.name}
-        </div>
-      )}
+    {/* Helpful note */}
+    <div className="mt-5 p-4 bg-blue-50/60 border border-blue-100 rounded-xl text-sm text-blue-800">
+      <div className="font-medium mb-1">Note</div>
+      <div className="text-xs leading-relaxed text-blue-700">
+        Update the compliance summary before freezing the report.
+        Supporting document is required only for{" "}
+        <span className="font-medium">Exceptional Approval - Delayed Complied</span>.
+      </div>
     </div>
+
+    {/* Spacer */}
+    <div className="flex-1" />
   </div>
 </div>
-  </div>
+
 
  {/* ========== 3. BOTTOM ACTION BAR ========== */}
 <div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
