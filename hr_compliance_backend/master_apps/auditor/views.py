@@ -1583,8 +1583,7 @@ class SaveAuditAPIView(APIView):
                     branch_id=branch_id,
                     audit_period__iexact=audit_period,
                 )
-                .exclude(frozen_at__isnull=True)
-                .order_by("-frozen_at")
+                .order_by("id")
                 .first()
             )
 
@@ -1616,6 +1615,7 @@ class SaveAuditAPIView(APIView):
                     "branch_name": branch.short_name,
                     "audit_period": audit_period,
                     "generated_at": generated_timestamp,
+                    "submission": submission,
                     "exceptional_entries": [
                         e for e in pdf_entries
                         if "Exceptional Approval"
@@ -2124,28 +2124,28 @@ class UpdateComplianceSummaryAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        submissions = VendorComplianceSubmission.objects.filter(
-            vendor_id=vendor_id,
-            branch_id=branch_id,
-            audit_period__iexact=audit_period,
-        )
-
-        if not submissions.exists():
-            return Response(
-                {"error": "Compliance Summary not found"},
-                status=status.HTTP_404_NOT_FOUND,
+            submissions = VendorComplianceSubmission.objects.filter(
+                vendor_id=vendor_id,
+                branch_id=branch_id,
+                audit_period__iexact=audit_period,
             )
 
-        submissions.update(
-            male_employees=request.data.get("male_employees"),
-            female_employees=request.data.get("female_employees"),
-            gross_wages=request.data.get("gross_wages"),
-            net_wages=request.data.get("net_wages"),
-            pf_remittance_date=request.data.get("pf_remittance_date") or None,
-            esic_remittance_date=request.data.get("esic_remittance_date") or None,
-            rc_remittance_date=request.data.get("rc_remittance_date") or None,
-            lwf_remittance_date=request.data.get("lwf_remittance_date") or None,
-        )
+            if not submissions.exists():
+                return Response(
+                    {"error": "Compliance Summary not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            submissions.update(
+                male_employees=request.data.get("male_employees"),
+                female_employees=request.data.get("female_employees"),
+                gross_wages=request.data.get("gross_wages"),
+                net_wages=request.data.get("net_wages"),
+                pf_remittance_date=request.data.get("pf_remittance_date") or None,
+                esic_remittance_date=request.data.get("esic_remittance_date") or None,
+                rc_remittance_date=request.data.get("rc_remittance_date") or None,
+                lwf_remittance_date=request.data.get("lwf_remittance_date") or None,
+            )
 
         return Response(
             {"message": "Compliance Summary updated successfully"},
@@ -3221,6 +3221,21 @@ class FreezeAuditReportsAPIView(APIView):
                 .order_by("-id")
                 .first()
             )
+
+            print("========== CC SUBMISSION ==========")
+            print("Submission:", submission)
+
+            if submission:
+                print("Male:", submission.male_employees)
+                print("Female:", submission.female_employees)
+                print("Gross:", submission.gross_wages)
+                print("Net:", submission.net_wages)
+                print("PF:", submission.pf_remittance_date)
+                print("ESIC:", submission.esic_remittance_date)
+                print("RC:", submission.rc_remittance_date)
+                print("LWF:", submission.lwf_remittance_date)
+            else:
+                print("Submission NOT FOUND")
 
             print(
                 "FREEZE DEBUG:",
