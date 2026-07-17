@@ -1160,199 +1160,138 @@ return hasExceptional ? (
 </div>
 
 {/* COMPLIANCE TABLE */}
-
-<div
-  className="
-    overflow-hidden
-    rounded-3xl
-    border border-gray-200
-    bg-white
-  "
->
-
+{/* COMPLIANCE TABLE */}
+<div className="overflow-hidden rounded-3xl border border-gray-200 bg-white">
   {/* HEADER */}
-
-  <div className="
-    border-b border-gray-100
-    px-5 py-4
-  ">
-
-    <h3 className="
-      text-sm
-      font-semibold
-      text-gray-900
-    ">
+  <div className="border-b border-gray-100 px-5 py-4">
+    <h3 className="text-sm font-semibold text-gray-900">
       Compliance Entries
     </h3>
-
-    <p className="
-      mt-1
-      text-xs
-      text-gray-500
-    ">
-      Frozen audit observations and
-      recommendations
+    <p className="mt-1 text-xs text-gray-500">
+      Frozen audit observations and recommendations
     </p>
-
   </div>
 
   {/* TABLE */}
-
-      <div
-        className="
-          overflow-auto
-          max-h-[500px]
-          w-full
-        "
-      >
-        <div style={{ width: "3200px" }}>
-
-      <Table
-        rowKey={(_, index) =>
-          index?.toString() || "row"
-        }
-
-        scroll={{
-          x: 3200,
-          y: 450,
-        }}
-
-        tableLayout="fixed"
-
-
+  <div className="overflow-auto max-h-[520px]">
+    <Table
+      rowKey={(_, index) => index?.toString() || "row"}
       size="middle"
-
       pagination={false}
-
       className="compliance-table"
-
-      dataSource={
-        selectedReport.entries || []
-      }
-
+      tableLayout="fixed"
+      scroll={{ x: 1600, y: 450 }}
+      dataSource={selectedReport.entries || []}
       locale={{
         emptyText: (
-          <Empty
-            description="
-              No frozen compliance observations available
-            "
-          />
+          <Empty description="No frozen compliance observations available" />
         ),
       }}
-
       columns={[
-
-  {
-    title: "State",
-    width: 120,
-    render: () => (
-      <span className="font-medium text-gray-700">
-        {selectedReport.state || "-"}
-      </span>
-    ),
-  },
-
-  {
-    title: "Act",
-    dataIndex: "act_name",
-    width: 220,
-    render: (text: string) => (
-      <div className="whitespace-pre-wrap text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-  {
-    title: "Section/ Rule",
-    dataIndex: "section",
-    width: 120,
-    render: (text: string) => (
-      <div className="text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-  {
-    title: "Form",
-    dataIndex: "form_number",
-    width: 120,
-    render: (text: string) => (
-      <div className="text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-  {
-    title: "Document",
-    dataIndex: "document_name",
-    width: 220,
-    render: (text: string) => (
-      <div className="whitespace-pre-wrap text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-  {
-    title: "Audit Particular",
-    dataIndex: "audit_particular",
-    width: 280,
-    render: (text: string) => (
-      <div className="whitespace-pre-wrap text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-  {
-    title: "Compliance Status",
-    dataIndex: "status",
-    width: 240,
-    render: (status: string) => (
-      <span
-        className={`
-          inline-flex items-center
-          rounded-full
-          px-4 py-2
-          text-xs tracking-wide
-          font-medium
-          ${getStatusClass(status)}
-        `}
-      >
-        {status || "Not Applicable"}
-      </span>
-    ),
-  },
-
-  {
-    title: "Auditor Observation",
-    dataIndex: "observation",
-    width: 250,
-    render: (text: string) => (
-      <div className="whitespace-pre-wrap text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-  {
-    title: "Action Recommendation",
-    dataIndex: "recommendation",
-    width: 250,
-    render: (text: string) => (
-      <div className="whitespace-pre-wrap text-gray-600">
-        {text || "-"}
-      </div>
-    ),
-  },
-
-]}
+        {
+          title: "State",
+          width: 110,
+          align: "center" as const,
+          render: () => (
+            <span className="font-medium text-gray-700">
+              {selectedReport.state || "-"}
+            </span>
+          ),
+        },
+        {
+          title: "Act",
+          dataIndex: "act_name",
+          width: 180,
+          align: "center" as const,
+          render: (text: string) => (
+            <div className="text-left text-gray-600 whitespace-pre-wrap">
+              {text || "-"}
+            </div>
+          ),
+        },
+        {
+          title: "Section / Rule",
+          dataIndex: "section",
+          width: 120,
+          align: "center" as const,
+          render: (text: string) => (
+            <div className="text-gray-600">{text || "-"}</div>
+          ),
+        },
+        {
+          title: "Form",
+          dataIndex: "form_number",
+          width: 90,
+          align: "center" as const,
+          render: (text: string) => (
+            <div className="text-gray-600">{text || "-"}</div>
+          ),
+        },
+        {
+          title: "Document",
+          dataIndex: "document_name",
+          width: 160,
+          align: "center" as const,
+          render: (text: string) => (
+            <div className="text-left text-gray-600 whitespace-pre-wrap">
+              {text || "-"}
+            </div>
+          ),
+        },
+        {
+          title: "Audit Particular",
+          dataIndex: "audit_particular",
+          width: 220,
+          align: "center" as const,
+          render: (text: string) => (
+            <div className="text-left text-gray-600 whitespace-pre-wrap">
+              {text || "-"}
+            </div>
+          ),
+        },
+        {
+          title: "Compliance Status",
+          dataIndex: "status",
+          width: 200,
+          align: "center" as const,
+          render: (status: string) => (
+            <span
+              className={`
+                inline-flex items-center
+                rounded-full
+                px-3 py-1.5
+                text-xs font-medium
+                ${getStatusClass(status)}
+              `}
+            >
+              {status || "Not Applicable"}
+            </span>
+          ),
+        },
+        {
+          title: "Auditor Observation",
+          dataIndex: "observation",
+          width: 240,
+          align: "center" as const,
+          render: (text: string) => (
+            <div className="text-left text-gray-600 whitespace-pre-wrap">
+              {text || "-"}
+            </div>
+          ),
+        },
+        {
+          title: "Action Recommendation",
+          dataIndex: "recommendation",
+          width: 240,
+          align: "center" as const,
+          render: (text: string) => (
+            <div className="text-left text-gray-600 whitespace-pre-wrap">
+              {text || "-"}
+            </div>
+          ),
+        },
+      ]}
     />
-    </div>
-
   </div>
 </div>
 
@@ -1446,32 +1385,27 @@ return hasExceptional ? (
     border-inline-end: none !important;
   }
 
-  .compliance-table .ant-table-thead > tr > th {
-    background: #fafafa !important;
-    color: #6b7280 !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid #f1f5f9 !important;
-    padding-top: 14px !important;
-    padding-bottom: 14px !important;
-    position: sticky !important;
-    top: 0;
-    z-index: 10;
-  }
+.compliance-table .ant-table-thead > tr > th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 12px 10px !important;
+}
 
-  .compliance-table .ant-table-tbody > tr > td {
-    border-bottom: 1px solid #f3f4f6 !important;
-    vertical-align: top;
-    padding-top: 14px !important;
-    padding-bottom: 14px !important;
-    background: white !important;
-  }
+.compliance-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f1f5f9 !important;
+  vertical-align: top;
+  padding: 12px 10px !important;
+  background: white !important;
+}
 
-  .compliance-table .ant-table-tbody > tr:hover > td {
-    background: #f5f9ff !important;
-  }
+.compliance-table .ant-table-tbody > tr:hover > td {
+  background: #f8fafc !important;
+}
 
   .compliance-table .ant-table-cell {
     border-inline-end: none !important;

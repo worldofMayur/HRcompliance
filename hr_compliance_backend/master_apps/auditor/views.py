@@ -2124,28 +2124,45 @@ class UpdateComplianceSummaryAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-            submissions = VendorComplianceSubmission.objects.filter(
-                vendor_id=vendor_id,
-                branch_id=branch_id,
-                audit_period__iexact=audit_period,
+        submissions = VendorComplianceSubmission.objects.filter(
+            vendor_id=vendor_id,
+            branch_id=branch_id,
+            audit_period__iexact=audit_period,
+        )
+
+        if not submissions.exists():
+            return Response(
+                {"error": "Compliance Summary not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-            if not submissions.exists():
-                return Response(
-                    {"error": "Compliance Summary not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
+        submissions.update(
+            male_employees=request.data.get("male_employees"),
+            female_employees=request.data.get("female_employees"),
+            gross_wages=request.data.get("gross_wages"),
+            net_wages=request.data.get("net_wages"),
+            pf_remittance_date=request.data.get("pf_remittance_date") or None,
+            esic_remittance_date=request.data.get("esic_remittance_date") or None,
+            rc_remittance_date=request.data.get("rc_remittance_date") or None,
+            lwf_remittance_date=request.data.get("lwf_remittance_date") or None,
+        )
 
-            submissions.update(
-                male_employees=request.data.get("male_employees"),
-                female_employees=request.data.get("female_employees"),
-                gross_wages=request.data.get("gross_wages"),
-                net_wages=request.data.get("net_wages"),
-                pf_remittance_date=request.data.get("pf_remittance_date") or None,
-                esic_remittance_date=request.data.get("esic_remittance_date") or None,
-                rc_remittance_date=request.data.get("rc_remittance_date") or None,
-                lwf_remittance_date=request.data.get("lwf_remittance_date") or None,
-            )
+        updated = VendorComplianceSubmission.objects.filter(
+            vendor_id=vendor_id,
+            branch_id=branch_id,
+            audit_period__iexact=audit_period,
+        ).values(
+            "id",
+            "document_id",
+            "male_employees",
+            "female_employees",
+            "gross_wages",
+            "net_wages",
+        )
+
+        print("===== UPDATED SUBMISSIONS =====")
+        for row in updated:
+            print(row)
 
         return Response(
             {"message": "Compliance Summary updated successfully"},
