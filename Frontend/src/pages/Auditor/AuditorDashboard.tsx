@@ -827,6 +827,29 @@ const handleShowAuditor = async () => {
       }
     };
 
+    const handleSaveComplianceSummary = async () => {
+  try {
+    await axios.put(
+      `${API_BASE}/api/auditor/update-compliance-summary/`,
+      {
+        branch_id: selectedBranch,
+        vendor_id: selectedVendor,
+        audit_period: auditPeriod,
+        ...complianceSummary,
+      },
+      authHeader
+    );
+
+    message.success("Compliance Summary updated successfully");
+
+    setIsEditingCompliance(false);
+
+    await loadChecklist();
+  } catch (err) {
+    console.error(err);
+    message.error("Failed to update Compliance Summary");
+  }
+};
   /* ================= SUBMIT ================= */
 
 const handleSubmit = async () => {
