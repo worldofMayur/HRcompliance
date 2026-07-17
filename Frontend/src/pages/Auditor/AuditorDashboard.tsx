@@ -1725,55 +1725,62 @@ const canFreezeReport =
         </div>
       )}
 
-      {/* Stats bar — more highlighted */}
+      {/* Stats bar */}
       {hasDocuments && (
-        <div className="mx-4 mt-3 flex items-center gap-2.5">
-          <div className="px-3.5 py-1.5 rounded-lg bg-blue-100 text-blue-800 font-semibold text-sm shadow-sm">
-            Total: {groupedChecklist.length}
+        <div className="mx-4 mt-3 flex items-center gap-2">
+          <div className="px-3 py-1 rounded-md bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100">
+            Total: <span className="font-semibold">{groupedChecklist.length}</span>
           </div>
-          <div className="px-3.5 py-1.5 rounded-lg bg-green-100 text-green-800 font-semibold text-sm shadow-sm">
+          <div className="px-3 py-1 rounded-md bg-green-50 text-green-700 text-sm font-medium border border-green-100">
             Complied:{" "}
-            {groupedChecklist.filter((row: any) => row.status === "Complied").length}
+            <span className="font-semibold">
+              {groupedChecklist.filter((row: any) => row.status === "Complied").length}
+            </span>
           </div>
-          <div className="px-3.5 py-1.5 rounded-lg bg-red-100 text-red-800 font-semibold text-sm shadow-sm">
+          <div className="px-3 py-1 rounded-md bg-red-50 text-red-700 text-sm font-medium border border-red-100">
             Pending:{" "}
-            {groupedChecklist.filter(
-              (row: any) => !allowedFreezeStatuses.includes(row.status)
-            ).length}
+            <span className="font-semibold">
+              {groupedChecklist.filter(
+                (row: any) => !allowedFreezeStatuses.includes(row.status)
+              ).length}
+            </span>
           </div>
         </div>
       )}
 
       {/* TABLE — now fills remaining height */}
-      <div className="flex-1 overflow-hidden px-4 pt-3 pb-2">
-        {!hasDocuments ? (
-          <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-gray-700">
-                No documents uploaded for this audit period
-              </div>
-              <div className="text-sm text-gray-400 mt-2">
-                Vendor has not submitted any compliance documents yet.
-              </div>
-            </div>
-          </div>
-        ) : (
-          <Table
-            rowClassName={() => "hover:bg-blue-50/70 transition-colors"}
-            columns={columns}
-            dataSource={groupedChecklist}
-            rowKey="id"
-            pagination={false}
-            bordered
-            size="small"
-            className="audit-table-highlighted"
-            scroll={{
-              y: "calc(100vh - 380px)", // fills available space cleanly
-              x: 1800,
-            }}
-          />
-        )}
+{/* TABLE — now fills remaining height */}
+<div className="flex-1 overflow-hidden px-4 pt-2 pb-3">
+  {!hasDocuments ? (
+    <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
+      <div className="text-center">
+        <div className="text-lg font-semibold text-gray-700">
+          No documents uploaded for this audit period
+        </div>
+        <div className="text-sm text-gray-400 mt-2">
+          Vendor has not submitted any compliance documents yet.
+        </div>
       </div>
+    </div>
+  ) : (
+    <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <Table
+        rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
+        columns={columns}
+        dataSource={groupedChecklist}
+        rowKey="id"
+        pagination={false}
+        bordered
+        size="small"
+        className="audit-table-highlighted"
+        scroll={{
+          y: "calc(88vh - 340px)",   // ← better calculation for modal height
+          x: 1800,
+        }}
+      />
+    </div>
+  )}
+</div>
     </div>
 
     {/* RIGHT SIDEBAR — Compliance Summary + Actions (always visible) */}
@@ -1781,7 +1788,7 @@ const canFreezeReport =
       <div className="p-4 flex flex-col gap-3 h-full overflow-y-auto">
 
 {/* Compliance Summary Card */}
-<div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+<div className="bg-gray-50/50 border border-gray-200 rounded-xl p-4 shadow-sm">
   <div className="flex justify-between items-center mb-3">
     <h3 className="font-semibold text-gray-800 text-[15px]">
       Compliance Summary
@@ -1790,18 +1797,10 @@ const canFreezeReport =
     <div className="flex gap-2">
       {isEditingCompliance ? (
         <>
-          <Button
-            size="small"
-            type="primary"
-            onClick={handleSaveComplianceSummary}
-          >
+          <Button size="small" type="primary" onClick={handleSaveComplianceSummary}>
             Save
           </Button>
-
-          <Button
-            size="small"
-            onClick={() => setIsEditingCompliance(false)}
-          >
+          <Button size="small" onClick={() => setIsEditingCompliance(false)}>
             Cancel
           </Button>
         </>
@@ -1817,6 +1816,7 @@ const canFreezeReport =
       )}
     </div>
   </div>
+
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <div>

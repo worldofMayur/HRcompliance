@@ -109,6 +109,24 @@
   padding-bottom: 10px !important;
 }
 
+.audit-table-highlighted .ant-table-thead > tr > th {
+  background: #f8fafc !important;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 12.5px;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.audit-table-highlighted .ant-table-tbody > tr > td {
+  vertical-align: top;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.audit-table-highlighted .ant-table {
+  border-radius: 0;
+}
+
 .tableCheckbox:checked ~ span span {
   @apply opacity-100;
 }
