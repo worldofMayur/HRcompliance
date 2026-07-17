@@ -1759,7 +1759,7 @@ const canFreezeReport =
 </div>
 
 {/* ================= 50/50 LAYOUT (Left + Right) ================= */}
-<div className="mt-3 flex gap-4 items-start">
+<div className="mt-2 flex gap-4 items-start">
   {/* LEFT 50% - Vendor Remark History + Buttons */}
   <div className="flex-1 flex flex-col gap-2">
 
@@ -1770,7 +1770,7 @@ const canFreezeReport =
           <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
         </div>
 
-        <div className="space-y-1.5 max-h-20 overflow-y-auto border border-amber-200 rounded-lg p-2 bg-amber-50">
+        <div className="space-y-1.5 max-h-16 overflow-y-auto border border-amber-200 rounded-lg p-2 bg-amber-50">
           {remarksData.map((remark, index) => (
             <Tooltip key={index} title={remark.remark}>
               <div className="px-3 py-2 bg-white border border-amber-200 rounded-md text-sm">
