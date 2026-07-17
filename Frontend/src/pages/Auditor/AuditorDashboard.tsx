@@ -2014,31 +2014,7 @@ const canFreezeReport =
     {/* Action buttons - stuck at bottom */}
     <div className="flex flex-col gap-2.5 pt-4">
 
-      <Upload
-        disabled={isAuditLocked && !manualEditMode}
-        multiple={false}
-        beforeUpload={(file) => {
-          const exceptionalRows = groupedChecklist.filter(
-            (row: any) =>
-              row.status === "Exceptional Approval - Delayed Complied"
-          );
 
-          const updatedFiles: any = { ...exceptionalFiles };
-
-          exceptionalRows.forEach((row: any) => {
-            updatedFiles[row.id] = file;
-          });
-
-          setExceptionalFiles(updatedFiles);
-          message.success(`${file.name} attached`);
-          return false;
-        }}
-        showUploadList={false}
-      >
-        <Button icon={<UploadOutlined />} block className="h-9 text-sm">
-          Upload Supporting Document
-        </Button>
-      </Upload>
 
       {selectedExceptionalFile && (
         <div className="text-xs text-green-600 px-1 -mt-1">
@@ -2050,27 +2026,69 @@ const canFreezeReport =
 </div>
   </div>
 
-  {/* ========== 3. BOTTOM ACTION BAR ========== */}
-  <div className="shrink-0 flex justify-end gap-3 px-5 py-3 border-t bg-white">
-    {hasDocuments && (
+ {/* ========== 3. BOTTOM ACTION BAR ========== */}
+<div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
+
+  {/* Show Upload only when Exceptional Approval is selected */}
+  {groupedChecklist.some(
+    (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+  ) && (
+    <Upload
+      disabled={isAuditLocked && !manualEditMode}
+      multiple={false}
+      beforeUpload={(file) => {
+        const exceptionalRows = groupedChecklist.filter(
+          (row: any) =>
+            row.status === "Exceptional Approval - Delayed Complied"
+        );
+
+        const updatedFiles: any = { ...exceptionalFiles };
+
+        exceptionalRows.forEach((row: any) => {
+          updatedFiles[row.id] = file;
+        });
+
+        setExceptionalFiles(updatedFiles);
+        message.success(`${file.name} attached`);
+        return false;
+      }}
+      showUploadList={false}
+    >
       <Button
-        type="primary"
-        className={`
-          h-9 px-6 text-sm font-medium
-          ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}
-        `}
-        loading={loading}
-        disabled={isAuditLocked && !manualEditMode}
-        onClick={handleSubmit}
+        icon={<UploadOutlined />}
+        className="h-9 text-sm"
       >
-        {notificationDocs.length > 0
-          ? "Review Reuploaded Documents"
-          : canFreezeReport
-          ? "Freeze Report & Issue CC"
-          : "Save & Submit"}
+        Upload Supporting Document
       </Button>
-    )}
-  </div>
+    </Upload>
+  )}
+
+  {/* Show selected file name if any */}
+  {selectedExceptionalFile && (
+    <span className="text-xs text-green-600">
+      {selectedExceptionalFile.name}
+    </span>
+  )}
+
+  {hasDocuments && (
+    <Button
+      type="primary"
+      className={`
+        h-9 px-6 text-sm font-medium
+        ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}
+      `}
+      loading={loading}
+      disabled={isAuditLocked && !manualEditMode}
+      onClick={handleSubmit}
+    >
+      {notificationDocs.length > 0
+        ? "Review Reuploaded Documents"
+        : canFreezeReport
+        ? "Freeze Report & Issue CC"
+        : "Save & Submit"}
+    </Button>
+  )}
+</div>
 </div>
 
 </Modal>
