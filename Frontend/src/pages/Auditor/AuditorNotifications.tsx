@@ -1032,6 +1032,30 @@ n.data?.status === "CC_ISSUED"
                               </span>
                             </div>
 
+                            <div>
+                              <span className="font-semibold text-gray-700">
+                                Workflow:
+                              </span>{" "}
+                              <span
+                                className={`
+                                  rounded-md px-2 py-1 text-[11px] font-medium
+                                  ${
+                                    n.data?.workflow_status === "REUPLOAD_REQUESTED"
+                                      ? "bg-red-100 text-red-700"
+                                      : n.data?.workflow_status === "REUPLOADED"
+                                      ? "bg-orange-100 text-orange-700"
+                                      : n.data?.workflow_status === "SUBMITTED"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : n.data?.workflow_status === "FROZEN"
+                                      ? "bg-purple-100 text-purple-700"
+                                      : "bg-green-100 text-green-700"
+                                  }
+                                `}
+                              >
+                                {n.data?.workflow_status || "-"}
+                              </span>
+                            </div>
+
                           </div>
 
                         </div>

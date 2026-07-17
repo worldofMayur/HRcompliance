@@ -425,7 +425,7 @@ const getRelativeTime = (date: string) => {
   )}
 
   <span className="mt-1 text-[11px] text-gray-400">
-    Auto refresh every 10s
+    Auto refresh every 10s • Last updated {currentTime}
   </span>
 </div>
 </div>
@@ -791,7 +791,22 @@ const getRelativeTime = (date: string) => {
                           • {d.audit_period}
                         </span>
                       )}
+
+                      {d.document_count !== undefined && (
+                        <span className="text-[11px] text-blue-600 font-medium">
+                          • {d.document_count} Documents
+                        </span>
+                      )}
                     </div>
+
+                    {/* WORKFLOW STATUS */}
+                    {d.workflow_status && (
+                      <div className="mt-2">
+                        <span className="rounded-md bg-indigo-100 px-2 py-1 text-[10px] font-medium text-indigo-700">
+                          {d.workflow_status}
+                        </span>
+                      </div>
+                    )}
 
                     {/* ISSUE TAGS */}
                     {filteredEntries.length > 0 ? (

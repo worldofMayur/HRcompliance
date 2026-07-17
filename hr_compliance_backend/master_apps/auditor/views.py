@@ -3089,10 +3089,7 @@ class VendorNotificationAPIView(APIView):
     def get(self, request):
 
         from master_apps.vendor.models import SystemNotification
-
-        # =====================================
-        # ROLE BASED NOTIFICATION TYPE
-        # =====================================
+        from master_apps.vendor.compliance_models import VendorComplianceSubmission
 
         notification_type = (
             "AUDITOR"
@@ -3100,26 +3097,66 @@ class VendorNotificationAPIView(APIView):
             else "VENDOR"
         )
 
-        data = SystemNotification.objects.filter(
-            user=request.user,
-            type=notification_type
-        ).order_by("-created_at")
+        notifications = (
+            SystemNotification.objects.filter(
+                user=request.user,
+                type=notification_type
+            )
+            .order_by("-created_at")
+        )
 
-        return Response([
-            {
+        response = []
+
+        for n in notifications:
+
+            data = dict(n.data or {})
+
+            vendor_id = data.get("vendor_id")
+
+            if vendor_id:
+
+                submissions = VendorComplianceSubmission.objects.filter(
+                    vendor_id=vendor_id,
+                    branch_id=n.branch_id,
+                    audit_period__iexact=n.audit_period,
+                )
+
+                data["document_count"] = submissions.count()
+
+                data["reuploaded_count"] = submissions.filter(
+                    is_reuploaded=True
+                ).count()
+
+                data["cc_issued"] = submissions.filter(
+                    is_cc_issued=True
+                ).exists()
+
+                data["is_frozen"] = submissions.filter(
+                    is_frozen=True
+                ).exists()
+
+                latest = submissions.order_by("-submitted_at").first()
+
+                if latest:
+
+                    data["workflow_status"] = latest.workflow_status
+                    data["vendor_remark"] = latest.general_remark
+                    data["reupload_remark"] = latest.reupload_remark
+
+            response.append({
+
                 "id": n.id,
                 "title": n.title,
                 "message": n.message,
-                "data": n.data,
+                "data": data,
                 "created_at": n.created_at,
                 "is_read": n.is_read,
                 "type": n.type,
                 "audit_period": n.audit_period,
                 "branch_id": n.branch_id,
-            }
-            for n in data
-        ])
+            })
 
+        return Response(response)
 
 class MarkNotificationReadAPIView(APIView):
     permission_classes = [IsAuthenticated]

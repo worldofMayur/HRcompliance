@@ -380,7 +380,11 @@ class VendorSubmitComplianceAPIView(APIView):
 
                     "audit_period": selected_period,
 
-                    "document_count": document_count,
+                    "document_count": VendorComplianceSubmission.objects.filter(
+                        vendor=vendor,
+                        branch_id=branch_id,
+                        audit_period__iexact=selected_period,
+                    ).count(),
 
                     "submitted_at": now().strftime(
                         "%d-%b-%Y %I:%M %p"
@@ -844,6 +848,11 @@ def reupload_compliance(request):
                     "reuploaded": True,
 
                     "document_id": submission.document.id,
+                    "document_count": VendorComplianceSubmission.objects.filter(
+                        vendor=vendor,
+                        branch_id=branch_id,
+                        audit_period__iexact=selected_period,
+                    ).count(),
 
                     "submission_id": submission.id,
 
