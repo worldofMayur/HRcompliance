@@ -551,6 +551,13 @@ const getPeriodOptions = () => {
   };
 
 const handleSubmit = () => {
+  // Reupload flow -> submit directly
+  if (effectiveReuploadMode) {
+    submitCompliance();
+    return;
+  }
+
+  // First-time submission -> show Compliance Summary
   setSummaryOpen(true);
 };
 
@@ -604,46 +611,47 @@ const submitCompliance = async () => {
     formData.append("selected_period", selectedPeriod);
     formData.append("general_remark", generalRemark);
 
-    formData.append(
-      "male_employees",
-      String(complianceSummary.male_employees ?? "")
-    );
+    if (!effectiveReuploadMode) {
+      formData.append(
+        "male_employees",
+        String(complianceSummary.male_employees ?? "")
+      );
 
-    formData.append(
-      "female_employees",
-      String(complianceSummary.female_employees ?? "")
-    );
+      formData.append(
+        "female_employees",
+        String(complianceSummary.female_employees ?? "")
+      );
 
-    formData.append(
-      "gross_wages",
-      String(complianceSummary.gross_wages ?? "")
-    );
+      formData.append(
+        "gross_wages",
+        String(complianceSummary.gross_wages ?? "")
+      );
 
-    formData.append(
-      "net_wages",
-      String(complianceSummary.net_wages ?? "")
-    );
+      formData.append(
+        "net_wages",
+        String(complianceSummary.net_wages ?? "")
+      );
 
-    formData.append(
-      "pf_remittance_date",
-      complianceSummary.pf_remittance_date
-    );
+      formData.append(
+        "pf_remittance_date",
+        complianceSummary.pf_remittance_date
+      );
 
-    formData.append(
-      "esic_remittance_date",
-      complianceSummary.esic_remittance_date
-    );
+      formData.append(
+        "esic_remittance_date",
+        complianceSummary.esic_remittance_date
+      );
 
-    formData.append(
-      "rc_remittance_date",
-      complianceSummary.rc_remittance_date
-    );
+      formData.append(
+        "rc_remittance_date",
+        complianceSummary.rc_remittance_date
+      );
 
-    formData.append(
-      "lwf_remittance_date",
-      complianceSummary.lwf_remittance_date
-    );
-
+      formData.append(
+        "lwf_remittance_date",
+        complianceSummary.lwf_remittance_date
+      );
+    }
     formData.append(
       "cc_emails",
       JSON.stringify(ccEmails || [])
