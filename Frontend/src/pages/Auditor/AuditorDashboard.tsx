@@ -1679,8 +1679,8 @@ const canFreezeReport =
   <div className="flex flex-col h-[calc(100vh-110px)]">
       {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
   <div
-      className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0"
-      style={{ maxHeight: 330 }}
+    className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0 overflow-y-auto"
+    style={{ maxHeight: "480px" }}
   >
 
   <div className="flex flex-wrap gap-8 text-sm">
@@ -1754,12 +1754,7 @@ const canFreezeReport =
 
 </div>
 
-<div
-    className="mt-4 flex justify-between items-start gap-6"
-    style={{
-        minHeight: 520,
-    }}
->
+<div className="mt-4 flex flex-col lg:flex-row justify-between items-start gap-6">
 
 <div className="flex-1">
     {remarksData.length > 0 && (
@@ -1831,7 +1826,7 @@ const canFreezeReport =
 
   </div>
 
-<div className="w-[380px] flex-shrink-0">
+<div className="w-full lg:w-[380px] flex-shrink-0 max-h-[420px] overflow-y-auto pr-2">
 <div className="flex flex-col gap-3">
 
 {/* Compliance Summary Card */}
@@ -2021,59 +2016,51 @@ const canFreezeReport =
 
 </div>
 
-<Button
-    type="primary"
-    icon={<DownloadOutlined />}
-    onClick={downloadZip}
->
-    Download Audit Documents
-</Button>
-
-<Upload
-    disabled={isAuditLocked && !manualEditMode}
-    multiple={false}
-    beforeUpload={(file) => {
-
-        const exceptionalRows =
-            groupedChecklist.filter(
-                (row: any) =>
-                    row.status ===
-                    "Exceptional Approval - Delayed Complied"
-            );
-
-        const updatedFiles = {
-            ...exceptionalFiles,
-        };
-
-        exceptionalRows.forEach((row: any) => {
-            updatedFiles[row.id] = file;
-        });
-
-        setExceptionalFiles(updatedFiles);
-
-        message.success(`${file.name} attached`);
-
-        return false;
-    }}
-    showUploadList={false}
->
-    <Button icon={<UploadOutlined />}>
-        Upload Supporting Document
-    </Button>
-
-    {selectedExceptionalFile && (
-        <div className="text-xs text-green-600 mt-1">
-            Selected: {selectedExceptionalFile.name}
-        </div>
-    )}
-</Upload>
-
-
 </div> {/* max-w-[420px] */}
 
 </div> {/* w-[45%] */}
 
 </div> {/* flex justify-between */}
+
+{/* ✅ CLEAN ACTION BAR - Download & Upload */}
+<div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+  <Button
+    type="primary"
+    icon={<DownloadOutlined />}
+    onClick={downloadZip}
+    loading={downloading}
+  >
+    Download Audit Documents
+  </Button>
+
+  <Upload
+    disabled={isAuditLocked && !manualEditMode}
+    multiple={false}
+    beforeUpload={(file) => {
+      const exceptionalRows = groupedChecklist.filter(
+        (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+      );
+      const updatedFiles = { ...exceptionalFiles };
+      exceptionalRows.forEach((row: any) => {
+        updatedFiles[row.id] = file;
+      });
+      setExceptionalFiles(updatedFiles);
+      message.success(`${file.name} attached`);
+      return false;
+    }}
+    showUploadList={false}
+  >
+    <Button icon={<UploadOutlined />}>
+      Upload Supporting Document
+    </Button>
+  </Upload>
+
+  {selectedExceptionalFile && (
+    <span className="text-xs text-green-600 ml-2">
+      Selected: {selectedExceptionalFile.name}
+    </span>
+  )}
+</div>
 
 </div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
     {/* 🔥 SCROLL AREA */}
