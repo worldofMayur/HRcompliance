@@ -1847,7 +1847,7 @@ const canFreezeReport =
         border
         rounded-xl
         shadow-sm
-        h-250px
+        h-50px
         flex
         flex-col
         "
