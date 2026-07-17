@@ -1754,7 +1754,7 @@ const canFreezeReport =
 </div>
 
 {/* ================= 50/50 LAYOUT (Left + Right) ================= */}
-<div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
   {/* LEFT 50% - Vendor Remark History + Buttons */}
   <div className="flex flex-col gap-4">
@@ -1824,7 +1824,7 @@ const canFreezeReport =
   </div>
 
   {/* RIGHT 50% - Compliance Summary (Taller) */}
-  <div className="flex flex-col h-full">
+  <div className="flex flex-col">
     <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden flex-1 flex flex-col">
 
       {/* Header */}
