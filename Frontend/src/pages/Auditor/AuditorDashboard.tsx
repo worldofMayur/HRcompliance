@@ -1754,9 +1754,9 @@ const canFreezeReport =
 
 </div>
 
-<div className="mt-4 flex flex-col lg:flex-row justify-between items-start gap-6">
+<div className="mt-4 flex flex-col lg:flex-row justify-between items-stretch gap-6">
 
-<div className="flex-1">
+<div className="flex-1 min-h-[320px]">
     {remarksData.length > 0 && (
 
       <>
