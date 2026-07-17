@@ -1087,6 +1087,78 @@ return hasExceptional ? (
                 </div>
               </div>
 
+{/* COMPLIANCE SUMMARY */}
+
+<div
+  className="
+    rounded-3xl
+    border border-blue-200
+    bg-blue-50
+    p-5
+  "
+>
+  <h3
+    className="
+      mb-4
+      flex items-center
+      gap-2
+      text-base
+      font-semibold
+      text-blue-900
+    "
+  >
+    <SafetyCertificateOutlined />
+    Compliance Summary
+  </h3>
+
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+
+    {[
+      {
+        label: "Male Employees",
+        value: selectedReport.compliance_summary?.male_employees,
+      },
+      {
+        label: "Female Employees",
+        value: selectedReport.compliance_summary?.female_employees,
+      },
+      {
+        label: "Gross Wages",
+        value: selectedReport.compliance_summary?.gross_wages,
+      },
+      {
+        label: "Net Wages",
+        value: selectedReport.compliance_summary?.net_wages,
+      },
+      {
+        label: "PF Remittance Date",
+        value: selectedReport.compliance_summary?.pf_remittance_date,
+      },
+      {
+        label: "ESIC Remittance Date",
+        value: selectedReport.compliance_summary?.esic_remittance_date,
+      },
+      {
+        label: "RC Remittance Date",
+        value: selectedReport.compliance_summary?.rc_remittance_date,
+      },
+      {
+        label: "LWF Remittance Date",
+        value: selectedReport.compliance_summary?.lwf_remittance_date,
+      },
+    ].map((item) => (
+      <div key={item.label}>
+        <div className="mb-1 text-xs font-semibold uppercase text-gray-500">
+          {item.label}
+        </div>
+        <div className="text-sm font-semibold text-gray-900">
+          {item.value || "-"}
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
 {/* COMPLIANCE TABLE */}
 
 <div

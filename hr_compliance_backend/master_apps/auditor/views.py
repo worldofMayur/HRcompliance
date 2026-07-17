@@ -2112,11 +2112,16 @@ class UpdateComplianceSummaryAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        submission = VendorComplianceSubmission.objects.filter(
-            branch_id=branch_id,
-            vendor_id=vendor_id,
-            audit_period=audit_period,
-        ).first()
+        submission = (
+            VendorComplianceSubmission.objects.filter(
+                vendor_id=vendor_id,
+                branch_id=branch_id,
+                audit_period__iexact=audit_period,
+            )
+            .exclude(frozen_at__isnull=True)
+            .order_by("-frozen_at")
+            .first()
+        )
 
         if not submission:
             return Response(
@@ -2129,10 +2134,18 @@ class UpdateComplianceSummaryAPIView(APIView):
         submission.gross_wages = request.data.get("gross_wages")
         submission.net_wages = request.data.get("net_wages")
 
-        submission.pf_remittance_date = request.data.get("pf_remittance_date") or None
-        submission.esic_remittance_date = request.data.get("esic_remittance_date") or None
-        submission.rc_remittance_date = request.data.get("rc_remittance_date") or None
-        submission.lwf_remittance_date = request.data.get("lwf_remittance_date") or None
+        submission.pf_remittance_date = (
+            request.data.get("pf_remittance_date") or None
+        )
+        submission.esic_remittance_date = (
+            request.data.get("esic_remittance_date") or None
+        )
+        submission.rc_remittance_date = (
+            request.data.get("rc_remittance_date") or None
+        )
+        submission.lwf_remittance_date = (
+            request.data.get("lwf_remittance_date") or None
+        )
 
         submission.save()
 
@@ -2140,8 +2153,8 @@ class UpdateComplianceSummaryAPIView(APIView):
             {"message": "Compliance Summary updated successfully"},
             status=status.HTTP_200_OK,
         )
-
-# ================= LIST =================
+        
+        # ================= LIST =================
 class AuditorListAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -3201,8 +3214,9 @@ class FreezeAuditReportsAPIView(APIView):
 
             submission = (
                 VendorComplianceSubmission.objects.filter(
+                    vendor_id=mapping.vendor_id if mapping else None,
                     branch_id=entry.branch_id,
-                    audit_period__iexact=audit_period
+                    audit_period__iexact=audit_period,
                 )
                 .exclude(frozen_at__isnull=True)
                 .order_by("-frozen_at")
@@ -3250,6 +3264,16 @@ class FreezeAuditReportsAPIView(APIView):
                         if submission
                         else None
                     ),
+                    "compliance_summary": {
+                        "male_employees": submission.male_employees if submission else None,
+                        "female_employees": submission.female_employees if submission else None,
+                        "gross_wages": submission.gross_wages if submission else None,
+                        "net_wages": submission.net_wages if submission else None,
+                        "pf_remittance_date": submission.pf_remittance_date if submission else None,
+                        "esic_remittance_date": submission.esic_remittance_date if submission else None,
+                        "rc_remittance_date": submission.rc_remittance_date if submission else None,
+                        "lwf_remittance_date": submission.lwf_remittance_date if submission else None,
+                    },
 
                     "entries": [],
                 }
