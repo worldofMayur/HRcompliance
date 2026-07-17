@@ -1791,7 +1791,6 @@ const canFreezeReport =
   )}
 </div>
     </div>
-
 {/* RIGHT SIDEBAR */}
 <div className="w-[360px] shrink-0 border-l bg-gray-50/40 flex flex-col">
   <div className="p-4 flex flex-col h-full">
@@ -1806,17 +1805,10 @@ const canFreezeReport =
         <div className="flex gap-2">
           {isEditingCompliance ? (
             <>
-              <Button
-                size="small"
-                type="primary"
-                onClick={handleSaveComplianceSummary}
-              >
+              <Button size="small" type="primary" onClick={handleSaveComplianceSummary}>
                 Save
               </Button>
-              <Button
-                size="small"
-                onClick={() => setIsEditingCompliance(false)}
-              >
+              <Button size="small" onClick={() => setIsEditingCompliance(false)}>
                 Cancel
               </Button>
             </>
@@ -2018,11 +2010,9 @@ const canFreezeReport =
       </div>
     </div>
 
-    {/* Spacer */}
     <div className="flex-1" />
   </div>
 </div>
-
 
  {/* ========== 3. BOTTOM ACTION BAR ========== */}
 <div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
