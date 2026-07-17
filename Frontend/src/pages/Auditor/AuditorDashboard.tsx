@@ -1676,7 +1676,12 @@ const canFreezeReport =
 >
 
   {/* 🔥 WRAPPER (IMPORTANT FOR SCROLL) */}
-  <div className="flex flex-col h-[calc(100vh-110px)]">
+<div
+        className="flex flex-col"
+        style={{
+            height: "calc(100vh - 110px)",
+        }}
+    >
       {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
     <div
       className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0"
@@ -1754,15 +1759,9 @@ const canFreezeReport =
 </div>
 
 {/* ================= 50/50 LAYOUT (Left + Right) ================= */}
-<div
-    className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4"
-    style={{
-        alignItems: "stretch",
-        minHeight: 340,
-    }}
->
+<div className="mt-3 flex gap-5 items-start">
   {/* LEFT 50% - Vendor Remark History + Buttons */}
-  <div className="flex flex-col h-full gap-3">
+  <div className="flex-1 flex flex-col gap-3">
 
     {remarksData.length > 0 && (
       <>
@@ -1829,9 +1828,8 @@ const canFreezeReport =
   </div>
 
   {/* RIGHT 50% - Compliance Summary (Taller) */}
-  <div className="flex flex-col justify-start h-full">
-    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden flex-1 flex flex-col">
-
+  <div className="w-[380px] flex-shrink-0">
+<div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-2">
         <div>
@@ -1856,12 +1854,7 @@ const canFreezeReport =
       </div>
 
       {/* Form Content */}
-      <div
-          className="p-3 overflow-y-auto"
-          style={{
-              maxHeight: 270,
-          }}
-      >
+      <div className="p-3">
 
         <div className="grid grid-cols-2 gap-3 text-sm">
 
@@ -2073,7 +2066,7 @@ const canFreezeReport =
                   bordered
                   size="small"
                   scroll={{
-                      y: "calc(100vh - 380px)",
+                      y: "calc(100vh - 450px)",
                       x: "max-content",
                   }}
                 />
