@@ -651,6 +651,9 @@ const loadChecklist = async (
         )
       ]);
 
+      console.log("Checklist API Response:", checklistRes.data);
+      console.log("Compliance Summary:", checklistRes.data.compliance_summary);
+
     // ======================================
     // NO DOCUMENTS CASE
     // ======================================
