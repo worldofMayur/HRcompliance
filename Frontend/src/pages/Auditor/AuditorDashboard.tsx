@@ -1754,7 +1754,12 @@ const canFreezeReport =
 
 </div>
 
-<div className="mt-4 flex justify-between items-start gap-6">
+<div
+    className="mt-4 flex justify-between items-start gap-6"
+    style={{
+        minHeight: 520,
+    }}
+>
 
 <div className="flex-1">
     {remarksData.length > 0 && (
@@ -1878,7 +1883,7 @@ const canFreezeReport =
         </h3>
     </div>
 
-    <div className="grid grid-cols-2 gap-4 p-5 text-sm">
+    <div className="grid grid-cols-2 gap-3 p-3 text-sm">
 
         <div>
             <div className="text-gray-500 mb-1">Male Employees</div>
@@ -1959,7 +1964,7 @@ const canFreezeReport =
         </div>
 
         <div className="col-span-2 border-t pt-3 mt-2">
-            <div className="font-semibold text-gray-700 mb-3">
+            <div className="font-semibold text-gray-700 mb-2">
                 Remittance Dates
             </div>
         </div>
