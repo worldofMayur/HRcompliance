@@ -1088,7 +1088,7 @@ if (exceptionalFiles) {
 const columns = [
 {
   title: "Audit Requirement",
-  width: 200,          // decreased
+  width: 150,          // decreased
   render: (_: any, record: any) => (
     <div className="space-y-1">
       <div className="text-xs text-gray-600">
