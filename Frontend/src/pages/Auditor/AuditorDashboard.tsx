@@ -1829,8 +1829,8 @@ const canFreezeReport =
   </div>
 
 {/* RIGHT 50% - Compliance Summary (Narrow & Scrollable) */}
-  <div className="w-[190px] flex-shrink-0 self-start">
-    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md flex flex-col max-h-[350px] overflow-hidden">
+<div className="w-[250px] flex-shrink-0 mt-0">
+      <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md flex flex-col max-h-[350px] overflow-hidden">
       
       {/* Header - Shrink-0 keeps it fixed at the top while the rest scrolls */}
       <div className="flex flex-col items-start justify-center border-b px-3 py-2 gap-2 shrink-0 bg-white z-10">
@@ -1975,7 +1975,7 @@ const canFreezeReport =
       </div>
     </div>
   </div>
-  
+
 </div>
 
 </div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
