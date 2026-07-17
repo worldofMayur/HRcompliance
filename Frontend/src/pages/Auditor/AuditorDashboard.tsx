@@ -1,9 +1,23 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { Table, Input, Button, message, Modal, Tooltip } from "antd";
+import {
+    Table,
+    Input,
+    InputNumber,
+    Button,
+    message,
+    Modal,
+    Tooltip,
+} from "antd";
 import { Upload } from "antd";
-import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+    DownloadOutlined,
+    SyncOutlined,
+    UploadOutlined,
+    EditOutlined,
+    SaveOutlined
+} from "@ant-design/icons";
 const API_BASE = import.meta.env.VITE_API_URL;
 export default function AuditorDashboard() {
   const token = localStorage.getItem("access_token");
@@ -66,6 +80,17 @@ export default function AuditorDashboard() {
     rc_remittance_date: "",
     lwf_remittance_date: "",
   });
+
+  const [isEditingCompliance, setIsEditingCompliance] = useState(false);
+  const updateCompliance = (
+      field: keyof typeof complianceSummary,
+      value: any
+  ) => {
+      setComplianceSummary(prev => ({
+          ...prev,
+          [field]: value,
+      }));
+  };
 
   const isAuditLocked =
     (
@@ -834,6 +859,37 @@ const handleShowAuditor = async () => {
     };
 
   /* ================= SUBMIT ================= */
+
+
+const handleSaveComplianceSummary = async () => {
+    try {
+
+        await axios.put(
+            `${API_BASE}/api/auditor/update-compliance-summary/`,
+            {
+                branch_id: selectedBranch,
+                vendor_id: selectedVendor,
+                audit_period: auditPeriod,
+                ...complianceSummary,
+            },
+            authHeader
+        );
+
+        message.success(
+            "Compliance Summary updated successfully."
+        );
+
+        setIsEditingCompliance(false);
+
+    } catch (err) {
+
+        console.error(err);
+
+        message.error(
+            "Failed to update Compliance Summary."
+        );
+    }
+};
 
 const handleSubmit = async () => {
 
@@ -1771,62 +1827,240 @@ const canFreezeReport =
 <div className="w-[35%] flex justify-end">
 <div className="w-full max-w-[380px] flex flex-col gap-3">
 
-  <Button
+{/* Compliance Summary Card */}
+
+<div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden">
+
+    <div className="flex items-center justify-between border-b px-4 py-3">
+        <div>
+            <div className="text-lg font-bold text-blue-700">
+                Compliance Summary
+            </div>
+            <div className="text-xs text-gray-500">
+                Vendor submitted details
+            </div>
+        </div>
+
+        {!isEditingCompliance ? (
+            <Button
+                icon={<EditOutlined />}
+                onClick={() => setIsEditingCompliance(true)}
+            >
+                Edit
+            </Button>
+        ) : (
+            <div className="flex gap-2">
+                <Button
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    onClick={handleSaveComplianceSummary}
+                >
+                    Save
+                </Button>
+
+                <Button
+                    onClick={() => {
+                        setIsEditingCompliance(false);
+                        loadChecklist();
+                    }}
+                >
+                    Cancel
+                </Button>
+            </div>
+        )}
+    </div>
+
+    <div className="col-span-2">
+        <h3 className="font-semibold text-blue-700">
+            Employee Information
+        </h3>
+    </div>
+
+    <div className="grid grid-cols-2 gap-4 p-5 text-sm">
+
+        <div>
+            <div className="text-gray-500 mb-1">Male Employees</div>
+
+            <InputNumber
+                className="w-full"
+                min={0}
+                controls={false}
+                value={complianceSummary.male_employees}
+                disabled={!isEditingCompliance}
+                onChange={(value) =>
+                    updateCompliance("male_employees", value)
+                }
+            />
+        </div>
+
+        <div>
+            <div className="text-gray-500 mb-1">Female Employees</div>
+
+            <InputNumber
+                className="w-full"
+                min={0}
+                controls={false}
+                value={complianceSummary.female_employees}
+                disabled={!isEditingCompliance}
+                onChange={(value) =>
+                    updateCompliance("female_employees", value)
+                }
+            />
+        </div>
+
+        <div className="col-span-2 border-t pt-3">
+            <h3 className="font-semibold text-blue-700">
+                Wage Details
+            </h3>
+        </div>
+
+        <div>
+            <div className="text-gray-500 mb-1">Gross Wages</div>
+
+            <InputNumber
+                className="w-full"
+                min={0}
+                controls={false}
+                formatter={(v) =>
+                    v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""
+                }
+                parser={(v) =>
+                    Number(v?.replace(/[₹,\s]/g, "") || 0)
+                }
+                value={complianceSummary.gross_wages}
+                disabled={!isEditingCompliance}
+                onChange={(value) =>
+                    updateCompliance("gross_wages", value)
+                }
+            />
+        </div>
+
+        <div>
+            <div className="text-gray-500 mb-1">Net Wages</div>
+
+            <InputNumber
+                className="w-full"
+                min={0}
+                controls={false}
+                formatter={(v) =>
+                    v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""
+                }
+                parser={(v) =>
+                    Number(v?.replace(/[₹,\s]/g, "") || 0)
+                }
+                value={complianceSummary.net_wages}
+                disabled={!isEditingCompliance}
+                onChange={(value) =>
+                    updateCompliance("net_wages", value)
+                }
+            />
+        </div>
+
+        <div className="col-span-2 border-t pt-3 mt-2">
+            <div className="font-semibold text-gray-700 mb-3">
+                Remittance Dates
+            </div>
+        </div>
+
+        <div>
+            <div className="text-gray-500 mb-1">PF Date</div>
+            <Input
+                type="date"
+                value={complianceSummary.pf_remittance_date}
+                disabled={!isEditingCompliance}
+                onChange={(e) =>
+                    updateCompliance("pf_remittance_date", e.target.value)
+                }
+            />
+        </div>
+
+        <div>
+            <div className="text-gray-500 mb-1">ESIC Date</div>
+            <Input
+                type="date"
+                value={complianceSummary.esic_remittance_date}
+                disabled={!isEditingCompliance}
+                onChange={(e) =>
+                    updateCompliance("esic_remittance_date", e.target.value)
+                }
+            />
+        </div>
+
+        <div>
+            <div className="text-gray-500 mb-1">RC Date</div>
+            <Input
+                type="date"
+                value={complianceSummary.rc_remittance_date}
+                disabled={!isEditingCompliance}
+                onChange={(e) =>
+                    updateCompliance("rc_remittance_date", e.target.value)
+                }
+            />
+        </div>
+
+        <div>
+            <div className="text-gray-500 mb-1">LWF Date</div>
+            <Input
+                type="date"
+                value={complianceSummary.lwf_remittance_date}
+                disabled={!isEditingCompliance}
+                onChange={(e) =>
+                    updateCompliance("lwf_remittance_date", e.target.value)
+                }
+            />
+        </div>
+
+    </div>
+
+</div>
+
+<Button
     type="primary"
     icon={<DownloadOutlined />}
     onClick={downloadZip}
-  >
+>
     Download Audit Documents
-  </Button>
+</Button>
 
-  
-
-
-    <Upload
-      disabled={
-        isAuditLocked &&
-        !manualEditMode
-      }
-      multiple={false}
-      beforeUpload={(file) => {
+<Upload
+    disabled={isAuditLocked && !manualEditMode}
+    multiple={false}
+    beforeUpload={(file) => {
 
         const exceptionalRows =
-          groupedChecklist.filter(
-            (row: any) =>
-              row.status ===
-              "Exceptional Approval - Delayed Complied"
-          );
+            groupedChecklist.filter(
+                (row: any) =>
+                    row.status ===
+                    "Exceptional Approval - Delayed Complied"
+            );
 
-        const updatedFiles: any = {
-          ...exceptionalFiles
+        const updatedFiles = {
+            ...exceptionalFiles,
         };
 
         exceptionalRows.forEach((row: any) => {
-          updatedFiles[row.id] = file;
+            updatedFiles[row.id] = file;
         });
 
         setExceptionalFiles(updatedFiles);
 
-        message.success(
-          `${file.name} attached`
-        );
+        message.success(`${file.name} attached`);
 
         return false;
-      }}
-      showUploadList={false}
-    >
-
+    }}
+    showUploadList={false}
+>
     <Button icon={<UploadOutlined />}>
-      Upload Supporting Document
+        Upload Supporting Document
     </Button>
 
     {selectedExceptionalFile && (
-      <div className="text-xs text-green-600 mt-1">
-        Selected: {selectedExceptionalFile.name}
-      </div>
+        <div className="text-xs text-green-600 mt-1">
+            Selected: {selectedExceptionalFile.name}
+        </div>
     )}
+</Upload>
 
-    </Upload>
 
 </div> {/* max-w-[420px] */}
 

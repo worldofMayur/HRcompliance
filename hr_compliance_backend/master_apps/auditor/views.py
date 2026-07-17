@@ -2097,6 +2097,50 @@ class SaveAuditAPIView(APIView):
             "message": "Audit saved successfully"
         })
 
+
+class UpdateComplianceSummaryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        branch_id = request.data.get("branch_id")
+        vendor_id = request.data.get("vendor_id")
+        audit_period = request.data.get("audit_period")
+
+        if not all([branch_id, vendor_id, audit_period]):
+            return Response(
+                {"error": "Missing required fields"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        submission = VendorComplianceSubmission.objects.filter(
+            branch_id=branch_id,
+            vendor_id=vendor_id,
+            audit_period=audit_period,
+        ).first()
+
+        if not submission:
+            return Response(
+                {"error": "Compliance Summary not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        submission.male_employees = request.data.get("male_employees")
+        submission.female_employees = request.data.get("female_employees")
+        submission.gross_wages = request.data.get("gross_wages")
+        submission.net_wages = request.data.get("net_wages")
+
+        submission.pf_remittance_date = request.data.get("pf_remittance_date") or None
+        submission.esic_remittance_date = request.data.get("esic_remittance_date") or None
+        submission.rc_remittance_date = request.data.get("rc_remittance_date") or None
+        submission.lwf_remittance_date = request.data.get("lwf_remittance_date") or None
+
+        submission.save()
+
+        return Response(
+            {"message": "Compliance Summary updated successfully"},
+            status=status.HTTP_200_OK,
+        )
+
 # ================= LIST =================
 class AuditorListAPIView(APIView):
     permission_classes = [IsAuthenticated]

@@ -47,8 +47,9 @@ from .views import (
     ComplianceArchiveListAPIView,
     ComplianceArchiveDownloadAPIView,
     ExceptionalApprovalFilesAPIView,
-    AuditSessionStatusAPIView
-)
+    AuditSessionStatusAPIView,
+    UpdateComplianceSummaryAPIView,
+    )
 
 urlpatterns = [
 
@@ -211,5 +212,10 @@ urlpatterns = [
     path(
         "audit-session-status/",
         AuditSessionStatusAPIView.as_view()
+    ),
+    path(
+        "update-compliance-summary/",
+        UpdateComplianceSummaryAPIView.as_view(),
+        name="update-compliance-summary",
     ),
 ]
