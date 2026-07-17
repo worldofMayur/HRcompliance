@@ -1757,7 +1757,7 @@ const canFreezeReport =
 <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
   {/* LEFT 50% - Vendor Remark History + Buttons */}
-  <div className="flex flex-col gap-4">
+  <div className="flex flex-col gap-3">
 
     {remarksData.length > 0 && (
       <>
@@ -1766,7 +1766,7 @@ const canFreezeReport =
           <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
         </div>
 
-        <div className="space-y-2 max-h-32 overflow-y-auto border border-amber-200 rounded-lg p-2 bg-amber-50">
+        <div className="space-y-1.5 max-h-24 overflow-y-auto border border-amber-200 rounded-lg p-2 bg-amber-50">
           {remarksData.map((remark, index) => (
             <Tooltip key={index} title={remark.remark}>
               <div className="px-3 py-2 bg-white border border-amber-200 rounded-md text-sm">
@@ -1785,7 +1785,7 @@ const canFreezeReport =
     )}
 
     {/* Action Buttons */}
-    <div className="flex flex-wrap items-center gap-3 pt-1">
+    <div className="flex flex-wrap items-center gap-2 pt-0.5">
       <Button
         type="primary"
         icon={<DownloadOutlined />}
