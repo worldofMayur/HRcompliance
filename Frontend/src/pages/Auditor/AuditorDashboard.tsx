@@ -1759,9 +1759,9 @@ const canFreezeReport =
 </div>
 
 {/* ================= 50/50 LAYOUT (Left + Right) ================= */}
-<div className="mt-2 flex gap-4 items-start">
+<div className="mt-1 flex gap-4 items-start">
   {/* LEFT 50% - Vendor Remark History + Buttons */}
-  <div className="flex-1 flex flex-col gap-2">
+  <div className="flex-1 flex flex-col gap-1">
 
     {remarksData.length > 0 && (
       <>
