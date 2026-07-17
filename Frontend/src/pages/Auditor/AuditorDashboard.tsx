@@ -1828,44 +1828,45 @@ const canFreezeReport =
     </div>
   </div>
 
-  {/* RIGHT 50% - Compliance Summary (Taller) */}
-  <div className="w-[380px] flex-shrink-0">
-    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b px-3 py-1.5">
+{/* RIGHT 50% - Compliance Summary (Narrow & Scrollable) */}
+  <div className="w-[190px] flex-shrink-0 self-start">
+    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md flex flex-col max-h-[350px] overflow-hidden">
+      
+      {/* Header - Shrink-0 keeps it fixed at the top while the rest scrolls */}
+      <div className="flex flex-col items-start justify-center border-b px-3 py-2 gap-2 shrink-0 bg-white z-10">
         <div>
-          <div className="text-lg font-bold text-blue-700">Compliance Summary</div>
-          <div className="text-xs text-gray-500">Vendor submitted details</div>
+          <div className="text-base font-bold text-blue-700 leading-tight">Compliance Summary</div>
+          <div className="text-[10px] text-gray-500">Vendor submitted details</div>
         </div>
 
         {!isEditingCompliance ? (
-          <Button icon={<EditOutlined />} onClick={() => setIsEditingCompliance(true)}>
+          <Button size="small" icon={<EditOutlined />} onClick={() => setIsEditingCompliance(true)} className="w-full text-xs">
             Edit
           </Button>
         ) : (
-          <div className="flex gap-2">
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveComplianceSummary}>
+          <div className="flex gap-2 w-full">
+            <Button size="small" type="primary" icon={<SaveOutlined />} onClick={handleSaveComplianceSummary} className="flex-1 text-xs px-1">
               Save
             </Button>
-            <Button onClick={() => { setIsEditingCompliance(false); loadChecklist(); }}>
+            <Button size="small" onClick={() => { setIsEditingCompliance(false); loadChecklist(); }} className="flex-1 text-xs px-1">
               Cancel
             </Button>
           </div>
         )}
       </div>
 
-      {/* Form Content */}
-      <div className="p-2.5">
-
-        <div className="grid grid-cols-2 gap-2.5 text-sm">
+      {/* Form Content - flex-1 and overflow-y-auto add the scrollbar */}
+      <div className="p-3 overflow-y-auto flex-1">
+        {/* Changed to grid-cols-1 so inputs aren't crushed in the 190px width */}
+        <div className="grid grid-cols-1 gap-3 text-sm">
 
           {/* Employee Information */}
-          <div className="col-span-2">
-            <h3 className="font-semibold text-blue-700 mb-2">Employee Information</h3>
+          <div>
+            <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Employee Info</h3>
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">Male Employees</div>
+            <div className="text-gray-500 mb-1 text-xs">Male Employees</div>
             <InputNumber
               className="w-full"
               min={0}
@@ -1877,7 +1878,7 @@ const canFreezeReport =
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">Female Employees</div>
+            <div className="text-gray-500 mb-1 text-xs">Female Employees</div>
             <InputNumber
               className="w-full"
               min={0}
@@ -1889,12 +1890,12 @@ const canFreezeReport =
           </div>
 
           {/* Wage Details */}
-          <div className="col-span-2 mt-2">
-            <h3 className="font-semibold text-blue-700 mb-2">Wage Details</h3>
+          <div className="mt-2">
+            <h3 className="font-semibold text-blue-700 mb-2 border-b pb-1">Wage Details</h3>
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">Gross Wages</div>
+            <div className="text-gray-500 mb-1 text-xs">Gross Wages</div>
             <InputNumber
               className="w-full"
               min={0}
@@ -1908,7 +1909,7 @@ const canFreezeReport =
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">Net Wages</div>
+            <div className="text-gray-500 mb-1 text-xs">Net Wages</div>
             <InputNumber
               className="w-full"
               min={0}
@@ -1922,14 +1923,15 @@ const canFreezeReport =
           </div>
 
           {/* Remittance Dates */}
-          <div className="col-span-2 mt-3">
-            <div className="font-semibold text-gray-700 mb-2">Remittance Dates</div>
+          <div className="mt-2">
+            <div className="font-semibold text-blue-700 mb-2 border-b pb-1">Remittance Dates</div>
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">PF Date</div>
+            <div className="text-gray-500 mb-1 text-xs">PF Date</div>
             <Input
               type="date"
+              className="text-xs"
               value={complianceSummary.pf_remittance_date}
               disabled={!isEditingCompliance}
               onChange={(e) => updateCompliance("pf_remittance_date", e.target.value)}
@@ -1937,9 +1939,10 @@ const canFreezeReport =
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">ESIC Date</div>
+            <div className="text-gray-500 mb-1 text-xs">ESIC Date</div>
             <Input
               type="date"
+              className="text-xs"
               value={complianceSummary.esic_remittance_date}
               disabled={!isEditingCompliance}
               onChange={(e) => updateCompliance("esic_remittance_date", e.target.value)}
@@ -1947,9 +1950,10 @@ const canFreezeReport =
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">RC Date</div>
+            <div className="text-gray-500 mb-1 text-xs">RC Date</div>
             <Input
               type="date"
+              className="text-xs"
               value={complianceSummary.rc_remittance_date}
               disabled={!isEditingCompliance}
               onChange={(e) => updateCompliance("rc_remittance_date", e.target.value)}
@@ -1957,9 +1961,10 @@ const canFreezeReport =
           </div>
 
           <div>
-            <div className="text-gray-500 mb-1">LWF Date</div>
+            <div className="text-gray-500 mb-1 text-xs">LWF Date</div>
             <Input
               type="date"
+              className="text-xs"
               value={complianceSummary.lwf_remittance_date}
               disabled={!isEditingCompliance}
               onChange={(e) => updateCompliance("lwf_remittance_date", e.target.value)}
@@ -1968,10 +1973,9 @@ const canFreezeReport =
 
         </div>
       </div>
-
     </div>
   </div>
-
+  
 </div>
 
 </div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
