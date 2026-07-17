@@ -1753,312 +1753,221 @@ const canFreezeReport =
 
 </div>
 
-<div className="mt-4 flex flex-col lg:flex-row justify-between items-start gap-6 min-h-[280px]">
+{/* ================= 50/50 LAYOUT (Left + Right) ================= */}
+<div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-<div className="flex-1 min-h-[320px]">
+  {/* LEFT 50% - Vendor Remark History + Buttons */}
+  <div className="flex flex-col gap-4">
+
     {remarksData.length > 0 && (
-
       <>
-
-        <div className="flex items-center justify-between mb-2">
-
-          <div className="font-semibold text-amber-700">
-            Vendor Remark History
-          </div>
-
-          <div className="text-xs text-gray-500">
-            {remarksData.length} Remark(s)
-          </div>
-
+        <div className="flex items-center justify-between">
+          <div className="font-semibold text-amber-700">Vendor Remark History</div>
+          <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
         </div>
 
-<div className="space-y-1 max-h-24 overflow-y-auto">
+        <div className="space-y-2 max-h-32 overflow-y-auto border border-amber-200 rounded-lg p-2 bg-amber-50">
           {remarksData.map((remark, index) => (
-
-            <Tooltip
-              key={index}
-              title={remark.remark}
-            >
-
-            <div
-              className="
-                px-2
-                py-1
-                bg-amber-50
-                border
-                border-amber-200
-                rounded-md
-              "
-            >
-
-              <div className="flex justify-between">
-
-                <span className="font-medium text-amber-700">
-                  Vendor Remark
-                </span>
-
-                <span className="text-xs text-gray-500">
-                  {remark.created_at
-                    ? new Date(
-                        remark.created_at
-                      ).toLocaleString("en-IN")
-                    : "-"}
-                </span>
-
+            <Tooltip key={index} title={remark.remark}>
+              <div className="px-3 py-2 bg-white border border-amber-200 rounded-md text-sm">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-medium text-amber-700">Vendor Remark</span>
+                  <span className="text-gray-500">
+                    {remark.created_at ? new Date(remark.created_at).toLocaleString("en-IN") : "-"}
+                  </span>
+                </div>
+                <div className="text-gray-800">{remark.remark}</div>
               </div>
-
-              <div className="text-xs text-gray-800">
-                {remark.remark}
-              </div>
-
-            </div>
-
             </Tooltip>
-
           ))}
-
         </div>
-
       </>
-
     )}
 
+    {/* Action Buttons */}
+    <div className="flex flex-wrap items-center gap-3 pt-1">
+      <Button
+        type="primary"
+        icon={<DownloadOutlined />}
+        onClick={downloadZip}
+        loading={downloading}
+      >
+        Download Audit Documents
+      </Button>
+
+      <Upload
+        disabled={isAuditLocked && !manualEditMode}
+        multiple={false}
+        beforeUpload={(file) => {
+          const exceptionalRows = groupedChecklist.filter(
+            (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+          );
+          const updatedFiles = { ...exceptionalFiles };
+          exceptionalRows.forEach((row: any) => {
+            updatedFiles[row.id] = file;
+          });
+          setExceptionalFiles(updatedFiles);
+          message.success(`${file.name} attached`);
+          return false;
+        }}
+        showUploadList={false}
+      >
+        <Button icon={<UploadOutlined />}>Upload Supporting Document</Button>
+      </Upload>
+
+      {selectedExceptionalFile && (
+        <span className="text-xs text-green-600 ml-2">
+          Selected: {selectedExceptionalFile.name}
+        </span>
+      )}
+    </div>
   </div>
 
-<div className="w-full lg:w-[380px] flex-shrink-0 max-h-[420px] overflow-y-auto pr-2">
-<div className="flex flex-col gap-3">
+  {/* RIGHT 50% - Compliance Summary (Taller) */}
+  <div className="flex flex-col h-full">
+    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden flex-1 flex flex-col">
 
-{/* Compliance Summary Card */}
-
-<div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden">
-
-    <div className="flex items-center justify-between border-b px-4 py-3">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
-            <div className="text-lg font-bold text-blue-700">
-                Compliance Summary
-            </div>
-            <div className="text-xs text-gray-500">
-                Vendor submitted details
-            </div>
+          <div className="text-lg font-bold text-blue-700">Compliance Summary</div>
+          <div className="text-xs text-gray-500">Vendor submitted details</div>
         </div>
 
         {!isEditingCompliance ? (
-            <Button
-                icon={<EditOutlined />}
-                onClick={() => setIsEditingCompliance(true)}
-            >
-                Edit
-            </Button>
+          <Button icon={<EditOutlined />} onClick={() => setIsEditingCompliance(true)}>
+            Edit
+          </Button>
         ) : (
-            <div className="flex gap-2">
-                <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    onClick={handleSaveComplianceSummary}
-                >
-                    Save
-                </Button>
-
-                <Button
-                    onClick={() => {
-                        setIsEditingCompliance(false);
-                        loadChecklist();
-                    }}
-                >
-                    Cancel
-                </Button>
-            </div>
+          <div className="flex gap-2">
+            <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveComplianceSummary}>
+              Save
+            </Button>
+            <Button onClick={() => { setIsEditingCompliance(false); loadChecklist(); }}>
+              Cancel
+            </Button>
+          </div>
         )}
-    </div>
+      </div>
 
-    <div className="col-span-2">
-        <h3 className="font-semibold text-blue-700">
-            Employee Information
-        </h3>
-    </div>
+      {/* Form Content */}
+      <div className="p-4 flex-1 overflow-y-auto">
 
-    <div className="grid grid-cols-2 gap-3 p-3 text-sm">
+        <div className="grid grid-cols-2 gap-4 text-sm">
 
-        <div>
+          {/* Employee Information */}
+          <div className="col-span-2">
+            <h3 className="font-semibold text-blue-700 mb-2">Employee Information</h3>
+          </div>
+
+          <div>
             <div className="text-gray-500 mb-1">Male Employees</div>
-
             <InputNumber
-                className="w-full"
-                min={0}
-                controls={false}
-                value={complianceSummary.male_employees}
-                disabled={!isEditingCompliance}
-                onChange={(value) =>
-                    updateCompliance("male_employees", value)
-                }
+              className="w-full"
+              min={0}
+              controls={false}
+              value={complianceSummary.male_employees}
+              disabled={!isEditingCompliance}
+              onChange={(value) => updateCompliance("male_employees", value)}
             />
-        </div>
+          </div>
 
-        <div>
+          <div>
             <div className="text-gray-500 mb-1">Female Employees</div>
-
             <InputNumber
-                className="w-full"
-                min={0}
-                controls={false}
-                value={complianceSummary.female_employees}
-                disabled={!isEditingCompliance}
-                onChange={(value) =>
-                    updateCompliance("female_employees", value)
-                }
+              className="w-full"
+              min={0}
+              controls={false}
+              value={complianceSummary.female_employees}
+              disabled={!isEditingCompliance}
+              onChange={(value) => updateCompliance("female_employees", value)}
             />
-        </div>
+          </div>
 
-        <div className="col-span-2 border-t pt-3">
-            <h3 className="font-semibold text-blue-700">
-                Wage Details
-            </h3>
-        </div>
+          {/* Wage Details */}
+          <div className="col-span-2 mt-3">
+            <h3 className="font-semibold text-blue-700 mb-2">Wage Details</h3>
+          </div>
 
-        <div>
+          <div>
             <div className="text-gray-500 mb-1">Gross Wages</div>
-
             <InputNumber
-                className="w-full"
-                min={0}
-                controls={false}
-                formatter={(v) =>
-                    v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""
-                }
-                parser={(v) =>
-                    Number(v?.replace(/[₹,\s]/g, "") || 0)
-                }
-                value={complianceSummary.gross_wages}
-                disabled={!isEditingCompliance}
-                onChange={(value) =>
-                    updateCompliance("gross_wages", value)
-                }
+              className="w-full"
+              min={0}
+              controls={false}
+              formatter={(v) => v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""}
+              parser={(v) => Number(v?.replace(/[₹,\s]/g, "") || 0)}
+              value={complianceSummary.gross_wages}
+              disabled={!isEditingCompliance}
+              onChange={(value) => updateCompliance("gross_wages", value)}
             />
-        </div>
+          </div>
 
-        <div>
+          <div>
             <div className="text-gray-500 mb-1">Net Wages</div>
-
             <InputNumber
-                className="w-full"
-                min={0}
-                controls={false}
-                formatter={(v) =>
-                    v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""
-                }
-                parser={(v) =>
-                    Number(v?.replace(/[₹,\s]/g, "") || 0)
-                }
-                value={complianceSummary.net_wages}
-                disabled={!isEditingCompliance}
-                onChange={(value) =>
-                    updateCompliance("net_wages", value)
-                }
+              className="w-full"
+              min={0}
+              controls={false}
+              formatter={(v) => v ? `₹ ${Number(v).toLocaleString("en-IN")}` : ""}
+              parser={(v) => Number(v?.replace(/[₹,\s]/g, "") || 0)}
+              value={complianceSummary.net_wages}
+              disabled={!isEditingCompliance}
+              onChange={(value) => updateCompliance("net_wages", value)}
             />
-        </div>
+          </div>
 
-        <div className="col-span-2 border-t pt-3 mt-2">
-            <div className="font-semibold text-gray-700 mb-2">
-                Remittance Dates
-            </div>
-        </div>
+          {/* Remittance Dates */}
+          <div className="col-span-2 mt-3">
+            <div className="font-semibold text-gray-700 mb-2">Remittance Dates</div>
+          </div>
 
-        <div>
+          <div>
             <div className="text-gray-500 mb-1">PF Date</div>
             <Input
-                type="date"
-                value={complianceSummary.pf_remittance_date}
-                disabled={!isEditingCompliance}
-                onChange={(e) =>
-                    updateCompliance("pf_remittance_date", e.target.value)
-                }
+              type="date"
+              value={complianceSummary.pf_remittance_date}
+              disabled={!isEditingCompliance}
+              onChange={(e) => updateCompliance("pf_remittance_date", e.target.value)}
             />
-        </div>
+          </div>
 
-        <div>
+          <div>
             <div className="text-gray-500 mb-1">ESIC Date</div>
             <Input
-                type="date"
-                value={complianceSummary.esic_remittance_date}
-                disabled={!isEditingCompliance}
-                onChange={(e) =>
-                    updateCompliance("esic_remittance_date", e.target.value)
-                }
+              type="date"
+              value={complianceSummary.esic_remittance_date}
+              disabled={!isEditingCompliance}
+              onChange={(e) => updateCompliance("esic_remittance_date", e.target.value)}
             />
-        </div>
+          </div>
 
-        <div>
+          <div>
             <div className="text-gray-500 mb-1">RC Date</div>
             <Input
-                type="date"
-                value={complianceSummary.rc_remittance_date}
-                disabled={!isEditingCompliance}
-                onChange={(e) =>
-                    updateCompliance("rc_remittance_date", e.target.value)
-                }
+              type="date"
+              value={complianceSummary.rc_remittance_date}
+              disabled={!isEditingCompliance}
+              onChange={(e) => updateCompliance("rc_remittance_date", e.target.value)}
             />
-        </div>
+          </div>
 
-        <div>
+          <div>
             <div className="text-gray-500 mb-1">LWF Date</div>
             <Input
-                type="date"
-                value={complianceSummary.lwf_remittance_date}
-                disabled={!isEditingCompliance}
-                onChange={(e) =>
-                    updateCompliance("lwf_remittance_date", e.target.value)
-                }
+              type="date"
+              value={complianceSummary.lwf_remittance_date}
+              disabled={!isEditingCompliance}
+              onChange={(e) => updateCompliance("lwf_remittance_date", e.target.value)}
             />
+          </div>
+
         </div>
+      </div>
 
     </div>
+  </div>
 
-</div>
-
-</div> {/* max-w-[420px] */}
-
-</div> {/* w-[45%] */}
-
-</div> {/* flex justify-between */}
-
-{/* ✅ CLEAN ACTION BAR - Download & Upload */}
-<div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
-  <Button
-    type="primary"
-    icon={<DownloadOutlined />}
-    onClick={downloadZip}
-    loading={downloading}
-  >
-    Download Audit Documents
-  </Button>
-
-  <Upload
-    disabled={isAuditLocked && !manualEditMode}
-    multiple={false}
-    beforeUpload={(file) => {
-      const exceptionalRows = groupedChecklist.filter(
-        (row: any) => row.status === "Exceptional Approval - Delayed Complied"
-      );
-      const updatedFiles = { ...exceptionalFiles };
-      exceptionalRows.forEach((row: any) => {
-        updatedFiles[row.id] = file;
-      });
-      setExceptionalFiles(updatedFiles);
-      message.success(`${file.name} attached`);
-      return false;
-    }}
-    showUploadList={false}
-  >
-    <Button icon={<UploadOutlined />}>
-      Upload Supporting Document
-    </Button>
-  </Upload>
-
-  {selectedExceptionalFile && (
-    <span className="text-xs text-green-600 ml-2">
-      Selected: {selectedExceptionalFile.name}
-    </span>
-  )}
 </div>
 
 </div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
