@@ -95,6 +95,20 @@
   }
 }
 
+/* ===== Audit Table Highlight Styles ===== */
+.audit-table-highlighted .ant-table-thead > tr > th {
+  background: #f1f5f9 !important;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 12.5px;
+}
+
+.audit-table-highlighted .ant-table-tbody > tr > td {
+  vertical-align: top;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
 .tableCheckbox:checked ~ span span {
   @apply opacity-100;
 }
