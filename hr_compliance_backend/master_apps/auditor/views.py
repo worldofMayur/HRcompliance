@@ -2110,7 +2110,7 @@ class SaveAuditAPIView(APIView):
         })
 
 
-cclass UpdateComplianceSummaryAPIView(APIView):
+class UpdateComplianceSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request):
