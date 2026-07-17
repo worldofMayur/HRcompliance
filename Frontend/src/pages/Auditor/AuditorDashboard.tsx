@@ -1780,39 +1780,43 @@ const canFreezeReport =
     <div className="w-[380px] shrink-0 border-l bg-white flex flex-col">
       <div className="p-4 flex flex-col gap-3 h-full overflow-y-auto">
 
-        {/* Compliance Summary Card */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-gray-800 text-[15px]">Compliance Summary</h3>
-              <div className="flex gap-2">
-                {isEditingCompliance ? (
-                  <>
-                    <Button
-                      size="small"
-                      type="primary"
-                      onClick={handleSaveComplianceSummary}
-                    >
-                      Save
-                    </Button>
+{/* Compliance Summary Card */}
+<div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+  <div className="flex justify-between items-center mb-3">
+    <h3 className="font-semibold text-gray-800 text-[15px]">
+      Compliance Summary
+    </h3>
 
-                    <Button
-                      size="small"
-                      onClick={() => setIsEditingCompliance(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="small"
-                    type="primary"
-                    ghost
-                    onClick={() => setIsEditingCompliance(true)}
-                  >
-                    Edit
-                  </Button>
-                )}
-          </div>
+    <div className="flex gap-2">
+      {isEditingCompliance ? (
+        <>
+          <Button
+            size="small"
+            type="primary"
+            onClick={handleSaveComplianceSummary}
+          >
+            Save
+          </Button>
+
+          <Button
+            size="small"
+            onClick={() => setIsEditingCompliance(false)}
+          >
+            Cancel
+          </Button>
+        </>
+      ) : (
+        <Button
+          size="small"
+          type="primary"
+          ghost
+          onClick={() => setIsEditingCompliance(true)}
+        >
+          Edit
+        </Button>
+      )}
+    </div>
+  </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <div>
