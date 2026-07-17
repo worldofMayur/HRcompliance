@@ -546,16 +546,33 @@ def reupload_compliance(request):
                     "period": selected_period,
                 })
 
+                print("===== MATCHING RECORDS =====")
+
+                matches = VendorComplianceSubmission.objects.filter(
+                    vendor=vendor,
+                    branch_id=branch_id,
+                    document_id=document_id,
+                )
+
+                for s in matches:
+                    print({
+                        "id": s.id,
+                        "period": s.audit_period,
+                        "workflow": s.workflow_status,
+                    })
+
+                print("===== END MATCHES =====")
+
                 submission = (
                     VendorComplianceSubmission.objects
-                    .filter(
-                        vendor=vendor,
-                        branch_id=branch_id,
-                        document_id=document_id,
-                        audit_period__iexact=selected_period,
-                    )
-                    .order_by("-id")
-                    .first()
+                        .filter(
+                            vendor=vendor,
+                            branch_id=branch_id,
+                            document_id=document_id,
+                            audit_period__iexact=selected_period,
+                        )
+                        .order_by("-id")
+                        .first()
                 )
                 print("AVAILABLE SUBMISSIONS")
                 print("NORMALIZED PERIOD:", selected_period)
