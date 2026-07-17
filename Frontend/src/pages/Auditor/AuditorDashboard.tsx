@@ -1085,173 +1085,166 @@ if (exceptionalFiles) {
 
   /* ================= TABLE ================= */
 
-  const columns = [
-      {
-        title: "Audit Requirement",
-        width: 250,
-        render: (_: any, record: any) => (
-          <div className="space-y-1">
-            <div className="text-xs text-gray-600">
-              Act: {record.act_name}
+const columns = [
+  {
+    title: "Audit Requirement",
+    width: 280,
+    render: (_: any, record: any) => (
+      <div className="space-y-1">
+        <div className="text-xs text-gray-600">
+          Act: {record.act_name}
+        </div>
+        <div className="text-xs text-gray-600">
+          Section: {record.section_rule}
+        </div>
+        <div className="text-xs text-gray-600">
+          Document: {record.document_name}
+        </div>
+        <div className="text-xs text-gray-600">
+          Form: {record.form_number || "-"}
+        </div>
+      </div>
+    ),
+  },
+
+  {
+    title: "Audit Particulars",
+    width: 280,
+    dataIndex: "audit_particulars",
+    render: (text: string) => (
+      <div
+        className="
+          bg-blue-50
+          border
+          border-blue-100
+          rounded-md
+          p-2
+          font-semibold
+          text-blue-700
+        "
+      >
+        {text}
+      </div>
+    ),
+  },
+
+  ...(showAuditorGuidelines
+    ? [
+        {
+          title: "Guidelines For Auditor",
+          width: 350,
+          dataIndex: "auditor_guide",
+          render: (text: any) => (
+            <div className="space-y-1">
+              {Array.isArray(text)
+                ? text.map((t: any, i: number) => (
+                    <div key={i}>• {t}</div>
+                  ))
+                : <div>• {text}</div>}
             </div>
+          ),
+        },
+      ]
+    : []),
 
-            <div className="text-xs text-gray-600">
-              Section: {record.section_rule}
-            </div>
-
-            <div className="text-xs text-gray-600">
-              Document: {record.document_name}
-            </div>
-          </div>
-        ),
-      },
-
-      {
-        title: "Form",
-        width: 80,
-        dataIndex: "form_number",
-        render: (text: string) => (
-          <div>
-            {text || "-"}
-          </div>
-        ),
-      },
-
-      {
-        title: "Audit Particulars",
-        width: 280,
-        dataIndex: "audit_particulars",
-        render: (text: string) => (
-          <div
-            className="
-              bg-blue-50
-              border
-              border-blue-100
-              rounded-md
-              p-2
-              font-semibold
-              text-blue-700
-            "
-          >
-            {text}
-          </div>
-        ),
-      },
-    ...(showAuditorGuidelines
-      ? [
-          {
-            title: "Guidelines For Auditor",
-            width: 350,
-            dataIndex: "auditor_guide",
-            render: (text: any) => (
-              <div className="space-y-1">
-                {Array.isArray(text)
-                  ? text.map((t: any, i: number) => (
-                      <div key={i}>• {t}</div>
-                    ))
-                  : <div>• {text}</div>}
-              </div>
-            ),
-          },
-        ]
-      : []),
-
-    {
-      title: "Compliance Status",
-      width: 220,
-      render: (_: any, record: any, index: number) => (
-        <select
-          value={record.status || ""}
-          disabled={
-            isAuditLocked
-            &&
-            [
-              "Complied",
-              "Exceptional Approval - Delayed Complied",
-              "Not Applicable For Audit Period"
-            ].includes(record.status)
-          }
-          onChange={(e) =>
+  {
+    title: "Compliance Status",
+    width: 220,
+    render: (_: any, record: any) => (
+      <select
+        value={record.status || ""}
+        disabled={
+          isAuditLocked &&
+          [
+            "Complied",
+            "Exceptional Approval - Delayed Complied",
+            "Not Applicable For Audit Period",
+          ].includes(record.status)
+        }
+        onChange={(e) =>
           updateField(record.id, "status", e.target.value)
-          }
-          className="border rounded-lg px-3 py-2 w-full"
-        >
-          <option value="">Select</option>
-          <option value="Complied">Complied</option>
-          <option value="Not Complied">Not Complied</option>
-          <option value="Exceptional Approval - Not Complied">Exceptional Approval- Not Complied</option>
-          <option value="Exceptional Approval - Delayed Complied">Exceptional Approval - Delayed Complied</option>
-          <option value="Incorrect Document Submitted">Incorrect Document Submitted</option>
-          <option value="Not Applicable For Audit Period">Not Applicable For Audit Period</option>
+        }
+        className="border rounded-lg px-3 py-2 w-full"
+      >
+        <option value="">Select</option>
+        <option value="Complied">Complied</option>
+        <option value="Not Complied">Not Complied</option>
+        <option value="Exceptional Approval - Delayed Complied">
+          Exceptional Approval - Delayed Complied
+        </option>
+        <option value="Incorrect Document Submitted">
+          Incorrect Document Submitted
+        </option>
+        <option value="Not Applicable For Audit Period">
+          Not Applicable For Audit Period
+        </option>
+      </select>
+    ),
+  },
 
-        </select>
-      ),
-    },
+  {
+    title: "Auditor Observation",
+    width: 220,
+    render: (_: any, record: any) => (
+      <TextArea
+        autoSize={{
+          minRows: 2,
+          maxRows: 3,
+        }}
+        value={record.observation}
+        disabled={
+          isAuditLocked &&
+          [
+            "Complied",
+            "Exceptional Approval - Delayed Complied",
+            "Not Applicable For Audit Period",
+          ].includes(record.status)
+        }
+        onChange={(e) =>
+          updateField(record.id, "observation", e.target.value)
+        }
+        className="w-full rounded-lg"
+        style={{
+          height: 36,
+          maxWidth: "100%",
+        }}
+        placeholder="Enter observation"
+      />
+    ),
+  },
 
-    {
-      title: "Auditor Observation",
-      width: 220,
-      render: (_: any, record: any) => (
-        <TextArea
-          autoSize={{
-            minRows: 2,
-            maxRows: 3,
-          }}
-          value={record.observation}
-          disabled={
-            isAuditLocked
-            &&
-            [
-              "Complied",
-              "Exceptional Approval - Delayed Complied",
-              "Not Applicable For Audit Period"
-            ].includes(record.status)
-          }
-          onChange={(e) =>
-            updateField(record.id, "observation", e.target.value)
-          }
-          className="w-full rounded-lg"
-          style={{
-            height: 36,
-            maxWidth: "100%"
-          }}
-          placeholder="Enter observation"
-        />
-      ),
-    },
+  {
+    title: "Action Recommendation",
+    width: 220,
+    render: (_: any, record: any) => (
+      <TextArea
+        autoSize={{
+          minRows: 2,
+          maxRows: 3,
+        }}
+        value={record.recommendation}
+        disabled={
+          isAuditLocked &&
+          [
+            "Complied",
+            "Exceptional Approval - Delayed Complied",
+            "Not Applicable For Audit Period",
+          ].includes(record.status)
+        }
+        onChange={(e) =>
+          updateField(record.id, "recommendation", e.target.value)
+        }
+        className="w-full rounded-lg"
+        style={{
+          height: 36,
+          maxWidth: "100%",
+        }}
+        placeholder="Enter recommendation"
+      />
+    ),
+  },
+];
 
-{
-  title: "Action Recommendation",
-  width: 220,
-  render: (_: any, record: any) => (
-    <TextArea
-      autoSize={{
-        minRows: 2,
-        maxRows: 3,
-      }}
-      value={record.recommendation}
-      disabled={
-        isAuditLocked
-        &&
-        [
-          "Complied",
-          "Exceptional Approval - Delayed Complied",
-          "Not Applicable For Audit Period"
-        ].includes(record.status)
-      }
-      onChange={(e) =>
-        updateField(record.id, "recommendation", e.target.value)
-      }
-      className="w-full rounded-lg"
-      style={{
-        height: 36,
-        maxWidth: "100%"
-      }}
-      placeholder="Enter recommendation"
-    />
-  ),
-},
-  ];
 
 const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
