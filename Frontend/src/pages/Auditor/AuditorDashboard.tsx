@@ -1086,66 +1086,66 @@ if (exceptionalFiles) {
   /* ================= TABLE ================= */
 
 const columns = [
-  {
-    title: "Audit Requirement",
-    width: 280,
-    render: (_: any, record: any) => (
-      <div className="space-y-1">
-        <div className="text-xs text-gray-600">
-          Act: {record.act_name}
-        </div>
-        <div className="text-xs text-gray-600">
-          Section: {record.section_rule}
-        </div>
-        <div className="text-xs text-gray-600">
-          Document: {record.document_name}
-        </div>
-        <div className="text-xs text-gray-600">
-          Form: {record.form_number || "-"}
-        </div>
+{
+  title: "Audit Requirement",
+  width: 230,          // decreased
+  render: (_: any, record: any) => (
+    <div className="space-y-1">
+      <div className="text-xs text-gray-600">
+        Act: {record.act_name}
       </div>
-    ),
-  },
-
-  {
-    title: "Audit Particulars",
-    width: 280,
-    dataIndex: "audit_particulars",
-    render: (text: string) => (
-      <div
-        className="
-          bg-blue-50
-          border
-          border-blue-100
-          rounded-md
-          p-2
-          font-semibold
-          text-blue-700
-        "
-      >
-        {text}
+      <div className="text-xs text-gray-600">
+        Section: {record.section_rule}
       </div>
-    ),
-  },
+      <div className="text-xs text-gray-600">
+        Document: {record.document_name}
+      </div>
+      <div className="text-xs text-gray-600">
+        Form: {record.form_number || "-"}
+      </div>
+    </div>
+  ),
+},
 
-  ...(showAuditorGuidelines
-    ? [
-        {
-          title: "Guidelines For Auditor",
-          width: 350,
-          dataIndex: "auditor_guide",
-          render: (text: any) => (
-            <div className="space-y-1">
-              {Array.isArray(text)
-                ? text.map((t: any, i: number) => (
-                    <div key={i}>• {t}</div>
-                  ))
-                : <div>• {text}</div>}
-            </div>
-          ),
-        },
-      ]
-    : []),
+{
+  title: "Audit Particulars",
+  width: 230,          // decreased
+  dataIndex: "audit_particulars",
+  render: (text: string) => (
+    <div
+      className="
+        bg-blue-50
+        border
+        border-blue-100
+        rounded-md
+        p-2
+        font-semibold
+        text-blue-700
+      "
+    >
+      {text}
+    </div>
+  ),
+},
+
+...(showAuditorGuidelines
+  ? [
+      {
+        title: "Guidelines For Auditor",
+        width: 260,      // decreased
+        dataIndex: "auditor_guide",
+        render: (text: any) => (
+          <div className="space-y-1">
+            {Array.isArray(text)
+              ? text.map((t: any, i: number) => (
+                  <div key={i}>• {t}</div>
+                ))
+              : <div>• {text}</div>}
+          </div>
+        ),
+      },
+    ]
+  : []),
 
   {
     title: "Compliance Status",
