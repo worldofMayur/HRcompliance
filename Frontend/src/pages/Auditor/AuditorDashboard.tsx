@@ -1678,10 +1678,9 @@ const canFreezeReport =
   {/* 🔥 WRAPPER (IMPORTANT FOR SCROLL) */}
   <div className="flex flex-col h-[calc(100vh-110px)]">
       {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
-  <div
-    className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0 overflow-y-auto"
-    style={{ maxHeight: "480px" }}
-  >
+    <div
+      className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0"
+    >
 
   <div className="flex flex-wrap gap-8 text-sm">
 
@@ -1754,7 +1753,7 @@ const canFreezeReport =
 
 </div>
 
-<div className="mt-4 flex flex-col lg:flex-row justify-between items-stretch gap-6">
+<div className="mt-4 flex flex-col lg:flex-row justify-between items-start gap-6 min-h-[280px]">
 
 <div className="flex-1 min-h-[320px]">
     {remarksData.length > 0 && (
