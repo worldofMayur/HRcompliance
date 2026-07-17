@@ -1761,65 +1761,210 @@ const canFreezeReport =
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-semibold text-gray-800 text-[15px]">Compliance Summary</h3>
-            <Button
-              size="small"
-              type="primary"
-              ghost
-              onClick={() => setIsEditingCompliance(true)}
-            >
-              Edit
-            </Button>
+              <div className="flex gap-2">
+                {isEditingCompliance ? (
+                  <>
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={handleSaveComplianceSummary}
+                    >
+                      Save
+                    </Button>
+
+                    <Button
+                      size="small"
+                      onClick={() => setIsEditingCompliance(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="small"
+                    type="primary"
+                    ghost
+                    onClick={() => setIsEditingCompliance(true)}
+                  >
+                    Edit
+                  </Button>
+                )}
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <div>
               <div className="text-gray-500 text-xs">Male Employees</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.male_employees || "-"}
-              </div>
+                {isEditingCompliance ? (
+                    <Input
+                        size="small"
+                        value={complianceSummary.male_employees}
+                        onChange={(e) =>
+                            setComplianceSummary({
+                                ...complianceSummary,
+                                male_employees: e.target.value,
+                            })
+                        }
+                    />
+                ) : (
+                    <div className="font-medium text-gray-900">
+                        {complianceSummary.male_employees || "-"}
+                    </div>
+                )}
             </div>
+
             <div>
               <div className="text-gray-500 text-xs">Female Employees</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.female_employees || "-"}
-              </div>
+
+              {isEditingCompliance ? (
+                <Input
+                  size="small"
+                  value={complianceSummary.female_employees}
+                  onChange={(e) =>
+                    setComplianceSummary({
+                      ...complianceSummary,
+                      female_employees: e.target.value,
+                    })
+                  }
+                />
+              ) : (
+                <div className="font-medium text-gray-900">
+                  {complianceSummary.female_employees || "-"}
+                </div>
+              )}
             </div>
+
             <div>
               <div className="text-gray-500 text-xs">Gross Wages</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.gross_wages || "-"}
-              </div>
+
+              {isEditingCompliance ? (
+                <Input
+                  size="small"
+                  value={complianceSummary.gross_wages}
+                  onChange={(e) =>
+                    setComplianceSummary({
+                      ...complianceSummary,
+                      gross_wages: e.target.value,
+                    })
+                  }
+                />
+              ) : (
+                <div className="font-medium text-gray-900">
+                  {complianceSummary.gross_wages || "-"}
+                </div>
+              )}
             </div>
+
             <div>
               <div className="text-gray-500 text-xs">Net Wages</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.net_wages || "-"}
-              </div>
+
+              {isEditingCompliance ? (
+                <Input
+                  size="small"
+                  value={complianceSummary.net_wages}
+                  onChange={(e) =>
+                    setComplianceSummary({
+                      ...complianceSummary,
+                      net_wages: e.target.value,
+                    })
+                  }
+                />
+              ) : (
+                <div className="font-medium text-gray-900">
+                  {complianceSummary.net_wages || "-"}
+                </div>
+              )}
             </div>
+
+
             <div>
               <div className="text-gray-500 text-xs">PF Date</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.pf_remittance_date || "-"}
-              </div>
+
+              {isEditingCompliance ? (
+                <Input
+                  size="small"
+                  type="date"
+                  value={complianceSummary.pf_remittance_date}
+                  onChange={(e) =>
+                    setComplianceSummary({
+                      ...complianceSummary,
+                      pf_remittance_date: e.target.value,
+                    })
+                  }
+                />
+              ) : (
+                <div className="font-medium text-gray-900">
+                  {complianceSummary.pf_remittance_date || "-"}
+                </div>
+              )}
             </div>
+
+
             <div>
               <div className="text-gray-500 text-xs">ESIC Date</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.esic_remittance_date || "-"}
-              </div>
+
+              {isEditingCompliance ? (
+                <Input
+                  size="small"
+                  type="date"
+                  value={complianceSummary.esic_remittance_date}
+                  onChange={(e) =>
+                    setComplianceSummary({
+                      ...complianceSummary,
+                      esic_remittance_date: e.target.value,
+                    })
+                  }
+                />
+              ) : (
+                <div className="font-medium text-gray-900">
+                  {complianceSummary.esic_remittance_date || "-"}
+                </div>
+              )}
             </div>
+
             <div>
               <div className="text-gray-500 text-xs">RC Date</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.rc_remittance_date || "-"}
-              </div>
+
+              {isEditingCompliance ? (
+                <Input
+                  size="small"
+                  type="date"
+                  value={complianceSummary.rc_remittance_date}
+                  onChange={(e) =>
+                    setComplianceSummary({
+                      ...complianceSummary,
+                      rc_remittance_date: e.target.value,
+                    })
+                  }
+                />
+              ) : (
+                <div className="font-medium text-gray-900">
+                  {complianceSummary.rc_remittance_date || "-"}
+                </div>
+              )}
             </div>
+
             <div>
               <div className="text-gray-500 text-xs">LWF Date</div>
-              <div className="font-medium text-gray-900">
-                {complianceSummary.lwf_remittance_date || "-"}
-              </div>
+
+              {isEditingCompliance ? (
+                <Input
+                  size="small"
+                  type="date"
+                  value={complianceSummary.lwf_remittance_date}
+                  onChange={(e) =>
+                    setComplianceSummary({
+                      ...complianceSummary,
+                      lwf_remittance_date: e.target.value,
+                    })
+                  }
+                />
+              ) : (
+                <div className="font-medium text-gray-900">
+                  {complianceSummary.lwf_remittance_date || "-"}
+                </div>
+              )}
             </div>
+
           </div>
         </div>
 
