@@ -1759,18 +1759,19 @@ const canFreezeReport =
 </div>
 
 {/* ================= 50/50 LAYOUT (Left + Right) ================= */}
-<div className="mt-1 flex gap-4 items-start">
+<div className="mt-1 flex gap-4 items-stretch">
   {/* LEFT 50% - Vendor Remark History + Buttons */}
-  <div className="flex-1 flex flex-col gap-1">
+  <div className="flex-1 flex flex-col">
 
     {remarksData.length > 0 && (
-      <>
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col flex-1 min-h-[120px] mb-3">
+        <div className="flex items-center justify-between mb-1">
           <div className="font-semibold text-amber-700">Vendor Remark History</div>
           <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
         </div>
 
-        <div className="space-y-1.5 max-h-16 overflow-y-auto border border-amber-200 rounded-lg p-2 bg-amber-50">
+        {/* Removed max-h-16, added flex-1 to allow dynamic expansion */}
+        <div className="flex-1 space-y-1.5 overflow-y-auto border border-amber-200 rounded-lg p-2 bg-amber-50">
           {remarksData.map((remark, index) => (
             <Tooltip key={index} title={remark.remark}>
               <div className="px-3 py-2 bg-white border border-amber-200 rounded-md text-sm">
@@ -1785,11 +1786,11 @@ const canFreezeReport =
             </Tooltip>
           ))}
         </div>
-      </>
+      </div>
     )}
 
-    {/* Action Buttons */}
-    <div className="flex flex-wrap items-center gap-2">
+    {/* Action Buttons - Added mt-auto to anchor to the bottom */}
+    <div className="flex flex-wrap items-center gap-2 mt-auto pt-2">
       <Button
         type="primary"
         icon={<DownloadOutlined />}
@@ -1829,7 +1830,7 @@ const canFreezeReport =
 
   {/* RIGHT 50% - Compliance Summary (Taller) */}
   <div className="w-[380px] flex-shrink-0">
-<div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden">
+    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl shadow-md overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-1.5">
         <div>
