@@ -2014,6 +2014,10 @@ const canFreezeReport =
   </div>
 </div>
 
+  </div>   {/* ← ADD THIS LINE (closes the main content flex) */}
+
+ {/* ========== 3. BOTTOM ACTION BAR ========== */}
+
  {/* ========== 3. BOTTOM ACTION BAR ========== */}
 <div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
 
