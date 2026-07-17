@@ -1676,9 +1676,12 @@ const canFreezeReport =
 >
 
   {/* 🔥 WRAPPER (IMPORTANT FOR SCROLL) */}
-<div className="flex flex-col h-full">
-    {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
-<div className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0">
+  <div className="flex flex-col h-[calc(100vh-110px)]">
+      {/* 🔹 TOP CONTENT (NO CHANGE IN UI) */}
+  <div
+      className="bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 flex-shrink-0"
+      style={{ maxHeight: 330 }}
+  >
 
   <div className="flex flex-wrap gap-8 text-sm">
 
@@ -2069,7 +2072,7 @@ const canFreezeReport =
 
 </div> {/* bg-gradient-to-r from-blue-50 to-white border rounded-xl p-4 */}
     {/* 🔥 SCROLL AREA */}
-  <div className="flex-1 p-4 overflow-hidden"
+  <div className="flex-1 min-h-0 p-4"
         style={{
             minHeight: 0,
         }}
