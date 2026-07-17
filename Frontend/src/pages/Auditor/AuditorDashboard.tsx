@@ -56,6 +56,19 @@ export default function AuditorDashboard() {
   const [manualEditMode, setManualEditMode] =
   useState(false);
 
+  const [complianceSummary, setComplianceSummary] = useState({
+  male_employees: "",
+  female_employees: "",
+  gross_wages: "",
+  net_wages: "",
+  pf_remittance_date: "",
+  esic_remittance_date: "",
+  rc_remittance_date: "",
+  lwf_remittance_date: "",
+});
+
+const [isEditingCompliance, setIsEditingCompliance] = useState(false);
+
   const isAuditLocked =
     (
       auditSessionStatus === "FROZEN"
@@ -688,6 +701,10 @@ const loadChecklist = async (
       "FINAL FILTERED ROWS:",
       rows
     );
+
+    if (checklistRes.data?.compliance_summary) {
+        setComplianceSummary(checklistRes.data.compliance_summary);
+    }
 
     setChecklist(rows);
 
