@@ -1577,6 +1577,17 @@ class SaveAuditAPIView(APIView):
                 "%d-%b-%Y %I:%M:%S %p"
             )
 
+            submission = (
+                VendorComplianceSubmission.objects.filter(
+                    vendor_id=vendor.id,
+                    branch_id=branch_id,
+                    audit_period__iexact=audit_period,
+                )
+                .exclude(frozen_at__isnull=True)
+                .order_by("-frozen_at")
+                .first()
+            )
+
             email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
                 {
@@ -1587,6 +1598,7 @@ class SaveAuditAPIView(APIView):
                     "audit_period": audit_period,
                     "entries": entries,
                     "generated_at": generated_timestamp,
+                    "submission": submission,
                     "exceptional_entries": [
                         e for e in pdf_entries
                         if "Exceptional Approval"

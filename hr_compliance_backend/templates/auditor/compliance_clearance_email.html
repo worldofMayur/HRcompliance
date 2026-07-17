@@ -354,6 +354,60 @@ body{
 
             </div>
 
+            <!-- COMPLIANCE SUMMARY -->
+
+            <div class="summary-card">
+
+                <div class="summary-header">
+                    Compliance Summary
+                </div>
+
+                <table class="summary-table">
+
+                    <tr>
+                        <td class="label">Male Employees</td>
+                        <td>{{ submission.male_employees|default:"-" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">Female Employees</td>
+                        <td>{{ submission.female_employees|default:"-" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">Gross Wages</td>
+                        <td>{{ submission.gross_wages|default:"-" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">Net Wages</td>
+                        <td>{{ submission.net_wages|default:"-" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">PF Remittance Date</td>
+                        <td>{{ submission.pf_remittance_date|default:"-" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">ESIC Remittance Date</td>
+                        <td>{{ submission.esic_remittance_date|default:"-" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">RC Remittance Date</td>
+                        <td>{{ submission.rc_remittance_date|default:"-" }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="label">LWF Remittance Date</td>
+                        <td>{{ submission.lwf_remittance_date|default:"-" }}</td>
+                    </tr>
+
+                </table>
+
+            </div>
+
             <!-- EXCEPTIONAL APPROVAL NOTE -->
 
             {% if exceptional_entries %}
