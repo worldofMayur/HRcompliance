@@ -1995,13 +1995,14 @@ const canFreezeReport =
           </div>
         </div>
 
-        {/* Action buttons */}
+      {/* Action buttons */}
+      <div className="flex flex-col gap-2.5 mt-1">
         <Button
           type="primary"
           icon={<DownloadOutlined />}
           onClick={downloadZip}
           block
-          className="h-10"
+          className="h-9 text-sm font-medium"
         >
           Download Audit Documents
         </Button>
@@ -2027,16 +2028,21 @@ const canFreezeReport =
           }}
           showUploadList={false}
         >
-          <Button icon={<UploadOutlined />} block className="h-10">
+          <Button
+            icon={<UploadOutlined />}
+            block
+            className="h-9 text-sm"
+          >
             Upload Supporting Document
           </Button>
         </Upload>
 
         {selectedExceptionalFile && (
-          <div className="text-xs text-green-600 -mt-1 px-1">
+          <div className="text-xs text-green-600 px-1 -mt-1">
             Selected: {selectedExceptionalFile.name}
           </div>
         )}
+      </div>
       </div>
     </div>
   </div>
@@ -2047,7 +2053,7 @@ const canFreezeReport =
       <Button
         type="primary"
         className={`
-          h-10 px-6 font-medium
+          h-9 px-6 text-sm font-medium
           ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}
         `}
         loading={loading}
