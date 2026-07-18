@@ -1478,238 +1478,154 @@ if (effectiveReuploadMode) {
 
       {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 
-      <Modal
-        title="Employee Payroll Details"
-        open={summaryOpen}
-        width={700}
-        onCancel={() => setSummaryOpen(false)}
-        cancelButtonProps={{
-          style: {
-            display: "none",
-          },
-        }}
-        onOk={() => {
-          if (
-            complianceSummary.male_employees === undefined ||
-            complianceSummary.female_employees === undefined ||
-            complianceSummary.gross_wages === undefined ||
-            complianceSummary.net_wages === undefined
-          ) {
-            message.error("Please fill all mandatory fields.");
-            return;
-          }
+{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
+<Modal
+  title="Employee Payroll Details"
+  open={summaryOpen}
+  width={1100}           // ← Increased width
+  onCancel={() => setSummaryOpen(false)}
+  cancelButtonProps={{ style: { display: "none" } }}
+  onOk={() => {
+    if (
+      payrollData.some(row =>
+        row.male_employees === undefined ||
+        row.female_employees === undefined ||
+        row.gross_wages === undefined ||
+        row.net_wages === undefined
+      )
+    ) {
+      message.error("Please fill all mandatory fields for every month.");
+      return;
+    }
+    setSummaryOpen(false);
+    submitCompliance();
+  }}
+  okText="Submit Compliance Documents"   // ← Renamed
+>
+  <div className="max-h-[65vh] overflow-y-auto pr-2">
+    <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
+      {payrollData.map((row, index) => (
+        <div
+          key={row.month}
+          className="min-w-[480px] flex-shrink-0 border border-blue-100 bg-blue-50/30 rounded-2xl p-6 snap-start"
+        >
+          <h3 className="mb-5 text-xl font-semibold text-blue-700 border-b pb-3">
+            {row.month}
+          </h3>
 
-          setSummaryOpen(false);
-          submitCompliance();
-        }}
-        okText="Proceed"
-      >
-        <div className="max-h-[65vh] overflow-y-auto pr-2 space-y-5">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-5">
+            {/* Male / Female */}
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">Male Employees</label>
+              <InputNumber
+                className="w-full"
+                min={0}
+                value={row.male_employees}
+                onChange={(value) => {
+                  const temp = [...payrollData];
+                  temp[index].male_employees = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
 
-  {payrollData.map((row, index) => (
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">Female Employees</label>
+              <InputNumber
+                className="w-full"
+                min={0}
+                value={row.female_employees}
+                onChange={(value) => {
+                  const temp = [...payrollData];
+                  temp[index].female_employees = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
 
-    <div
-      key={row.month}
-      className="
-        rounded-2xl
-        border
-        border-blue-100
-        bg-blue-50/30
-        p-5
-      "
-    >
+            {/* Wages */}
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">Gross Wages</label>
+              <InputNumber
+                className="w-full"
+                min={0}
+                value={row.gross_wages}
+                onChange={(value) => {
+                  const temp = [...payrollData];
+                  temp[index].gross_wages = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
 
-      <h3 className="mb-4 text-lg font-semibold text-blue-700">
-        {row.month}
-      </h3>
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">Net Wages</label>
+              <InputNumber
+                className="w-full"
+                min={0}
+                value={row.net_wages}
+                onChange={(value) => {
+                  const temp = [...payrollData];
+                  temp[index].net_wages = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
 
-      <div className="grid grid-cols-2 gap-4">
+            {/* Remittance Dates */}
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">PF Remittance Date</label>
+              <DatePicker
+                className="w-full"
+                onChange={(_, value) => {
+                  const temp = [...payrollData];
+                  temp[index].pf_remittance_date = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
 
-        {/* Male */}
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">ESIC Remittance Date</label>
+              <DatePicker
+                className="w-full"
+                onChange={(_, value) => {
+                  const temp = [...payrollData];
+                  temp[index].esic_remittance_date = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
 
-        <div>
-          <label className="block mb-1 font-medium">
-            Male Employees
-          </label>
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">RC Remittance Date</label>
+              <DatePicker
+                className="w-full"
+                onChange={(_, value) => {
+                  const temp = [...payrollData];
+                  temp[index].rc_remittance_date = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
 
-          <InputNumber
-            className="w-full"
-            min={0}
-            value={row.male_employees}
-            onChange={(value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].male_employees = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
+            <div>
+              <label className="block mb-1.5 font-medium text-gray-700">LWF Remittance Date</label>
+              <DatePicker
+                className="w-full"
+                onChange={(_, value) => {
+                  const temp = [...payrollData];
+                  temp[index].lwf_remittance_date = value;
+                  setPayrollData(temp);
+                }}
+              />
+            </div>
+          </div>
         </div>
-
-        {/* Female */}
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Female Employees
-          </label>
-
-          <InputNumber
-            className="w-full"
-            min={0}
-            value={row.female_employees}
-            onChange={(value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].female_employees = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
-        </div>
-
-        {/* Gross */}
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Gross Wages
-          </label>
-
-          <InputNumber
-            className="w-full"
-            min={0}
-            value={row.gross_wages}
-            onChange={(value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].gross_wages = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
-        </div>
-
-        {/* Net */}
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Net Wages
-          </label>
-
-          <InputNumber
-            className="w-full"
-            min={0}
-            value={row.net_wages}
-            onChange={(value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].net_wages = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
-        </div>
-
-        {/* PF */}
-
-        <div>
-          <label className="block mb-1 font-medium">
-            PF Remittance Date
-          </label>
-
-          <DatePicker
-            className="w-full"
-            onChange={(_, value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].pf_remittance_date = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
-        </div>
-
-        {/* ESIC */}
-
-        <div>
-          <label className="block mb-1 font-medium">
-            ESIC Remittance Date
-          </label>
-
-          <DatePicker
-            className="w-full"
-            onChange={(_, value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].esic_remittance_date = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
-        </div>
-
-        {/* RC */}
-
-        <div>
-          <label className="block mb-1 font-medium">
-            RC Remittance Date
-          </label>
-
-          <DatePicker
-            className="w-full"
-            onChange={(_, value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].rc_remittance_date = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
-        </div>
-
-        {/* LWF */}
-
-        <div>
-          <label className="block mb-1 font-medium">
-            LWF Remittance Date
-          </label>
-
-          <DatePicker
-            className="w-full"
-            onChange={(_, value) => {
-
-              const temp = [...payrollData];
-
-              temp[index].lwf_remittance_date = value;
-
-              setPayrollData(temp);
-
-            }}
-          />
-        </div>
-
-      </div>
-
+      ))}
     </div>
-
-  ))}
-
-</div>
-
-      </Modal>
+  </div>
+</Modal>
 
     </div>
   );
