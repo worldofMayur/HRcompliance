@@ -710,47 +710,54 @@ const submitCompliance = async () => {
     formData.append("selected_period", selectedPeriod);
     formData.append("general_remark", generalRemark);
 
-    if (!effectiveReuploadMode) {
-      formData.append(
-        "male_employees",
-        String(complianceSummary.male_employees ?? "")
-      );
+if (!effectiveReuploadMode) {
 
-      formData.append(
-        "female_employees",
-        String(complianceSummary.female_employees ?? "")
-      );
+    const payroll = payrollData[0];
 
-      formData.append(
-        "gross_wages",
-        String(complianceSummary.gross_wages ?? "")
-      );
+    if (payroll) {
 
-      formData.append(
-        "net_wages",
-        String(complianceSummary.net_wages ?? "")
-      );
+        formData.append(
+            "male_employees",
+            String(payroll.male_employees ?? "")
+        );
 
-      formData.append(
-        "pf_remittance_date",
-        complianceSummary.pf_remittance_date
-      );
+        formData.append(
+            "female_employees",
+            String(payroll.female_employees ?? "")
+        );
 
-      formData.append(
-        "esic_remittance_date",
-        complianceSummary.esic_remittance_date
-      );
+        formData.append(
+            "gross_wages",
+            String(payroll.gross_wages ?? "")
+        );
 
-      formData.append(
-        "rc_remittance_date",
-        complianceSummary.rc_remittance_date
-      );
+        formData.append(
+            "net_wages",
+            String(payroll.net_wages ?? "")
+        );
 
-      formData.append(
-        "lwf_remittance_date",
-        complianceSummary.lwf_remittance_date
-      );
+        formData.append(
+            "pf_remittance_date",
+            payroll.pf_remittance_date || ""
+        );
+
+        formData.append(
+            "esic_remittance_date",
+            payroll.esic_remittance_date || ""
+        );
+
+        formData.append(
+            "rc_remittance_date",
+            payroll.rc_remittance_date || ""
+        );
+
+        formData.append(
+            "lwf_remittance_date",
+            payroll.lwf_remittance_date || ""
+        );
+
     }
+}
     formData.append(
       "cc_emails",
       JSON.stringify(ccEmails || [])

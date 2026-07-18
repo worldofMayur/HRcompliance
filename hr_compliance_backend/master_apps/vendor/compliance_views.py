@@ -63,16 +63,16 @@ class VendorSubmitComplianceAPIView(APIView):
             WorkflowStatus.SUBMITTED
         )
         general_remark = request.data.get("general_remark")
-        male_employees = request.data.get("male_employees")
-        female_employees = request.data.get("female_employees")
+        male_employees = request.data.get("male_employees") or None
+        female_employees = request.data.get("female_employees") or None
 
-        gross_wages = request.data.get("gross_wages")
-        net_wages = request.data.get("net_wages")
+        gross_wages = request.data.get("gross_wages") or None
+        net_wages = request.data.get("net_wages") or None
 
-        pf_remittance_date = request.data.get("pf_remittance_date")
-        esic_remittance_date = request.data.get("esic_remittance_date")
-        rc_remittance_date = request.data.get("rc_remittance_date")
-        lwf_remittance_date = request.data.get("lwf_remittance_date")
+        pf_remittance_date = request.data.get("pf_remittance_date") or None
+        esic_remittance_date = request.data.get("esic_remittance_date") or None
+        rc_remittance_date = request.data.get("rc_remittance_date") or None
+        lwf_remittance_date = request.data.get("lwf_remittance_date") or None
 
         # ✅ NEW: CC EMAILS
         cc_emails = request.data.get("cc_emails")
