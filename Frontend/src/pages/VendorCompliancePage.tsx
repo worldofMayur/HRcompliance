@@ -1478,22 +1478,19 @@ if (effectiveReuploadMode) {
 
       {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
+
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
-  width={1280}                    // ← Much wider
-  centered                        // ← Centers perfectly on screen
+  width={1280}
+  centered
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
   onOk={() => {
     if (
       payrollData.some(row =>
-        row.male_employees === undefined ||
-        row.female_employees === undefined ||
-        row.gross_wages === undefined ||
-        row.net_wages === undefined
+        !row.male_employees || !row.female_employees ||
+        !row.gross_wages || !row.net_wages
       )
     ) {
       message.error("Please fill all mandatory fields for every month.");
@@ -1505,122 +1502,143 @@ if (effectiveReuploadMode) {
   okText="Submit Compliance Documents"
   okButtonProps={{ size: "large" }}
 >
-  <div className="max-h-[70vh] overflow-hidden">
-    <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory px-2">
+  <div className="max-h-[65vh] overflow-hidden">
+    <div className="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory px-1">
       {payrollData.map((row, index) => (
         <div
           key={row.month}
-          className="min-w-[520px] flex-shrink-0 bg-white border border-gray-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow snap-start"
+          className="min-w-[500px] flex-shrink-0 bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow transition-all snap-start"
         >
-          <h3 className="text-2xl font-semibold text-gray-900 mb-8 border-b pb-4">
+          <h3 className="text-2xl font-semibold text-gray-900 mb-6 border-b pb-3">
             {row.month}
           </h3>
 
-          <div className="grid grid-cols-2 gap-x-10 gap-y-7">
-            {/* Employees */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+            {/* Male Employees */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">Male Employees</label>
-              <InputNumber
-                className="w-full h-11"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Male Employees</label>
+              <Input
+                type="number"
                 min={0}
-                value={row.male_employees}
-                onChange={(value) => {
+                value={row.male_employees ?? ""}
+                onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].male_employees = value;
+                  temp[index].male_employees = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
+                className="h-10"
               />
             </div>
 
+            {/* Female Employees */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">Female Employees</label>
-              <InputNumber
-                className="w-full h-11"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Female Employees</label>
+              <Input
+                type="number"
                 min={0}
-                value={row.female_employees}
-                onChange={(value) => {
+                value={row.female_employees ?? ""}
+                onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].female_employees = value;
+                  temp[index].female_employees = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
+                className="h-10"
               />
             </div>
 
-            {/* Wages */}
+            {/* Gross Wages */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">Gross Wages</label>
-              <InputNumber
-                className="w-full h-11"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gross Wages</label>
+              <Input
+                type="number"
                 min={0}
-                value={row.gross_wages}
-                onChange={(value) => {
+                value={row.gross_wages ?? ""}
+                onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].gross_wages = value;
+                  temp[index].gross_wages = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
+                className="h-10"
               />
             </div>
 
+            {/* Net Wages */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">Net Wages</label>
-              <InputNumber
-                className="w-full h-11"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Net Wages</label>
+              <Input
+                type="number"
                 min={0}
-                value={row.net_wages}
-                onChange={(value) => {
+                value={row.net_wages ?? ""}
+                onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].net_wages = value;
+                  temp[index].net_wages = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
+                className="h-10"
               />
             </div>
 
-            {/* Remittance Dates */}
+            {/* PF Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">PF Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">PF Remittance Date</label>
               <DatePicker
-                className="w-full h-11"
-                onChange={(_, value) => {
+                selected={row.pf_remittance_date ? new Date(row.pf_remittance_date) : null}
+                onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].pf_remittance_date = value;
+                  temp[index].pf_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
                   setPayrollData(temp);
                 }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
             </div>
 
+            {/* ESIC Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">ESIC Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ESIC Remittance Date</label>
               <DatePicker
-                className="w-full h-11"
-                onChange={(_, value) => {
+                selected={row.esic_remittance_date ? new Date(row.esic_remittance_date) : null}
+                onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].esic_remittance_date = value;
+                  temp[index].esic_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
                   setPayrollData(temp);
                 }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
             </div>
 
+            {/* RC Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">RC Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">RC Remittance Date</label>
               <DatePicker
-                className="w-full h-11"
-                onChange={(_, value) => {
+                selected={row.rc_remittance_date ? new Date(row.rc_remittance_date) : null}
+                onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].rc_remittance_date = value;
+                  temp[index].rc_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
                   setPayrollData(temp);
                 }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
             </div>
 
+            {/* LWF Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1.5">LWF Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">LWF Remittance Date</label>
               <DatePicker
-                className="w-full h-11"
-                onChange={(_, value) => {
+                selected={row.lwf_remittance_date ? new Date(row.lwf_remittance_date) : null}
+                onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].lwf_remittance_date = value;
+                  temp[index].lwf_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
                   setPayrollData(temp);
                 }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
             </div>
           </div>
