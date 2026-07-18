@@ -491,9 +491,15 @@ class PrincipalEmployerBranchCreateAPIView(APIView):
                 # =============================
                 # CREATE USER BRANCH
                 # =============================
+                print("========== BRANCH CREATE ==========")
+                print("DATA :", request.data)
+                print("FILES:", request.FILES)
+                print("DOCUMENT:", request.FILES.get("document"))
                 serializer = PrincipalEmployerBranchSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 branch = serializer.save()
+                print("Saved document:", branch.document)
+                print("Saved path:", branch.document.path if branch.document else "NO DOCUMENT")
 
                 return Response(
                     PrincipalEmployerBranchSerializer(branch).data,

@@ -218,7 +218,12 @@ const handleBranchUpdate = async (branchId: number) => {
 
   const res = await api.put(
     `/api/principal-employer/branch/${branchId}/update/`,
-    formData
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
   );
 
   const data = res.data;
@@ -259,10 +264,15 @@ const handleBranchSubmit = async () => {
     formData.append("document", branchData.document);
   }
 
-  const res = await api.post(
-    "/api/principal-employer/branch/create/",
-    formData
-  );
+const res = await api.post(
+  "/api/principal-employer/branch/create/",
+  formData,
+  {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }
+);
 
   const newBranch = res.data;
 
