@@ -18,6 +18,7 @@ export default function AuditorDashboard() {
 
   const [peList, setPeList] = useState<any[]>([]);
   const [vendorList, setVendorList] = useState<any[]>([]);
+  const [complianceModalOpen, setComplianceModalOpen] = useState(false);
   const [stateList, setStateList] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
@@ -1680,15 +1681,17 @@ const canFreezeReport =
           Download Audit Documents
         </Button>
 
+        <Button
+          type="default"
+          size="small"
+          onClick={() => setComplianceModalOpen(true)}
+          className="h-8 text-xs font-medium border-gray-300"
+        >
+          View Compliance Summary
+        </Button>
+
         <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
-          Mapping Active:{" "}
-          {mappingStartDate
-            ? new Date(mappingStartDate).toLocaleDateString("en-IN")
-            : "-"}{" "}
-          →{" "}
-          {mappingEndDate
-            ? new Date(mappingEndDate).toLocaleDateString("en-IN")
-            : "-"}
+          Mapping Active: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"} → {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
         </span>
       </div>
     </div>
@@ -2082,6 +2085,67 @@ const canFreezeReport =
   )}
 </div>
 </div>
+
+{/* FULL COMPLIANCE SUMMARY MODAL */}
+<Modal
+  title={`Compliance Summary - ${auditPeriod || "Selected Period"}`}
+  open={complianceModalOpen}
+  onCancel={() => setComplianceModalOpen(false)}
+  footer={null}
+  width={900}
+  centered
+>
+  <div className="p-8 bg-white rounded-2xl">
+    <div className="grid grid-cols-2 gap-x-12 gap-y-8 text-lg">
+      <div>
+        <div className="text-gray-500 text-sm mb-1">Male Employees</div>
+        <div className="text-4xl font-semibold text-gray-900">
+          {complianceSummary.male_employees || "0"}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-gray-500 text-sm mb-1">Female Employees</div>
+        <div className="text-4xl font-semibold text-gray-900">
+          {complianceSummary.female_employees || "0"}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-gray-500 text-sm mb-1">Gross Wages</div>
+        <div className="text-4xl font-semibold text-gray-900">
+          {complianceSummary.gross_wages || "0"}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-gray-500 text-sm mb-1">Net Wages</div>
+        <div className="text-4xl font-semibold text-gray-900">
+          {complianceSummary.net_wages || "0"}
+        </div>
+      </div>
+
+      <div className="col-span-2 pt-6 border-t grid grid-cols-2 gap-12">
+        <div>
+          <div className="text-gray-500 text-sm">PF Remittance Date</div>
+          <div className="font-medium text-xl mt-1">{complianceSummary.pf_remittance_date || "-"}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-sm">ESIC Remittance Date</div>
+          <div className="font-medium text-xl mt-1">{complianceSummary.esic_remittance_date || "-"}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-sm">RC Remittance Date</div>
+          <div className="font-medium text-xl mt-1">{complianceSummary.rc_remittance_date || "-"}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-sm">LWF Remittance Date</div>
+          <div className="font-medium text-xl mt-1">{complianceSummary.lwf_remittance_date || "-"}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Modal>
 
 </Modal>
 
