@@ -100,6 +100,7 @@ export default function VendorCompliancePage() {
   const [frequencyBase, setFrequencyBase] = useState("");
 
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [payrollData, setPayrollData] = useState<any[]>([]);
 
   const [complianceSummary, setComplianceSummary] = useState({
     male_employees: undefined as number | undefined,
@@ -550,15 +551,60 @@ const getPeriodOptions = () => {
   }]);
   };
 
-const handleSubmit = () => {
-  // Reupload flow -> submit directly
-  if (effectiveReuploadMode) {
-    submitCompliance();
-    return;
+  const getPayrollMonths = () => {
+  if (!selectedPeriod) return [];
+
+  const months: string[] = [];
+
+  const [monthPart, year] = selectedPeriod.split(" ");
+
+  if (monthPart.includes("-")) {
+    const [start, end] = monthPart.split("-");
+
+    const monthNames = [
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec"
+    ];
+
+    let startIndex = monthNames.indexOf(start);
+    let endIndex = monthNames.indexOf(end);
+
+    for (let i = startIndex; i <= endIndex; i++) {
+      months.push(`${monthNames[i]} ${year}`);
+    }
+  } else {
+    months.push(selectedPeriod);
   }
 
-  // First-time submission -> show Compliance Summary
-  setSummaryOpen(true);
+  return months;
+};
+
+const handleSubmit = () => {
+// Reupload -> submit directly
+if (effectiveReuploadMode) {
+  submitCompliance();
+  return;
+}
+
+// Build payroll rows
+const rows = getPayrollMonths().map((month) => ({
+  month,
+
+  male_employees: undefined,
+  female_employees: undefined,
+
+  gross_wages: undefined,
+  net_wages: undefined,
+
+  pf_remittance_date: "",
+  esic_remittance_date: "",
+  rc_remittance_date: "",
+  lwf_remittance_date: "",
+}));
+
+setPayrollData(rows);
+
+setSummaryOpen(true);
 };
 
 const submitCompliance = async () => {
@@ -855,7 +901,9 @@ if (effectiveReuploadMode) {
   return (
     <div className="space-y-6 w-full px-8">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-800">Submit Compliance Record</h1>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          Upload Compliance Documents
+        </h1>
         <p className="text-sm text-gray-500">Upload compliance documents for the selected branch and period.</p>
       </div>
 
@@ -1416,11 +1464,11 @@ if (effectiveReuploadMode) {
       shadow-sm
     "
   >
-    {
-      effectiveReuploadMode
-        ? "Reupload Compliance Documents"
-        : "Submit Compliance Record"
-    }
+  {
+    effectiveReuploadMode
+      ? "Reupload Compliance Documents"
+      : "Proceed"
+  }
   </Button>
 
 </div>
@@ -1431,10 +1479,15 @@ if (effectiveReuploadMode) {
       {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 
       <Modal
-        title="Compliance Summary"
+        title="Employee Payroll Details"
         open={summaryOpen}
         width={700}
         onCancel={() => setSummaryOpen(false)}
+        cancelButtonProps={{
+          style: {
+            display: "none",
+          },
+        }}
         onOk={() => {
           if (
             complianceSummary.male_employees === undefined ||
@@ -1449,147 +1502,213 @@ if (effectiveReuploadMode) {
           setSummaryOpen(false);
           submitCompliance();
         }}
-        okText="Submit Compliance"
+        okText="Proceed"
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="max-h-[65vh] overflow-y-auto pr-2 space-y-5">
 
-  <div>
-    <label className="block mb-1 font-medium">
-      Male Employees
-    </label>
+  {payrollData.map((row, index) => (
 
-    <InputNumber
-      className="w-full"
-      min={0}
-      value={complianceSummary.male_employees}
-      onChange={(value) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          male_employees: value ?? undefined,
-        }))
-      }
-    />
-  </div>
+    <div
+      key={row.month}
+      className="
+        rounded-2xl
+        border
+        border-blue-100
+        bg-blue-50/30
+        p-5
+      "
+    >
 
-  <div>
-    <label className="block mb-1 font-medium">
-      Female Employees
-    </label>
+      <h3 className="mb-4 text-lg font-semibold text-blue-700">
+        {row.month}
+      </h3>
 
-    <InputNumber
-      className="w-full"
-      min={0}
-      value={complianceSummary.female_employees}
-      onChange={(value) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          female_employees: value ?? undefined,
-        }))
-      }
-    />
-  </div>
+      <div className="grid grid-cols-2 gap-4">
 
-  <div>
-    <label className="block mb-1 font-medium">
-      Gross Wages
-    </label>
+        {/* Male */}
 
-    <InputNumber
-      className="w-full"
-      min={0}
-      value={complianceSummary.gross_wages}
-      onChange={(value) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          gross_wages: value ?? undefined,
-        }))
-      }
-    />
-  </div>
+        <div>
+          <label className="block mb-1 font-medium">
+            Male Employees
+          </label>
 
-  <div>
-    <label className="block mb-1 font-medium">
-      Net Wages
-    </label>
+          <InputNumber
+            className="w-full"
+            min={0}
+            value={row.male_employees}
+            onChange={(value) => {
 
-    <InputNumber
-      className="w-full"
-      min={0}
-      value={complianceSummary.net_wages}
-      onChange={(value) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          net_wages: value ?? undefined,
-        }))
-      }
-    />
-  </div>
+              const temp = [...payrollData];
 
-  <div>
-    <label className="block mb-1 font-medium">
-      PF Remittance Date
-    </label>
+              temp[index].male_employees = value;
 
-    <DatePicker
-      className="w-full"
-      onChange={(_, dateString) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          pf_remittance_date: String(dateString),
-        }))
-      }
-    />
-  </div>
+              setPayrollData(temp);
 
-  <div>
-    <label className="block mb-1 font-medium">
-      ESIC Remittance Date
-    </label>
+            }}
+          />
+        </div>
 
-    <DatePicker
-      className="w-full"
-      onChange={(_, dateString) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          esic_remittance_date: String(dateString),
-        }))
-      }
-    />
-  </div>
+        {/* Female */}
 
-  <div>
-    <label className="block mb-1 font-medium">
-      RC Remittance Date
-    </label>
+        <div>
+          <label className="block mb-1 font-medium">
+            Female Employees
+          </label>
 
-    <DatePicker
-      className="w-full"
-      onChange={(_, dateString) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          rc_remittance_date: String(dateString),
-        }))
-      }
-    />
-  </div>
+          <InputNumber
+            className="w-full"
+            min={0}
+            value={row.female_employees}
+            onChange={(value) => {
 
-  <div>
-    <label className="block mb-1 font-medium">
-      LWF Remittance Date
-    </label>
+              const temp = [...payrollData];
 
-    <DatePicker
-      className="w-full"
-      onChange={(_, dateString) =>
-        setComplianceSummary(prev => ({
-          ...prev,
-          lwf_remittance_date: String(dateString),
-        }))
-      }
-    />
-  </div>
+              temp[index].female_employees = value;
+
+              setPayrollData(temp);
+
+            }}
+          />
+        </div>
+
+        {/* Gross */}
+
+        <div>
+          <label className="block mb-1 font-medium">
+            Gross Wages
+          </label>
+
+          <InputNumber
+            className="w-full"
+            min={0}
+            value={row.gross_wages}
+            onChange={(value) => {
+
+              const temp = [...payrollData];
+
+              temp[index].gross_wages = value;
+
+              setPayrollData(temp);
+
+            }}
+          />
+        </div>
+
+        {/* Net */}
+
+        <div>
+          <label className="block mb-1 font-medium">
+            Net Wages
+          </label>
+
+          <InputNumber
+            className="w-full"
+            min={0}
+            value={row.net_wages}
+            onChange={(value) => {
+
+              const temp = [...payrollData];
+
+              temp[index].net_wages = value;
+
+              setPayrollData(temp);
+
+            }}
+          />
+        </div>
+
+        {/* PF */}
+
+        <div>
+          <label className="block mb-1 font-medium">
+            PF Remittance Date
+          </label>
+
+          <DatePicker
+            className="w-full"
+            onChange={(_, value) => {
+
+              const temp = [...payrollData];
+
+              temp[index].pf_remittance_date = value;
+
+              setPayrollData(temp);
+
+            }}
+          />
+        </div>
+
+        {/* ESIC */}
+
+        <div>
+          <label className="block mb-1 font-medium">
+            ESIC Remittance Date
+          </label>
+
+          <DatePicker
+            className="w-full"
+            onChange={(_, value) => {
+
+              const temp = [...payrollData];
+
+              temp[index].esic_remittance_date = value;
+
+              setPayrollData(temp);
+
+            }}
+          />
+        </div>
+
+        {/* RC */}
+
+        <div>
+          <label className="block mb-1 font-medium">
+            RC Remittance Date
+          </label>
+
+          <DatePicker
+            className="w-full"
+            onChange={(_, value) => {
+
+              const temp = [...payrollData];
+
+              temp[index].rc_remittance_date = value;
+
+              setPayrollData(temp);
+
+            }}
+          />
+        </div>
+
+        {/* LWF */}
+
+        <div>
+          <label className="block mb-1 font-medium">
+            LWF Remittance Date
+          </label>
+
+          <DatePicker
+            className="w-full"
+            onChange={(_, value) => {
+
+              const temp = [...payrollData];
+
+              temp[index].lwf_remittance_date = value;
+
+              setPayrollData(temp);
+
+            }}
+          />
+        </div>
+
+      </div>
+
+    </div>
+
+  ))}
 
 </div>
+
       </Modal>
 
     </div>
