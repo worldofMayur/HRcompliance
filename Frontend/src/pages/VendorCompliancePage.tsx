@@ -7,9 +7,10 @@ import {
   message,
   Select,
   Modal,
-  DatePicker,
-  InputNumber,
 } from "antd";
+
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import type { UploadFile } from "antd/es/upload/interface";
 import { useLocation } from "react-router-dom";
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -141,6 +142,29 @@ const formatDate = (date: Date | null) => {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
+};
+
+const dateInputClass =
+  "w-full h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none";
+
+const formatForAPI = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const parseApiDate = (value: string) => {
+  if (!value) return null;
+
+  const [year, month, day] = value.split("-");
+
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  );
 };
 
 const parseDateForPicker = (dateStr: string) => {
