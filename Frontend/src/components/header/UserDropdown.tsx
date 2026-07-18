@@ -146,7 +146,7 @@ export default function UserDropdown() {
               src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
               alt="User"
               onError={handleImageError}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover scale-150 object-[center_20%]"
             />
           </div>
 
@@ -195,7 +195,7 @@ export default function UserDropdown() {
                 src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
                 alt="User"
                 onError={handleImageError}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover scale-150 object-[center_20%]"
               />
             </div>
 
