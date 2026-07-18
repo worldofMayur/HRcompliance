@@ -610,3 +610,61 @@ class PrincipalEmployerDocumentZipAPIView(APIView):
         )
 
         return response
+
+
+class PrincipalEmployerBranchDocumentZipAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pe_id):
+
+        pe = get_object_or_404(
+            PrincipalEmployer,
+            pk=pe_id
+        )
+
+        branches = PrincipalEmployerBranch.objects.filter(
+            principal_employer=pe
+        ).exclude(document="")
+
+        if not branches.exists():
+            return Response(
+                {"error": "No branch documents found"},
+                status=404
+            )
+
+        zip_buffer = BytesIO()
+
+        with zipfile.ZipFile(
+            zip_buffer,
+            "w",
+            zipfile.ZIP_DEFLATED
+        ) as zip_file:
+
+            for branch in branches:
+
+                if (
+                    branch.document
+                    and os.path.exists(branch.document.path)
+                ):
+
+                    zip_file.write(
+                        branch.document.path,
+                        arcname=os.path.basename(
+                            branch.document.name
+                        )
+                    )
+
+        zip_buffer.seek(0)
+
+        response = HttpResponse(
+            zip_buffer.read(),
+            content_type="application/zip"
+        )
+
+        response[
+            "Content-Disposition"
+        ] = (
+            f'attachment; filename="{pe.short_name}_branch_documents.zip"'
+        )
+
+        return response

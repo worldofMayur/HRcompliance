@@ -1656,7 +1656,7 @@ finally {
                     }
 
                     const response = await api.get(
-                      `/api/principal-employer/${selectedPEObject.id}/download-documents/`,
+                      `/api/principal-employer/${selectedPEObject.id}/download-branch-documents/`,
                       {
                         responseType: "blob",
                       }

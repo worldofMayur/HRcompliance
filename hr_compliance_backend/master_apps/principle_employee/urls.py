@@ -10,7 +10,8 @@ from .views import (
     PrincipalEmployerBranchCreateAPIView,
     PrincipalEmployerBranchListAPIView,
     PrincipalEmployerBranchUpdateAPIView,
-    PrincipalEmployerDocumentZipAPIView,   # ✅ NEW
+    PrincipalEmployerDocumentZipAPIView,
+    PrincipalEmployerBranchDocumentZipAPIView,   # ✅ Add this
 )
 
 urlpatterns = [
@@ -70,6 +71,11 @@ urlpatterns = [
         "principal-employer/branch/<int:pk>/update/",
         PrincipalEmployerBranchUpdateAPIView.as_view(),
         name="branch-update",
+    ),
+
+    path(
+        "<int:pe_id>/download-branch-documents/",
+        PrincipalEmployerBranchDocumentZipAPIView.as_view(),
     ),
 ]
 
