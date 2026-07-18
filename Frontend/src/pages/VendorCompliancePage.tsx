@@ -2,12 +2,14 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import {
   Upload,
-  Input,
   Button,
   message,
   Select,
   Modal,
 } from "antd";
+
+import InputField from "../components/form/input/InputField";
+import Label from "../components/form/Label";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -1530,6 +1532,7 @@ if (effectiveReuploadMode) {
 
 
 {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
+{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
@@ -1567,14 +1570,14 @@ if (effectiveReuploadMode) {
           <div className="grid grid-cols-2 gap-x-6 gap-y-5">
             {/* Male Employees */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Male Employees</label>
-              <Input
+              <Label>Male Employees</Label>
+              <InputField
                 type="number"
-                min={0}
                 value={row.male_employees ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].male_employees = e.target.value ? Number(e.target.value) : undefined;
+                  temp[index].male_employees =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-10 text-sm"
@@ -1583,14 +1586,14 @@ if (effectiveReuploadMode) {
 
             {/* Female Employees */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Female Employees</label>
-              <Input
+              <Label>Female Employees</Label>
+              <InputField
                 type="number"
-                min={0}
                 value={row.female_employees ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].female_employees = e.target.value ? Number(e.target.value) : undefined;
+                  temp[index].female_employees =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-10 text-sm"
@@ -1599,14 +1602,14 @@ if (effectiveReuploadMode) {
 
             {/* Gross Wages */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gross Wages</label>
-              <Input
+              <Label>Gross Wages</Label>
+              <InputField
                 type="number"
-                min={0}
                 value={row.gross_wages ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].gross_wages = e.target.value ? Number(e.target.value) : undefined;
+                  temp[index].gross_wages =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-10 text-sm"
@@ -1615,14 +1618,14 @@ if (effectiveReuploadMode) {
 
             {/* Net Wages */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Net Wages</label>
-              <Input
+              <Label>Net Wages</Label>
+              <InputField
                 type="number"
-                min={0}
                 value={row.net_wages ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].net_wages = e.target.value ? Number(e.target.value) : undefined;
+                  temp[index].net_wages =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-10 text-sm"
@@ -1631,7 +1634,7 @@ if (effectiveReuploadMode) {
 
             {/* PF Remittance Date */}
             <div className="flex flex-col">
-              <label className="block text-sm font-medium text-gray-700 mb-1">PF Remittance Date</label>
+              <Label>PF Remittance Date</Label>
               <DatePicker
                 selected={row.pf_remittance_date ? parseDateForPicker(row.pf_remittance_date) : null}
                 value={row.pf_remittance_date || ""}
@@ -1655,7 +1658,7 @@ if (effectiveReuploadMode) {
 
             {/* ESIC Remittance Date */}
             <div className="flex flex-col">
-              <label className="block text-sm font-medium text-gray-700 mb-1">ESIC Remittance Date</label>
+              <Label>ESIC Remittance Date</Label>
               <DatePicker
                 selected={row.esic_remittance_date ? parseDateForPicker(row.esic_remittance_date) : null}
                 value={row.esic_remittance_date || ""}
@@ -1679,7 +1682,7 @@ if (effectiveReuploadMode) {
 
             {/* RC Remittance Date */}
             <div className="flex flex-col">
-              <label className="block text-sm font-medium text-gray-700 mb-1">RC Remittance Date</label>
+              <Label>RC Remittance Date</Label>
               <DatePicker
                 selected={row.rc_remittance_date ? parseDateForPicker(row.rc_remittance_date) : null}
                 value={row.rc_remittance_date || ""}
@@ -1703,7 +1706,7 @@ if (effectiveReuploadMode) {
 
             {/* LWF Remittance Date */}
             <div className="flex flex-col">
-              <label className="block text-sm font-medium text-gray-700 mb-1">LWF Remittance Date</label>
+              <Label>LWF Remittance Date</Label>
               <DatePicker
                 selected={row.lwf_remittance_date ? parseDateForPicker(row.lwf_remittance_date) : null}
                 value={row.lwf_remittance_date || ""}
