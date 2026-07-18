@@ -468,36 +468,19 @@ const handleEditSelected = () => {
                 onChange={handleChange}
               />
 
-              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
-
-                <label className="flex items-start gap-3 cursor-pointer">
-
-                  <Checkbox
-                    checked={formData.showAuditorGuidelines}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        showAuditorGuidelines: e.target.checked,
-                      }))
-                    }
-                  />
-
-                  <div>
-
-                    <div className="font-semibold text-amber-900">
-                      Show Auditor Guidelines
-                    </div>
-
-                    <p className="mt-1 text-xs text-amber-700">
-                      When enabled, the auditor will see the compliance guidelines before
-                      starting the audit. Disable this if the guidelines should be hidden.
-                    </p>
-
-                  </div>
-
-                </label>
-
-              </div>
+              <Checkbox
+                checked={formData.showAuditorGuidelines}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    showAuditorGuidelines: e.target.checked,
+                  }))
+                }
+              >
+                <span className="font-semibold text-blue-600">
+                  Show Auditor Guidelines
+                </span>
+              </Checkbox>
             </div>
 
             <div>
