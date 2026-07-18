@@ -1541,6 +1541,7 @@ if (effectiveReuploadMode) {
 
 {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
+{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
@@ -1584,8 +1585,7 @@ if (effectiveReuploadMode) {
                 value={row.male_employees ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].male_employees =
-                    e.target.value === "" ? undefined : Number(e.target.value);
+                  temp[index].male_employees = e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-9 text-sm"
@@ -1600,8 +1600,7 @@ if (effectiveReuploadMode) {
                 value={row.female_employees ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].female_employees =
-                    e.target.value === "" ? undefined : Number(e.target.value);
+                  temp[index].female_employees = e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-9 text-sm"
@@ -1616,8 +1615,7 @@ if (effectiveReuploadMode) {
                 value={row.gross_wages ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].gross_wages =
-                    e.target.value === "" ? undefined : Number(e.target.value);
+                  temp[index].gross_wages = e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-9 text-sm"
@@ -1632,8 +1630,7 @@ if (effectiveReuploadMode) {
                 value={row.net_wages ?? ""}
                 onChange={(e) => {
                   const temp = [...payrollData];
-                  temp[index].net_wages =
-                    e.target.value === "" ? undefined : Number(e.target.value);
+                  temp[index].net_wages = e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
                 className="h-9 text-sm"
@@ -1644,18 +1641,17 @@ if (effectiveReuploadMode) {
             <div className="flex flex-col">
               <Label>PF Remittance Date</Label>
               <DatePicker
-                selected={row.pf_remittance_date ? parseDateForPicker(row.pf_remittance_date) : null}
-                value={row.pf_remittance_date || ""}
+                selected={row.pf_remittance_date ? parseApiDate(row.pf_remittance_date) : null}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].pf_remittance_date = date ? formatDate(date) : "";
+                  temp[index].pf_remittance_date = date ? formatForAPI(date) : "";
                   setPayrollData(temp);
                 }}
                 onChangeRaw={(e) => {
                   const value = e.target.value;
                   const temp = [...payrollData];
                   const parsed = parseDate(value);
-                  temp[index].pf_remittance_date = parsed ? formatDate(parsed) : value;
+                  temp[index].pf_remittance_date = parsed ? formatForAPI(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
@@ -1668,18 +1664,17 @@ if (effectiveReuploadMode) {
             <div className="flex flex-col">
               <Label>ESIC Remittance Date</Label>
               <DatePicker
-                selected={row.esic_remittance_date ? parseDateForPicker(row.esic_remittance_date) : null}
-                value={row.esic_remittance_date || ""}
+                selected={row.esic_remittance_date ? parseApiDate(row.esic_remittance_date) : null}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].esic_remittance_date = date ? formatDate(date) : "";
+                  temp[index].esic_remittance_date = date ? formatForAPI(date) : "";
                   setPayrollData(temp);
                 }}
                 onChangeRaw={(e) => {
                   const value = e.target.value;
                   const temp = [...payrollData];
                   const parsed = parseDate(value);
-                  temp[index].esic_remittance_date = parsed ? formatDate(parsed) : value;
+                  temp[index].esic_remittance_date = parsed ? formatForAPI(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
@@ -1692,18 +1687,17 @@ if (effectiveReuploadMode) {
             <div className="flex flex-col">
               <Label>RC Remittance Date</Label>
               <DatePicker
-                selected={row.rc_remittance_date ? parseDateForPicker(row.rc_remittance_date) : null}
-                value={row.rc_remittance_date || ""}
+                selected={row.rc_remittance_date ? parseApiDate(row.rc_remittance_date) : null}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].rc_remittance_date = date ? formatDate(date) : "";
+                  temp[index].rc_remittance_date = date ? formatForAPI(date) : "";
                   setPayrollData(temp);
                 }}
                 onChangeRaw={(e) => {
                   const value = e.target.value;
                   const temp = [...payrollData];
                   const parsed = parseDate(value);
-                  temp[index].rc_remittance_date = parsed ? formatDate(parsed) : value;
+                  temp[index].rc_remittance_date = parsed ? formatForAPI(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
@@ -1716,18 +1710,17 @@ if (effectiveReuploadMode) {
             <div className="flex flex-col">
               <Label>LWF Remittance Date</Label>
               <DatePicker
-                selected={row.lwf_remittance_date ? parseDateForPicker(row.lwf_remittance_date) : null}
-                value={row.lwf_remittance_date || ""}
+                selected={row.lwf_remittance_date ? parseApiDate(row.lwf_remittance_date) : null}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].lwf_remittance_date = date ? formatDate(date) : "";
+                  temp[index].lwf_remittance_date = date ? formatForAPI(date) : "";
                   setPayrollData(temp);
                 }}
                 onChangeRaw={(e) => {
                   const value = e.target.value;
                   const temp = [...payrollData];
                   const parsed = parseDate(value);
-                  temp[index].lwf_remittance_date = parsed ? formatDate(parsed) : value;
+                  temp[index].lwf_remittance_date = parsed ? formatForAPI(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
@@ -1741,7 +1734,6 @@ if (effectiveReuploadMode) {
     </div>
   </div>
 </Modal>
-
     </div>
   );
 }
