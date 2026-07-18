@@ -117,11 +117,37 @@ export default function VendorCompliancePage() {
   const docRef = useRef<any>(null);
 
   /* ================= FORMAT DATE ================= */
-  const formatDate = (date: any) => {
-    if (!date) return "-";
-    const d = new Date(date);
-    return d.toLocaleDateString("en-GB");
-  };
+
+  const parseDate = (value: string) => {
+  const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+  if (!regex.test(value)) return null;
+
+  const [day, month, year] = value.split("/").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
+};
+
+const formatDate = (date: Date | null) => {
+  if (!date) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const parseDateForPicker = (dateStr: string) => {
+  if (!dateStr) return null;
+  const parsed = parseDate(dateStr);
+  return parsed;
+};
 
   /* ================= PREFILL ================= */
     /* ================= PREFILL ================= */
@@ -1479,6 +1505,7 @@ if (effectiveReuploadMode) {
       {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 
 
+{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
@@ -1502,8 +1529,8 @@ if (effectiveReuploadMode) {
   okText="Submit Compliance Documents"
   okButtonProps={{ size: "large" }}
 >
-  <div className="max-h-[65vh] overflow-hidden">
-    <div className="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory px-1">
+  <div className="max-h-[68vh] overflow-hidden">
+    <div className="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory px-2">
       {payrollData.map((row, index) => (
         <div
           key={row.month}
@@ -1526,7 +1553,7 @@ if (effectiveReuploadMode) {
                   temp[index].male_employees = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
-                className="h-10"
+                className="h-10 text-sm"
               />
             </div>
 
@@ -1542,7 +1569,7 @@ if (effectiveReuploadMode) {
                   temp[index].female_employees = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
-                className="h-10"
+                className="h-10 text-sm"
               />
             </div>
 
@@ -1558,7 +1585,7 @@ if (effectiveReuploadMode) {
                   temp[index].gross_wages = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
-                className="h-10"
+                className="h-10 text-sm"
               />
             </div>
 
@@ -1574,18 +1601,26 @@ if (effectiveReuploadMode) {
                   temp[index].net_wages = e.target.value ? Number(e.target.value) : undefined;
                   setPayrollData(temp);
                 }}
-                className="h-10"
+                className="h-10 text-sm"
               />
             </div>
 
-            {/* PF Date */}
-            <div>
+            {/* PF Remittance Date */}
+            <div className="flex flex-col">
               <label className="block text-sm font-medium text-gray-700 mb-1">PF Remittance Date</label>
               <DatePicker
-                selected={row.pf_remittance_date ? new Date(row.pf_remittance_date) : null}
+                selected={row.pf_remittance_date ? parseDateForPicker(row.pf_remittance_date) : null}
+                value={row.pf_remittance_date || ""}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].pf_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
+                  temp[index].pf_remittance_date = date ? formatDate(date) : "";
+                  setPayrollData(temp);
+                }}
+                onChangeRaw={(e) => {
+                  const value = e.target.value;
+                  const temp = [...payrollData];
+                  const parsed = parseDate(value);
+                  temp[index].pf_remittance_date = parsed ? formatDate(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
@@ -1594,14 +1629,22 @@ if (effectiveReuploadMode) {
               />
             </div>
 
-            {/* ESIC Date */}
-            <div>
+            {/* ESIC Remittance Date */}
+            <div className="flex flex-col">
               <label className="block text-sm font-medium text-gray-700 mb-1">ESIC Remittance Date</label>
               <DatePicker
-                selected={row.esic_remittance_date ? new Date(row.esic_remittance_date) : null}
+                selected={row.esic_remittance_date ? parseDateForPicker(row.esic_remittance_date) : null}
+                value={row.esic_remittance_date || ""}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].esic_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
+                  temp[index].esic_remittance_date = date ? formatDate(date) : "";
+                  setPayrollData(temp);
+                }}
+                onChangeRaw={(e) => {
+                  const value = e.target.value;
+                  const temp = [...payrollData];
+                  const parsed = parseDate(value);
+                  temp[index].esic_remittance_date = parsed ? formatDate(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
@@ -1610,14 +1653,22 @@ if (effectiveReuploadMode) {
               />
             </div>
 
-            {/* RC Date */}
-            <div>
+            {/* RC Remittance Date */}
+            <div className="flex flex-col">
               <label className="block text-sm font-medium text-gray-700 mb-1">RC Remittance Date</label>
               <DatePicker
-                selected={row.rc_remittance_date ? new Date(row.rc_remittance_date) : null}
+                selected={row.rc_remittance_date ? parseDateForPicker(row.rc_remittance_date) : null}
+                value={row.rc_remittance_date || ""}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].rc_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
+                  temp[index].rc_remittance_date = date ? formatDate(date) : "";
+                  setPayrollData(temp);
+                }}
+                onChangeRaw={(e) => {
+                  const value = e.target.value;
+                  const temp = [...payrollData];
+                  const parsed = parseDate(value);
+                  temp[index].rc_remittance_date = parsed ? formatDate(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
@@ -1626,14 +1677,22 @@ if (effectiveReuploadMode) {
               />
             </div>
 
-            {/* LWF Date */}
-            <div>
+            {/* LWF Remittance Date */}
+            <div className="flex flex-col">
               <label className="block text-sm font-medium text-gray-700 mb-1">LWF Remittance Date</label>
               <DatePicker
-                selected={row.lwf_remittance_date ? new Date(row.lwf_remittance_date) : null}
+                selected={row.lwf_remittance_date ? parseDateForPicker(row.lwf_remittance_date) : null}
+                value={row.lwf_remittance_date || ""}
                 onChange={(date: Date | null) => {
                   const temp = [...payrollData];
-                  temp[index].lwf_remittance_date = date ? date.toLocaleDateString("en-GB") : "";
+                  temp[index].lwf_remittance_date = date ? formatDate(date) : "";
+                  setPayrollData(temp);
+                }}
+                onChangeRaw={(e) => {
+                  const value = e.target.value;
+                  const temp = [...payrollData];
+                  const parsed = parseDate(value);
+                  temp[index].lwf_remittance_date = parsed ? formatDate(parsed) : value;
                   setPayrollData(temp);
                 }}
                 dateFormat="dd/MM/yyyy"
