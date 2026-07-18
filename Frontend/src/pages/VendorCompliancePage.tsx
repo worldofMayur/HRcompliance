@@ -1581,7 +1581,7 @@ if (effectiveReuploadMode) {
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
-                className="h-8 text-sm"
+                className="h-9 text-sm"
               />
             </div>
 
@@ -1597,7 +1597,7 @@ if (effectiveReuploadMode) {
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
-                className="h-8 text-sm"
+                className="h-9 text-sm"
               />
             </div>
 
@@ -1613,7 +1613,7 @@ if (effectiveReuploadMode) {
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
-                className="h-8 text-sm"
+                className="h-9 text-sm"
               />
             </div>
 
@@ -1629,7 +1629,7 @@ if (effectiveReuploadMode) {
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(temp);
                 }}
-                className="h-8 text-sm"
+                className="h-9 text-sm"
               />
             </div>
 
