@@ -196,13 +196,26 @@ const openAdd = () => {
 };
 
   const openEdit = (doc) => {
+    let documentName = doc.name;
+    let category = doc.principal_employer || "";
+
+    if (doc.name.startsWith("State_")) {
+      documentName = doc.name.replace(/^State_/, "");
+      category = "State";
+    } else if (doc.name.startsWith("Central_")) {
+      documentName = doc.name.replace(/^Central_/, "");
+      category = "Central";
+    }
+
     setEditDoc(doc);
+
     setFormData({
-      name: doc.name,
+      name: documentName,
       document_type: "",
       frequency: doc.frequency,
-      principal_employer: doc.principal_employer || "",
+      principal_employer: category,
     });
+
     setShowForm(true);
   };
 

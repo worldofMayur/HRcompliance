@@ -36,3 +36,31 @@ class DocumentMasterSerializer(serializers.ModelSerializer):
             validated_data["name"] = f"{pe.short_name}_{name}"
 
         return super().create(validated_data)
+
+
+    def update(self, instance, validated_data):
+        pe = validated_data.get(
+            "principal_employer",
+            instance.principal_employer
+        )
+
+        name = validated_data.get(
+            "name",
+            instance.name
+        )
+
+        category = validated_data.get(
+            "document_category",
+            instance.document_category
+        )
+
+        if category:
+            validated_data["name"] = f"{category}_{name}"
+
+        elif pe:
+            validated_data["name"] = f"{pe.short_name}_{name}"
+
+        else:
+            validated_data["name"] = name
+
+        return super().update(instance, validated_data)
