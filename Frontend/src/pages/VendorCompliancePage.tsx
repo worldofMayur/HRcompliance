@@ -1479,10 +1479,12 @@ if (effectiveReuploadMode) {
       {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 
 {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
+{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
-  width={1100}           // ← Increased width
+  width={1280}                    // ← Much wider
+  centered                        // ← Centers perfectly on screen
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
   onOk={() => {
@@ -1500,25 +1502,26 @@ if (effectiveReuploadMode) {
     setSummaryOpen(false);
     submitCompliance();
   }}
-  okText="Submit Compliance Documents"   // ← Renamed
+  okText="Submit Compliance Documents"
+  okButtonProps={{ size: "large" }}
 >
-  <div className="max-h-[65vh] overflow-y-auto pr-2">
-    <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
+  <div className="max-h-[70vh] overflow-hidden">
+    <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory px-2">
       {payrollData.map((row, index) => (
         <div
           key={row.month}
-          className="min-w-[480px] flex-shrink-0 border border-blue-100 bg-blue-50/30 rounded-2xl p-6 snap-start"
+          className="min-w-[520px] flex-shrink-0 bg-white border border-gray-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow snap-start"
         >
-          <h3 className="mb-5 text-xl font-semibold text-blue-700 border-b pb-3">
+          <h3 className="text-2xl font-semibold text-gray-900 mb-8 border-b pb-4">
             {row.month}
           </h3>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-            {/* Male / Female */}
+          <div className="grid grid-cols-2 gap-x-10 gap-y-7">
+            {/* Employees */}
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">Male Employees</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">Male Employees</label>
               <InputNumber
-                className="w-full"
+                className="w-full h-11"
                 min={0}
                 value={row.male_employees}
                 onChange={(value) => {
@@ -1530,9 +1533,9 @@ if (effectiveReuploadMode) {
             </div>
 
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">Female Employees</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">Female Employees</label>
               <InputNumber
-                className="w-full"
+                className="w-full h-11"
                 min={0}
                 value={row.female_employees}
                 onChange={(value) => {
@@ -1545,9 +1548,9 @@ if (effectiveReuploadMode) {
 
             {/* Wages */}
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">Gross Wages</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">Gross Wages</label>
               <InputNumber
-                className="w-full"
+                className="w-full h-11"
                 min={0}
                 value={row.gross_wages}
                 onChange={(value) => {
@@ -1559,9 +1562,9 @@ if (effectiveReuploadMode) {
             </div>
 
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">Net Wages</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">Net Wages</label>
               <InputNumber
-                className="w-full"
+                className="w-full h-11"
                 min={0}
                 value={row.net_wages}
                 onChange={(value) => {
@@ -1574,9 +1577,9 @@ if (effectiveReuploadMode) {
 
             {/* Remittance Dates */}
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">PF Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">PF Remittance Date</label>
               <DatePicker
-                className="w-full"
+                className="w-full h-11"
                 onChange={(_, value) => {
                   const temp = [...payrollData];
                   temp[index].pf_remittance_date = value;
@@ -1586,9 +1589,9 @@ if (effectiveReuploadMode) {
             </div>
 
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">ESIC Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">ESIC Remittance Date</label>
               <DatePicker
-                className="w-full"
+                className="w-full h-11"
                 onChange={(_, value) => {
                   const temp = [...payrollData];
                   temp[index].esic_remittance_date = value;
@@ -1598,9 +1601,9 @@ if (effectiveReuploadMode) {
             </div>
 
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">RC Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">RC Remittance Date</label>
               <DatePicker
-                className="w-full"
+                className="w-full h-11"
                 onChange={(_, value) => {
                   const temp = [...payrollData];
                   temp[index].rc_remittance_date = value;
@@ -1610,9 +1613,9 @@ if (effectiveReuploadMode) {
             </div>
 
             <div>
-              <label className="block mb-1.5 font-medium text-gray-700">LWF Remittance Date</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1.5">LWF Remittance Date</label>
               <DatePicker
-                className="w-full"
+                className="w-full h-11"
                 onChange={(_, value) => {
                   const temp = [...payrollData];
                   temp[index].lwf_remittance_date = value;
