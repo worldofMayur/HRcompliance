@@ -27,6 +27,8 @@ from .compliance_views import (
     FrozenAuditPeriodsAPIView,
 )
 
+from .dashboard_views import ExceptionalDashboardAPIView
+
 from .dashboard_views import (
     BranchDashboardKPIAPIView,
     BranchDashboardStateSummaryAPIView,
@@ -91,6 +93,10 @@ urlpatterns = [
     path(
         "reports/branch-wise/",
         BranchWiseVendorReportAPIView.as_view(),
+    ),
+    path(
+        "dashboard/exceptional/",
+        ExceptionalDashboardAPIView.as_view(),
     ),
     path(
         "dashboard/branch/kpi/",

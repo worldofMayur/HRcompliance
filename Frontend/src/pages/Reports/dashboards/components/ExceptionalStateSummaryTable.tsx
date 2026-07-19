@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import axios from "axios";
+import { API_BASE } from "../../../config/api"; // Update path if different
 
 interface ExceptionalStateData {
   key: string;
@@ -63,99 +65,72 @@ const columns: ColumnsType<ExceptionalStateData> = [
   { title: "Dec", dataIndex: "dec", key: "dec", width: 55, align: "center" },
 ];
 
-const data: ExceptionalStateData[] = [
-  {
-    key: "1",
-    state: "Maharashtra",
-    branch_count: 12,
-    vendor_count: 48,
-    jan: 2,
-    feb: 1,
-    mar: 4,
-    apr: 0,
-    may: 3,
-    jun: 2,
-    jul: 1,
-    aug: 0,
-    sep: 2,
-    oct: 1,
-    nov: 3,
-    dec: 2,
-  },
-  {
-    key: "2",
-    state: "Karnataka",
-    branch_count: 8,
-    vendor_count: 31,
-    jan: 0,
-    feb: 2,
-    mar: 1,
-    apr: 3,
-    may: 1,
-    jun: 0,
-    jul: 2,
-    aug: 1,
-    sep: 0,
-    oct: 1,
-    nov: 2,
-    dec: 1,
-  },
-  {
-    key: "3",
-    state: "Tamil Nadu",
-    branch_count: 10,
-    vendor_count: 26,
-    jan: 1,
-    feb: 1,
-    mar: 0,
-    apr: 2,
-    may: 2,
-    jun: 1,
-    jul: 1,
-    aug: 2,
-    sep: 1,
-    oct: 0,
-    nov: 1,
-    dec: 2,
-  },
-  {
-    key: "4",
-    state: "Delhi",
-    branch_count: 5,
-    vendor_count: 18,
-    jan: 1,
-    feb: 0,
-    mar: 2,
-    apr: 1,
-    may: 0,
-    jun: 1,
-    jul: 2,
-    aug: 0,
-    sep: 1,
-    oct: 1,
-    nov: 0,
-    dec: 1,
-  },
-];
-
 const ExceptionalStateSummaryTable: React.FC = () => {
+  const [data, setData] = useState<ExceptionalStateData[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchSummary();
+  }, []);
+
+  const fetchSummary = async () => {
+    try {
+      setLoading(true);
+
+      const response = await axios.get(
+        `${API_BASE}/api/vendor/dashboard/exceptional/`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      const formatted = response.data.map(
+        (item: any, index: number): ExceptionalStateData => ({
+          key: index.toString(),
+          state: item.state,
+          branch_count: item.branch_count,
+          vendor_count: item.vendor_count,
+          jan: item.jan,
+          feb: item.feb,
+          mar: item.mar,
+          apr: item.apr,
+          may: item.may,
+          jun: item.jun,
+          jul: item.jul,
+          aug: item.aug,
+          sep: item.sep,
+          oct: item.oct,
+          nov: item.nov,
+          dec: item.dec,
+        })
+      );
+
+      setData(formatted);
+    } catch (error) {
+      console.error("Failed to load Exceptional Dashboard", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card
       title="State-wise Exceptional Approval Summary"
       size="small"
       bodyStyle={{ padding: 0 }}
     >
-    <Table
-      rowKey="key"
-      columns={columns}
-      dataSource={data}
-      pagination={false}
-      bordered
-      size="small"
-      sticky
-      tableLayout="fixed"
-      scroll={{ y: 360 }}
-    />
+      <Table
+        rowKey="key"
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        pagination={false}
+        bordered
+        size="small"
+        sticky
+        tableLayout="fixed"
+        scroll={{ x: "max-content", y: 360 }}
+      />
     </Card>
   );
 };

@@ -10,6 +10,7 @@ from datetime import datetime
 from django.db.models import Count, Q
 from master_apps.vendor.compliance_models import VendorComplianceSubmission
 from master_apps.vendor.constants import WorkflowStatus
+import re
 from master_apps.principle_employee.models import PrincipalEmployerBranch
 
 
@@ -638,3 +639,190 @@ class AllBranchesVendorAPIView(APIView):
             })
 
         return Response(response)
+
+
+from collections import defaultdict
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.principle_employee.models import (
+    PrincipalEmployer,
+    PrincipalEmployerBranch,
+)
+
+from master_apps.vendor.mapping_models import VendorBranchMapping
+
+
+class ExceptionalDashboardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        # ------------------------------------
+        # Branch Count (Exclude All Branches)
+        # ------------------------------------
+
+        branch_summary = (
+            PrincipalEmployerBranch.objects
+            .filter(principal_employer=pe)
+            .exclude(short_name__iexact="All Branches")
+            .values("state")
+            .annotate(branch_count=Count("id"))
+        )
+
+        branch_map = {
+            row["state"]: row["branch_count"]
+            for row in branch_summary
+        }
+
+        # ------------------------------------
+        # Unique Vendors
+        # ------------------------------------
+
+        vendor_summary = (
+            VendorBranchMapping.objects
+            .filter(principal_employer=pe)
+            .values("branch__state")
+            .annotate(
+                vendor_count=Count(
+                    "vendor",
+                    distinct=True,
+                )
+            )
+        )
+
+        vendor_map = {
+            row["branch__state"]: row["vendor_count"]
+            for row in vendor_summary
+        }
+
+        # ------------------------------------
+        # Prepare Response
+        # ------------------------------------
+
+        states = sorted(
+            set(branch_map.keys()) |
+            set(vendor_map.keys())
+        )
+
+        response = {}
+
+        for state in states:
+
+            response[state] = {
+
+                "state": state,
+                "branch_count": branch_map.get(state, 0),
+                "vendor_count": vendor_map.get(state, 0),
+
+                "jan": 0,
+                "feb": 0,
+                "mar": 0,
+                "apr": 0,
+                "may": 0,
+                "jun": 0,
+                "jul": 0,
+                "aug": 0,
+                "sep": 0,
+                "oct": 0,
+                "nov": 0,
+                "dec": 0,
+            }
+
+        # -------------------------------------
+        # Exceptional Approval Records
+        # -------------------------------------
+
+        submissions = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            has_exceptional_approval=True,
+            is_cc_issued=True,
+        ).select_related(
+            "vendor",
+            "branch",
+        )
+
+        month_keys = [
+            "jan","feb","mar","apr","may","jun",
+            "jul","aug","sep","oct","nov","dec"
+        ]
+
+        for submission in submissions:
+
+            state = submission.state
+
+            if state not in response:
+                continue
+
+            mapping = VendorBranchMapping.objects.filter(
+                principal_employer=pe,
+                vendor=submission.vendor,
+                branch=submission.branch,
+            ).first()
+
+            if not mapping:
+                continue
+
+            frequency = mapping.frequency
+
+            period = str(submission.audit_period).lower()
+
+            base_month = None
+
+            for index, name in enumerate(month_keys, start=1):
+                if name in period:
+                    base_month = index
+                    break
+
+            if base_month is None:
+
+                match = re.search(r"(\d{4})[-/](\d{1,2})", period)
+
+                if match:
+                    base_month = int(match.group(2))
+
+            if base_month is None:
+                continue
+
+            months = []
+
+            if frequency == "MONTHLY":
+
+                months = [base_month]
+
+            elif frequency == "QUARTERLY":
+
+                start = ((base_month - 1) // 3) * 3 + 1
+                months = [start, start + 1, start + 2]
+
+            elif frequency == "HALF_YEARLY":
+
+                start = 1 if base_month <= 6 else 7
+                months = list(range(start, start + 6))
+
+            elif frequency == "ANNUALLY":
+
+                months = list(range(1, 13))
+
+            else:
+
+                months = [base_month]
+
+            for month in months:
+
+                response[state][month_keys[month - 1]] += 1
+
+        return Response(list(response.values()))
