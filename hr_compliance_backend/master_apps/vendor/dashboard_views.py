@@ -762,6 +762,13 @@ class ExceptionalDashboardAPIView(APIView):
 
         for submission in submissions:
 
+            print("===================================")
+            print("Vendor:", submission.vendor.short_name)
+            print("State:", submission.state)
+            print("Audit:", submission.audit_period)
+            print("CC:", submission.is_cc_issued)
+            print("Exceptional:", submission.has_exceptional_approval)
+
             state = submission.state
 
             if state not in response:
@@ -773,10 +780,15 @@ class ExceptionalDashboardAPIView(APIView):
                 branch=submission.branch,
             ).first()
 
+            print("Mapping:", mapping)
+
             if not mapping:
                 continue
 
             frequency = mapping.frequency
+            print("Frequency:", frequency)
+            print("Base Month:", base_month)
+            print("Months:", months)
 
             period = str(submission.audit_period).lower()
 
