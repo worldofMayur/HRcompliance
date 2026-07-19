@@ -26,105 +26,90 @@ const columns: ColumnsType<ExceptionalStateData> = [
     title: "State",
     dataIndex: "state",
     key: "state",
-    fixed: "left",
-    width: 180,
+    align: "left",
   },
   {
     title: "Branches",
     dataIndex: "branch_count",
     key: "branch_count",
-    width: 110,
     align: "center",
   },
   {
     title: "Vendors",
     dataIndex: "vendor_count",
     key: "vendor_count",
-    width: 110,
     align: "center",
   },
   {
     title: "Jan",
     dataIndex: "jan",
     key: "jan",
-    width: 80,
     align: "center",
   },
   {
     title: "Feb",
     dataIndex: "feb",
     key: "feb",
-    width: 80,
     align: "center",
   },
   {
     title: "Mar",
     dataIndex: "mar",
     key: "mar",
-    width: 80,
     align: "center",
   },
   {
     title: "Apr",
     dataIndex: "apr",
     key: "apr",
-    width: 80,
     align: "center",
   },
   {
     title: "May",
     dataIndex: "may",
     key: "may",
-    width: 80,
     align: "center",
   },
   {
     title: "Jun",
     dataIndex: "jun",
     key: "jun",
-    width: 80,
     align: "center",
   },
   {
     title: "Jul",
     dataIndex: "jul",
     key: "jul",
-    width: 80,
     align: "center",
   },
   {
     title: "Aug",
     dataIndex: "aug",
     key: "aug",
-    width: 80,
     align: "center",
   },
   {
     title: "Sep",
     dataIndex: "sep",
     key: "sep",
-    width: 80,
     align: "center",
   },
   {
     title: "Oct",
     dataIndex: "oct",
     key: "oct",
-    width: 80,
     align: "center",
   },
   {
     title: "Nov",
     dataIndex: "nov",
     key: "nov",
-    width: 80,
     align: "center",
   },
   {
     title: "Dec",
     dataIndex: "dec",
     key: "dec",
-    width: 80,
     align: "center",
   },
 ];
@@ -212,14 +197,14 @@ const ExceptionalStateSummaryTable: React.FC = () => {
       bodyStyle={{ padding: 0 }}
     >
       <Table
+        rowKey="key"
         columns={columns}
         dataSource={data}
-        rowKey="key"
-        pagination={false}
         bordered
-        size="middle"
+        pagination={false}
+        size="small"
         sticky
-        scroll={{ x: 1500 }}
+        scroll={{ y: 360 }}
       />
     </Card>
   );
