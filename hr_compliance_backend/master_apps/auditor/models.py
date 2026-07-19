@@ -103,6 +103,14 @@ class AuditEntry(models.Model):
         on_delete=models.CASCADE
     )
 
+    submission = models.ForeignKey(
+        "vendor.VendorComplianceSubmission",
+        on_delete=models.CASCADE,
+        related_name="audit_entries",
+        null=True,
+        blank=True,
+    )
+
     # ✅ KEEPING SAME (no breaking change)
     branch_id = models.IntegerField()
 
