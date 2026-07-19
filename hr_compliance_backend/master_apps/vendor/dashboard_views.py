@@ -1086,6 +1086,15 @@ from rest_framework.response import Response
 from master_apps.auditor.models import AuditEntry
 
 
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.principle_employee.models import PrincipalEmployer
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
+
+
 class DocumentReferencePieAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1096,37 +1105,35 @@ class DocumentReferencePieAPIView(APIView):
         try:
             pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
-            return Response({"error": "Principal Employer not found"}, status=404)
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
 
-        queryset = (
-            AuditEntry.objects
-            .filter(
-                status="Exceptional Approval - Delayed Complied",
-                submission__principal_employer=pe,   # ← Important: tie to current user
-            )
-            .select_related(
-                "submission__document",
-                "submission__vendor",
-            )
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            has_exceptional_approval=True,
+            is_cc_issued=True,
         )
 
-        # Support query filters (for future use)
+        # Optional Filters
         vendor_id = request.GET.get("vendor_id")
         branch_id = request.GET.get("branch_id")
         audit_period = request.GET.get("audit_period")
 
         if vendor_id:
-            queryset = queryset.filter(submission__vendor_id=vendor_id)
+            queryset = queryset.filter(vendor_id=vendor_id)
+
         if branch_id:
-            queryset = queryset.filter(submission__branch_id=branch_id)
+            queryset = queryset.filter(branch_id=branch_id)
+
         if audit_period:
-            queryset = queryset.filter(submission__audit_period=audit_period)
+            queryset = queryset.filter(audit_period=audit_period)
 
         data = (
-            queryset
-            .values(
-                "submission__document_id",
-                "submission__document__name",
+            queryset.values(
+                "document_id",
+                "document__name",
             )
             .annotate(count=Count("id"))
             .order_by("-count")
@@ -1134,15 +1141,15 @@ class DocumentReferencePieAPIView(APIView):
 
         response = [
             {
-                "document_id": row["submission__document_id"],
-                "document_name": row["submission__document__name"],
+                "document_id": row["document_id"],
+                "document_name": row["document__name"],
                 "count": row["count"],
             }
             for row in data
         ]
 
         return Response(response)
-
+        
 
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
