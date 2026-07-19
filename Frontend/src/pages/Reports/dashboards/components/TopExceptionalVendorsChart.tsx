@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "antd";
-import axios from "@/utils/axios";
-
+import axios from "axios";
 import {
   ResponsiveContainer,
   BarChart,
@@ -12,6 +11,8 @@ import {
   Tooltip,
   LabelList,
 } from "recharts";
+
+const API_BASE = import.meta.env.VITE_API_URL;
 
 const TopExceptionalVendorsChart: React.FC = () => {
 
@@ -24,8 +25,14 @@ const TopExceptionalVendorsChart: React.FC = () => {
 useEffect(() => {
   setLoading(true);
 
-  axios
-    .get("/vendor/dashboard/exceptional/top-vendors/")
+  axios.get(
+      `${API_BASE}/api/vendor/dashboard/exceptional/top-vendors/`,
+      {
+          headers: {
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+      }
+  )
     .then((res) => {
       setData(res.data);
     })
