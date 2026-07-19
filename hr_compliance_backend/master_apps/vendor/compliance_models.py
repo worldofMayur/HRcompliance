@@ -509,3 +509,68 @@ class ExceptionalApprovalDocument(models.Model):
                 "\n📁 EXCEPTIONAL APPROVAL SAVED:",
                 self.file.name
             )
+
+
+class VendorCompliancePayroll(models.Model):
+
+    submission = models.ForeignKey(
+        VendorComplianceSubmission,
+        on_delete=models.CASCADE,
+        related_name="payrolls"
+    )
+
+    month = models.CharField(
+        max_length=30
+    )
+
+    male_employees = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    female_employees = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    gross_wages = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    net_wages = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    pf_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    esic_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    rc_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    lwf_remittance_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+
+        ordering = ["id"]
+
+    def __str__(self):
+
+        return f"{self.submission.audit_period} - {self.month}"
