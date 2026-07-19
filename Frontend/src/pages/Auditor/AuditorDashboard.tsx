@@ -1506,26 +1506,19 @@ const canFreezeReport =
   width={1800}
   closable={false}
   styles={{
-  body:{
-    height:"88vh",
-    overflow:"hidden",
-    padding:0
-  }
+    body: {
+      height: "88vh",
+      overflow: "hidden",
+      padding: 0
+    }
   }}
   style={{ top: 20 }}
   title={
     <div className="flex justify-between items-center">
       <div className="flex flex-col">
         <span className="font-semibold">
-          {
-            notificationDocs.length > 0
-
-              ? "Compliance Reupload Review"
-
-              : "Final Audit Review"
-          }
+          {notificationDocs.length > 0 ? "Compliance Reupload Review" : "Final Audit Review"}
         </span>
-
         {notificationDocs.length > 0 && (
           <span className="text-xs text-orange-500 mt-1">
             Reviewing {notificationDocs.length} reuploaded document(s)
@@ -1533,97 +1526,34 @@ const canFreezeReport =
         )}
       </div>
 
-      {
-        auditSessionStatus && (
+      {auditSessionStatus && (
+        <div style={{ marginBottom: 12 }}>
+          <span style={{
+            padding: "6px 12px",
+            borderRadius: 6,
+            fontSize: 12,
+            fontWeight: 600,
+            background: auditSessionStatus === "FROZEN" ? "#fee2e2" : auditSessionStatus === "SUBMITTED" ? "#dbeafe" : "#fef3c7",
+            color: auditSessionStatus === "FROZEN" ? "#b91c1c" : auditSessionStatus === "SUBMITTED" ? "#1d4ed8" : "#92400e",
+          }}>
+            {notificationDocs.length > 0 ? "REUPLOAD REVIEW" : auditSessionStatus}
+          </span>
+        </div>
+      )}
 
-          <div
-            style={{
-              marginBottom: 12,
-            }}
-          >
-
-            <span
-              style={{
-
-                padding: "6px 12px",
-
-                borderRadius: 6,
-
-                fontSize: 12,
-
-                fontWeight: 600,
-
-                background:
-                  auditSessionStatus === "FROZEN"
-                    ? "#fee2e2"
-                    : auditSessionStatus === "SUBMITTED"
-                    ? "#dbeafe"
-                    : "#fef3c7",
-
-                color:
-                  auditSessionStatus === "FROZEN"
-                    ? "#b91c1c"
-                    : auditSessionStatus === "SUBMITTED"
-                    ? "#1d4ed8"
-                    : "#92400e",
-              }}
-            >
-
-              {
-                notificationDocs.length > 0
-
-                  ? "REUPLOAD REVIEW"
-
-                  : auditSessionStatus
-              }
-
-            </span>
-
-          </div>
-        )
-      }
-
-      {
-        (
-          auditSessionStatus === "FROZEN"
-          ||
-          isFrozen
-        )
-
-        &&
-
-        notificationDocs.length === 0
-
-        &&
-
-        !manualEditMode
-
-        && (
-
-          <Button
-
-            type="primary"
-
-            size="small"
-
-            icon={<SyncOutlined />}
-
-            onClick={() => {
-
-              setManualEditMode(true);
-
-              message.warning(
-                "Audit unlocked for editing"
-              );
-            }}
-
-          >
-
-            Edit Audit
-
-          </Button>
-      )
-      }
+      {(auditSessionStatus === "FROZEN" || isFrozen) && notificationDocs.length === 0 && !manualEditMode && (
+        <Button
+          type="primary"
+          size="small"
+          icon={<SyncOutlined />}
+          onClick={() => {
+            setManualEditMode(true);
+            message.warning("Audit unlocked for editing");
+          }}
+        >
+          Edit Audit
+        </Button>
+      )}
 
       <Button
         size="small"
@@ -1636,518 +1566,173 @@ const canFreezeReport =
   }
 >
 
-  {/* 🔥 WRAPPER (IMPORTANT FOR SCROLL) */}
-{/* 🔥 WRAPPER */}
-<div className="h-full flex flex-col bg-gray-50/40">
+  {/* WRAPPER */}
+  <div className="h-full flex flex-col bg-gray-50/40">
 
-  {/* ========== 1. COMPACT METADATA BAR ========== */}
-  <div className="shrink-0 bg-white border-b px-5 py-3">
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
-      <div>
-        <span className="text-gray-400 text-xs">PE</span>
-        <div className="font-semibold text-gray-800">
-          {peList.find(p => p.id == selectedPE)?.short_name || "-"}
-        </div>
-      </div>
-      <div>
-        <span className="text-gray-400 text-xs">Vendor</span>
-        <div className="font-semibold text-gray-800">
-          {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
-        </div>
-      </div>
-      <div>
-        <span className="text-gray-400 text-xs">State</span>
-        <div className="font-semibold text-gray-800">{selectedState || "-"}</div>
-      </div>
-      <div>
-        <span className="text-gray-400 text-xs">Branch</span>
-        <div className="font-semibold text-gray-800">
-          {branches.find(b => b.id == selectedBranch)?.name || "-"}
-        </div>
-      </div>
-      <div>
-        <span className="text-gray-400 text-xs">Period</span>
-        <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
-      </div>
-
-      <div className="ml-auto flex items-center gap-3">
-        <Button
-          type="primary"
-          size="small"
-          icon={<DownloadOutlined />}
-          onClick={downloadZip}
-          className="h-8 text-xs font-medium"
-        >
-          Download Audit Documents
-        </Button>
-
-        <Button
-          type="default"
-          size="small"
-          onClick={() => setComplianceModalOpen(true)}
-          className="h-8 text-xs font-medium border-gray-300"
-        >
-          View Compliance Summary
-        </Button>
-
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
-          Mapping Active: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"} → {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
-        </span>
-      </div>
-
-    </div>
-  </div>
-
- {/* ========== 2. MAIN CONTENT (FULL WIDTH) ========== */}
-<div className="flex-1 flex overflow-hidden">
-
-  {/* FULL WIDTH COLUMN */}
-  <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-
-    {/* Locked banner */}
-    {isAuditLocked && (
-      <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
-        This audit report has been frozen, finalized, and locked from further modifications.
-      </div>
-    )}
-
-    {/* Vendor Remarks (compact) */}
-    {remarksData.length > 0 && (
-      <div className="mx-4 mt-3">
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="font-semibold text-amber-700 text-sm">Vendor Remark History</div>
-          <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
-        </div>
-        <div className="space-y-1 max-h-[72px] overflow-y-auto pr-1">
-          {remarksData.map((remark, index) => (
-            <Tooltip key={index} title={remark.remark}>
-              <div className="px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-amber-700 text-xs">Vendor Remark</span>
-                  <span className="text-[11px] text-gray-500">
-                    {remark.created_at
-                      ? new Date(remark.created_at).toLocaleString("en-IN")
-                      : "-"}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-800 truncate mt-0.5">{remark.remark}</div>
-              </div>
-            </Tooltip>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Stats bar */}
-    {hasDocuments && (
-      <div className="mx-4 mt-3 flex items-center gap-2">
-        <div className="px-3 py-1 rounded-md bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100">
-          Total: <span className="font-semibold">{groupedChecklist.length}</span>
-        </div>
-        <div className="px-3 py-1 rounded-md bg-green-50 text-green-700 text-sm font-medium border border-green-100">
-          Complied:{" "}
-          <span className="font-semibold">
-            {groupedChecklist.filter((row: any) => row.status === "Complied").length}
-          </span>
-        </div>
-        <div className="px-3 py-1 rounded-md bg-red-50 text-red-700 text-sm font-medium border border-red-100">
-          Pending:{" "}
-          <span className="font-semibold">
-            {groupedChecklist.filter(
-              (row: any) => !allowedFreezeStatuses.includes(row.status)
-            ).length}
-          </span>
-        </div>
-      </div>
-    )}
-
-    {/* TABLE — Full Width */}
-    <div className="flex-1 overflow-hidden px-4 pt-2 pb-3">
-      {!hasDocuments ? (
-        <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
-          <div className="text-center">
-            <div className="text-lg font-semibold text-gray-700">
-              No documents uploaded for this audit period
-            </div>
-            <div className="text-sm text-gray-400 mt-2">
-              Vendor has not submitted any compliance documents yet.
-            </div>
+    {/* 1. METADATA BAR */}
+    <div className="shrink-0 bg-white border-b px-5 py-3">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
+        <div>
+          <span className="text-gray-400 text-xs">PE</span>
+          <div className="font-semibold text-gray-800">
+            {peList.find(p => p.id == selectedPE)?.short_name || "-"}
           </div>
         </div>
-      ) : (
-        <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <Table
-            rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
-            columns={columns}
-            dataSource={groupedChecklist}
-            rowKey="id"
-            pagination={false}
-            bordered
-            size="small"
-            className="audit-table-highlighted"
-            scroll={{
-              y: "calc(88vh - 340px)",
-              x: 1800,
-            }}
-          />
+        <div>
+          <span className="text-gray-400 text-xs">Vendor</span>
+          <div className="font-semibold text-gray-800">
+            {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
+          </div>
         </div>
+        <div>
+          <span className="text-gray-400 text-xs">State</span>
+          <div className="font-semibold text-gray-800">{selectedState || "-"}</div>
+        </div>
+        <div>
+          <span className="text-gray-400 text-xs">Branch</span>
+          <div className="font-semibold text-gray-800">
+            {branches.find(b => b.id == selectedBranch)?.name || "-"}
+          </div>
+        </div>
+        <div>
+          <span className="text-gray-400 text-xs">Period</span>
+          <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
+        </div>
+
+        <div className="ml-auto flex items-center gap-3">
+          <Button
+            type="primary"
+            size="small"
+            icon={<DownloadOutlined />}
+            onClick={downloadZip}
+            className="h-8 text-xs font-medium"
+          >
+            Download Audit Documents
+          </Button>
+
+          <Button
+            type="default"
+            size="small"
+            onClick={() => setComplianceModalOpen(true)}
+            className="h-8 text-xs font-medium border-gray-300"
+          >
+            View Compliance Summary
+          </Button>
+
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
+            Mapping Active: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"} → {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {/* 2. FULL WIDTH TABLE AREA */}
+    <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Locked banner, Remarks, Stats, Table - as in previous response */}
+        {isAuditLocked && (
+          <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
+            This audit report has been frozen, finalized, and locked from further modifications.
+          </div>
+        )}
+
+        {remarksData.length > 0 && ( /* Vendor Remarks block */ )}
+
+        {hasDocuments && ( /* Stats bar */ )}
+
+        <div className="flex-1 overflow-hidden px-4 pt-2 pb-3">
+          {!hasDocuments ? (
+            <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-gray-700">No documents uploaded for this audit period</div>
+                <div className="text-sm text-gray-400 mt-2">Vendor has not submitted any compliance documents yet.</div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <Table
+                rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
+                columns={columns}
+                dataSource={groupedChecklist}
+                rowKey="id"
+                pagination={false}
+                bordered
+                size="small"
+                className="audit-table-highlighted"
+                scroll={{ y: "calc(88vh - 340px)", x: 1800 }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* 3. BOTTOM ACTION BAR */}
+    <div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
+      {/* Upload and Submit buttons remain the same */}
+      {hasDocuments && (
+        <Button
+          type="primary"
+          className={`h-9 px-6 text-sm font-medium ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}`}
+          loading={loading}
+          disabled={isAuditLocked && !manualEditMode}
+          onClick={handleSubmit}
+        >
+          {notificationDocs.length > 0 ? "Review Reuploaded Documents" : canFreezeReport ? "Freeze Report & Issue CC" : "Save & Submit"}
+        </Button>
       )}
     </div>
   </div>
-</div>
 
-{/* RIGHT SIDEBAR */}
-<div className="w-[360px] shrink-0 border-l bg-gray-50/40 flex flex-col">
-  <div className="p-4 flex flex-col h-full">
-
-    {/* Compliance Summary Card */}
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-gray-800 text-[15px]">
-          Compliance Summary
-        </h3>
-
-        <div className="flex gap-2">
-          {isEditingCompliance ? (
-            <>
-              <Button size="small" type="primary" onClick={handleSaveComplianceSummary}>
-                Save
-              </Button>
-              <Button size="small" onClick={() => setIsEditingCompliance(false)}>
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <Button
-              size="small"
-              type="primary"
-              ghost
-              onClick={() => setIsEditingCompliance(true)}
-            >
-              Edit
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-x-5 gap-y-4 text-sm">
-        {/* Male Employees */}
+  {/* FULL COMPLIANCE SUMMARY MODAL */}
+  <Modal
+    title={`Compliance Summary - ${auditPeriod || "Selected Period"}`}
+    open={complianceModalOpen}
+    onCancel={() => setComplianceModalOpen(false)}
+    footer={null}
+    width={900}
+    centered
+  >
+    <div className="p-8 bg-white rounded-2xl">
+      <div className="grid grid-cols-2 gap-x-12 gap-y-8 text-lg">
         <div>
-          <div className="text-gray-500 text-xs mb-0.5">Male Employees</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              value={complianceSummary.male_employees}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  male_employees: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.male_employees || "-"}
-            </div>
-          )}
+          <div className="text-gray-500 text-sm mb-1">Male Employees</div>
+          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.male_employees || "0"}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-sm mb-1">Female Employees</div>
+          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.female_employees || "0"}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-sm mb-1">Gross Wages</div>
+          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.gross_wages || "0"}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-sm mb-1">Net Wages</div>
+          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.net_wages || "0"}</div>
         </div>
 
-        {/* Female Employees */}
-        <div>
-          <div className="text-gray-500 text-xs mb-0.5">Female Employees</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              value={complianceSummary.female_employees}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  female_employees: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.female_employees || "-"}
-            </div>
-          )}
-        </div>
-
-        {/* Gross Wages */}
-        <div>
-          <div className="text-gray-500 text-xs mb-0.5">Gross Wages</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              value={complianceSummary.gross_wages}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  gross_wages: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.gross_wages || "-"}
-            </div>
-          )}
-        </div>
-
-        {/* Net Wages */}
-        <div>
-          <div className="text-gray-500 text-xs mb-0.5">Net Wages</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              value={complianceSummary.net_wages}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  net_wages: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.net_wages || "-"}
-            </div>
-          )}
-        </div>
-
-        {/* PF Date */}
-        <div>
-          <div className="text-gray-500 text-xs mb-0.5">PF Date</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              type="date"
-              value={complianceSummary.pf_remittance_date}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  pf_remittance_date: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.pf_remittance_date || "-"}
-            </div>
-          )}
-        </div>
-
-        {/* ESIC Date */}
-        <div>
-          <div className="text-gray-500 text-xs mb-0.5">ESIC Date</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              type="date"
-              value={complianceSummary.esic_remittance_date}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  esic_remittance_date: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.esic_remittance_date || "-"}
-            </div>
-          )}
-        </div>
-
-        {/* RC Date */}
-        <div>
-          <div className="text-gray-500 text-xs mb-0.5">RC Date</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              type="date"
-              value={complianceSummary.rc_remittance_date}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  rc_remittance_date: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.rc_remittance_date || "-"}
-            </div>
-          )}
-        </div>
-
-        {/* LWF Date */}
-        <div>
-          <div className="text-gray-500 text-xs mb-0.5">LWF Date</div>
-          {isEditingCompliance ? (
-            <Input
-              size="small"
-              type="date"
-              value={complianceSummary.lwf_remittance_date}
-              onChange={(e) =>
-                setComplianceSummary({
-                  ...complianceSummary,
-                  lwf_remittance_date: e.target.value,
-                })
-              }
-            />
-          ) : (
-            <div className="font-semibold text-gray-900 text-[15px]">
-              {complianceSummary.lwf_remittance_date || "-"}
-            </div>
-          )}
+        <div className="col-span-2 pt-6 border-t grid grid-cols-2 gap-12">
+          <div>
+            <div className="text-gray-500 text-sm">PF Remittance Date</div>
+            <div className="font-medium text-xl mt-1">{complianceSummary.pf_remittance_date || "-"}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-sm">ESIC Remittance Date</div>
+            <div className="font-medium text-xl mt-1">{complianceSummary.esic_remittance_date || "-"}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-sm">RC Remittance Date</div>
+            <div className="font-medium text-xl mt-1">{complianceSummary.rc_remittance_date || "-"}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-sm">LWF Remittance Date</div>
+            <div className="font-medium text-xl mt-1">{complianceSummary.lwf_remittance_date || "-"}</div>
+          </div>
         </div>
       </div>
     </div>
-
-    {/* Helpful note */}
-    <div className="mt-5 p-4 bg-blue-50/60 border border-blue-100 rounded-xl text-sm text-blue-800">
-      <div className="font-medium mb-1">Note</div>
-      <div className="text-xs leading-relaxed text-blue-700">
-        Update the compliance summary before freezing the report.
-        Supporting document is required only for{" "}
-        <span className="font-medium">Exceptional Approval - Delayed Complied</span>.
-      </div>
-    </div>
-
-    <div className="flex-1" />
-  </div>
-</div>
-
-  </div>   {/* ← ADD THIS LINE (closes the main content flex) */}
-
- {/* ========== 3. BOTTOM ACTION BAR ========== */}
-
- {/* ========== 3. BOTTOM ACTION BAR ========== */}
-<div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
-
-  {/* Show Upload only when Exceptional Approval is selected */}
-  {groupedChecklist.some(
-    (row: any) => row.status === "Exceptional Approval - Delayed Complied"
-  ) && (
-    <Upload
-      disabled={isAuditLocked && !manualEditMode}
-      multiple={false}
-      beforeUpload={(file) => {
-        const exceptionalRows = groupedChecklist.filter(
-          (row: any) =>
-            row.status === "Exceptional Approval - Delayed Complied"
-        );
-
-        const updatedFiles: any = { ...exceptionalFiles };
-
-        exceptionalRows.forEach((row: any) => {
-          updatedFiles[row.id] = file;
-        });
-
-        setExceptionalFiles(updatedFiles);
-        message.success(`${file.name} attached`);
-        return false;
-      }}
-      showUploadList={false}
-    >
-      <Button
-        icon={<UploadOutlined />}
-        className="h-9 text-sm"
-      >
-        Upload Supporting Document
-      </Button>
-    </Upload>
-  )}
-
-  {/* Show selected file name if any */}
-  {selectedExceptionalFile && (
-    <span className="text-xs text-green-600">
-      {selectedExceptionalFile.name}
-    </span>
-  )}
-
-  {hasDocuments && (
-    <Button
-      type="primary"
-      className={`
-        h-9 px-6 text-sm font-medium
-        ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}
-      `}
-      loading={loading}
-      disabled={isAuditLocked && !manualEditMode}
-      onClick={handleSubmit}
-    >
-      {notificationDocs.length > 0
-        ? "Review Reuploaded Documents"
-        : canFreezeReport
-        ? "Freeze Report & Issue CC"
-        : "Save & Submit"}
-    </Button>
-  )}
-</div>
-</div>
-
-{/* FULL COMPLIANCE SUMMARY MODAL */}
-<Modal
-  title={`Compliance Summary - ${auditPeriod || "Selected Period"}`}
-  open={complianceModalOpen}
-  onCancel={() => setComplianceModalOpen(false)}
-  footer={null}
-  width={900}
-  centered
->
-  <div className="p-8 bg-white rounded-2xl">
-    <div className="grid grid-cols-2 gap-x-12 gap-y-8 text-lg">
-      <div>
-        <div className="text-gray-500 text-sm mb-1">Male Employees</div>
-        <div className="text-4xl font-semibold text-gray-900">
-          {complianceSummary.male_employees || "0"}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-gray-500 text-sm mb-1">Female Employees</div>
-        <div className="text-4xl font-semibold text-gray-900">
-          {complianceSummary.female_employees || "0"}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-gray-500 text-sm mb-1">Gross Wages</div>
-        <div className="text-4xl font-semibold text-gray-900">
-          {complianceSummary.gross_wages || "0"}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-gray-500 text-sm mb-1">Net Wages</div>
-        <div className="text-4xl font-semibold text-gray-900">
-          {complianceSummary.net_wages || "0"}
-        </div>
-      </div>
-
-      <div className="col-span-2 pt-6 border-t grid grid-cols-2 gap-12">
-        <div>
-          <div className="text-gray-500 text-sm">PF Remittance Date</div>
-          <div className="font-medium text-xl mt-1">{complianceSummary.pf_remittance_date || "-"}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-sm">ESIC Remittance Date</div>
-          <div className="font-medium text-xl mt-1">{complianceSummary.esic_remittance_date || "-"}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-sm">RC Remittance Date</div>
-          <div className="font-medium text-xl mt-1">{complianceSummary.rc_remittance_date || "-"}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-sm">LWF Remittance Date</div>
-          <div className="font-medium text-xl mt-1">{complianceSummary.lwf_remittance_date || "-"}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</Modal>
+  </Modal>
 
 </Modal>
 
