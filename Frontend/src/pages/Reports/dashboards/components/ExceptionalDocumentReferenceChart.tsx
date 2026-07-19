@@ -30,7 +30,7 @@ const ExceptionalDocumentReferenceChart: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("access");
+      const token = localStorage.getItem("access_token");
       if (!token) {
         setError("No token found. Please login again.");
         return;
