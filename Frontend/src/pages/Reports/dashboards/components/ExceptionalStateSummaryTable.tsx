@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import axios from "axios";
+import api from "../../../utils/api";
 
 interface ExceptionalStateData {
   key: string;
@@ -76,15 +76,12 @@ const ExceptionalStateSummaryTable: React.FC = () => {
     try {
       setLoading(true);
 
-      const response = await axios.get(
-        `${API_BASE}/api/vendor/dashboard/exceptional/`,
-        {
-          withCredentials: true,
-        }
+      const response = await api.get(
+        "/api/vendor/dashboard/exceptional/"
       );
 
-      const formatted = response.data.map(
-        (item: any, index: number): ExceptionalStateData => ({
+      const formatted: ExceptionalStateData[] = response.data.map(
+        (item: any, index: number) => ({
           key: index.toString(),
           state: item.state,
           branch_count: item.branch_count,
