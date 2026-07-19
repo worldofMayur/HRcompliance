@@ -29,46 +29,68 @@ const TopExceptionalVendorsChart: React.FC = () => {
     <Card
       title="Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
       size="small"
-      style={{ height: 380 }}
+      style={{ height: 460 }}
       bodyStyle={{
-        height: 320,
-        padding: "12px 18px",
+        height: 390,
+        padding: "12px 20px",
       }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           margin={{
-            top: 20,
-            right: 20,
-            left: 30,
-            bottom: 70,
+            top: 30,
+            right: 30,
+            left: 35,
+            bottom: 85,
           }}
         >
           <CartesianGrid
-            stroke="#f0f0f0"
-            strokeDasharray="3 3"
+            stroke="#e8e8e8"
+            strokeDasharray="4 4"
             vertical={false}
           />
 
           <XAxis
             dataKey="vendor"
+            interval={0}
             angle={-35}
             textAnchor="end"
-            interval={0}
-            height={65}
+            height={80}
             tick={{
               fontSize: 11,
               fill: "#555",
+            }}
+            label={{
+              value: "Vendor Name",
+              position: "insideBottom",
+              offset: -5,
+              style: {
+                fill: "#555",
+                fontSize: 13,
+                fontWeight: 600,
+              },
             }}
           />
 
           <YAxis
             allowDecimals={false}
-            width={40}
+            width={70}
             tick={{
               fontSize: 12,
               fill: "#555",
+            }}
+            label={{
+              value: "Exceptional Clearances",
+              angle: -90,
+              position: "insideLeft",
+              offset: -20,
+              style: {
+                fill: "#555",
+                fontSize: 13,
+                fontWeight: 600,
+                textAnchor: "middle",
+              },
             }}
           />
 
@@ -84,15 +106,16 @@ const TopExceptionalVendorsChart: React.FC = () => {
             dataKey="count"
             fill="#1677ff"
             radius={[8, 8, 0, 0]}
-            animationDuration={700}
+            barSize={42}
+            animationDuration={800}
           >
             <LabelList
               dataKey="count"
               position="top"
               style={{
+                fill: "#1677ff",
                 fontSize: 12,
                 fontWeight: 600,
-                fill: "#1677ff",
               }}
             />
           </Bar>
