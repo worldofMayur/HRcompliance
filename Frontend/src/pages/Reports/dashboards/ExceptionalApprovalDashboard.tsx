@@ -1,4 +1,4 @@
-import { Row, Col, Space } from "antd";
+import { Row, Col } from "antd";
 
 import ExceptionalStateSummaryTable from "./components/ExceptionalStateSummaryTable";
 import TopExceptionalVendorsChart from "./components/TopExceptionalVendorsChart";
@@ -6,17 +6,26 @@ import ExceptionalDocumentReferenceChart from "./components/ExceptionalDocumentR
 
 export default function ExceptionalApprovalDashboard() {
   return (
-    <Row gutter={[16, 16]}>
-<Col xs={24} xl={12}>
-        <ExceptionalStateSummaryTable />
-      </Col>
+    <div className="space-y-6">
 
-      <Col xs={24} xl={12}>
-        <Space direction="vertical" size={16} style={{ width: "100%" }}>
+      {/* Full Width Table */}
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <ExceptionalStateSummaryTable />
+        </Col>
+      </Row>
+
+      {/* Charts */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
           <TopExceptionalVendorsChart />
+        </Col>
+
+        <Col xs={24} lg={12}>
           <ExceptionalDocumentReferenceChart />
-        </Space>
-      </Col>
-    </Row>
+        </Col>
+      </Row>
+
+    </div>
   );
 }

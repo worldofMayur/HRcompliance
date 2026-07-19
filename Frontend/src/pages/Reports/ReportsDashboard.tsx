@@ -29,14 +29,14 @@ export default function ReportsDashboard() {
         </p>
       </div>
 
-      {/* Main Layout - Dashboard gets more space */}
+      {/* Main Layout */}
       <div className="grid gap-6 xl:grid-cols-[78%_22%]">
 
-        {/* ==================== MAIN DASHBOARD AREA (Wider) ==================== */}
-        <div className="rounded-3xl border border-blue-200 bg-white p-6 shadow-lg dark:border-blue-900 dark:bg-gray-900 min-h-[680px] relative">
-          
-          {/* Highlight Badge */}
-          <div className="absolute -top-3 left-6 bg-blue-600 text-white text-xs font-medium px-4 py-1 rounded-full shadow-md">
+        {/* ================= Dashboard ================= */}
+        <div className="relative rounded-3xl border border-blue-200 bg-white p-6 shadow-lg dark:border-blue-900 dark:bg-gray-900">
+
+          {/* Live Badge */}
+          <div className="absolute -top-3 left-6 rounded-full bg-blue-600 px-4 py-1 text-xs font-medium text-white shadow-md">
             📊 LIVE DASHBOARD
           </div>
 
@@ -53,30 +53,40 @@ export default function ReportsDashboard() {
           )}
         </div>
 
-        {/* ==================== SIDEBAR (Narrower) ==================== */}
-        <div className="space-y-6 sticky top-6 self-start">
+        {/* ================= Sidebar ================= */}
+        <div className="sticky top-6 self-start space-y-6">
 
-          {/* Report Type Selector */}
+          {/* Report Type */}
           <Card className="shadow-sm">
             <label className="mb-3 block text-sm font-semibold text-gray-700">
               Report Type
             </label>
+
             <Select
               className="w-full"
+              size="large"
               value={selectedReport}
               onChange={(value) => setSelectedReport(value)}
-              size="large"
             >
-              <Option value="branch">Branch Wise Vendor Mapping</Option>
-              <Option value="compliance">Vendor Compliance Status</Option>
-              <Option value="exception">Exceptional Approval Report</Option>
-              <Option value="document">Document Wise Compliance Status</Option>
+              <Option value="branch">
+                Branch Wise Vendor Mapping
+              </Option>
+
+              <Option value="compliance">
+                Vendor Compliance Status
+              </Option>
+
+              <Option value="exception">
+                Exceptional Approval Report
+              </Option>
+
+              <Option value="document">
+                Document Wise Compliance Status
+              </Option>
             </Select>
           </Card>
 
-          {/* Report Filters Sidebar */}
-
-          {/* Other Report Components */}
+          {/* Filters */}
           <div className="space-y-5">
             {selectedReport === "branch" && <BranchReport />}
             {selectedReport === "compliance" && <ComplianceReport />}
