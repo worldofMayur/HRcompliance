@@ -712,51 +712,11 @@ const submitCompliance = async () => {
 
 if (!effectiveReuploadMode) {
 
-    const payroll = payrollData[0];
+    formData.append(
+        "payroll_data",
+        JSON.stringify(payrollData)
+    );
 
-    if (payroll) {
-
-        formData.append(
-            "male_employees",
-            String(payroll.male_employees ?? "")
-        );
-
-        formData.append(
-            "female_employees",
-            String(payroll.female_employees ?? "")
-        );
-
-        formData.append(
-            "gross_wages",
-            String(payroll.gross_wages ?? "")
-        );
-
-        formData.append(
-            "net_wages",
-            String(payroll.net_wages ?? "")
-        );
-
-        formData.append(
-            "pf_remittance_date",
-            payroll.pf_remittance_date || ""
-        );
-
-        formData.append(
-            "esic_remittance_date",
-            payroll.esic_remittance_date || ""
-        );
-
-        formData.append(
-            "rc_remittance_date",
-            payroll.rc_remittance_date || ""
-        );
-
-        formData.append(
-            "lwf_remittance_date",
-            payroll.lwf_remittance_date || ""
-        );
-
-    }
 }
     formData.append(
       "cc_emails",

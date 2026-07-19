@@ -11,7 +11,8 @@ from .compliance_models import (
     VendorComplianceSubmission,
     VendorComplianceSupportingFile,
     VendorComplianceFileVersion,
-    ExceptionalApprovalDocument
+    ExceptionalApprovalDocument,
+    VendorCompliancePayroll,
 )
 
 from .models import Vendor
@@ -63,16 +64,15 @@ class VendorSubmitComplianceAPIView(APIView):
             WorkflowStatus.SUBMITTED
         )
         general_remark = request.data.get("general_remark")
-        male_employees = request.data.get("male_employees") or None
-        female_employees = request.data.get("female_employees") or None
+        payroll_data = request.data.get("payroll_data")
 
-        gross_wages = request.data.get("gross_wages") or None
-        net_wages = request.data.get("net_wages") or None
-
-        pf_remittance_date = request.data.get("pf_remittance_date") or None
-        esic_remittance_date = request.data.get("esic_remittance_date") or None
-        rc_remittance_date = request.data.get("rc_remittance_date") or None
-        lwf_remittance_date = request.data.get("lwf_remittance_date") or None
+        if payroll_data:
+            try:
+                payroll_data = json.loads(payroll_data)
+            except Exception:
+                payroll_data = []
+        else:
+            payroll_data = []
 
         # ✅ NEW: CC EMAILS
         cc_emails = request.data.get("cc_emails")
@@ -234,17 +234,6 @@ class VendorSubmitComplianceAPIView(APIView):
                     state=mapping.branch.state,
                     audit_period=selected_period,
 
-                    male_employees=male_employees,
-                    female_employees=female_employees,
-
-                    gross_wages=gross_wages,
-                    net_wages=net_wages,
-
-                    pf_remittance_date=pf_remittance_date,
-                    esic_remittance_date=esic_remittance_date,
-                    rc_remittance_date=rc_remittance_date,
-                    lwf_remittance_date=lwf_remittance_date,
-
                     main_file=file,
                     workflow_status=workflow_status,
                     original_filename=file.name,
@@ -262,6 +251,29 @@ class VendorSubmitComplianceAPIView(APIView):
 
                     is_reupload=False
                 )
+
+                # ===============================
+                # SAVE MONTH-WISE PAYROLL
+                # ===============================
+
+                for payroll in payroll_data:
+
+                    VendorCompliancePayroll.objects.create(
+                        submission=latest_submission,
+
+                        month=payroll.get("month", ""),
+
+                        male_employees=payroll.get("male_employees"),
+                        female_employees=payroll.get("female_employees"),
+
+                        gross_wages=payroll.get("gross_wages"),
+                        net_wages=payroll.get("net_wages"),
+
+                        pf_remittance_date=payroll.get("pf_remittance_date") or None,
+                        esic_remittance_date=payroll.get("esic_remittance_date") or None,
+                        rc_remittance_date=payroll.get("rc_remittance_date") or None,
+                        lwf_remittance_date=payroll.get("lwf_remittance_date") or None,
+                    )
 
                 remark_saved = True  # ✅ mark as saved
 

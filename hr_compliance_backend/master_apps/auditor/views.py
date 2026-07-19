@@ -42,7 +42,10 @@ import calendar
 from master_apps.vendor.mapping_models import VendorBranchMapping
 from master_apps.vendor.models import Vendor
 from master_apps.principle_employee.models import PrincipalEmployer
-from master_apps.vendor.compliance_models import VendorComplianceSubmission
+from master_apps.vendor.compliance_models import (
+    VendorComplianceSubmission,
+    VendorCompliancePayroll,
+)
 
 User = get_user_model()
 
@@ -1587,6 +1590,10 @@ class SaveAuditAPIView(APIView):
                 .first()
             )
 
+            payroll_data = VendorCompliancePayroll.objects.filter(
+                submission=submission
+            ).order_by("id")
+
             email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
                 {
@@ -1598,10 +1605,10 @@ class SaveAuditAPIView(APIView):
                     "entries": entries,
                     "generated_at": generated_timestamp,
                     "submission": submission,
+                    "payroll_data": payroll_data,
                     "exceptional_entries": [
                         e for e in pdf_entries
-                        if "Exceptional Approval"
-                        in str(e.get("status", ""))
+                        if "Exceptional Approval" in str(e.get("status", ""))
                     ],
                 }
             )
@@ -1616,6 +1623,7 @@ class SaveAuditAPIView(APIView):
                     "audit_period": audit_period,
                     "generated_at": generated_timestamp,
                     "submission": submission,
+                    "payroll_data": payroll_data,
                     "exceptional_entries": [
                         e for e in pdf_entries
                         if "Exceptional Approval"
@@ -1649,6 +1657,7 @@ class SaveAuditAPIView(APIView):
                     "audit_period": audit_period,
 
                     "entries": pdf_entries,
+                    "payroll_data": payroll_data,
 
                     "generated_at": generated_timestamp,
 
@@ -2136,33 +2145,34 @@ class UpdateComplianceSummaryAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        submissions.update(
-            male_employees=request.data.get("male_employees"),
-            female_employees=request.data.get("female_employees"),
-            gross_wages=request.data.get("gross_wages"),
-            net_wages=request.data.get("net_wages"),
-            pf_remittance_date=request.data.get("pf_remittance_date") or None,
-            esic_remittance_date=request.data.get("esic_remittance_date") or None,
-            rc_remittance_date=request.data.get("rc_remittance_date") or None,
-            lwf_remittance_date=request.data.get("lwf_remittance_date") or None,
-        )
+        payroll_data = request.data.get("payroll_data", [])
 
-        updated = VendorComplianceSubmission.objects.filter(
-            vendor_id=vendor_id,
-            branch_id=branch_id,
-            audit_period__iexact=audit_period,
-        ).values(
-            "id",
-            "document_id",
-            "male_employees",
-            "female_employees",
-            "gross_wages",
-            "net_wages",
-        )
+        # Get one submission to relate the payroll records
+        submission = submissions.first()
 
-        print("===== UPDATED SUBMISSIONS =====")
-        for row in updated:
-            print(row)
+        # Remove old payroll rows
+        VendorCompliancePayroll.objects.filter(
+            submission=submission
+        ).delete()
+
+        # Create new payroll rows
+        for payroll in payroll_data:
+
+            VendorCompliancePayroll.objects.create(
+                submission=submission,
+                month=payroll.get("month"),
+
+                male_employees=payroll.get("male_employees"),
+                female_employees=payroll.get("female_employees"),
+
+                gross_wages=payroll.get("gross_wages"),
+                net_wages=payroll.get("net_wages"),
+
+                pf_remittance_date=payroll.get("pf_remittance_date") or None,
+                esic_remittance_date=payroll.get("esic_remittance_date") or None,
+                rc_remittance_date=payroll.get("rc_remittance_date") or None,
+                lwf_remittance_date=payroll.get("lwf_remittance_date") or None,
+            )
 
         return Response(
             {"message": "Compliance Summary updated successfully"},
@@ -2673,6 +2683,28 @@ class AuditChecklistAPIView(APIView):
 
         summary = submissions.first()
 
+        payroll_data = []
+
+        if summary:
+
+            payroll_data = list(
+
+                VendorCompliancePayroll.objects.filter(
+                    submission=summary
+                ).values(
+                    "month",
+                    "male_employees",
+                    "female_employees",
+                    "gross_wages",
+                    "net_wages",
+                    "pf_remittance_date",
+                    "esic_remittance_date",
+                    "rc_remittance_date",
+                    "lwf_remittance_date",
+                )
+
+            )
+
         # ======================================
         # NO DOCUMENTS UPLOADED
         # ======================================
@@ -2816,16 +2848,7 @@ class AuditChecklistAPIView(APIView):
 
             "show_auditor_guidelines": auditor.show_auditor_guidelines,
 
-            "compliance_summary": {
-                "male_employees": summary.male_employees if summary else None,
-                "female_employees": summary.female_employees if summary else None,
-                "gross_wages": summary.gross_wages if summary else None,
-                "net_wages": summary.net_wages if summary else None,
-                "pf_remittance_date": summary.pf_remittance_date if summary else None,
-                "esic_remittance_date": summary.esic_remittance_date if summary else None,
-                "rc_remittance_date": summary.rc_remittance_date if summary else None,
-                "lwf_remittance_date": summary.lwf_remittance_date if summary else None,
-            },
+            "payroll_data": payroll_data,
 
             "checklist": response
 

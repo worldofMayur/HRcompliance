@@ -358,56 +358,57 @@ body{
 
             <div class="summary-card">
 
-                <div class="summary-header">
-                    Compliance Summary
-                </div>
+    <div class="summary-header">
+        Payroll Summary
+    </div>
 
-                <table class="summary-table">
+    <table class="exception-table">
 
-                    <tr>
-                        <td class="label">Male Employees</td>
-                        <td>{{ submission.male_employees|default:"-" }}</td>
-                    </tr>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Male</th>
+                <th>Female</th>
+                <th>Gross Wages</th>
+                <th>Net Wages</th>
+                <th>PF</th>
+                <th>ESIC</th>
+                <th>RC</th>
+                <th>LWF</th>
+            </tr>
+        </thead>
 
-                    <tr>
-                        <td class="label">Female Employees</td>
-                        <td>{{ submission.female_employees|default:"-" }}</td>
-                    </tr>
+        <tbody>
 
-                    <tr>
-                        <td class="label">Gross Wages</td>
-                        <td>{{ submission.gross_wages|default:"-" }}</td>
-                    </tr>
+        {% for row in payroll_data %}
 
-                    <tr>
-                        <td class="label">Net Wages</td>
-                        <td>{{ submission.net_wages|default:"-" }}</td>
-                    </tr>
+            <tr>
+                <td>{{ row.month }}</td>
+                <td>{{ row.male_employees }}</td>
+                <td>{{ row.female_employees }}</td>
+                <td>{{ row.gross_wages }}</td>
+                <td>{{ row.net_wages }}</td>
+                <td>{{ row.pf_remittance_date|default:"-" }}</td>
+                <td>{{ row.esic_remittance_date|default:"-" }}</td>
+                <td>{{ row.rc_remittance_date|default:"-" }}</td>
+                <td>{{ row.lwf_remittance_date|default:"-" }}</td>
+            </tr>
 
-                    <tr>
-                        <td class="label">PF Remittance Date</td>
-                        <td>{{ submission.pf_remittance_date|default:"-" }}</td>
-                    </tr>
+        {% empty %}
 
-                    <tr>
-                        <td class="label">ESIC Remittance Date</td>
-                        <td>{{ submission.esic_remittance_date|default:"-" }}</td>
-                    </tr>
+            <tr>
+                <td colspan="9" style="text-align:center;">
+                    No payroll data available.
+                </td>
+            </tr>
 
-                    <tr>
-                        <td class="label">RC Remittance Date</td>
-                        <td>{{ submission.rc_remittance_date|default:"-" }}</td>
-                    </tr>
+        {% endfor %}
 
-                    <tr>
-                        <td class="label">LWF Remittance Date</td>
-                        <td>{{ submission.lwf_remittance_date|default:"-" }}</td>
-                    </tr>
+        </tbody>
 
-                </table>
+    </table>
 
-            </div>
-
+</div>
             <!-- EXCEPTIONAL APPROVAL NOTE -->
 
             {% if exceptional_entries %}

@@ -57,16 +57,7 @@ export default function AuditorDashboard() {
   const [manualEditMode, setManualEditMode] =
   useState(false);
 
-  const [complianceSummary, setComplianceSummary] = useState({
-  male_employees: "",
-  female_employees: "",
-  gross_wages: "",
-  net_wages: "",
-  pf_remittance_date: "",
-  esic_remittance_date: "",
-  rc_remittance_date: "",
-  lwf_remittance_date: "",
-});
+  const [payrollData, setPayrollData] = useState<any[]>([]);
 
 const [isEditingCompliance, setIsEditingCompliance] = useState(false);
 
@@ -706,8 +697,8 @@ const loadChecklist = async (
       rows
     );
 
-    if (checklistRes.data?.compliance_summary) {
-        setComplianceSummary(checklistRes.data.compliance_summary);
+    if (checklistRes.data?.payroll_data) {
+        setPayrollData(checklistRes.data.payroll_data);
     }
 
     setChecklist(rows);
@@ -836,7 +827,7 @@ const handleShowAuditor = async () => {
         branch_id: selectedBranch,
         vendor_id: selectedVendor,
         audit_period: auditPeriod,
-        ...complianceSummary,
+        payroll_data: payrollData,
       },
       authHeader
     );
@@ -1693,45 +1684,148 @@ const canFreezeReport =
     width={900}
     centered
   >
-    <div className="p-8 bg-white rounded-2xl">
-      <div className="grid grid-cols-2 gap-x-12 gap-y-8 text-lg">
-        <div>
-          <div className="text-gray-500 text-sm mb-1">Male Employees</div>
-          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.male_employees || "0"}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-sm mb-1">Female Employees</div>
-          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.female_employees || "0"}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-sm mb-1">Gross Wages</div>
-          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.gross_wages || "0"}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-sm mb-1">Net Wages</div>
-          <div className="text-4xl font-semibold text-gray-900">{complianceSummary.net_wages || "0"}</div>
-        </div>
+    <div className="overflow-x-auto">
 
-        <div className="col-span-2 pt-6 border-t grid grid-cols-2 gap-12">
-          <div>
-            <div className="text-gray-500 text-sm">PF Remittance Date</div>
-            <div className="font-medium text-xl mt-1">{complianceSummary.pf_remittance_date || "-"}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-sm">ESIC Remittance Date</div>
-            <div className="font-medium text-xl mt-1">{complianceSummary.esic_remittance_date || "-"}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-sm">RC Remittance Date</div>
-            <div className="font-medium text-xl mt-1">{complianceSummary.rc_remittance_date || "-"}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-sm">LWF Remittance Date</div>
-            <div className="font-medium text-xl mt-1">{complianceSummary.lwf_remittance_date || "-"}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <table className="w-full border border-gray-300 text-sm">
+
+    <thead className="bg-gray-100">
+
+      <tr>
+        <th className="border p-2">Month</th>
+        <th className="border p-2">Male</th>
+        <th className="border p-2">Female</th>
+        <th className="border p-2">Gross Wages</th>
+        <th className="border p-2">Net Wages</th>
+        <th className="border p-2">PF Date</th>
+        <th className="border p-2">ESIC Date</th>
+        <th className="border p-2">RC Date</th>
+        <th className="border p-2">LWF Date</th>
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {payrollData.map((row: any, index: number) => (
+
+        <tr key={index}>
+
+          <td className="border p-2 font-medium">
+            {row.month}
+          </td>
+
+          <td className="border p-2">
+            <Input
+              value={row.male_employees}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].male_employees = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+          <td className="border p-2">
+            <Input
+              value={row.female_employees}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].female_employees = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+          <td className="border p-2">
+            <Input
+              value={row.gross_wages}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].gross_wages = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+          <td className="border p-2">
+            <Input
+              value={row.net_wages}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].net_wages = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.pf_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].pf_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.esic_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].esic_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.rc_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].rc_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.lwf_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].lwf_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
+
+        </tr>
+
+      ))}
+
+    </tbody>
+
+  </table>
+
+  <div className="flex justify-end mt-6">
+
+    <Button
+      type="primary"
+      onClick={handleSaveComplianceSummary}
+    >
+      Save Compliance Summary
+    </Button>
+
+  </div>
+
+</div>
   </Modal>
 
 </Modal>
