@@ -1694,106 +1694,108 @@ const canFreezeReport =
           Mapping Active: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"} → {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
         </span>
       </div>
+
     </div>
   </div>
 
-  {/* ========== 2. MAIN CONTENT (LEFT + RIGHT) ========== */}
-  <div className="flex-1 flex overflow-hidden">
+ {/* ========== 2. MAIN CONTENT (FULL WIDTH) ========== */}
+<div className="flex-1 flex overflow-hidden">
 
-    {/* LEFT COLUMN — Remarks + Stats + Table */}
-    <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+  {/* FULL WIDTH COLUMN */}
+  <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-      {/* Locked banner */}
-      {isAuditLocked && (
-        <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
-          This audit report has been frozen, finalized, and locked from further modifications.
+    {/* Locked banner */}
+    {isAuditLocked && (
+      <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
+        This audit report has been frozen, finalized, and locked from further modifications.
+      </div>
+    )}
+
+    {/* Vendor Remarks (compact) */}
+    {remarksData.length > 0 && (
+      <div className="mx-4 mt-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="font-semibold text-amber-700 text-sm">Vendor Remark History</div>
+          <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
         </div>
-      )}
-
-      {/* Vendor Remarks (compact) */}
-      {remarksData.length > 0 && (
-        <div className="mx-4 mt-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="font-semibold text-amber-700 text-sm">Vendor Remark History</div>
-            <div className="text-xs text-gray-500">{remarksData.length} Remark(s)</div>
-          </div>
-          <div className="space-y-1 max-h-[72px] overflow-y-auto pr-1">
-            {remarksData.map((remark, index) => (
-              <Tooltip key={index} title={remark.remark}>
-                <div className="px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-amber-700 text-xs">Vendor Remark</span>
-                    <span className="text-[11px] text-gray-500">
-                      {remark.created_at
-                        ? new Date(remark.created_at).toLocaleString("en-IN")
-                        : "-"}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-800 truncate mt-0.5">{remark.remark}</div>
+        <div className="space-y-1 max-h-[72px] overflow-y-auto pr-1">
+          {remarksData.map((remark, index) => (
+            <Tooltip key={index} title={remark.remark}>
+              <div className="px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-amber-700 text-xs">Vendor Remark</span>
+                  <span className="text-[11px] text-gray-500">
+                    {remark.created_at
+                      ? new Date(remark.created_at).toLocaleString("en-IN")
+                      : "-"}
+                  </span>
                 </div>
-              </Tooltip>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Stats bar */}
-      {hasDocuments && (
-        <div className="mx-4 mt-3 flex items-center gap-2">
-          <div className="px-3 py-1 rounded-md bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100">
-            Total: <span className="font-semibold">{groupedChecklist.length}</span>
-          </div>
-          <div className="px-3 py-1 rounded-md bg-green-50 text-green-700 text-sm font-medium border border-green-100">
-            Complied:{" "}
-            <span className="font-semibold">
-              {groupedChecklist.filter((row: any) => row.status === "Complied").length}
-            </span>
-          </div>
-          <div className="px-3 py-1 rounded-md bg-red-50 text-red-700 text-sm font-medium border border-red-100">
-            Pending:{" "}
-            <span className="font-semibold">
-              {groupedChecklist.filter(
-                (row: any) => !allowedFreezeStatuses.includes(row.status)
-              ).length}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* TABLE — now fills remaining height */}
-{/* TABLE — now fills remaining height */}
-<div className="flex-1 overflow-hidden px-4 pt-2 pb-3">
-  {!hasDocuments ? (
-    <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
-      <div className="text-center">
-        <div className="text-lg font-semibold text-gray-700">
-          No documents uploaded for this audit period
-        </div>
-        <div className="text-sm text-gray-400 mt-2">
-          Vendor has not submitted any compliance documents yet.
+                <div className="text-xs text-gray-800 truncate mt-0.5">{remark.remark}</div>
+              </div>
+            </Tooltip>
+          ))}
         </div>
       </div>
+    )}
+
+    {/* Stats bar */}
+    {hasDocuments && (
+      <div className="mx-4 mt-3 flex items-center gap-2">
+        <div className="px-3 py-1 rounded-md bg-blue-50 text-blue-700 text-sm font-medium border border-blue-100">
+          Total: <span className="font-semibold">{groupedChecklist.length}</span>
+        </div>
+        <div className="px-3 py-1 rounded-md bg-green-50 text-green-700 text-sm font-medium border border-green-100">
+          Complied:{" "}
+          <span className="font-semibold">
+            {groupedChecklist.filter((row: any) => row.status === "Complied").length}
+          </span>
+        </div>
+        <div className="px-3 py-1 rounded-md bg-red-50 text-red-700 text-sm font-medium border border-red-100">
+          Pending:{" "}
+          <span className="font-semibold">
+            {groupedChecklist.filter(
+              (row: any) => !allowedFreezeStatuses.includes(row.status)
+            ).length}
+          </span>
+        </div>
+      </div>
+    )}
+
+    {/* TABLE — Full Width */}
+    <div className="flex-1 overflow-hidden px-4 pt-2 pb-3">
+      {!hasDocuments ? (
+        <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-700">
+              No documents uploaded for this audit period
+            </div>
+            <div className="text-sm text-gray-400 mt-2">
+              Vendor has not submitted any compliance documents yet.
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <Table
+            rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
+            columns={columns}
+            dataSource={groupedChecklist}
+            rowKey="id"
+            pagination={false}
+            bordered
+            size="small"
+            className="audit-table-highlighted"
+            scroll={{
+              y: "calc(88vh - 340px)",
+              x: 1800,
+            }}
+          />
+        </div>
+      )}
     </div>
-  ) : (
-    <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <Table
-        rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
-        columns={columns}
-        dataSource={groupedChecklist}
-        rowKey="id"
-        pagination={false}
-        bordered
-        size="small"
-        className="audit-table-highlighted"
-        scroll={{
-          y: "calc(88vh - 340px)",   // ← better calculation for modal height
-          x: 1800,
-        }}
-      />
-    </div>
-  )}
+  </div>
 </div>
-    </div>
+
 {/* RIGHT SIDEBAR */}
 <div className="w-[360px] shrink-0 border-l bg-gray-50/40 flex flex-col">
   <div className="p-4 flex flex-col h-full">
