@@ -29,7 +29,7 @@ const TopExceptionalVendorsChart: React.FC = () => {
     <Card
       title="Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
       size="small"
-      style={{ height: 460 }}
+      style={{ height: 380 }}
       bodyStyle={{
         height: 390,
         padding: "12px 20px",
