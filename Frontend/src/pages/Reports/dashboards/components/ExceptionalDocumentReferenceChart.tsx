@@ -9,7 +9,8 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { API_BASE } from "../../services/api"; // Adjust if your API_BASE is elsewhere
+
+const API_BASE = import.meta.env.VITE_API_URL;
 
 interface DocumentReferenceData {
   document_id: number;
@@ -43,7 +44,7 @@ const ExceptionalDocumentReferenceChart: React.FC = () => {
       const token = localStorage.getItem("access");
 
       const response = await axios.get(
-        `${API_BASE}/api/dashboard/document-reference/`,
+        `${API_BASE}/api/vendor/dashboard/document-reference/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -53,7 +54,7 @@ const ExceptionalDocumentReferenceChart: React.FC = () => {
 
       setData(response.data);
     } catch (error) {
-      console.error("Failed to load document reference chart", error);
+      console.error("Failed to load document reference chart:", error);
     } finally {
       setLoading(false);
     }
