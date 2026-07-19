@@ -1,99 +1,90 @@
 import React from "react";
-import ReactApexChart from "react-apexcharts";
 import { Card } from "antd";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+} from "recharts";
+
+const data = [
+  { name: "PF Remittance", value: 28 },
+  { name: "ESIC Receipt", value: 22 },
+  { name: "PT Return", value: 18 },
+  { name: "Shop Act", value: 12 },
+  { name: "LWF Receipt", value: 8 },
+  { name: "Salary Register", value: 6 },
+  { name: "Bonus Register", value: 4 },
+  { name: "Others", value: 2 },
+];
+
+const COLORS = [
+  "#1677ff",
+  "#52c41a",
+  "#faad14",
+  "#ff4d4f",
+  "#722ed1",
+  "#13c2c2",
+  "#2f54eb",
+  "#bfbfbf",
+];
 
 const ExceptionalDocumentReferenceChart: React.FC = () => {
-  const series = [28, 22, 18, 12, 8, 6, 4, 2];
-
-  const options: ApexCharts.ApexOptions = {
-    chart: {
-      type: "pie",
-      toolbar: {
-        show: false,
-      },
-    },
-
-    labels: [
-      "PF Remittance",
-      "ESIC Receipt",
-      "PT Return",
-      "Shop Act",
-      "LWF Receipt",
-      "Salary Register",
-      "Bonus Register",
-      "Others",
-    ],
-
-    legend: {
-      position: "bottom",
-      horizontalAlign: "center",
-      fontSize: "13px",
-      itemMargin: {
-        horizontal: 12,
-        vertical: 6,
-      },
-    },
-
-    dataLabels: {
-      enabled: true,
-      formatter: (val: number) => `${val.toFixed(0)}%`,
-      style: {
-        fontSize: "12px",
-        fontWeight: 600,
-      },
-      dropShadow: {
-        enabled: false,
-      },
-    },
-
-    stroke: {
-      width: 2,
-      colors: ["#fff"],
-    },
-
-    tooltip: {
-      y: {
-        formatter: (val: number) => `${val} Documents`,
-      },
-    },
-
-    plotOptions: {
-      pie: {
-        expandOnClick: true,
-        offsetY: 10,
-      },
-    },
-
-    responsive: [
-      {
-        breakpoint: 768,
-        options: {
-          chart: {
-            height: 300,
-          },
-          legend: {
-            position: "bottom",
-          },
-        },
-      },
-    ],
-  };
-
   return (
-<Card
-  size="small"
-  title="Documents Referenced for Exceptional Clearance"
-  style={{
-    height: 370,
-  }}
->
-  <ReactApexChart
-    options={options}
-    series={series}
-    type="pie"
-    height={300}
-  />
-</Card>
+    <Card
+      title="Documents Referenced for Exceptional Clearance"
+      size="small"
+      style={{ height: 380 }}
+      bodyStyle={{
+        height: 320,
+        padding: "12px 16px",
+      }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="42%"
+            outerRadius={85}
+            innerRadius={35}
+            paddingAngle={3}
+            cornerRadius={6}
+            label={({ percent }) =>
+              `${((percent ?? 0) * 100).toFixed(0)}%`
+            }
+          >
+            {data.map((_, index) => (
+              <Cell
+                key={index}
+                fill={COLORS[index % COLORS.length]}
+              />
+            ))}
+          </Pie>
+
+          <Tooltip
+            formatter={(value: number) => [
+              `${value} Documents`,
+              "Count",
+            ]}
+          />
+
+          <Legend
+            verticalAlign="bottom"
+            align="center"
+            iconType="circle"
+            wrapperStyle={{
+              fontSize: 12,
+              paddingTop: 15,
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </Card>
   );
 };
 

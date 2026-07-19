@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Cell,
+  LabelList,
 } from "recharts";
 
 const data = [
@@ -24,26 +24,16 @@ const data = [
   { vendor: "Apex Group", count: 4 },
 ];
 
-const colors = [
-  "#1677ff",
-  "#4096ff",
-  "#69b1ff",
-  "#91caff",
-  "#1677ff",
-  "#4096ff",
-  "#69b1ff",
-  "#91caff",
-  "#1677ff",
-  "#4096ff",
-];
-
 const TopExceptionalVendorsChart: React.FC = () => {
   return (
     <Card
       title="Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
       size="small"
-      style={{ height: 370 }}
-      bodyStyle={{ height: 310 }}
+      style={{ height: 380 }}
+      bodyStyle={{
+        height: 320,
+        padding: "12px 18px",
+      }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
@@ -51,31 +41,39 @@ const TopExceptionalVendorsChart: React.FC = () => {
           margin={{
             top: 20,
             right: 20,
-            left: 10,
-            bottom: 55,
+            left: 30,
+            bottom: 70,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid
+            stroke="#f0f0f0"
+            strokeDasharray="3 3"
+            vertical={false}
+          />
 
           <XAxis
             dataKey="vendor"
             angle={-35}
             textAnchor="end"
             interval={0}
-            height={70}
-            tick={{ fontSize: 11 }}
+            height={65}
+            tick={{
+              fontSize: 11,
+              fill: "#555",
+            }}
           />
 
           <YAxis
             allowDecimals={false}
-            label={{
-              value: "Exceptional Clearance Count",
-              angle: -90,
-              position: "insideLeft",
+            width={40}
+            tick={{
+              fontSize: 12,
+              fill: "#555",
             }}
           />
 
           <Tooltip
+            cursor={{ fill: "#f5f5f5" }}
             formatter={(value: number) => [
               `${value} Clearances`,
               "Count",
@@ -84,14 +82,19 @@ const TopExceptionalVendorsChart: React.FC = () => {
 
           <Bar
             dataKey="count"
+            fill="#1677ff"
             radius={[8, 8, 0, 0]}
+            animationDuration={700}
           >
-            {data.map((_, index) => (
-              <Cell
-                key={index}
-                fill={colors[index % colors.length]}
-              />
-            ))}
+            <LabelList
+              dataKey="count"
+              position="top"
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                fill: "#1677ff",
+              }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
