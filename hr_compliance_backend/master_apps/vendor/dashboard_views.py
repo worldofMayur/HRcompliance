@@ -762,16 +762,17 @@ class ExceptionalDashboardAPIView(APIView):
 
         for submission in submissions:
 
-            print("===================================")
+            print("\n===================================")
             print("Vendor:", submission.vendor.short_name)
             print("State:", submission.state)
-            print("Audit:", submission.audit_period)
-            print("CC:", submission.is_cc_issued)
+            print("Audit Period:", submission.audit_period)
+            print("CC Issued:", submission.is_cc_issued)
             print("Exceptional:", submission.has_exceptional_approval)
 
             state = submission.state
 
             if state not in response:
+                print("❌ State not found in response:", state)
                 continue
 
             mapping = VendorBranchMapping.objects.filter(
@@ -787,8 +788,10 @@ class ExceptionalDashboardAPIView(APIView):
                 continue
 
             frequency = str(mapping.frequency).strip().upper()
+            print("Frequency:", frequency)
 
             period = str(submission.audit_period).lower()
+            print("Period:", period)
 
             base_month = None
 
@@ -798,46 +801,43 @@ class ExceptionalDashboardAPIView(APIView):
                     break
 
             if base_month is None:
-
                 match = re.search(r"(\d{4})[-/](\d{1,2})", period)
-
                 if match:
                     base_month = int(match.group(2))
 
+            print("Base Month:", base_month)
+
             if base_month is None:
+                print("❌ Could not determine base month")
                 continue
 
             months = []
 
             if frequency == "MONTHLY":
-
                 months = [base_month]
 
-            print("Frequency:", frequency)
-            print("Period:", period)
-            print("Base Month:", base_month)
-            print("Months:", months)
-
             elif frequency == "QUARTERLY":
-
                 start = ((base_month - 1) // 3) * 3 + 1
                 months = [start, start + 1, start + 2]
 
             elif frequency == "HALF_YEARLY":
-
                 start = 1 if base_month <= 6 else 7
                 months = list(range(start, start + 6))
 
             elif frequency == "ANNUALLY":
-
                 months = list(range(1, 13))
 
             else:
-
+                print("⚠ Unknown frequency:", frequency)
                 months = [base_month]
 
-            for month in months:
+            print("Months:", months)
 
+            for month in months:
                 response[state][month_keys[month - 1]] += 1
+                print(f"✅ Incremented {month_keys[month - 1]} for {state}")
+
+        print("\n========== FINAL RESPONSE ==========")
+        print(response)
 
         return Response(list(response.values()))
