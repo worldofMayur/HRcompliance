@@ -1,79 +1,101 @@
 import React from "react";
-import ReactApexChart from "react-apexcharts";
 import { Card } from "antd";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+} from "recharts";
+
+const data = [
+  { vendor: "ABC Ltd", count: 15 },
+  { vendor: "XYZ Services", count: 13 },
+  { vendor: "Delta Corp", count: 12 },
+  { vendor: "Sun Tech", count: 10 },
+  { vendor: "Prime Solutions", count: 9 },
+  { vendor: "Vision Pvt", count: 8 },
+  { vendor: "Secure Co", count: 7 },
+  { vendor: "Global HR", count: 6 },
+  { vendor: "Quick Staff", count: 5 },
+  { vendor: "Apex Group", count: 4 },
+];
+
+const colors = [
+  "#1677ff",
+  "#4096ff",
+  "#69b1ff",
+  "#91caff",
+  "#1677ff",
+  "#4096ff",
+  "#69b1ff",
+  "#91caff",
+  "#1677ff",
+  "#4096ff",
+];
 
 const TopExceptionalVendorsChart: React.FC = () => {
-  const options: ApexCharts.ApexOptions = {
-    chart: {
-      type: "bar",
-      toolbar: {
-        show: false,
-      },
-    },
-    plotOptions: {
-      bar: {
-        borderRadius: 6,
-        columnWidth: "55%",
-      },
-    },
-    dataLabels: {
-      enabled: true,
-    },
-    xaxis: {
-      categories: [
-        "ABC Ltd",
-        "XYZ Services",
-        "Delta Corp",
-        "Sun Tech",
-        "Prime Solutions",
-        "Vision Pvt",
-        "Secure Co",
-        "Global HR",
-        "Quick Staff",
-        "Apex Group",
-      ],
-      title: {
-        text: "Vendor Name",
-      },
-      labels: {
-        rotate: -45,
-      },
-    },
-    yaxis: {
-      title: {
-        text: "Exceptional Clearance Count",
-      },
-    },
-    tooltip: {
-      y: {
-        formatter: (val: number) => `${val} Clearances`,
-      },
-    },
-  };
-
-  const series = [
-    {
-      name: "Exceptional Clearances",
-      data: [15, 13, 12, 10, 9, 8, 7, 6, 5, 4],
-    },
-  ];
-
   return (
-<Card
-  size="small"
-  title="Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
-  style={{
-    height: 370,
-    marginBottom: 16,
-  }}
->
-  <ReactApexChart
-    options={options}
-    series={series}
-    type="bar"
-    height={300}
-  />
-</Card>
+    <Card
+      title="Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
+      size="small"
+      style={{ height: 370 }}
+      bodyStyle={{ height: 310 }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{
+            top: 20,
+            right: 20,
+            left: 10,
+            bottom: 55,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+
+          <XAxis
+            dataKey="vendor"
+            angle={-35}
+            textAnchor="end"
+            interval={0}
+            height={70}
+            tick={{ fontSize: 11 }}
+          />
+
+          <YAxis
+            allowDecimals={false}
+            label={{
+              value: "Exceptional Clearance Count",
+              angle: -90,
+              position: "insideLeft",
+            }}
+          />
+
+          <Tooltip
+            formatter={(value: number) => [
+              `${value} Clearances`,
+              "Count",
+            ]}
+          />
+
+          <Bar
+            dataKey="count"
+            radius={[8, 8, 0, 0]}
+          >
+            {data.map((_, index) => (
+              <Cell
+                key={index}
+                fill={colors[index % colors.length]}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </Card>
   );
 };
 
