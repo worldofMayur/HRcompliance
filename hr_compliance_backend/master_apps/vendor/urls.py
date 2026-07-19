@@ -27,8 +27,6 @@ from .compliance_views import (
     FrozenAuditPeriodsAPIView,
 )
 
-from .dashboard_views import ExceptionalDashboardAPIView
-
 from .dashboard_views import (
     BranchDashboardKPIAPIView,
     BranchDashboardStateSummaryAPIView,
@@ -37,11 +35,12 @@ from .dashboard_views import (
     BranchDashboardServiceDistributionAPIView,
     ComplianceDashboardSummaryAPIView,
     ComplianceDashboardMonthlyTrendAPIView,
-    VendorWiseComplianceAPIView,      
+    VendorWiseComplianceAPIView,
     ComplianceStatusDistributionAPIView,
-    AllBranchesVendorAPIView.
-    TopExceptionalVendorsAPIView
-    )
+    AllBranchesVendorAPIView,
+    ExceptionalDashboardAPIView,
+    TopExceptionalVendorsAPIView,
+)
 
 # Report Views Import
 from .report_views import (
