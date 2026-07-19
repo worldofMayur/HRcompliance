@@ -654,6 +654,20 @@ from master_apps.principle_employee.models import (
 
 from master_apps.vendor.mapping_models import VendorBranchMapping
 
+import re
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.principle_employee.models import (
+    PrincipalEmployer,
+    PrincipalEmployerBranch,
+)
+
+from master_apps.vendor.mapping_models import VendorBranchMapping
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
+
 
 class ExceptionalDashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -671,8 +685,12 @@ class ExceptionalDashboardAPIView(APIView):
                 status=404,
             )
 
+        print("\n==============================")
+        print("PE:", pe.short_name)
+        print("==============================")
+
         # ------------------------------------
-        # Branch Count (Exclude All Branches)
+        # Branch Count
         # ------------------------------------
 
         branch_summary = (
@@ -689,7 +707,7 @@ class ExceptionalDashboardAPIView(APIView):
         }
 
         # ------------------------------------
-        # Unique Vendors
+        # Vendor Count
         # ------------------------------------
 
         vendor_summary = (
@@ -699,7 +717,7 @@ class ExceptionalDashboardAPIView(APIView):
             .annotate(
                 vendor_count=Count(
                     "vendor",
-                    distinct=True,
+                    distinct=True
                 )
             )
         )
@@ -708,10 +726,6 @@ class ExceptionalDashboardAPIView(APIView):
             row["branch__state"]: row["vendor_count"]
             for row in vendor_summary
         }
-
-        # ------------------------------------
-        # Prepare Response
-        # ------------------------------------
 
         states = sorted(
             set(branch_map.keys()) |
@@ -725,7 +739,9 @@ class ExceptionalDashboardAPIView(APIView):
             response[state] = {
 
                 "state": state,
+
                 "branch_count": branch_map.get(state, 0),
+
                 "vendor_count": vendor_map.get(state, 0),
 
                 "jan": 0,
@@ -742,9 +758,77 @@ class ExceptionalDashboardAPIView(APIView):
                 "dec": 0,
             }
 
-        # -------------------------------------
-        # Exceptional Approval Records
-        # -------------------------------------
+        print("\n========== COUNTS ==========")
+
+        print(
+            "TOTAL:",
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe
+            ).count()
+        )
+
+        print(
+            "EXCEPTIONAL:",
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                has_exceptional_approval=True
+            ).count()
+        )
+
+        print(
+            "CC ISSUED:",
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                is_cc_issued=True
+            ).count()
+        )
+
+        print(
+            "FROZEN:",
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                workflow_status="FROZEN"
+            ).count()
+        )
+
+        print(
+            "EXCEPTIONAL + CC:",
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                has_exceptional_approval=True,
+                is_cc_issued=True,
+            ).count()
+        )
+
+        print("============================\n")
+
+        print("========== ALL SUBMISSIONS ==========")
+
+        all_rows = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        ).select_related(
+            "vendor",
+            "document",
+            "branch",
+        )
+
+        for row in all_rows:
+
+            print(
+                {
+                    "id": row.id,
+                    "vendor": row.vendor.short_name,
+                    "document": row.document.name,
+                    "branch": row.branch.short_name,
+                    "audit_period": row.audit_period,
+                    "workflow": row.workflow_status,
+                    "exceptional": row.has_exceptional_approval,
+                    "cc": row.is_cc_issued,
+                    "frozen": row.is_frozen,
+                }
+            )
+
+        print("=====================================\n")
 
         submissions = VendorComplianceSubmission.objects.filter(
             principal_employer=pe,
@@ -755,24 +839,44 @@ class ExceptionalDashboardAPIView(APIView):
             "branch",
         )
 
+        print(
+            "SUBMISSIONS USED BY DASHBOARD:",
+            submissions.count()
+        )
+
         month_keys = [
-            "jan","feb","mar","apr","may","jun",
-            "jul","aug","sep","oct","nov","dec"
+            "jan",
+            "feb",
+            "mar",
+            "apr",
+            "may",
+            "jun",
+            "jul",
+            "aug",
+            "sep",
+            "oct",
+            "nov",
+            "dec",
         ]
 
         for submission in submissions:
 
-            print("\n===================================")
+            print("\n==============================")
+
+            print("Submission ID:", submission.id)
             print("Vendor:", submission.vendor.short_name)
             print("State:", submission.state)
             print("Audit Period:", submission.audit_period)
-            print("CC Issued:", submission.is_cc_issued)
+            print("Workflow:", submission.workflow_status)
             print("Exceptional:", submission.has_exceptional_approval)
+            print("CC Issued:", submission.is_cc_issued)
 
             state = submission.state
 
             if state not in response:
-                print("❌ State not found in response:", state)
+
+                print("State Missing:", state)
+
                 continue
 
             mapping = VendorBranchMapping.objects.filter(
@@ -784,60 +888,93 @@ class ExceptionalDashboardAPIView(APIView):
             print("Mapping:", mapping)
 
             if not mapping:
-                print("❌ Mapping not found")
+
+                print("Mapping Not Found")
+
                 continue
 
             frequency = str(mapping.frequency).strip().upper()
+
             print("Frequency:", frequency)
 
-            period = str(submission.audit_period).lower()
-            print("Period:", period)
+            period = str(
+                submission.audit_period
+            ).lower()
 
             base_month = None
 
-            for index, name in enumerate(month_keys, start=1):
-                if name in period:
+            for index, month in enumerate(month_keys, start=1):
+
+                if month in period:
+
                     base_month = index
+
                     break
 
             if base_month is None:
-                match = re.search(r"(\d{4})[-/](\d{1,2})", period)
+
+                match = re.search(
+                    r"(\\d{4})[-/](\\d{1,2})",
+                    period
+                )
+
                 if match:
+
                     base_month = int(match.group(2))
 
             print("Base Month:", base_month)
 
             if base_month is None:
-                print("❌ Could not determine base month")
+
+                print("Unable to determine month")
+
                 continue
 
-            months = []
-
             if frequency == "MONTHLY":
+
                 months = [base_month]
 
             elif frequency == "QUARTERLY":
+
                 start = ((base_month - 1) // 3) * 3 + 1
-                months = [start, start + 1, start + 2]
+
+                months = [
+                    start,
+                    start + 1,
+                    start + 2,
+                ]
 
             elif frequency == "HALF_YEARLY":
+
                 start = 1 if base_month <= 6 else 7
-                months = list(range(start, start + 6))
+
+                months = list(
+                    range(start, start + 6)
+                )
 
             elif frequency == "ANNUALLY":
-                months = list(range(1, 13))
+
+                months = list(
+                    range(1, 13)
+                )
 
             else:
-                print("⚠ Unknown frequency:", frequency)
+
                 months = [base_month]
 
             print("Months:", months)
 
             for month in months:
+
                 response[state][month_keys[month - 1]] += 1
-                print(f"✅ Incremented {month_keys[month - 1]} for {state}")
+
+                print(
+                    "Incremented:",
+                    month_keys[month - 1]
+                )
 
         print("\n========== FINAL RESPONSE ==========")
+
         print(response)
 
         return Response(list(response.values()))
