@@ -1,5 +1,6 @@
-import React from "react";
-import { Card } from "antd";
+import React, { useEffect, useState } from "react";
+import { Card, Spin, Empty } from "antd";
+import axios from "axios";
 import {
   ResponsiveContainer,
   PieChart,
@@ -8,17 +9,13 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { API_BASE } from "../../services/api"; // Adjust if your API_BASE is elsewhere
 
-const data = [
-  { name: "PF Remittance", value: 28 },
-  { name: "ESIC Receipt", value: 22 },
-  { name: "PT Return", value: 18 },
-  { name: "Shop Act", value: 12 },
-  { name: "LWF Receipt", value: 8 },
-  { name: "Salary Register", value: 6 },
-  { name: "Bonus Register", value: 4 },
-  { name: "Others", value: 2 },
-];
+interface DocumentReferenceData {
+  document_id: number;
+  document_name: string;
+  count: number;
+}
 
 const COLORS = [
   "#1677ff",
@@ -29,9 +26,43 @@ const COLORS = [
   "#13c2c2",
   "#2f54eb",
   "#bfbfbf",
+  "#fa541c",
+  "#389e0d",
+  "#9254de",
+  "#f759ab",
 ];
 
 const ExceptionalDocumentReferenceChart: React.FC = () => {
+  const [data, setData] = useState<DocumentReferenceData[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchChartData = async () => {
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("access");
+
+      const response = await axios.get(
+        `${API_BASE}/api/dashboard/document-reference/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setData(response.data);
+    } catch (error) {
+      console.error("Failed to load document reference chart", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchChartData();
+  }, []);
+
   return (
     <Card
       title="Documents Referenced for Exceptional Clearance"
@@ -42,48 +73,65 @@ const ExceptionalDocumentReferenceChart: React.FC = () => {
         padding: "12px 16px",
       }}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="42%"
-            outerRadius={85}
-            innerRadius={35}
-            paddingAngle={3}
-            cornerRadius={6}
-            label={({ percent }) =>
-              `${((percent ?? 0) * 100).toFixed(0)}%`
-            }
-          >
-            {data.map((_, index) => (
-              <Cell
-                key={index}
-                fill={COLORS[index % COLORS.length]}
-              />
-            ))}
-          </Pie>
+      {loading ? (
+        <div
+          style={{
+            height: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Spin size="large" />
+        </div>
+      ) : data.length === 0 ? (
+        <Empty description="No Data Available" />
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="count"
+              nameKey="document_name"
+              cx="50%"
+              cy="42%"
+              outerRadius={85}
+              innerRadius={35}
+              paddingAngle={3}
+              cornerRadius={6}
+              label={({ percent }) =>
+                `${((percent ?? 0) * 100).toFixed(0)}%`
+              }
+            >
+              {data.map((_, index) => (
+                <Cell
+                  key={index}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
 
-          <Tooltip
-            formatter={(value: number) => [
-              `${value} Documents`,
-              "Count",
-            ]}
-          />
+            <Tooltip
+              formatter={(value: number) => [
+                `${value} Documents`,
+                "Count",
+              ]}
+            />
 
-          <Legend
-            verticalAlign="bottom"
-            align="center"
-            iconType="circle"
-            wrapperStyle={{
-              fontSize: 12,
-              paddingTop: 15,
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+            <Legend
+              verticalAlign="bottom"
+              align="center"
+              iconType="circle"
+              formatter={(value) => (
+                <span style={{ fontSize: 12 }}>{value}</span>
+              )}
+              wrapperStyle={{
+                paddingTop: 15,
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
     </Card>
   );
 };

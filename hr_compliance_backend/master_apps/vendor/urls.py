@@ -40,6 +40,9 @@ from .dashboard_views import (
     AllBranchesVendorAPIView,
     ExceptionalDashboardAPIView,
     TopExceptionalVendorsAPIView,
+    DocumentReferencePieAPIView,
+    ExceptionalVendorListAPIView,
+    ExceptionalDocumentListAPIView,
 )
 
 # Report Views Import
@@ -130,6 +133,21 @@ urlpatterns = [
     path(
         "dashboard/compliance/monthly-trend/",
         ComplianceDashboardMonthlyTrendAPIView.as_view(),
+    ),
+    path(
+        "dashboard/document-reference/",
+        DocumentReferencePieAPIView.as_view(),
+        name="document-reference-pie",
+    ),
+    path(
+        "dashboard/exceptional-vendors/",
+        ExceptionalVendorListAPIView.as_view(),
+        name="exceptional-vendor-list",
+    ),
+    path(
+        "dashboard/exceptional-documents/",
+        ExceptionalDocumentListAPIView.as_view(),
+        name="exceptional-document-list",
     ),
     path("dashboard/compliance/vendor-wise/", VendorWiseComplianceAPIView.as_view()),
     path("dashboard/compliance/status-distribution/", ComplianceStatusDistributionAPIView.as_view()),

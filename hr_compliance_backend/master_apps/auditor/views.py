@@ -1281,17 +1281,32 @@ class SaveAuditAPIView(APIView):
         # SAVE DATA
         # =========================
         for entry in entries:
+
+            checklist = AuditChecklist.objects.select_related(
+                "document"
+            ).get(
+                id=entry.get("checklist_id")
+            )
+
+            submission = VendorComplianceSubmission.objects.filter(
+                vendor_id=vendor.id,
+                branch_id=branch_id,
+                audit_period=audit_period,
+                document=checklist.document,
+            ).first()
+
             AuditEntry.objects.update_or_create(
                 checklist_id=entry.get("checklist_id"),
                 branch_id=branch_id,
                 audit_period=audit_period,
                 defaults={
+                    "submission": submission,
                     "auditor": request.user.auditor_profile,
                     "status": entry.get("status"),
                     "observation": entry.get("observation"),
                     "recommendation": entry.get("recommendation"),
-                    "submitted_by": request.user
-                }
+                    "submitted_by": request.user,
+                },
             )
 
                         # ======================================

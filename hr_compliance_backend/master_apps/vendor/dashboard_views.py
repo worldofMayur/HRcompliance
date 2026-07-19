@@ -1076,3 +1076,217 @@ class TopExceptionalVendorsAPIView(APIView):
         )
 
         return Response(response[:10])
+
+
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.auditor.models import AuditEntry
+
+
+class DocumentReferencePieAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        pe_id = request.GET.get("pe_id")
+        vendor_id = request.GET.get("vendor_id")
+        branch_id = request.GET.get("branch_id")
+        audit_period = request.GET.get("audit_period")
+
+        queryset = (
+            AuditEntry.objects
+            .filter(
+                status="Exceptional Approval - Delayed Complied",
+                submission__isnull=False,
+            )
+            .select_related(
+                "submission",
+                "submission__document",
+                "submission__vendor",
+                "submission__branch",
+                "submission__principal_employer",
+            )
+        )
+
+        # ==========================
+        # FILTERS
+        # ==========================
+
+        if pe_id:
+            queryset = queryset.filter(
+                submission__principal_employer_id=pe_id
+            )
+
+        if vendor_id:
+            queryset = queryset.filter(
+                submission__vendor_id=vendor_id
+            )
+
+        if branch_id:
+            queryset = queryset.filter(
+                submission__branch_id=branch_id
+            )
+
+        if audit_period:
+            queryset = queryset.filter(
+                submission__audit_period=audit_period
+            )
+
+        # ==========================
+        # DOCUMENT COUNT
+        # ==========================
+
+        data = (
+            queryset
+            .values(
+                "submission__document_id",
+                "submission__document__name",
+            )
+            .annotate(
+                count=Count("id")
+            )
+            .order_by("-count")
+        )
+
+        response = []
+
+        for row in data:
+
+            response.append({
+
+                "document_id": row["submission__document_id"],
+
+                "document_name": row["submission__document__name"],
+
+                "count": row["count"]
+
+            })
+
+        return Response(response)
+
+
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
+
+
+class ExceptionalVendorListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        pe_id = request.GET.get("pe_id")
+        branch_id = request.GET.get("branch_id")
+        audit_period = request.GET.get("audit_period")
+
+        queryset = (
+            VendorComplianceSubmission.objects.filter(
+                has_exceptional_approval=True,
+                is_cc_issued=True,
+            )
+            .select_related("vendor")
+        )
+
+        if pe_id:
+            queryset = queryset.filter(
+                principal_employer_id=pe_id
+            )
+
+        if branch_id:
+            queryset = queryset.filter(
+                branch_id=branch_id
+            )
+
+        if audit_period:
+            queryset = queryset.filter(
+                audit_period=audit_period
+            )
+
+        vendors = (
+            queryset.values(
+                "vendor_id",
+                "vendor__name",
+            )
+            .distinct()
+            .order_by("vendor__name")
+        )
+
+        return Response([
+            {
+                "id": item["vendor_id"],
+                "name": item["vendor__name"],
+            }
+            for item in vendors
+        ])
+
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
+
+
+class ExceptionalDocumentListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        pe_id = request.GET.get("pe_id")
+        vendor_id = request.GET.get("vendor_id")
+        branch_id = request.GET.get("branch_id")
+        audit_period = request.GET.get("audit_period")
+
+        queryset = (
+            VendorComplianceSubmission.objects.filter(
+                has_exceptional_approval=True,
+                is_cc_issued=True,
+            )
+            .select_related("document")
+        )
+
+        if pe_id:
+            queryset = queryset.filter(
+                principal_employer_id=pe_id
+            )
+
+        if vendor_id:
+            queryset = queryset.filter(
+                vendor_id=vendor_id
+            )
+
+        if branch_id:
+            queryset = queryset.filter(
+                branch_id=branch_id
+            )
+
+        if audit_period:
+            queryset = queryset.filter(
+                audit_period=audit_period
+            )
+
+        documents = (
+            queryset.values(
+                "document_id",
+                "document__name",
+            )
+            .distinct()
+            .order_by("document__name")
+        )
+
+        return Response([
+            {
+                "id": item["document_id"],
+                "name": item["document__name"],
+            }
+            for item in documents
+        ])
