@@ -999,3 +999,80 @@ class ExceptionalDashboardAPIView(APIView):
         print(response)
 
         return Response(list(response.values()))
+
+
+from collections import defaultdict
+from datetime import timedelta
+from django.utils import timezone
+
+
+class TopExceptionalVendorsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        submissions = (
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                has_exceptional_approval=True,
+                is_cc_issued=True,
+            )
+            .select_related(
+                "vendor",
+                "branch",
+            )
+            .order_by(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
+        )
+
+        vendor_counts = defaultdict(int)
+        processed = set()
+
+        for submission in submissions:
+
+            key = (
+                submission.vendor_id,
+                submission.branch_id,
+                submission.audit_period,
+            )
+
+            if key in processed:
+                continue
+
+            processed.add(key)
+
+            vendor_name = (
+                submission.vendor.short_name
+                or submission.vendor.name
+            )
+
+            vendor_counts[vendor_name] += 1
+
+        response = [
+            {
+                "vendor": vendor,
+                "count": count,
+            }
+            for vendor, count in vendor_counts.items()
+        ]
+
+        response.sort(
+            key=lambda x: x["count"],
+            reverse=True,
+        )
+
+        return Response(response[:10])

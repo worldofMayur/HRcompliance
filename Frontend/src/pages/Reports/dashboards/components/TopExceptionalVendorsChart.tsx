@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "antd";
+import axios from "@/utils/axios";
+
 import {
   ResponsiveContainer,
   BarChart,
@@ -11,22 +13,33 @@ import {
   LabelList,
 } from "recharts";
 
-const data = [
-  { vendor: "ABC Ltd", count: 15 },
-  { vendor: "XYZ Services", count: 13 },
-  { vendor: "Delta Corp", count: 12 },
-  { vendor: "Sun Tech", count: 10 },
-  { vendor: "Prime Solutions", count: 9 },
-  { vendor: "Vision Pvt", count: 8 },
-  { vendor: "Secure Co", count: 7 },
-  { vendor: "Global HR", count: 6 },
-  { vendor: "Quick Staff", count: 5 },
-  { vendor: "Apex Group", count: 4 },
-];
-
 const TopExceptionalVendorsChart: React.FC = () => {
+
+  const [data, setData] = useState<
+    { vendor: string; count: number }[]
+  >([]);
+
+  const [loading, setLoading] = useState(false);
+
+useEffect(() => {
+  setLoading(true);
+
+  axios
+    .get("/vendor/dashboard/exceptional/top-vendors/")
+    .then((res) => {
+      setData(res.data);
+    })
+    .catch((err) => {
+      console.error(err);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+}, []);
+
   return (
     <Card
+    loading={loading}
       title="Top 10 Vendors with Exceptional Clearance (Last 12 Months)"
       size="small"
       style={{ height: 380 }}
@@ -35,7 +48,20 @@ const TopExceptionalVendorsChart: React.FC = () => {
         padding: "12px 20px",
       }}
     >
-      <ResponsiveContainer width="100%" height="100%">
+      {data.length === 0 ? (
+          <div
+              style={{
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  color: "#888",
+              }}
+          >
+              No exceptional clearance records found.
+          </div>
+      ) : (
+          <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
           margin={{
@@ -121,6 +147,7 @@ const TopExceptionalVendorsChart: React.FC = () => {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      )}
     </Card>
   );
 };
