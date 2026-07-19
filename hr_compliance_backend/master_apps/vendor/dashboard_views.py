@@ -783,12 +783,10 @@ class ExceptionalDashboardAPIView(APIView):
             print("Mapping:", mapping)
 
             if not mapping:
+                print("❌ Mapping not found")
                 continue
 
-            frequency = mapping.frequency
-            print("Frequency:", frequency)
-            print("Base Month:", base_month)
-            print("Months:", months)
+            frequency = str(mapping.frequency).strip().upper()
 
             period = str(submission.audit_period).lower()
 
@@ -814,6 +812,11 @@ class ExceptionalDashboardAPIView(APIView):
             if frequency == "MONTHLY":
 
                 months = [base_month]
+
+            print("Frequency:", frequency)
+            print("Period:", period)
+            print("Base Month:", base_month)
+            print("Months:", months)
 
             elif frequency == "QUARTERLY":
 
