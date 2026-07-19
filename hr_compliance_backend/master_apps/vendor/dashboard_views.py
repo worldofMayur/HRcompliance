@@ -830,13 +830,21 @@ class ExceptionalDashboardAPIView(APIView):
 
         print("=====================================\n")
 
-        submissions = VendorComplianceSubmission.objects.filter(
-            principal_employer=pe,
-            has_exceptional_approval=True,
-            is_cc_issued=True,
-        ).select_related(
-            "vendor",
-            "branch",
+        submissions = (
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                has_exceptional_approval=True,
+                is_cc_issued=True,
+            )
+            .select_related(
+                "vendor",
+                "branch",
+            )
+            .order_by(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
         )
 
         print(
@@ -859,7 +867,20 @@ class ExceptionalDashboardAPIView(APIView):
             "dec",
         ]
 
+        processed_audits = set()
+
         for submission in submissions:
+
+            audit_key = (
+                submission.vendor_id,
+                submission.branch_id,
+                submission.audit_period,
+            )
+
+            if audit_key in processed_audits:
+                continue
+
+            processed_audits.add(audit_key)
 
             print("\n==============================")
 
