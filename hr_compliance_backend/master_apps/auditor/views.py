@@ -1331,6 +1331,13 @@ class SaveAuditAPIView(APIView):
                             ).first()
                         )
 
+                        print("\n========== EXCEPTION DEBUG ==========")
+                        print("Status:", status_value)
+                        print("Checklist:", checklist.id if checklist else None)
+                        print("Document:", checklist.document.name if checklist and checklist.document else None)
+                        print("Related Submission:", related_submission)
+                        print("====================================")
+
                     if related_submission:
 
                         ExceptionalApprovalDocument.objects.filter(
@@ -1348,13 +1355,22 @@ class SaveAuditAPIView(APIView):
                             exceptional_doc.file.name
                         )
 
+                        print("BEFORE:", related_submission.has_exceptional_approval)
+
                         related_submission.has_exceptional_approval = True
 
-                        related_submission.workflow_status = (
-                            WorkflowStatus.EXCEPTIONAL_APPROVAL
+                        related_submission.workflow_status = WorkflowStatus.EXCEPTIONAL_APPROVAL
+
+                        related_submission.save(
+                            update_fields=[
+                                "has_exceptional_approval",
+                                "workflow_status",
+                            ]
                         )
 
-                        related_submission.save()
+                        related_submission.refresh_from_db()
+
+                        print("AFTER:", related_submission.has_exceptional_approval)
 
         logger.info("✅ Audit entries saved")
 
