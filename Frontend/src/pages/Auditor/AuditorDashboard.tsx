@@ -1636,9 +1636,9 @@ const canFreezeReport =
           </div>
         )}
 
-        {remarksData.length > 0 && ( /* Vendor Remarks block */ )}
+        {/* Vendor Remarks block will be added here */}
 
-        {hasDocuments && ( /* Stats bar */ )}
+        {/* Stats bar will be added here */}
 
         <div className="flex-1 overflow-hidden px-4 pt-2 pb-3">
           {!hasDocuments ? (
