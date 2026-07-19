@@ -204,48 +204,22 @@ const data: ExceptionalStateData[] = [
   },
 ];
 
-const emptyRow = {
-  state: "",
-  branch_count: "",
-  vendor_count: "",
-  jan: "",
-  feb: "",
-  mar: "",
-  apr: "",
-  may: "",
-  jun: "",
-  jul: "",
-  aug: "",
-  sep: "",
-  oct: "",
-  nov: "",
-  dec: "",
-};
-
-const displayData = [
-  ...data,
-  ...Array.from({ length: Math.max(0, 18 - data.length) }, (_, i) => ({
-    key: `empty-${i}`,
-    ...emptyRow,
-  })),
-];
-
 const ExceptionalStateSummaryTable: React.FC = () => {
   return (
-        <Card
-        title="State-wise Exceptional Approval Summary"
-        size="small"
-        style={{ height: 760 }}
-        bodyStyle={{ padding: 0 }}
-        >
+    <Card
+      title="State-wise Exceptional Approval Summary"
+      size="small"
+      bodyStyle={{ padding: 0 }}
+    >
       <Table
         columns={columns}
-        dataSource={displayData}
+        dataSource={data}
+        rowKey="key"
         pagination={false}
         bordered
         size="middle"
-        scroll={{ x: 1500, y: 680 }}
         sticky
+        scroll={{ x: 1500 }}
       />
     </Card>
   );
