@@ -1087,58 +1087,40 @@ from master_apps.auditor.models import AuditEntry
 
 
 class DocumentReferencePieAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
 
-        pe_id = request.GET.get("pe_id")
-        vendor_id = request.GET.get("vendor_id")
-        branch_id = request.GET.get("branch_id")
-        audit_period = request.GET.get("audit_period")
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response({"error": "Principal Employer not found"}, status=404)
 
         queryset = (
             AuditEntry.objects
             .filter(
                 status="Exceptional Approval - Delayed Complied",
-                submission__isnull=False,
+                submission__principal_employer=pe,   # ← Important: tie to current user
             )
             .select_related(
-                "submission",
                 "submission__document",
                 "submission__vendor",
-                "submission__branch",
-                "submission__principal_employer",
             )
         )
 
-        # ==========================
-        # FILTERS
-        # ==========================
-
-        if pe_id:
-            queryset = queryset.filter(
-                submission__principal_employer_id=pe_id
-            )
+        # Support query filters (for future use)
+        vendor_id = request.GET.get("vendor_id")
+        branch_id = request.GET.get("branch_id")
+        audit_period = request.GET.get("audit_period")
 
         if vendor_id:
-            queryset = queryset.filter(
-                submission__vendor_id=vendor_id
-            )
-
+            queryset = queryset.filter(submission__vendor_id=vendor_id)
         if branch_id:
-            queryset = queryset.filter(
-                submission__branch_id=branch_id
-            )
-
+            queryset = queryset.filter(submission__branch_id=branch_id)
         if audit_period:
-            queryset = queryset.filter(
-                submission__audit_period=audit_period
-            )
-
-        # ==========================
-        # DOCUMENT COUNT
-        # ==========================
+            queryset = queryset.filter(submission__audit_period=audit_period)
 
         data = (
             queryset
@@ -1146,28 +1128,20 @@ class DocumentReferencePieAPIView(APIView):
                 "submission__document_id",
                 "submission__document__name",
             )
-            .annotate(
-                count=Count("id")
-            )
+            .annotate(count=Count("id"))
             .order_by("-count")
         )
 
-        response = []
-
-        for row in data:
-
-            response.append({
-
+        response = [
+            {
                 "document_id": row["submission__document_id"],
-
                 "document_name": row["submission__document__name"],
-
-                "count": row["count"]
-
-            })
+                "count": row["count"],
+            }
+            for row in data
+        ]
 
         return Response(response)
-
 
 
 from rest_framework.views import APIView
