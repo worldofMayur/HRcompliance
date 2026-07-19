@@ -26,92 +26,41 @@ const columns: ColumnsType<ExceptionalStateData> = [
     title: "State",
     dataIndex: "state",
     key: "state",
-    align: "left",
+    width: 130,
+    ellipsis: true,
+    onCell: () => ({
+      style: {
+        whiteSpace: "nowrap",
+      },
+    }),
   },
   {
     title: "Branches",
     dataIndex: "branch_count",
     key: "branch_count",
+    width: 70,
     align: "center",
   },
   {
     title: "Vendors",
     dataIndex: "vendor_count",
     key: "vendor_count",
+    width: 70,
     align: "center",
   },
-  {
-    title: "Jan",
-    dataIndex: "jan",
-    key: "jan",
-    align: "center",
-  },
-  {
-    title: "Feb",
-    dataIndex: "feb",
-    key: "feb",
-    align: "center",
-  },
-  {
-    title: "Mar",
-    dataIndex: "mar",
-    key: "mar",
-    align: "center",
-  },
-  {
-    title: "Apr",
-    dataIndex: "apr",
-    key: "apr",
-    align: "center",
-  },
-  {
-    title: "May",
-    dataIndex: "may",
-    key: "may",
-    align: "center",
-  },
-  {
-    title: "Jun",
-    dataIndex: "jun",
-    key: "jun",
-    align: "center",
-  },
-  {
-    title: "Jul",
-    dataIndex: "jul",
-    key: "jul",
-    align: "center",
-  },
-  {
-    title: "Aug",
-    dataIndex: "aug",
-    key: "aug",
-    align: "center",
-  },
-  {
-    title: "Sep",
-    dataIndex: "sep",
-    key: "sep",
-    align: "center",
-  },
-  {
-    title: "Oct",
-    dataIndex: "oct",
-    key: "oct",
-    align: "center",
-  },
-  {
-    title: "Nov",
-    dataIndex: "nov",
-    key: "nov",
-    align: "center",
-  },
-  {
-    title: "Dec",
-    dataIndex: "dec",
-    key: "dec",
-    align: "center",
-  },
+
+  { title: "Jan", dataIndex: "jan", key: "jan", width: 55, align: "center" },
+  { title: "Feb", dataIndex: "feb", key: "feb", width: 55, align: "center" },
+  { title: "Mar", dataIndex: "mar", key: "mar", width: 55, align: "center" },
+  { title: "Apr", dataIndex: "apr", key: "apr", width: 55, align: "center" },
+  { title: "May", dataIndex: "may", key: "may", width: 55, align: "center" },
+  { title: "Jun", dataIndex: "jun", key: "jun", width: 55, align: "center" },
+  { title: "Jul", dataIndex: "jul", key: "jul", width: 55, align: "center" },
+  { title: "Aug", dataIndex: "aug", key: "aug", width: 55, align: "center" },
+  { title: "Sep", dataIndex: "sep", key: "sep", width: 55, align: "center" },
+  { title: "Oct", dataIndex: "oct", key: "oct", width: 55, align: "center" },
+  { title: "Nov", dataIndex: "nov", key: "nov", width: 55, align: "center" },
+  { title: "Dec", dataIndex: "dec", key: "dec", width: 55, align: "center" },
 ];
 
 const data: ExceptionalStateData[] = [
@@ -196,16 +145,17 @@ const ExceptionalStateSummaryTable: React.FC = () => {
       size="small"
       bodyStyle={{ padding: 0 }}
     >
-      <Table
-        rowKey="key"
-        columns={columns}
-        dataSource={data}
-        bordered
-        pagination={false}
-        size="small"
-        sticky
-        scroll={{ y: 360 }}
-      />
+    <Table
+      rowKey="key"
+      columns={columns}
+      dataSource={data}
+      pagination={false}
+      bordered
+      size="small"
+      sticky
+      tableLayout="fixed"
+      scroll={{ y: 360 }}
+    />
     </Card>
   );
 };
