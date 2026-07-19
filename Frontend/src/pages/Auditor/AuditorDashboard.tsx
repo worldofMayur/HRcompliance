@@ -1659,20 +1659,59 @@ const canFreezeReport =
     </div>
 
     {/* 3. BOTTOM ACTION BAR */}
-    <div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
-      {/* Upload and Submit buttons remain the same */}
-      {hasDocuments && (
-        <Button
-          type="primary"
-          className={`h-9 px-6 text-sm font-medium ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}`}
-          loading={loading}
-          disabled={isAuditLocked && !manualEditMode}
-          onClick={handleSubmit}
-        >
-          {notificationDocs.length > 0 ? "Review Reuploaded Documents" : canFreezeReport ? "Freeze Report & Issue CC" : "Save & Submit"}
-        </Button>
-      )}
-    </div>
+{/* ========== 3. BOTTOM ACTION BAR ========== */}
+<div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
+
+  {/* Upload Supporting Document - ONLY for Exceptional Approval */}
+  {groupedChecklist.some(
+    (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+  ) && (
+    <Upload
+      disabled={isAuditLocked && !manualEditMode}
+      multiple={false}
+      beforeUpload={(file) => {
+        const exceptionalRows = groupedChecklist.filter(
+          (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+        );
+
+        const updatedFiles: any = { ...exceptionalFiles };
+
+        exceptionalRows.forEach((row: any) => {
+          updatedFiles[row.id] = file;
+        });
+
+        setExceptionalFiles(updatedFiles);
+        message.success(`${file.name} attached for Exceptional Approval`);
+        return false;
+      }}
+      showUploadList={false}
+    >
+      <Button
+        icon={<UploadOutlined />}
+        className="h-9 text-sm"
+      >
+        Upload Supporting Document
+      </Button>
+    </Upload>
+  )}
+
+  {/* Submit Button */}
+  {hasDocuments && (
+    <Button
+      type="primary"
+      className={`h-9 px-6 text-sm font-medium ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}`}
+      loading={loading}
+      disabled={isAuditLocked && !manualEditMode}
+      onClick={handleSubmit}
+    >
+      {notificationDocs.length > 0
+        ? "Review Reuploaded Documents"
+        : canFreezeReport
+        ? "Freeze Report & Issue CC"
+        : "Save & Submit"}
+    </Button>
+  )}
+</div>
   </div>
 
   {/* FULL COMPLIANCE SUMMARY MODAL */}
