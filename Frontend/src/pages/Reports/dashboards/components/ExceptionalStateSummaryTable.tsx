@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Card, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import axios from "axios";
-import { API_BASE } from "../../../config/api"; // Update path if different
 
 interface ExceptionalStateData {
   key: string;
