@@ -29,13 +29,8 @@ export default function UserDropdown() {
     };
   }, []);
 
-  const toggleDropdown = () => {
-    setIsOpen((prev) => !prev);
-  };
-
-  const closeDropdown = () => {
-    setIsOpen(false);
-  };
+  const toggleDropdown = () => setIsOpen((prev) => !prev);
+  const closeDropdown = () => setIsOpen(false);
 
   const handleLogout = async () => {
     try {
@@ -51,8 +46,12 @@ export default function UserDropdown() {
     }
   };
 
-  const displayName =
-    username || (email ? email.split("@")[0] : "") || "User";
+  // Clean name (never show full email as name)
+  const displayName = username
+    ? username
+    : email
+    ? email.split("@")[0]
+    : "User";
 
   const displayEmail = email || "No Email";
 
@@ -74,7 +73,8 @@ export default function UserDropdown() {
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
-    e.currentTarget.src = "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff";
+    e.currentTarget.src =
+      "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff";
   };
 
   return (
@@ -85,7 +85,7 @@ export default function UserDropdown() {
         aria-label="User menu"
         className="
           flex items-center gap-2.5
-          pl-2 pr-2.5 py-1.5
+          pl-1.5 pr-3 py-1.5
           rounded-2xl
           border border-gray-200/70
           bg-white/80
@@ -97,9 +97,9 @@ export default function UserDropdown() {
           transition-all duration-200
         "
       >
-        {/* Avatar */}
+        {/* Avatar - slightly bigger */}
         <div className="relative shrink-0">
-          <div className="h-9 w-9 rounded-full overflow-hidden ring-2 ring-white dark:ring-gray-800 shadow-sm">
+          <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-white dark:ring-gray-800 shadow-sm">
             <img
               src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
               alt="User"
@@ -110,7 +110,7 @@ export default function UserDropdown() {
           <span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
         </div>
 
-        {/* Name + Role (hidden on very small screens) */}
+        {/* Name + Role */}
         <div className="hidden sm:flex flex-col items-start text-left">
           <span className="text-sm font-semibold text-gray-900 dark:text-white leading-none">
             {displayName}
@@ -158,9 +158,9 @@ export default function UserDropdown() {
         "
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-2 py-3 mb-1">
+        <div className="flex items-center gap-3 px-2 py-3">
           <div className="relative shrink-0">
-            <div className="h-11 w-11 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-gray-800">
+            <div className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-gray-800">
               <img
                 src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
                 alt="User"
@@ -168,7 +168,7 @@ export default function UserDropdown() {
                 className="h-full w-full object-cover"
               />
             </div>
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
+            <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
           </div>
 
           <div className="min-w-0">
