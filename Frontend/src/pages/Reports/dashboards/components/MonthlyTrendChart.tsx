@@ -1,5 +1,14 @@
-import React from "react";
-import ReactApexChart from "react-apexcharts";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+  LabelList,
+} from "recharts";
 
 interface TrendItem {
   month: string;
@@ -10,74 +19,84 @@ interface Props {
   data: TrendItem[];
 }
 
+const COLORS = [
+  "#2563eb",
+  "#3b82f6",
+  "#60a5fa",
+  "#93c5fd",
+  "#1d4ed8",
+  "#2563eb",
+  "#3b82f6",
+  "#60a5fa",
+  "#93c5fd",
+  "#1d4ed8",
+  "#2563eb",
+  "#3b82f6",
+];
+
 export default function MonthlyTrendChart({ data }: Props) {
-  const options = {
-    chart: {
-      type: "bar",
-      toolbar: { show: false },
-      height: 320,
-    },
-    plotOptions: {
-      bar: {
-        borderRadius: 6,
-        columnWidth: "45%",
-        dataLabels: {
-          position: "top",
-        },
-      },
-    },
-    colors: ["#1677ff"],
-    dataLabels: {
-      enabled: true,
-      offsetY: -20,
-      style: {
-        fontSize: "13px",
-        fontWeight: "bold",
-        colors: ["#333"],
-      },
-      formatter: (val: number) => val.toString(),
-    },
-    xaxis: {
-      categories: data.map((d) => [d.month, `${new Date().getFullYear()}`]),
-      title: {
-        text: "Months",
-        style: { fontSize: "13px" },
-      },
-      axisBorder: { show: false },
-    },
-    yaxis: {
-      title: {
-        text: "Unique Vendors",
-        style: { fontSize: "13px" },
-      },
-      min: 0,
-      labels: {
-        formatter: (val: number) => val.toString(),
-      },
-    },
-    tooltip: {
-      y: {
-        formatter: (val: number) => `${val} Unique Vendors`,
-      },
-    },
-    grid: {
-      borderColor: "#f0f0f0",
-    },
-  };
-
-  const series = [
-    {
-      name: "Unique Vendors",
-      data: data.map((d) => d.unique_vendors),
-    },
-  ];
-
   return (
-    <ReactApexChart
-      options={options}
-      series={series}
-      type="bar"
-      height={300}
-    />
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart
+        data={data}
+        margin={{
+          top: 30,
+          right: 20,
+          left: 0,
+          bottom: 10,
+        }}
+      >
+        <CartesianGrid
+          strokeDasharray="3 3"
+          vertical={false}
+          stroke="#f0f0f0"
+        />
+
+        <XAxis
+          dataKey="month"
+          tick={{ fontSize: 12 }}
+          tickLine={false}
+          axisLine={false}
+        />
+
+        <YAxis
+          allowDecimals={false}
+          tick={{ fontSize: 12 }}
+          tickLine={false}
+          axisLine={false}
+        />
+
+        <Tooltip
+          cursor={{ fill: "#f5f5f5" }}
+          formatter={(value: number) => [
+            `${value} Unique Vendors`,
+            "Count",
+          ]}
+        />
+
+        <Bar
+          dataKey="unique_vendors"
+          radius={[8, 8, 0, 0]}
+          maxBarSize={50}
+        >
+          <LabelList
+            dataKey="unique_vendors"
+            position="top"
+            style={{
+              fill: "#374151",
+              fontWeight: 600,
+              fontSize: 12,
+            }}
+          />
+
+          {data.map((_, index) => (
+            <Cell
+              key={index}
+              fill={COLORS[index % COLORS.length]}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }

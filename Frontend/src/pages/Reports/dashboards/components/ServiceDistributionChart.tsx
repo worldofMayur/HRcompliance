@@ -1,5 +1,11 @@
-import React from "react";
-import ReactApexChart from "react-apexcharts";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 interface ServiceDistribution {
   service: string;
@@ -10,184 +16,101 @@ interface Props {
   data: ServiceDistribution[];
 }
 
+const COLORS = [
+  "#2563eb",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#ec4899",
+  "#f97316",
+  "#6366f1",
+  "#84cc16",
+];
+
 export default function ServiceDistributionChart({ data }: Props) {
   const totalVendors = data.reduce(
     (sum, item) => sum + item.vendors,
     0
   );
 
-  const options: ApexCharts.ApexOptions = {
-    chart: {
-      type: "pie",
-      height: 320,
-
-      toolbar: {
-        show: false,
-      },
-
-      animations: {
-        enabled: true,
-      },
-
-      selection: {
-        enabled: false,
-      },
-
-      events: {
-        dataPointSelection: (_event, chartContext) => {
-          // Prevent slice staying selected
-          chartContext.toggleDataPointSelection(-1);
-        },
-      },
-    },
-
-    labels: data.map((item) => item.service),
-
-    colors: [
-      "#1677ff",
-      "#52c41a",
-      "#faad14",
-      "#f5222d",
-      "#722ed1",
-      "#13c2c2",
-      "#eb2f96",
-      "#fa8c16",
-      "#2f54eb",
-      "#a0d911",
-    ],
-
-    stroke: {
-      width: 2,
-      colors: ["#ffffff"],
-    },
-
-    states: {
-      active: {
-        allowMultipleDataPointsSelection: false,
-        filter: {
-          type: "none",
-        },
-      },
-
-      hover: {
-        filter: {
-          type: "lighten",
-          value: 0.08,
-        },
-      },
-    },
-
-    plotOptions: {
-      pie: {
-        expandOnClick: false,
-
-        customScale: 0.95,
-
-        offsetY: 10,
-
-        dataLabels: {
-          offset: -2,
-        },
-      },
-    },
-
-    dataLabels: {
-      enabled: true,
-
-      formatter: (val: number) => `${val.toFixed(1)}%`,
-
-      style: {
-        fontSize: "15px",
-        fontWeight: "bold",
-        colors: ["#fff"],
-      },
-
-      dropShadow: {
-        enabled: false,
-      },
-    },
-
-    legend: {
-      position: "bottom",
-
-      horizontalAlign: "center",
-
-      floating: false,
-
-      fontSize: "13px",
-
-      fontWeight: 500,
-
-    itemMargin: {
-    horizontal: 10,
-    vertical: 10,
-    },
-
-      formatter: (seriesName, opts) => {
-        const value =
-          data[opts.seriesIndex]?.vendors || 0;
-
-        const percent =
-          totalVendors > 0
-            ? (
-                (value / totalVendors) *
-                100
-              ).toFixed(1)
-            : "0";
-
-        return `${seriesName} (${percent}%)`;
-      },
-    },
-
-    tooltip: {
-      theme: "light",
-
-      y: {
-        formatter: (val: number) => {
-          const percent =
-            totalVendors > 0
-              ? (
-                  (val / totalVendors) *
-                  100
-                ).toFixed(1)
-              : "0";
-
-          return `${val} Vendors (${percent}%)`;
-        },
-      },
-    },
-
-    responsive: [
-      {
-        breakpoint: 768,
-
-        options: {
-          chart: {
-            height: 300,
-          },
-
-          legend: {
-            position: "bottom",
-          },
-
-          plotOptions: {
-            pie: {
-              customScale: 1,
-            },
-          },
-        },
-      },
-    ],
-  };
-
-  const series = data.map((item) => item.vendors);
+  const chartData = data.map((item) => ({
+    name: item.service,
+    value: item.vendors,
+  }));
 
   return (
-    <ReactApexChart
-      options={options}
-      series={series}
-      type="pie"
-      height={310}
-    />
+    <ResponsiveContainer width="100%" height={310}>
+      <PieChart>
+        <Pie
+          data={chartData}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="45%"
+          innerRadius={65}
+          outerRadius={95}
+          paddingAngle={3}
+          cornerRadius={6}
+          label={({ percent }) =>
+            `${((percent ?? 0) * 100).toFixed(1)}%`
+          }
+        >
+          {chartData.map((_, index) => (
+            <Cell
+              key={index}
+              fill={COLORS[index % COLORS.length]}
+            />
+          ))}
+        </Pie>
+
+        <Tooltip
+          formatter={(value: number) => [
+            `${value} Vendors (${(
+              (value / totalVendors) *
+              100
+            ).toFixed(1)}%)`,
+            "Count",
+          ]}
+        />
+
+        <Legend
+          verticalAlign="bottom"
+          align="center"
+          formatter={(value, entry: any) => {
+            const count = entry.payload.value;
+
+            return `${value} (${(
+              (count / totalVendors) *
+              100
+            ).toFixed(1)}%)`;
+          }}
+        />
+
+        <text
+          x="50%"
+          y="43%"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={26}
+          fontWeight={700}
+          fill="#1f2937"
+        >
+          {totalVendors}
+        </text>
+
+        <text
+          x="50%"
+          y="51%"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={13}
+          fill="#6b7280"
+        >
+          Vendors
+        </text>
+      </PieChart>
+    </ResponsiveContainer>
   );
 }
