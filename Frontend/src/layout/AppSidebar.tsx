@@ -38,12 +38,12 @@ const AppSidebar: React.FC = () => {
   };
 
   const menuClass = (path: string) =>
-    `menu-item group relative flex items-center gap-3 overflow-hidden rounded-xl px-3.5 py-2.5 transition-all duration-200
+    `menu-item group relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-3 transition-all duration-200
     ${
       isActive(path)
         ? `bg-brand-50/90 text-brand-700 font-medium dark:bg-white/[0.08] dark:text-white
            before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2
-           before:h-5 before:w-[3px] before:rounded-r-full before:bg-brand-500`
+           before:h-6 before:w-[3px] before:rounded-r-full before:bg-brand-500`
         : `text-gray-600 hover:bg-gray-50 hover:text-gray-900
            dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-200`
     }`;
@@ -61,7 +61,7 @@ const AppSidebar: React.FC = () => {
       <aside
         className={`
           fixed top-0 left-0 z-50 mt-16 h-screen overflow-hidden
-          border-r border-gray-200/60 bg-white/90 px-3
+          border-r border-gray-200/60 bg-white/90 px-4
           shadow-[4px_0_24px_rgba(15,23,42,0.04)]
           backdrop-blur-xl transition-all duration-300 ease-out
           dark:border-gray-800 dark:bg-gray-900/95
@@ -80,7 +80,7 @@ const AppSidebar: React.FC = () => {
 
         <div
           className={`
-            relative z-10 flex pt-3 pb-2
+            relative z-10 flex pt-2 pb-3
             ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-center"}
           `}
         >
@@ -94,19 +94,19 @@ const AppSidebar: React.FC = () => {
               alt="KEKUL"
               className="block"
               style={{
-                width: isExpanded || isHovered || isMobileOpen ? "110px" : "42px",
-                marginBottom: "6px",
-                marginTop: "4px",
+                width: isExpanded || isHovered || isMobileOpen ? "120px" : "42px",
+                marginBottom: "12px",
+                marginTop: "12px",
                 transition: "width 0.25s ease",
               }}
             />
 
             {(isExpanded || isHovered || isMobileOpen) && (
-              <div className="mt-1 flex flex-col items-center text-center leading-tight">
-                <span className="text-[15px] font-semibold tracking-tight text-gray-800 dark:text-gray-100">
+              <div className="flex flex-col items-center text-center leading-tight mt-1">
+                <span className="text-[18px] font-bold tracking-[0.01em] text-gray-800 dark:text-gray-100">
                   Vendor Compliance
                 </span>
-                <span className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                <span className="text-xs text-gray-400 dark:text-gray-500">
                   Audit Management Platform
                 </span>
               </div>
@@ -114,21 +114,21 @@ const AppSidebar: React.FC = () => {
           </Link>
         </div>
 
-        <nav className="relative z-10 mt-2 h-[calc(100vh-130px)] overflow-y-auto px-1 pb-20">
+        <nav className="relative z-10 mt-3 h-[calc(100vh-140px)] overflow-y-auto px-1 pb-24">
           <h2
             className={`
-              mb-3 flex px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400
+              mb-4 flex px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400
               ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}
             `}
           >
             {isExpanded || isHovered || isMobileOpen ? (
               "Compliance Modules"
             ) : (
-              <HorizontaLDots className="size-5" />
+              <HorizontaLDots className="size-6" />
             )}
           </h2>
 
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-3">
             {role === "SUPERADMIN" && (
               <>
                 <li>
@@ -141,7 +141,9 @@ const AppSidebar: React.FC = () => {
                       <ListIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Manage Principal Employer</span>
+                      <span className="menu-item-text font-medium">
+                        Manage Principal Employer
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -156,7 +158,9 @@ const AppSidebar: React.FC = () => {
                       <BoxCubeIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Manage Vendor</span>
+                      <span className="menu-item-text font-medium">
+                        Manage Vendor
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -171,7 +175,9 @@ const AppSidebar: React.FC = () => {
                       <PlugInIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Manage Auditor</span>
+                      <span className="menu-item-text font-medium">
+                        Manage Auditor
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -186,7 +192,9 @@ const AppSidebar: React.FC = () => {
                       <TableIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Manage Audit Checklist</span>
+                      <span className="menu-item-text font-medium">
+                        Manage Audit Checklist
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -201,7 +209,9 @@ const AppSidebar: React.FC = () => {
                       <BoxCubeIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Manage Documents</span>
+                      <span className="menu-item-text font-medium">
+                        Manage Documents
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -220,7 +230,9 @@ const AppSidebar: React.FC = () => {
                       <TableIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Reports & Dashboard</span>
+                      <span className="menu-item-text font-medium">
+                        Reports & Dashboard
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -235,7 +247,9 @@ const AppSidebar: React.FC = () => {
                       <BoxCubeIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Vendor Mapping</span>
+                      <span className="menu-item-text font-medium">
+                        Vendor Mapping
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -250,7 +264,9 @@ const AppSidebar: React.FC = () => {
                       <BoxCubeIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Manage Vendor</span>
+                      <span className="menu-item-text font-medium">
+                        Manage Vendor
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -265,7 +281,9 @@ const AppSidebar: React.FC = () => {
                       <TableIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Frozen Audit Reports</span>
+                      <span className="menu-item-text font-medium">
+                        Frozen Audit Reports
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -280,7 +298,9 @@ const AppSidebar: React.FC = () => {
                       <ListIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Notifications</span>
+                      <span className="menu-item-text font-medium">
+                        Notifications
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -299,7 +319,9 @@ const AppSidebar: React.FC = () => {
                       <TableIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Submit Compliance Records</span>
+                      <span className="menu-item-text font-medium">
+                        Submit Compliance Records
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -314,7 +336,9 @@ const AppSidebar: React.FC = () => {
                       <ListIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Manage CC Emails</span>
+                      <span className="menu-item-text font-medium">
+                        Manage CC Emails
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -329,7 +353,9 @@ const AppSidebar: React.FC = () => {
                       <ListIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Notifications</span>
+                      <span className="menu-item-text font-medium">
+                        Notifications
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -348,7 +374,9 @@ const AppSidebar: React.FC = () => {
                       <TableIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Audit Dashboard</span>
+                      <span className="menu-item-text font-medium">
+                        Audit Dashboard
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -363,7 +391,9 @@ const AppSidebar: React.FC = () => {
                       <ListIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Freeze Audit Reports</span>
+                      <span className="menu-item-text font-medium">
+                        Freeze Audit Reports
+                      </span>
                     )}
                   </Link>
                 </li>
@@ -378,7 +408,9 @@ const AppSidebar: React.FC = () => {
                       <ListIcon />
                     </span>
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text">Notifications</span>
+                      <span className="menu-item-text font-medium">
+                        Notifications
+                      </span>
                     )}
                   </Link>
                 </li>
