@@ -17,16 +17,18 @@ export default function ReportsDashboard() {
   const [selectedReport, setSelectedReport] = useState<ReportType>("branch");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      {/* Header */}
-      <div className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-          Reports & Dashboard
-        </h1>
-        <p className="mt-1 text-gray-500">
-          Dashboard analytics and report generation.
-        </p>
+      {/* Compact Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Reports & Dashboard
+          </h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Dashboard analytics and report generation
+          </p>
+        </div>
       </div>
 
       {/* Main Layout */}
