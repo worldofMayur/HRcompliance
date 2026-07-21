@@ -67,7 +67,7 @@ const AppSidebar: React.FC = () => {
           dark:border-gray-800 dark:bg-gray-900/95
           lg:mt-0
 
-          ${isExpanded || isMobileOpen || isHovered ? "w-[248px]" : "w-[80px]"}
+          ${isExpanded || isMobileOpen || isHovered ? "w-[290px]" : "w-[90px]"}
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
