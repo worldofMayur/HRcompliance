@@ -14,7 +14,6 @@ export default function UserDropdown() {
 
   const navigate = useNavigate();
 
-  // Load user info
   useEffect(() => {
     const loadUserData = () => {
       setUsername(localStorage.getItem("username") || "");
@@ -23,7 +22,6 @@ export default function UserDropdown() {
     };
 
     loadUserData();
-
     window.addEventListener("storage", loadUserData);
 
     return () => {
@@ -31,12 +29,10 @@ export default function UserDropdown() {
     };
   }, []);
 
-  // Toggle dropdown
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  // Close dropdown
   const closeDropdown = () => {
     setIsOpen(false);
   };
@@ -44,72 +40,55 @@ export default function UserDropdown() {
   const handleLogout = async () => {
     try {
       const refresh = localStorage.getItem("refresh_token");
-
       if (refresh) {
         await api.post("/api/auth/logout/", { refresh });
       }
     } catch (err) {
-      console.error(
-        "Backend logout failed (non-critical)",
-        err
-      );
+      console.error("Backend logout failed (non-critical)", err);
     } finally {
       logoutUser();
-
-      navigate("/signin", {
-        replace: true,
-      });
+      navigate("/signin", { replace: true });
     }
   };
 
-  // Safe display values
   const displayName =
-    username ||
-    (email ? email.split("@")[0] : "") ||
-    "User";
+    username || (email ? email.split("@")[0] : "") || "User";
 
   const displayEmail = email || "No Email";
 
-  // Role color
   const getRoleColor = () => {
     switch (role) {
       case "SUPERADMIN":
-        return "text-purple-500";
-
+        return "text-purple-600 bg-purple-50 dark:bg-purple-500/10 dark:text-purple-400";
       case "AUDITOR":
-        return "text-blue-500";
-
+        return "text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400";
       case "PE":
-        return "text-green-500";
-
+        return "text-green-600 bg-green-50 dark:bg-green-500/10 dark:text-green-400";
       case "VENDOR":
-        return "text-orange-500";
-
+        return "text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400";
       default:
-        return "text-gray-400";
+        return "text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-400";
     }
   };
 
-  // Image fallback
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
-    e.currentTarget.src =
-      "https://ui-avatars.com/api/?name=User";
+    e.currentTarget.src = "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff";
   };
 
   return (
     <div className="relative">
-      {/* USER BUTTON */}
+      {/* Trigger Button */}
       <button
         onClick={toggleDropdown}
         aria-label="User menu"
         className="
-          flex items-center gap-3
-          px-3.5 py-2
+          flex items-center gap-2.5
+          pl-2 pr-2.5 py-1.5
           rounded-2xl
-          border border-gray-200/60
-          bg-white/70
+          border border-gray-200/70
+          bg-white/80
           backdrop-blur-xl
           hover:bg-white
           hover:shadow-sm
@@ -118,30 +97,9 @@ export default function UserDropdown() {
           transition-all duration-200
         "
       >
-        {/* USER INFO */}
-        <div className="hidden sm:flex flex-col items-end text-right">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white leading-none">
-            {displayName}
-          </span>
-
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] text-gray-400">
-              {displayEmail}
-            </span>
-
-            {role && (
-              <span
-                className={`text-[10px] font-medium uppercase tracking-wide ${getRoleColor()}`}
-              >
-                {role}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* AVATAR */}
-        <div className="relative">
-          <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-white dark:ring-gray-800 shadow-sm">
+        {/* Avatar */}
+        <div className="relative shrink-0">
+          <div className="h-9 w-9 rounded-full overflow-hidden ring-2 ring-white dark:ring-gray-800 shadow-sm">
             <img
               src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
               alt="User"
@@ -149,14 +107,24 @@ export default function UserDropdown() {
               className="h-full w-full object-cover"
             />
           </div>
-
-          {/* ONLINE DOT */}
-          <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
+          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
         </div>
 
-        {/* ARROW */}
+        {/* Name + Role (hidden on very small screens) */}
+        <div className="hidden sm:flex flex-col items-start text-left">
+          <span className="text-sm font-semibold text-gray-900 dark:text-white leading-none">
+            {displayName}
+          </span>
+          {role && (
+            <span className="text-[11px] font-medium text-gray-400 mt-0.5 uppercase tracking-wide">
+              {role}
+            </span>
+          )}
+        </div>
+
+        {/* Chevron */}
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
           viewBox="0 0 20 20"
@@ -166,31 +134,33 @@ export default function UserDropdown() {
             d="M5 8L10 13L15 8"
             stroke="currentColor"
             strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </button>
 
-      {/* DROPDOWN */}
+      {/* Dropdown */}
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
         className="
-          absolute right-0 mt-4
-          w-[290px]
-          rounded-3xl
+          absolute right-0 mt-3
+          w-[280px]
+          rounded-2xl
           border border-gray-200/70
-          bg-white/90
+          bg-white/95
           backdrop-blur-2xl
-          dark:bg-gray-900/90
+          dark:bg-gray-900/95
           dark:border-gray-800
-          p-4
+          p-3
           shadow-[0_10px_40px_rgba(0,0,0,0.08)]
         "
       >
-        {/* HEADER */}
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="relative">
-            <div className="h-12 w-12 rounded-full overflow-hidden border shadow-md">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-2 py-3 mb-1">
+          <div className="relative shrink-0">
+            <div className="h-11 w-11 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-gray-800">
               <img
                 src={`${import.meta.env.BASE_URL}images/user/owner.jpg`}
                 alt="User"
@@ -198,47 +168,42 @@ export default function UserDropdown() {
                 className="h-full w-full object-cover"
               />
             </div>
-
-            <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
           </div>
 
-          <div>
-            <p className="text-sm font-semibold text-gray-800 dark:text-white">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
               {displayName}
             </p>
-
-            <div className="flex items-center gap-2">
-              <p className="text-[11px] text-gray-400">
-                {displayEmail}
-              </p>
-
-              {role && (
-                <>
-                  <span className="text-gray-300">•</span>
-
-                  <span
-                    className={`text-[10px] uppercase tracking-wide ${getRoleColor()}`}
-                  >
-                    {role}
-                  </span>
-                </>
-              )}
-            </div>
+            <p className="text-xs text-gray-400 truncate mt-0.5">
+              {displayEmail}
+            </p>
+            {role && (
+              <span
+                className={`inline-flex mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${getRoleColor()}`}
+              >
+                {role}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* MENU */}
-        <ul className="py-3 space-y-1">
+        <div className="h-px bg-gray-100 dark:bg-gray-800 my-1" />
+
+        {/* Menu Items */}
+        <ul className="py-1 space-y-0.5">
           <li>
             <DropdownItem
               tag="a"
               to="/TailAdmin/profile"
               className="
-                flex items-center gap-2
-                px-3 py-2
-                rounded-lg
-                hover:bg-gray-100
-                dark:hover:bg-gray-800
+                flex items-center gap-2.5
+                px-3 py-2.5
+                rounded-xl
+                text-sm text-gray-700
+                hover:bg-gray-50
+                dark:text-gray-300
+                dark:hover:bg-white/[0.05]
               "
             >
               Edit Profile
@@ -250,11 +215,13 @@ export default function UserDropdown() {
               tag="a"
               to="/TailAdmin/profile"
               className="
-                flex items-center gap-2
-                px-3 py-2
-                rounded-lg
-                hover:bg-gray-100
-                dark:hover:bg-gray-800
+                flex items-center gap-2.5
+                px-3 py-2.5
+                rounded-xl
+                text-sm text-gray-700
+                hover:bg-gray-50
+                dark:text-gray-300
+                dark:hover:bg-white/[0.05]
               "
             >
               Account Settings
@@ -262,23 +229,23 @@ export default function UserDropdown() {
           </li>
         </ul>
 
-        {/* LOGOUT */}
-        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-          <button
-            onClick={handleLogout}
-            className="
-              w-full flex items-center justify-center gap-2
-              px-3 py-2
-              text-sm font-medium text-red-600
-              rounded-lg
-              hover:bg-red-50
-              dark:hover:bg-red-900/20
-              transition
-            "
-          >
-            Sign Out
-          </button>
-        </div>
+        <div className="h-px bg-gray-100 dark:bg-gray-800 my-1" />
+
+        {/* Sign Out */}
+        <button
+          onClick={handleLogout}
+          className="
+            w-full flex items-center justify-center
+            px-3 py-2.5
+            text-sm font-medium text-red-600
+            rounded-xl
+            hover:bg-red-50
+            dark:hover:bg-red-900/20
+            transition-colors
+          "
+        >
+          Sign Out
+        </button>
       </Dropdown>
     </div>
   );
