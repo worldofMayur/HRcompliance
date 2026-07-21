@@ -21,10 +21,7 @@ const AppSidebar: React.FC = () => {
   } = useSidebar();
 
   const location = useLocation();
-
-  // ROLE (IMPORTANT)
   const role = localStorage.getItem("role");
-
   const loadingBarRef = useRef<any>(null);
 
   const isActive = useCallback(
@@ -40,47 +37,19 @@ const AppSidebar: React.FC = () => {
     loadingBarRef.current?.continuousStart(30);
   };
 
-  // COMMON MENU STYLE
   const menuClass = (path: string) =>
-    `menu-item group relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3 transition-all duration-300 ease-out hover:translate-x-[2px]
+    `menu-item group relative flex items-center gap-3 overflow-hidden rounded-xl px-3.5 py-2.5 transition-all duration-200
     ${
       isActive(path)
-        ? `
-          border border-brand-100
-          bg-gradient-to-r
-          from-brand-50
-          to-blue-50
-          text-brand-700
-          shadow-sm
-          dark:border-white/[0.06]
-          dark:bg-white/[0.08]
-          dark:text-white
-
-          border border-brand-100
-          bg-gradient-to-r
-          from-brand-50
-          to-blue-50
-          text-brand-700
-          shadow-sm
-          dark:border-white/[0.06]
-          dark:bg-white/[0.08]
-          dark:text-white
-        `
-        : `
-          text-gray-700
-          hover:border
-          hover:border-gray-200
-          hover:bg-white
-          hover:shadow-sm
-          dark:text-gray-300
-          dark:hover:border-white/[0.04]
-          dark:hover:bg-white/[0.04]
-        `
+        ? `bg-brand-50/90 text-brand-700 font-medium dark:bg-white/[0.08] dark:text-white
+           before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2
+           before:h-5 before:w-[3px] before:rounded-r-full before:bg-brand-500`
+        : `text-gray-600 hover:bg-gray-50 hover:text-gray-900
+           dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-200`
     }`;
 
   return (
     <>
-      {/* TOP LOADING BAR */}
       <LoadingBar
         color="#2563eb"
         height={2}
@@ -89,193 +58,77 @@ const AppSidebar: React.FC = () => {
         waitingTime={300}
       />
 
-      {/* SIDEBAR */}
       <aside
         className={`
-          fixed
-          top-0
-          left-0
-          z-50
-          mt-16
-          h-screen
-          overflow-hidden
-          border-r
-          border-gray-200/60
-          bg-white/85
-          px-4
-          shadow-[4px_0_24px_rgba(15,23,42,0.05)]
-          backdrop-blur-xl
-          transition-all
-          duration-300
-          ease-out
-          hover:translate-x-[2px]
-
-          before:absolute
-          before:right-0
-          before:top-0
-          before:h-full
-          before:w-px
-          before:bg-gradient-to-b
-          before:from-transparent
-          before:via-gray-200/60
-          before:to-transparent
-
-          dark:border-gray-800
-          dark:bg-gray-900/95
+          fixed top-0 left-0 z-50 mt-16 h-screen overflow-hidden
+          border-r border-gray-200/60 bg-white/90 px-3
+          shadow-[4px_0_24px_rgba(15,23,42,0.04)]
+          backdrop-blur-xl transition-all duration-300 ease-out
+          dark:border-gray-800 dark:bg-gray-900/95
           lg:mt-0
 
-          ${
-            isExpanded || isMobileOpen || isHovered
-              ? "w-[290px]"
-              : "w-[90px]"
-          }
-
+          ${isExpanded || isMobileOpen || isHovered ? "w-[248px]" : "w-[80px]"}
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-
           lg:translate-x-0
         `}
         onMouseEnter={() => !isExpanded && setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* BACKGROUND GLOW */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div
-            className="
-              absolute
-              right-[-60px]
-              top-[120px]
-              h-[180px]
-              w-[180px]
-              rounded-full
-              bg-brand-50/70
-              blur-3xl
-            "
-          />
-
-          <div
-            className="
-              absolute
-              bottom-[-40px]
-              left-[-40px]
-              h-[140px]
-              w-[140px]
-              rounded-full
-              bg-indigo-500/10
-              blur-3xl
-            "
-          />
+          <div className="absolute right-[-50px] top-[100px] h-[160px] w-[160px] rounded-full bg-brand-50/60 blur-3xl" />
         </div>
 
-        {/* LOGO SECTION */}
         <div
           className={`
-            relative
-            z-10
-            flex
-            pt-2
-            pb-3
-            ${
-              !isExpanded && !isHovered
-                ? "lg:justify-center"
-                : "justify-center"
-            }
+            relative z-10 flex pt-3 pb-2
+            ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-center"}
           `}
         >
           <Link
             to="/TailAdmin/"
             onClick={handleNavigation}
-              className="
-              group/logo
-              flex
-              flex-col
-              items-center
-              gap-0
-              rounded-2xl
-              px-2
-              py-1
-              transition-all
-              duration-300
-              hover:translate-x-[2px]
-            "
+            className="group/logo flex flex-col items-center gap-0 rounded-2xl px-2 py-1 transition-all duration-300"
           >
-            {/* LOGO ICON */}
-            <div className="flex items-center justify-center">
             <img
               src="/Kekul-Logo.png"
               alt="KEKUL"
+              className="block"
               style={{
-                width: "120px",
-                display: "block",
-                marginBottom: "12px",
-                marginTop: "12px",
+                width: isExpanded || isHovered || isMobileOpen ? "110px" : "42px",
+                marginBottom: "6px",
+                marginTop: "4px",
+                transition: "width 0.25s ease",
               }}
             />
-            </div>
 
-            {/* LOGO TEXT */}
             {(isExpanded || isHovered || isMobileOpen) && (
-<div className="flex flex-col items-center text-center leading-tight mt-4">
-                  <span
-                  className="
-                    text-[18px]
-                    font-bold
-                    tracking-[0.01em]
-                    text-gray-800
-                    dark:text-gray-100
-                  "
-                >
+              <div className="mt-1 flex flex-col items-center text-center leading-tight">
+                <span className="text-[15px] font-semibold tracking-tight text-gray-800 dark:text-gray-100">
                   Vendor Compliance
                 </span>
-
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                 Audit Management Platform
+                <span className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                  Audit Management Platform
                 </span>
               </div>
             )}
           </Link>
         </div>
 
-        {/* NAVIGATION */}
-        <nav
-          className="
-            relative
-            z-10
-            mt-3
-            h-[calc(100vh-140px)]
-            overflow-y-auto
-            px-1
-            pb-24
-          "
-        >
-          {/* SECTION TITLE */}
+        <nav className="relative z-10 mt-2 h-[calc(100vh-130px)] overflow-y-auto px-1 pb-20">
           <h2
             className={`
-              mb-4
-              flex
-              px-3
-              text-[11px]
-              font-semibold
-              uppercase
-              tracking-[0.16em]
-              text-gray-400
-              ${
-                !isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-              }
+              mb-3 flex px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400
+              ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}
             `}
           >
             {isExpanded || isHovered || isMobileOpen ? (
               "Compliance Modules"
             ) : (
-              <HorizontaLDots className="size-6" />
+              <HorizontaLDots className="size-5" />
             )}
           </h2>
 
-          {/* MENU LIST */}
-          <ul className="flex flex-col gap-3">
-
-            {/* ================= SUPERADMIN MENU ================= */}
+          <ul className="flex flex-col gap-1.5">
             {role === "SUPERADMIN" && (
               <>
                 <li>
@@ -287,11 +140,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <ListIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Manage Principal Employer
-                      </span>
+                      <span className="menu-item-text">Manage Principal Employer</span>
                     )}
                   </Link>
                 </li>
@@ -305,11 +155,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <BoxCubeIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Manage Vendor
-                      </span>
+                      <span className="menu-item-text">Manage Vendor</span>
                     )}
                   </Link>
                 </li>
@@ -323,11 +170,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <PlugInIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Manage Auditor
-                      </span>
+                      <span className="menu-item-text">Manage Auditor</span>
                     )}
                   </Link>
                 </li>
@@ -341,11 +185,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <TableIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Manage Audit Checklist
-                      </span>
+                      <span className="menu-item-text">Manage Audit Checklist</span>
                     )}
                   </Link>
                 </li>
@@ -359,18 +200,14 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <BoxCubeIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Manage Documents
-                      </span>
+                      <span className="menu-item-text">Manage Documents</span>
                     )}
                   </Link>
                 </li>
               </>
             )}
 
-            {/* ================= PE MENU ================= */}
             {role === "PE" && (
               <>
                 <li>
@@ -382,15 +219,12 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <TableIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Reports & Dashboard
-                      </span>
+                      <span className="menu-item-text">Reports & Dashboard</span>
                     )}
                   </Link>
                 </li>
-                
+
                 <li>
                   <Link
                     to="vendor-mapping"
@@ -400,11 +234,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <BoxCubeIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Vendor Mapping
-                      </span>
+                      <span className="menu-item-text">Vendor Mapping</span>
                     )}
                   </Link>
                 </li>
@@ -418,11 +249,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <BoxCubeIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Manage Vendor
-                      </span>
+                      <span className="menu-item-text">Manage Vendor</span>
                     )}
                   </Link>
                 </li>
@@ -436,11 +264,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <TableIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Frozen Audit Reports
-                      </span>
+                      <span className="menu-item-text">Frozen Audit Reports</span>
                     )}
                   </Link>
                 </li>
@@ -454,18 +279,14 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <ListIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Notifications
-                      </span>
+                      <span className="menu-item-text">Notifications</span>
                     )}
                   </Link>
                 </li>
               </>
             )}
 
-            {/* ================= VENDOR MENU ================= */}
             {role === "VENDOR" && (
               <>
                 <li>
@@ -477,11 +298,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <TableIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Submit Compliance Records
-                      </span>
+                      <span className="menu-item-text">Submit Compliance Records</span>
                     )}
                   </Link>
                 </li>
@@ -495,11 +313,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <ListIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Manage CC Emails
-                      </span>
+                      <span className="menu-item-text">Manage CC Emails</span>
                     )}
                   </Link>
                 </li>
@@ -513,18 +328,14 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <ListIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Notifications
-                      </span>
+                      <span className="menu-item-text">Notifications</span>
                     )}
                   </Link>
                 </li>
               </>
             )}
 
-            {/* ================= AUDITOR MENU ================= */}
             {role === "AUDITOR" && (
               <>
                 <li>
@@ -536,11 +347,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <TableIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Audit Dashboard
-                      </span>
+                      <span className="menu-item-text">Audit Dashboard</span>
                     )}
                   </Link>
                 </li>
@@ -554,11 +362,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <ListIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Freeze Audit Reports
-                      </span>
+                      <span className="menu-item-text">Freeze Audit Reports</span>
                     )}
                   </Link>
                 </li>
@@ -572,11 +377,8 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-icon-size shrink-0">
                       <ListIcon />
                     </span>
-
                     {(isExpanded || isHovered || isMobileOpen) && (
-                      <span className="menu-item-text font-medium">
-                        Notifications
-                      </span>
+                      <span className="menu-item-text">Notifications</span>
                     )}
                   </Link>
                 </li>
