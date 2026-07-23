@@ -166,6 +166,15 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 EMAIL_TIMEOUT = 30
 
+print("=" * 50)
+print("EMAIL_HOST:", EMAIL_HOST)
+print("EMAIL_PORT:", EMAIL_PORT)
+print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
+print("EMAIL_USE_SSL:", EMAIL_USE_SSL)
+print("EMAIL_USE_TLS:", EMAIL_USE_TLS)
+print("EMAIL_HOST_PASSWORD SET:", bool(EMAIL_HOST_PASSWORD))
+print("=" * 50)
+
 # ==========================================================
 # DJANGO REST FRAMEWORK
 # ==========================================================
