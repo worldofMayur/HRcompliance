@@ -1,9 +1,23 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { Table, Input, Button, message, Modal, Tooltip } from "antd";
-import { Upload } from "antd";
+import {
+  Table,
+  Input,
+  Button,
+  message,
+  Modal,
+  Tooltip,
+  Checkbox,
+  Upload,
+} from "antd";
 import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
+
+import InputField from "../../components/form/input/InputField";
+import Label from "../../components/form/Label";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
 const API_BASE = import.meta.env.VITE_API_URL;
 export default function AuditorDashboard() {
   const token = localStorage.getItem("access_token");
@@ -1760,152 +1774,192 @@ const canFreezeReport =
           <div className="grid grid-cols-8 gap-4">
             {/* Male Employees */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                Male Employees
-              </label>
-              <Input
+              <Label>Male Employees</Label>
+              <InputField
+                type="number"
                 value={row.male_employees ?? ""}
                 disabled={!isEditingCompliance}
                 onChange={(e) => {
                   const updated = [...payrollData];
-                  updated[index].male_employees = e.target.value;
+                  updated[index].male_employees =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                className="h-10 text-sm"
               />
             </div>
 
             {/* Female Employees */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                Female Employees
-              </label>
-              <Input
+              <Label>Female Employees</Label>
+              <InputField
+                type="number"
                 value={row.female_employees ?? ""}
                 disabled={!isEditingCompliance}
                 onChange={(e) => {
                   const updated = [...payrollData];
-                  updated[index].female_employees = e.target.value;
+                  updated[index].female_employees =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                className="h-10 text-sm"
               />
             </div>
 
             {/* Gross Wages */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                Gross Wages
-              </label>
-              <Input
+              <Label>Gross Wages</Label>
+              <InputField
+                type="number"
                 value={row.gross_wages ?? ""}
                 disabled={!isEditingCompliance}
                 onChange={(e) => {
                   const updated = [...payrollData];
-                  updated[index].gross_wages = e.target.value;
+                  updated[index].gross_wages =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                className="h-10 text-sm"
               />
             </div>
 
             {/* Net Wages */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                Net Wages
-              </label>
-              <Input
+              <Label>Net Wages</Label>
+              <InputField
+                type="number"
                 value={row.net_wages ?? ""}
                 disabled={!isEditingCompliance}
                 onChange={(e) => {
                   const updated = [...payrollData];
-                  updated[index].net_wages = e.target.value;
+                  updated[index].net_wages =
+                    e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                className="h-10 text-sm"
               />
             </div>
 
             {/* PF Remittance Date */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                PF Remittance Date
-              </label>
-              <Input
-                type="date"
-                value={row.pf_remittance_date || ""}
+            <div className="flex flex-col">
+              <Label>PF Remittance Date</Label>
+              <DatePicker
                 disabled={!isEditingCompliance}
-                onChange={(e) => {
+                selected={
+                  row.pf_remittance_date
+                    ? new Date(row.pf_remittance_date)
+                    : null
+                }
+                onChange={(date: Date | null) => {
                   const updated = [...payrollData];
-                  updated[index].pf_remittance_date = e.target.value;
+                  updated[index].pf_remittance_date = date
+                    ? date.toISOString().split("T")[0]
+                    : "";
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
             </div>
 
             {/* ESIC Remittance Date */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                ESIC Remittance Date
-              </label>
-              <Input
-                type="date"
-                value={row.esic_remittance_date || ""}
+            <div className="flex flex-col">
+              <Label>ESIC Remittance Date</Label>
+              <DatePicker
                 disabled={!isEditingCompliance}
-                onChange={(e) => {
+                selected={
+                  row.esic_remittance_date
+                    ? new Date(row.esic_remittance_date)
+                    : null
+                }
+                onChange={(date: Date | null) => {
                   const updated = [...payrollData];
-                  updated[index].esic_remittance_date = e.target.value;
+                  updated[index].esic_remittance_date = date
+                    ? date.toISOString().split("T")[0]
+                    : "";
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
             </div>
 
             {/* PT RC Remittance Date */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                PT RC Remittance Date
-              </label>
-              <Input
-                type="date"
-                value={row.rc_remittance_date || ""}
+            <div className="flex flex-col">
+              <Label>PT RC Remittance Date</Label>
+              <DatePicker
                 disabled={!isEditingCompliance || row.pt_rc_not_applicable}
-                onChange={(e) => {
+                selected={
+                  row.rc_remittance_date
+                    ? new Date(row.rc_remittance_date)
+                    : null
+                }
+                onChange={(date: Date | null) => {
                   const updated = [...payrollData];
-                  updated[index].rc_remittance_date = e.target.value;
+                  updated[index].rc_remittance_date = date
+                    ? date.toISOString().split("T")[0]
+                    : "";
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
-              {row.pt_rc_not_applicable !== undefined && (
-                <div className="mt-2 text-xs text-gray-500">
-                  {row.pt_rc_not_applicable ? "Not Applicable" : ""}
-                </div>
-              )}
+              <Checkbox
+                className="mt-2"
+                disabled={!isEditingCompliance}
+                checked={!!row.pt_rc_not_applicable}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].pt_rc_not_applicable = e.target.checked;
+                  if (e.target.checked) {
+                    updated[index].rc_remittance_date = "";
+                  }
+                  setPayrollData(updated);
+                }}
+              >
+                <span className="text-xs text-gray-600">Not Applicable</span>
+              </Checkbox>
             </div>
 
             {/* LWF Remittance Date */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                LWF Remittance Date
-              </label>
-              <Input
-                type="date"
-                value={row.lwf_remittance_date || ""}
+            <div className="flex flex-col">
+              <Label>LWF Remittance Date</Label>
+              <DatePicker
                 disabled={!isEditingCompliance || row.lwf_not_applicable}
-                onChange={(e) => {
+                selected={
+                  row.lwf_remittance_date
+                    ? new Date(row.lwf_remittance_date)
+                    : null
+                }
+                onChange={(date: Date | null) => {
                   const updated = [...payrollData];
-                  updated[index].lwf_remittance_date = e.target.value;
+                  updated[index].lwf_remittance_date = date
+                    ? date.toISOString().split("T")[0]
+                    : "";
                   setPayrollData(updated);
                 }}
-                className="h-10 rounded-lg"
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
               />
-              {row.lwf_not_applicable !== undefined && (
-                <div className="mt-2 text-xs text-gray-500">
-                  {row.lwf_not_applicable ? "Not Applicable" : ""}
-                </div>
-              )}
+              <Checkbox
+                className="mt-2"
+                disabled={!isEditingCompliance}
+                checked={!!row.lwf_not_applicable}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].lwf_not_applicable = e.target.checked;
+                  if (e.target.checked) {
+                    updated[index].lwf_remittance_date = "";
+                  }
+                  setPayrollData(updated);
+                }}
+              >
+                <span className="text-xs text-gray-600">Not Applicable</span>
+              </Checkbox>
             </div>
           </div>
         </div>
@@ -1913,7 +1967,6 @@ const canFreezeReport =
     )}
   </div>
 
-  {/* Save Button only when editing */}
   {isEditingCompliance && (
     <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
       <Button
