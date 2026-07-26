@@ -1977,40 +1977,58 @@ const canFreezeReport =
 </Modal>
 
 {minimizedPopups.length > 0 && (
-  <div className="fixed bottom-0 left-0 w-full bg-gray-50 border-t px-2 py-2 flex gap-2 overflow-x-auto z-50">
-
+  <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 px-3 py-2.5 flex gap-2.5 overflow-x-auto z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
     {minimizedPopups.map((popup) => (
       <div
         key={popup.id}
         onClick={() => handleRestore(popup)}
-        className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 border border-blue-300 rounded-md cursor-pointer hover:bg-blue-200 whitespace-nowrap"
+        className="
+          group
+          flex items-center gap-2.5
+          min-w-[160px]
+          max-w-[220px]
+          px-3.5 py-2
+          bg-blue-50
+          border border-blue-200
+          rounded-xl
+          cursor-pointer
+          transition-all duration-200
+          hover:bg-blue-100
+          hover:border-blue-300
+          hover:shadow-sm
+        "
       >
+        {/* Tab Content */}
+        <div className="flex flex-col leading-tight min-w-0 flex-1">
+          <span className="text-sm font-semibold text-gray-800 truncate">
+            {popup.auditPeriod}
+          </span>
+          <span className="text-xs text-gray-500 truncate mt-0.5">
+            {(popup.branchName || popup.branch || "Audit").split(",")[0]}
+          </span>
+        </div>
 
-        {/* TAB TEXT */}
-      <div className="flex flex-col leading-tight">
-        <span className="font-medium">
-          {popup.auditPeriod}
-        </span>
-
-        <span className="text-[10px] text-gray-600">
-          {(popup.branchName || popup.branch || "Audit").split(",")[0]}
-        </span>
-      </div>
-
-        {/* ❌ CLOSE BUTTON */}
-        <span
+        {/* Close Button */}
+        <button
           onClick={(e) => {
-            e.stopPropagation();   // VERY IMPORTANT
+            e.stopPropagation();
             handleCloseTab(popup.id);
           }}
-          className="ml-1 text-gray-600 hover:text-red-500 font-bold cursor-pointer"
+          className="
+            flex items-center justify-center
+            h-5 w-5
+            rounded-full
+            text-gray-400
+            hover:bg-red-100
+            hover:text-red-500
+            transition-colors
+            text-sm font-medium
+          "
         >
           ×
-        </span>
-
+        </button>
       </div>
     ))}
-
   </div>
 )}
     </div>
