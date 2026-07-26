@@ -1295,4 +1295,43 @@ class DocumentWiseRemittanceTrendAPIView(APIView):
                 status=404,
             )
 
-        return Response([])
+        from collections import defaultdict
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            pf_remittance_date__isnull=False,
+        ).order_by("audit_period")
+
+        trend = defaultdict(lambda: {
+            "total_day": 0,
+            "count": 0,
+            "before_15": 0,
+            "after_15": 0,
+        })
+
+        for submission in queryset:
+            month = submission.audit_period
+
+            day = submission.pf_remittance_date.day
+
+            trend[month]["total_day"] += day
+            trend[month]["count"] += 1
+
+            if day <= 15:
+                trend[month]["before_15"] += 1
+            else:
+                trend[month]["after_15"] += 1
+
+        response = []
+
+        for month, values in trend.items():
+            response.append({
+                "month": month,
+                "remittance_day": round(
+                    values["total_day"] / values["count"], 1
+                ),
+                "before_15": values["before_15"],
+                "after_15": values["after_15"],
+            })
+
+        return Response(response)
