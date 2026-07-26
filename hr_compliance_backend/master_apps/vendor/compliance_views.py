@@ -271,8 +271,12 @@ class VendorSubmitComplianceAPIView(APIView):
 
                         pf_remittance_date=payroll.get("pf_remittance_date") or None,
                         esic_remittance_date=payroll.get("esic_remittance_date") or None,
+
                         rc_remittance_date=payroll.get("rc_remittance_date") or None,
+                        pt_rc_not_applicable=payroll.get("pt_rc_not_applicable", False),
+
                         lwf_remittance_date=payroll.get("lwf_remittance_date") or None,
+                        lwf_not_applicable=payroll.get("lwf_not_applicable", False),
                     )
 
                 remark_saved = True  # ✅ mark as saved

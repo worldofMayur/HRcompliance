@@ -562,9 +562,17 @@ class VendorCompliancePayroll(models.Model):
         blank=True
     )
 
+    pt_rc_not_applicable = models.BooleanField(
+        default=False
+    )
+
     lwf_remittance_date = models.DateField(
         null=True,
         blank=True
+    )
+
+    lwf_not_applicable = models.BooleanField(
+        default=False
     )
 
     class Meta:
