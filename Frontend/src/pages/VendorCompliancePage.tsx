@@ -1503,10 +1503,11 @@ if (effectiveReuploadMode) {
 {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
+{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
-  width={1100}
+  width={1320}
   centered
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
@@ -1540,10 +1541,10 @@ if (effectiveReuploadMode) {
           {row.month}
         </h3>
 
-        {/* All fields in ONE row */}
-        <div className="flex items-end gap-4 flex-wrap">
+        {/* All 8 fields in ONE row */}
+        <div className="flex items-end gap-3 flex-nowrap">
           {/* Male Employees */}
-          <div className="w-[110px]">
+          <div className="w-[105px] shrink-0">
             <Label>Male Employees</Label>
             <InputField
               type="number"
@@ -1559,7 +1560,7 @@ if (effectiveReuploadMode) {
           </div>
 
           {/* Female Employees */}
-          <div className="w-[110px]">
+          <div className="w-[105px] shrink-0">
             <Label>Female Employees</Label>
             <InputField
               type="number"
@@ -1575,7 +1576,7 @@ if (effectiveReuploadMode) {
           </div>
 
           {/* Gross Wages */}
-          <div className="w-[120px]">
+          <div className="w-[115px] shrink-0">
             <Label>Gross Wages</Label>
             <InputField
               type="number"
@@ -1591,7 +1592,7 @@ if (effectiveReuploadMode) {
           </div>
 
           {/* Net Wages */}
-          <div className="w-[120px]">
+          <div className="w-[115px] shrink-0">
             <Label>Net Wages</Label>
             <InputField
               type="number"
@@ -1607,7 +1608,7 @@ if (effectiveReuploadMode) {
           </div>
 
           {/* PF Remittance Date */}
-          <div className="w-[140px] flex flex-col">
+          <div className="w-[135px] shrink-0 flex flex-col">
             <Label>PF Remittance Date</Label>
             <DatePicker
               selected={
@@ -1636,7 +1637,7 @@ if (effectiveReuploadMode) {
           </div>
 
           {/* ESIC Remittance Date */}
-          <div className="w-[140px] flex flex-col">
+          <div className="w-[135px] shrink-0 flex flex-col">
             <Label>ESIC Remittance Date</Label>
             <DatePicker
               selected={
@@ -1667,7 +1668,7 @@ if (effectiveReuploadMode) {
           </div>
 
           {/* RC Remittance Date */}
-          <div className="w-[140px] flex flex-col">
+          <div className="w-[135px] shrink-0 flex flex-col">
             <Label>RC Remittance Date</Label>
             <DatePicker
               selected={
@@ -1696,7 +1697,7 @@ if (effectiveReuploadMode) {
           </div>
 
           {/* LWF Remittance Date */}
-          <div className="w-[140px] flex flex-col">
+          <div className="w-[135px] shrink-0 flex flex-col">
             <Label>LWF Remittance Date</Label>
             <DatePicker
               selected={
