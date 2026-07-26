@@ -1527,7 +1527,7 @@ if (effectiveReuploadMode) {
   okText="Submit Compliance Documents"
   okButtonProps={{ 
     size: "large",
-    style: { height: 42, fontWeight: 500 }
+    style: { height: 32, fontWeight: 500 }
   }}
 >
   <div className="max-h-[68vh] overflow-y-auto pr-2 space-y-5">
@@ -1555,7 +1555,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-10 text-sm"
+              className="h-8 text-sm"
             />
           </div>
 
@@ -1571,7 +1571,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-10 text-sm"
+              className="h-8 text-sm"
             />
           </div>
 
@@ -1587,7 +1587,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-10 text-sm"
+              className="h-8 text-sm"
             />
           </div>
 
@@ -1603,7 +1603,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-10 text-sm"
+              className="h-8 text-sm"
             />
           </div>
 
