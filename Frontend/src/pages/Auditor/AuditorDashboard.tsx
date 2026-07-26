@@ -2,16 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { Table, Input, Button, message, Modal, Tooltip } from "antd";
-
-import InputField from "../../components/form/input/InputField";
-import Label from "../../components/form/Label";
-
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-
 import { Upload } from "antd";
 import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
-
 const API_BASE = import.meta.env.VITE_API_URL;
 export default function AuditorDashboard() {
   const token = localStorage.getItem("access_token");
@@ -1722,272 +1714,158 @@ const canFreezeReport =
 </div>
   </div>
 
-{/* FULL COMPLIANCE SUMMARY MODAL */}
-<Modal
-  title={
-    <div className="flex items-center justify-between pr-8">
-      <span className="text-base font-semibold">
-        Compliance Summary - {auditPeriod || "Selected Period"}
-      </span>
+  {/* FULL COMPLIANCE SUMMARY MODAL */}
+  <Modal
+    title={`Compliance Summary - ${auditPeriod || "Selected Period"}`}
+    open={complianceModalOpen}
+    onCancel={() => setComplianceModalOpen(false)}
+    footer={null}
+    width={900}
+    centered
+  >
+    <div className="overflow-x-auto">
 
-      <Button
-        size="small"
-        type={isEditingCompliance ? "default" : "primary"}
-        onClick={() => setIsEditingCompliance(!isEditingCompliance)}
-      >
-        {isEditingCompliance ? "Cancel Edit" : "Edit"}
-      </Button>
-    </div>
-  }
-  open={complianceModalOpen}
-  width={1280}
-  centered
-  footer={null}
-  onCancel={() => {
-    setComplianceModalOpen(false);
-    setIsEditingCompliance(false);
-  }}
->
-  <div className="max-h-[70vh] overflow-y-auto pr-1 space-y-5">
-    {payrollData.length === 0 ? (
-      <div className="py-16 text-center text-gray-400">
-        No payroll data available for this period
-      </div>
-    ) : (
-      payrollData.map((row: any, index: number) => (
-        <div
-          key={row.month}
-          className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
-        >
-          {/* Month */}
-          <h3 className="text-base font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+  <table className="w-full border border-gray-300 text-sm">
+
+    <thead className="bg-gray-100">
+
+      <tr>
+        <th className="border p-2">Month</th>
+        <th className="border p-2">Male</th>
+        <th className="border p-2">Female</th>
+        <th className="border p-2">Gross Wages</th>
+        <th className="border p-2">Net Wages</th>
+        <th className="border p-2">PF Date</th>
+        <th className="border p-2">ESIC Date</th>
+        <th className="border p-2">RC Date</th>
+        <th className="border p-2">LWF Date</th>
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {payrollData.map((row: any, index: number) => (
+
+        <tr key={index}>
+
+          <td className="border p-2 font-medium">
             {row.month}
-          </h3>
+          </td>
 
-          <div className="grid grid-cols-8 gap-3">
+          <td className="border p-2">
+            <Input
+              value={row.male_employees}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].male_employees = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* Male Employees */}
-            <div>
-              <Label>Male Employees</Label>
-              <InputField
-                type="number"
-                disabled={!isEditingCompliance}
-                value={row.male_employees ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].male_employees =
-                    e.target.value === ""
-                      ? undefined
-                      : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+          <td className="border p-2">
+            <Input
+              value={row.female_employees}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].female_employees = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* Female Employees */}
-            <div>
-              <Label>Female Employees</Label>
-              <InputField
-                type="number"
-                disabled={!isEditingCompliance}
-                value={row.female_employees ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].female_employees =
-                    e.target.value === ""
-                      ? undefined
-                      : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+          <td className="border p-2">
+            <Input
+              value={row.gross_wages}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].gross_wages = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* Gross Wages */}
-            <div>
-              <Label>Gross Wages</Label>
-              <InputField
-                type="number"
-                disabled={!isEditingCompliance}
-                value={row.gross_wages ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].gross_wages =
-                    e.target.value === ""
-                      ? undefined
-                      : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+          <td className="border p-2">
+            <Input
+              value={row.net_wages}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].net_wages = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* Net Wages */}
-            <div>
-              <Label>Net Wages</Label>
-              <InputField
-                type="number"
-                disabled={!isEditingCompliance}
-                value={row.net_wages ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].net_wages =
-                    e.target.value === ""
-                      ? undefined
-                      : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.pf_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].pf_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* PF */}
-            <div className="flex flex-col">
-              <Label>PF Remittance Date</Label>
-              <DatePicker
-                disabled={!isEditingCompliance}
-                selected={
-                  row.pf_remittance_date
-                    ? parseApiDate(row.pf_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].pf_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].pf_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.esic_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].esic_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* ESIC */}
-            <div className="flex flex-col">
-              <Label>ESIC Remittance Date</Label>
-              <DatePicker
-                disabled={!isEditingCompliance}
-                selected={
-                  row.esic_remittance_date
-                    ? parseApiDate(row.esic_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].esic_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].esic_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.rc_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].rc_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* RC */}
-            <div className="flex flex-col">
-              <Label>RC Remittance Date</Label>
-              <DatePicker
-                disabled={!isEditingCompliance}
-                selected={
-                  row.rc_remittance_date
-                    ? parseApiDate(row.rc_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].rc_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].rc_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+          <td className="border p-2">
+            <Input
+              type="date"
+              value={row.lwf_remittance_date || ""}
+              onChange={(e) => {
+                const updated = [...payrollData];
+                updated[index].lwf_remittance_date = e.target.value;
+                setPayrollData(updated);
+              }}
+            />
+          </td>
 
-            {/* LWF */}
-            <div className="flex flex-col">
-              <Label>LWF Remittance Date</Label>
-              <DatePicker
-                disabled={!isEditingCompliance}
-                selected={
-                  row.lwf_remittance_date
-                    ? parseApiDate(row.lwf_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].lwf_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].lwf_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+        </tr>
 
-          </div>
-        </div>
-      ))
-    )}
+      ))}
+
+    </tbody>
+
+  </table>
+
+  <div className="flex justify-end mt-6">
+
+    <Button
+      type="primary"
+      onClick={handleSaveComplianceSummary}
+    >
+      Save Compliance Summary
+    </Button>
+
   </div>
 
-  {isEditingCompliance && (
-    <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
-      <Button
-        type="primary"
-        size="large"
-        onClick={handleSaveComplianceSummary}
-      >
-        Save Compliance Summary
-      </Button>
-    </div>
-  )}
-</Modal>
+</div>
+  </Modal>
 
 </Modal>
 
