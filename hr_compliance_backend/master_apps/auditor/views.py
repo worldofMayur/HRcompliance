@@ -2201,8 +2201,12 @@ class UpdateComplianceSummaryAPIView(APIView):
 
                 pf_remittance_date=payroll.get("pf_remittance_date") or None,
                 esic_remittance_date=payroll.get("esic_remittance_date") or None,
+
                 rc_remittance_date=payroll.get("rc_remittance_date") or None,
+                pt_rc_not_applicable=payroll.get("pt_rc_not_applicable", False),
+
                 lwf_remittance_date=payroll.get("lwf_remittance_date") or None,
+                lwf_not_applicable=payroll.get("lwf_not_applicable", False),
             )
 
         return Response(
@@ -3330,6 +3334,15 @@ class FreezeAuditReportsAPIView(APIView):
                 .first()
             )
 
+            payroll_data = []
+
+            if submission:
+                payroll_data = list(
+                    VendorCompliancePayroll.objects.filter(
+                        submission=submission
+                    ).order_by("id")
+                )
+
             print("========== CC SUBMISSION ==========")
             print("Submission:", submission)
 
@@ -3396,6 +3409,8 @@ class FreezeAuditReportsAPIView(APIView):
                         "rc_remittance_date": submission.rc_remittance_date if submission else None,
                         "lwf_remittance_date": submission.lwf_remittance_date if submission else None,
                     },
+
+                    "payroll_data": payroll_data,
 
                     "entries": [],
                 }
