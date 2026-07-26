@@ -3357,22 +3357,16 @@ class FreezeAuditReportsAPIView(APIView):
                     )
                 )
 
-                summary = payroll_data[0] if payroll_data else {}
+            summary = payroll_data[0] if payroll_data else {}
 
             print("========== CC SUBMISSION ==========")
             print("Submission:", submission)
 
             if submission:
-                print("Male:", submission.male_employees)
-                print("Female:", submission.female_employees)
-                print("Gross:", submission.gross_wages)
-                print("Net:", submission.net_wages)
-                print("PF:", submission.pf_remittance_date)
-                print("ESIC:", submission.esic_remittance_date)
-                print("RC:", submission.rc_remittance_date)
-                print("LWF:", submission.lwf_remittance_date)
-                print("PAYROLL:", payroll_data)
-                print("SUMMARY:", summary)
+                print("========== PAYROLL DEBUG ==========")
+                print("Submission:", submission)
+                print("Payroll Rows:", payroll_data)
+                print("Summary:", summary)
             else:
                 print("Submission NOT FOUND")
 
