@@ -7,6 +7,7 @@ import {
   message,
   Select,
   Modal,
+  Checkbox,
 } from "antd";
 
 import InputField from "../components/form/input/InputField";
@@ -1512,7 +1513,7 @@ if (effectiveReuploadMode) {
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
-  width={1280}
+  width={1480}
   centered
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
@@ -1535,19 +1536,19 @@ if (effectiveReuploadMode) {
   okText="Submit Compliance Documents"
   okButtonProps={{ size: "large" }}
 >
-  <div className="max-h-[70vh] overflow-y-auto pr-1 space-y-5">
+  <div className="max-h-[72vh] overflow-y-auto pr-2 space-y-6">
     {payrollData.map((row, index) => (
       <div
         key={row.month}
-        className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
+        className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"
       >
         {/* Month Title */}
-        <h3 className="text-base font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900 mb-5 pb-3 border-b border-gray-100">
           {row.month}
         </h3>
 
-        {/* Clean 8-column grid - no empty space */}
-        <div className="grid grid-cols-8 gap-3">
+        {/* Clean grid with better spacing */}
+        <div className="grid grid-cols-8 gap-4">
           {/* Male Employees */}
           <div>
             <Label>Male Employees</Label>
@@ -1560,7 +1561,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-10 text-sm"
             />
           </div>
 
@@ -1576,7 +1577,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-10 text-sm"
             />
           </div>
 
@@ -1592,7 +1593,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-10 text-sm"
             />
           </div>
 
@@ -1608,7 +1609,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-10 text-sm"
             />
           </div>
 
@@ -1672,10 +1673,9 @@ if (effectiveReuploadMode) {
             />
           </div>
 
-          {/* RC Remittance Date */}
+          {/* PT RC Remittance Date + Not Applicable */}
           <div className="flex flex-col">
             <Label>PT RC Remittance Date</Label>
-
             <DatePicker
               disabled={row.pt_rc_not_applicable}
               selected={
@@ -1692,95 +1692,76 @@ if (effectiveReuploadMode) {
                 const value = e.target.value;
                 const temp = [...payrollData];
                 const parsed = parseDate(value);
-
                 temp[index].rc_remittance_date = parsed
                   ? formatForAPI(parsed)
                   : value;
-
                 setPayrollData(temp);
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
               className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
             />
-
-            <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
-              <input
-                type="checkbox"
-                checked={row.pt_rc_not_applicable}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-
-                  temp[index].pt_rc_not_applicable = e.target.checked;
-
-                  if (e.target.checked) {
-                    temp[index].rc_remittance_date = "";
-                  }
-
-                  setPayrollData(temp);
-                }}
-              />
-
-              Not Applicable
-            </label>
-          </div>
-
-          {/* LWF Remittance Date */}
-          <div className="flex flex-col">
-          <Label>LWF Remittance Date</Label>
-
-          <DatePicker
-            disabled={row.lwf_not_applicable}
-            selected={
-              row.lwf_remittance_date
-                ? parseApiDate(row.lwf_remittance_date)
-                : null
-            }
-            onChange={(date: Date | null) => {
-              const temp = [...payrollData];
-
-              temp[index].lwf_remittance_date = date
-                ? formatForAPI(date)
-                : "";
-
-              setPayrollData(temp);
-            }}
-            onChangeRaw={(e) => {
-              const value = e.target.value;
-              const temp = [...payrollData];
-              const parsed = parseDate(value);
-
-              temp[index].lwf_remittance_date = parsed
-                ? formatForAPI(parsed)
-                : value;
-
-              setPayrollData(temp);
-            }}
-            dateFormat="dd/MM/yyyy"
-            placeholderText="dd/mm/yyyy"
-            className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-          />
-
-          <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
-            <input
-              type="checkbox"
-              checked={row.lwf_not_applicable}
+            <Checkbox
+              className="mt-2.5"
+              checked={!!row.pt_rc_not_applicable}
               onChange={(e) => {
                 const temp = [...payrollData];
+                temp[index].pt_rc_not_applicable = e.target.checked;
+                if (e.target.checked) {
+                  temp[index].rc_remittance_date = "";
+                }
+                setPayrollData(temp);
+              }}
+            >
+              <span className="text-xs text-gray-600">Not Applicable</span>
+            </Checkbox>
+          </div>
 
+          {/* LWF Remittance Date + Not Applicable */}
+          <div className="flex flex-col">
+            <Label>LWF Remittance Date</Label>
+            <DatePicker
+              disabled={row.lwf_not_applicable}
+              selected={
+                row.lwf_remittance_date
+                  ? parseApiDate(row.lwf_remittance_date)
+                  : null
+              }
+              onChange={(date: Date | null) => {
+                const temp = [...payrollData];
+                temp[index].lwf_remittance_date = date
+                  ? formatForAPI(date)
+                  : "";
+                setPayrollData(temp);
+              }}
+              onChangeRaw={(e) => {
+                const value = e.target.value;
+                const temp = [...payrollData];
+                const parsed = parseDate(value);
+                temp[index].lwf_remittance_date = parsed
+                  ? formatForAPI(parsed)
+                  : value;
+                setPayrollData(temp);
+              }}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="dd/mm/yyyy"
+              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+            />
+            <Checkbox
+              className="mt-2.5"
+              checked={!!row.lwf_not_applicable}
+              onChange={(e) => {
+                const temp = [...payrollData];
                 temp[index].lwf_not_applicable = e.target.checked;
-
                 if (e.target.checked) {
                   temp[index].lwf_remittance_date = "";
                 }
-
                 setPayrollData(temp);
               }}
-            />
-
-            Not Applicable
-          </label>
-        </div>
+            >
+              <span className="text-xs text-gray-600">Not Applicable</span>
+            </Checkbox>
+          </div>
         </div>
       </div>
     ))}
