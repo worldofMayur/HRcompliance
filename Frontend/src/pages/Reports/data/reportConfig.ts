@@ -1,7 +1,8 @@
 export type ReportType =
   | "branch"
   | "compliance"
-  | "exception";
+  | "exception"
+  | "document";
 
 export interface ReportCard {
   id: ReportType;
@@ -19,23 +20,26 @@ export const REPORT_CARDS: ReportCard[] = [
   {
     id: "branch",
     title: "Branch Wise Vendor Mapping",
-    description:
-      "View branch-wise vendor mapping details.",
+    description: "View branch-wise vendor mapping details.",
     icon: "🏢",
   },
   {
     id: "compliance",
     title: "Vendor Compliance Status",
-    description:
-      "View vendor compliance clearance reports.",
+    description: "View vendor compliance clearance reports.",
     icon: "📋",
   },
   {
     id: "exception",
     title: "Exceptional Approval Report",
-    description:
-      "View exceptional approval reports.",
+    description: "View exceptional approval reports.",
     icon: "⚠️",
+  },
+  {
+    id: "document",
+    title: "Document Wise Compliance Status",
+    description: "View document-wise compliance status reports.",
+    icon: "📈",
   },
 ];
 
@@ -69,5 +73,12 @@ export const REPORT_COLUMNS = {
     { title: "Observation", key: "observation" },
     { title: "Recommendation", key: "recommendation" },
     { title: "Approval Status", key: "approval_status" },
+  ],
+
+  document: [
+    { title: "Audit Month", key: "month" },
+    { title: "Average Remittance Day", key: "remittance_day" },
+    { title: "Before 15th", key: "before_15" },
+    { title: "After 15th", key: "after_15" },
   ],
 };
