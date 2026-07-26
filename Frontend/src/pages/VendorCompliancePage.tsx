@@ -651,8 +651,12 @@ const rows = getPayrollMonths().map((month) => ({
 
   pf_remittance_date: "",
   esic_remittance_date: "",
+
   rc_remittance_date: "",
+  pt_rc_not_applicable: false,
+
   lwf_remittance_date: "",
+  lwf_not_applicable: false,
 }));
 
 setPayrollData(rows);
@@ -1670,8 +1674,10 @@ if (effectiveReuploadMode) {
 
           {/* RC Remittance Date */}
           <div className="flex flex-col">
-            <Label>RC Remittance Date</Label>
+            <Label>PT RC Remittance Date</Label>
+
             <DatePicker
+              disabled={row.pt_rc_not_applicable}
               selected={
                 row.rc_remittance_date
                   ? parseApiDate(row.rc_remittance_date)
@@ -1686,47 +1692,95 @@ if (effectiveReuploadMode) {
                 const value = e.target.value;
                 const temp = [...payrollData];
                 const parsed = parseDate(value);
+
                 temp[index].rc_remittance_date = parsed
                   ? formatForAPI(parsed)
                   : value;
+
                 setPayrollData(temp);
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
               className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
             />
+
+            <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+              <input
+                type="checkbox"
+                checked={row.pt_rc_not_applicable}
+                onChange={(e) => {
+                  const temp = [...payrollData];
+
+                  temp[index].pt_rc_not_applicable = e.target.checked;
+
+                  if (e.target.checked) {
+                    temp[index].rc_remittance_date = "";
+                  }
+
+                  setPayrollData(temp);
+                }}
+              />
+
+              Not Applicable
+            </label>
           </div>
 
           {/* LWF Remittance Date */}
           <div className="flex flex-col">
-            <Label>LWF Remittance Date</Label>
-            <DatePicker
-              selected={
-                row.lwf_remittance_date
-                  ? parseApiDate(row.lwf_remittance_date)
-                  : null
-              }
-              onChange={(date: Date | null) => {
+          <Label>LWF Remittance Date</Label>
+
+          <DatePicker
+            disabled={row.lwf_not_applicable}
+            selected={
+              row.lwf_remittance_date
+                ? parseApiDate(row.lwf_remittance_date)
+                : null
+            }
+            onChange={(date: Date | null) => {
+              const temp = [...payrollData];
+
+              temp[index].lwf_remittance_date = date
+                ? formatForAPI(date)
+                : "";
+
+              setPayrollData(temp);
+            }}
+            onChangeRaw={(e) => {
+              const value = e.target.value;
+              const temp = [...payrollData];
+              const parsed = parseDate(value);
+
+              temp[index].lwf_remittance_date = parsed
+                ? formatForAPI(parsed)
+                : value;
+
+              setPayrollData(temp);
+            }}
+            dateFormat="dd/MM/yyyy"
+            placeholderText="dd/mm/yyyy"
+            className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+          />
+
+          <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+            <input
+              type="checkbox"
+              checked={row.lwf_not_applicable}
+              onChange={(e) => {
                 const temp = [...payrollData];
-                temp[index].lwf_remittance_date = date
-                  ? formatForAPI(date)
-                  : "";
+
+                temp[index].lwf_not_applicable = e.target.checked;
+
+                if (e.target.checked) {
+                  temp[index].lwf_remittance_date = "";
+                }
+
                 setPayrollData(temp);
               }}
-              onChangeRaw={(e) => {
-                const value = e.target.value;
-                const temp = [...payrollData];
-                const parsed = parseDate(value);
-                temp[index].lwf_remittance_date = parsed
-                  ? formatForAPI(parsed)
-                  : value;
-                setPayrollData(temp);
-              }}
-              dateFormat="dd/MM/yyyy"
-              placeholderText="dd/mm/yyyy"
-              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
             />
-          </div>
+
+            Not Applicable
+          </label>
+        </div>
         </div>
       </div>
     ))}
