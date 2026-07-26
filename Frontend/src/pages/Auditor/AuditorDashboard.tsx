@@ -1718,7 +1718,9 @@ const canFreezeReport =
 <Modal
   title={
     <div className="flex items-center justify-between pr-8">
-      <span>Compliance Summary - {auditPeriod || "Selected Period"}</span>
+      <span className="text-base font-semibold">
+        Compliance Summary - {auditPeriod || "Selected Period"}
+      </span>
 
       <Button
         size="small"
@@ -1756,9 +1758,9 @@ const canFreezeReport =
 
           {/* Clean 8-column grid */}
           <div className="grid grid-cols-8 gap-3">
-            {/* Male */}
+            {/* Male Employees */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 Male Employees
               </label>
               <Input
@@ -1769,12 +1771,13 @@ const canFreezeReport =
                   updated[index].male_employees = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
 
-            {/* Female */}
+            {/* Female Employees */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 Female Employees
               </label>
               <Input
@@ -1785,12 +1788,13 @@ const canFreezeReport =
                   updated[index].female_employees = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
 
             {/* Gross Wages */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 Gross Wages
               </label>
               <Input
@@ -1801,12 +1805,13 @@ const canFreezeReport =
                   updated[index].gross_wages = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
 
             {/* Net Wages */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 Net Wages
               </label>
               <Input
@@ -1817,12 +1822,13 @@ const canFreezeReport =
                   updated[index].net_wages = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
 
-            {/* PF Date */}
+            {/* PF Remittance Date */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 PF Remittance Date
               </label>
               <Input
@@ -1834,12 +1840,13 @@ const canFreezeReport =
                   updated[index].pf_remittance_date = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
 
-            {/* ESIC Date */}
+            {/* ESIC Remittance Date */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 ESIC Remittance Date
               </label>
               <Input
@@ -1851,12 +1858,13 @@ const canFreezeReport =
                   updated[index].esic_remittance_date = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
 
-            {/* RC Date */}
+            {/* RC Remittance Date */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 RC Remittance Date
               </label>
               <Input
@@ -1868,12 +1876,13 @@ const canFreezeReport =
                   updated[index].rc_remittance_date = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
 
-            {/* LWF Date */}
+            {/* LWF Remittance Date */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
                 LWF Remittance Date
               </label>
               <Input
@@ -1885,6 +1894,7 @@ const canFreezeReport =
                   updated[index].lwf_remittance_date = e.target.value;
                   setPayrollData(updated);
                 }}
+                className="h-9 rounded-lg"
               />
             </div>
           </div>
@@ -1893,10 +1903,10 @@ const canFreezeReport =
     )}
   </div>
 
-  {/* Save Button - only useful when editing */}
+  {/* Save Button only when editing */}
   {isEditingCompliance && (
-    <div className="flex justify-end mt-6 pt-4 border-t">
-      <Button type="primary" onClick={handleSaveComplianceSummary}>
+    <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
+      <Button type="primary" size="large" onClick={handleSaveComplianceSummary}>
         Save Compliance Summary
       </Button>
     </div>
