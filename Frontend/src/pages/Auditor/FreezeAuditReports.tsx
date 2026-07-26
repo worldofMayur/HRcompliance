@@ -980,10 +980,11 @@ return hasExceptional ? (
 </div>
             {/* MODAL BODY */}
 
+            {/* MODAL BODY */}
             <div className="
-              flex-1 overflow-auto
+              flex-1 overflow-y-auto
               px-6 py-5
-              space-y-4
+              space-y-5
             ">
 
               {/* AUDIT SUMMARY */}
@@ -1154,7 +1155,7 @@ return hasExceptional ? (
 </div>
 
 {/* COMPLIANCE TABLE */}
-{/* COMPLIANCE TABLE */}
+{/* COMPLIANCE ENTRIES */}
 <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white">
   {/* HEADER */}
   <div className="border-b border-gray-100 px-5 py-4">
@@ -1166,15 +1167,15 @@ return hasExceptional ? (
     </p>
   </div>
 
-  {/* TABLE */}
-  <div className="overflow-auto max-h-[520px]">
+  {/* TABLE with proper vertical scroll */}
+  <div className="max-h-[420px] overflow-hidden">
     <Table
       rowKey={(_, index) => index?.toString() || "row"}
       size="middle"
       pagination={false}
       className="compliance-table"
       tableLayout="fixed"
-      scroll={{ x: 1600, y: 450 }}
+      scroll={{ x: 1600, y: 380 }}
       dataSource={selectedReport.entries || []}
       locale={{
         emptyText: (
