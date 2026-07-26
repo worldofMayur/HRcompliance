@@ -12,6 +12,13 @@ from master_apps.vendor.compliance_models import VendorComplianceSubmission
 from master_apps.vendor.constants import WorkflowStatus
 import re
 from master_apps.principle_employee.models import PrincipalEmployerBranch
+from django.db.models import Avg, Count, Q
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.principle_employee.models import PrincipalEmployer
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
 
 
 # =========================
@@ -1271,3 +1278,21 @@ class ExceptionalDocumentListAPIView(APIView):
             }
             for item in documents
         ])
+
+
+class DocumentWiseRemittanceTrendAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        return Response([])

@@ -43,6 +43,7 @@ from .dashboard_views import (
     DocumentReferencePieAPIView,
     ExceptionalVendorListAPIView,
     ExceptionalDocumentListAPIView,
+    DocumentWiseRemittanceTrendAPIView,
 )
 
 # Report Views Import
@@ -104,6 +105,10 @@ urlpatterns = [
     path(
         "dashboard/branch/kpi/",
         BranchDashboardKPIAPIView.as_view(),
+    ),
+    path(
+        "dashboard/document-wise-remittance/",
+        DocumentWiseRemittanceTrendAPIView.as_view(),
     ),
     path(
         "dashboard/branch/state-summary/",
