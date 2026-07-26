@@ -1087,76 +1087,70 @@ return hasExceptional ? (
                 </div>
               </div>
 
-{/* COMPLIANCE SUMMARY */}
+{/* PAYROLL SUMMARY */}
 
-<div
-  className="
-    rounded-3xl
-    border border-blue-200
-    bg-blue-50
-    p-5
-  "
->
-  <h3
-    className="
-      mb-4
-      flex items-center
-      gap-2
-      text-base
-      font-semibold
-      text-blue-900
-    "
-  >
-    <SafetyCertificateOutlined />
-    Compliance Summary
-  </h3>
+<div className="overflow-hidden rounded-3xl border border-blue-200 bg-white">
 
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-
-    {[
-      {
-        label: "Male Employees",
-        value: selectedReport.compliance_summary?.male_employees,
-      },
-      {
-        label: "Female Employees",
-        value: selectedReport.compliance_summary?.female_employees,
-      },
-      {
-        label: "Gross Wages",
-        value: selectedReport.compliance_summary?.gross_wages,
-      },
-      {
-        label: "Net Wages",
-        value: selectedReport.compliance_summary?.net_wages,
-      },
-      {
-        label: "PF Remittance Date",
-        value: selectedReport.compliance_summary?.pf_remittance_date,
-      },
-      {
-        label: "ESIC Remittance Date",
-        value: selectedReport.compliance_summary?.esic_remittance_date,
-      },
-      {
-        label: "RC Remittance Date",
-        value: selectedReport.compliance_summary?.rc_remittance_date,
-      },
-      {
-        label: "LWF Remittance Date",
-        value: selectedReport.compliance_summary?.lwf_remittance_date,
-      },
-    ].map((item) => (
-      <div key={item.label}>
-        <div className="mb-1 text-xs font-semibold uppercase text-gray-500">
-          {item.label}
-        </div>
-        <div className="text-sm font-semibold text-gray-900">
-          {item.value || "-"}
-        </div>
-      </div>
-    ))}
+  <div className="border-b border-blue-100 bg-blue-50 px-5 py-4">
+    <h3 className="flex items-center gap-2 text-base font-semibold text-blue-900">
+      <SafetyCertificateOutlined />
+      Payroll Summary
+    </h3>
   </div>
+
+  <Table
+    rowKey="month"
+    pagination={false}
+    size="small"
+    dataSource={selectedReport.payroll_data || []}
+    scroll={{ x: 1200 }}
+
+    columns={[
+      {
+        title: "Month",
+        dataIndex: "month",
+      },
+      {
+        title: "Male",
+        dataIndex: "male_employees",
+      },
+      {
+        title: "Female",
+        dataIndex: "female_employees",
+      },
+      {
+        title: "Gross Wages",
+        dataIndex: "gross_wages",
+      },
+      {
+        title: "Net Wages",
+        dataIndex: "net_wages",
+      },
+      {
+        title: "PF Date",
+        dataIndex: "pf_remittance_date",
+      },
+      {
+        title: "ESIC Date",
+        dataIndex: "esic_remittance_date",
+      },
+      {
+        title: "RC Date",
+        render: (_: any, record: any) =>
+          record.pt_rc_not_applicable
+            ? "Not Applicable"
+            : record.rc_remittance_date || "-",
+      },
+      {
+        title: "LWF Date",
+        render: (_: any, record: any) =>
+          record.lwf_not_applicable
+            ? "Not Applicable"
+            : record.lwf_remittance_date || "-",
+      },
+    ]}
+  />
+
 </div>
 
 {/* COMPLIANCE TABLE */}
