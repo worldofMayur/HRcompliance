@@ -3340,7 +3340,21 @@ class FreezeAuditReportsAPIView(APIView):
                 payroll_data = list(
                     VendorCompliancePayroll.objects.filter(
                         submission=submission
-                    ).order_by("id")
+                    )
+                    .order_by("id")
+                    .values(
+                        "month",
+                        "male_employees",
+                        "female_employees",
+                        "gross_wages",
+                        "net_wages",
+                        "pf_remittance_date",
+                        "esic_remittance_date",
+                        "rc_remittance_date",
+                        "lwf_remittance_date",
+                        "pt_rc_not_applicable",
+                        "lwf_not_applicable",
+                    )
                 )
 
             print("========== CC SUBMISSION ==========")
