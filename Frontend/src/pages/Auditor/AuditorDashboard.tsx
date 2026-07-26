@@ -1546,20 +1546,6 @@ const canFreezeReport =
         </div>
       )}
 
-      {(auditSessionStatus === "FROZEN" || isFrozen) && notificationDocs.length === 0 && !manualEditMode && (
-        <Button
-          type="primary"
-          size="small"
-          icon={<SyncOutlined />}
-          onClick={() => {
-            setManualEditMode(true);
-            message.warning("Audit unlocked for editing");
-          }}
-        >
-          Edit Audit
-        </Button>
-      )}
-
       <Button
         size="small"
         onClick={handleMinimize}
@@ -1605,29 +1591,36 @@ const canFreezeReport =
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <Button
-            type="primary"
-            size="small"
-            icon={<DownloadOutlined />}
-            onClick={downloadZip}
-            className="h-8 text-xs font-medium"
-          >
-            Download Audit Documents
-          </Button>
+  <Button
+    type="primary"
+    size="small"
+    icon={<DownloadOutlined />}
+    onClick={downloadZip}
+    className="h-8 text-xs font-medium"
+  >
+    Download Audit Documents
+  </Button>
 
-          <Button
-            type="default"
-            size="small"
-            onClick={() => setComplianceModalOpen(true)}
-            className="h-8 text-xs font-medium border-gray-300"
-          >
-            View Compliance Summary
-          </Button>
+  <Button
+    type="primary"
+    size="small"
+    onClick={() => setComplianceModalOpen(true)}
+    className="h-8 text-xs font-medium"
+  >
+    View Compliance Summary
+  </Button>
 
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
-            Mapping Active: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"} → {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
-          </span>
-        </div>
+  <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
+    Mapping Active:{" "}
+    {mappingStartDate
+      ? new Date(mappingStartDate).toLocaleDateString("en-IN")
+      : "-"}{" "}
+    →{" "}
+    {mappingEndDate
+      ? new Date(mappingEndDate).toLocaleDateString("en-IN")
+      : "-"}
+  </span>
+</div>
       </div>
     </div>
 
