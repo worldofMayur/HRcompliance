@@ -1714,158 +1714,219 @@ const canFreezeReport =
 </div>
   </div>
 
-  {/* FULL COMPLIANCE SUMMARY MODAL */}
-  <Modal
-    title={`Compliance Summary - ${auditPeriod || "Selected Period"}`}
-    open={complianceModalOpen}
-    onCancel={() => setComplianceModalOpen(false)}
-    footer={null}
-    width={900}
-    centered
-  >
-    <div className="overflow-x-auto">
+{/* FULL COMPLIANCE SUMMARY MODAL */}
+<Modal
+  title={
+    <div className="flex items-center justify-between pr-8">
+      <span className="text-base font-semibold">
+        Compliance Summary - {auditPeriod || "Selected Period"}
+      </span>
 
-  <table className="w-full border border-gray-300 text-sm">
-
-    <thead className="bg-gray-100">
-
-      <tr>
-        <th className="border p-2">Month</th>
-        <th className="border p-2">Male</th>
-        <th className="border p-2">Female</th>
-        <th className="border p-2">Gross Wages</th>
-        <th className="border p-2">Net Wages</th>
-        <th className="border p-2">PF Date</th>
-        <th className="border p-2">ESIC Date</th>
-        <th className="border p-2">RC Date</th>
-        <th className="border p-2">LWF Date</th>
-      </tr>
-
-    </thead>
-
-    <tbody>
-
-      {payrollData.map((row: any, index: number) => (
-
-        <tr key={index}>
-
-          <td className="border p-2 font-medium">
+      <Button
+        size="small"
+        type={isEditingCompliance ? "default" : "primary"}
+        onClick={() => setIsEditingCompliance(!isEditingCompliance)}
+      >
+        {isEditingCompliance ? "Cancel Edit" : "Edit"}
+      </Button>
+    </div>
+  }
+  open={complianceModalOpen}
+  onCancel={() => {
+    setComplianceModalOpen(false);
+    setIsEditingCompliance(false);
+  }}
+  footer={null}
+  width={1480}
+  centered
+>
+  <div className="max-h-[68vh] overflow-y-auto pr-2 space-y-5">
+    {payrollData.length === 0 ? (
+      <div className="py-16 text-center text-gray-400">
+        No payroll data available for this period
+      </div>
+    ) : (
+      payrollData.map((row: any, index: number) => (
+        <div
+          key={index}
+          className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
+        >
+          {/* Month Title */}
+          <h3 className="text-base font-semibold text-gray-900 mb-4 pb-2.5 border-b border-gray-100">
             {row.month}
-          </td>
+          </h3>
 
-          <td className="border p-2">
-            <Input
-              value={row.male_employees}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].male_employees = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
+          {/* Clean 8-column grid */}
+          <div className="grid grid-cols-8 gap-4">
+            {/* Male Employees */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Male Employees
+              </label>
+              <Input
+                value={row.male_employees ?? ""}
+                disabled={!isEditingCompliance}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].male_employees = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+            </div>
 
-          <td className="border p-2">
-            <Input
-              value={row.female_employees}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].female_employees = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
+            {/* Female Employees */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Female Employees
+              </label>
+              <Input
+                value={row.female_employees ?? ""}
+                disabled={!isEditingCompliance}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].female_employees = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+            </div>
 
-          <td className="border p-2">
-            <Input
-              value={row.gross_wages}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].gross_wages = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
+            {/* Gross Wages */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Gross Wages
+              </label>
+              <Input
+                value={row.gross_wages ?? ""}
+                disabled={!isEditingCompliance}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].gross_wages = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+            </div>
 
-          <td className="border p-2">
-            <Input
-              value={row.net_wages}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].net_wages = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
+            {/* Net Wages */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Net Wages
+              </label>
+              <Input
+                value={row.net_wages ?? ""}
+                disabled={!isEditingCompliance}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].net_wages = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+            </div>
 
-          <td className="border p-2">
-            <Input
-              type="date"
-              value={row.pf_remittance_date || ""}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].pf_remittance_date = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
+            {/* PF Remittance Date */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                PF Remittance Date
+              </label>
+              <Input
+                type="date"
+                value={row.pf_remittance_date || ""}
+                disabled={!isEditingCompliance}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].pf_remittance_date = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+            </div>
 
-          <td className="border p-2">
-            <Input
-              type="date"
-              value={row.esic_remittance_date || ""}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].esic_remittance_date = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
+            {/* ESIC Remittance Date */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                ESIC Remittance Date
+              </label>
+              <Input
+                type="date"
+                value={row.esic_remittance_date || ""}
+                disabled={!isEditingCompliance}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].esic_remittance_date = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+            </div>
 
-          <td className="border p-2">
-            <Input
-              type="date"
-              value={row.rc_remittance_date || ""}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].rc_remittance_date = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
+            {/* PT RC Remittance Date */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                PT RC Remittance Date
+              </label>
+              <Input
+                type="date"
+                value={row.rc_remittance_date || ""}
+                disabled={!isEditingCompliance || row.pt_rc_not_applicable}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].rc_remittance_date = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+              {row.pt_rc_not_applicable !== undefined && (
+                <div className="mt-2 text-xs text-gray-500">
+                  {row.pt_rc_not_applicable ? "Not Applicable" : ""}
+                </div>
+              )}
+            </div>
 
-          <td className="border p-2">
-            <Input
-              type="date"
-              value={row.lwf_remittance_date || ""}
-              onChange={(e) => {
-                const updated = [...payrollData];
-                updated[index].lwf_remittance_date = e.target.value;
-                setPayrollData(updated);
-              }}
-            />
-          </td>
-
-        </tr>
-
-      ))}
-
-    </tbody>
-
-  </table>
-
-  <div className="flex justify-end mt-6">
-
-    <Button
-      type="primary"
-      onClick={handleSaveComplianceSummary}
-    >
-      Save Compliance Summary
-    </Button>
-
+            {/* LWF Remittance Date */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                LWF Remittance Date
+              </label>
+              <Input
+                type="date"
+                value={row.lwf_remittance_date || ""}
+                disabled={!isEditingCompliance || row.lwf_not_applicable}
+                onChange={(e) => {
+                  const updated = [...payrollData];
+                  updated[index].lwf_remittance_date = e.target.value;
+                  setPayrollData(updated);
+                }}
+                className="h-10 rounded-lg"
+              />
+              {row.lwf_not_applicable !== undefined && (
+                <div className="mt-2 text-xs text-gray-500">
+                  {row.lwf_not_applicable ? "Not Applicable" : ""}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))
+    )}
   </div>
 
-</div>
-  </Modal>
+  {/* Save Button only when editing */}
+  {isEditingCompliance && (
+    <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
+      <Button
+        type="primary"
+        size="large"
+        onClick={handleSaveComplianceSummary}
+        style={{ height: 42 }}
+      >
+        Save Compliance Summary
+      </Button>
+    </div>
+  )}
+</Modal>
 
 </Modal>
 
