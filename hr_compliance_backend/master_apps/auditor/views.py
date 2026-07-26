@@ -3357,6 +3357,8 @@ class FreezeAuditReportsAPIView(APIView):
                     )
                 )
 
+                summary = payroll_data[0] if payroll_data else {}
+
             print("========== CC SUBMISSION ==========")
             print("Submission:", submission)
 
@@ -3369,6 +3371,8 @@ class FreezeAuditReportsAPIView(APIView):
                 print("ESIC:", submission.esic_remittance_date)
                 print("RC:", submission.rc_remittance_date)
                 print("LWF:", submission.lwf_remittance_date)
+                print("PAYROLL:", payroll_data)
+                print("SUMMARY:", summary)
             else:
                 print("Submission NOT FOUND")
 
@@ -3414,14 +3418,24 @@ class FreezeAuditReportsAPIView(APIView):
                         else None
                     ),
                     "compliance_summary": {
-                        "male_employees": submission.male_employees if submission else None,
-                        "female_employees": submission.female_employees if submission else None,
-                        "gross_wages": submission.gross_wages if submission else None,
-                        "net_wages": submission.net_wages if submission else None,
-                        "pf_remittance_date": submission.pf_remittance_date if submission else None,
-                        "esic_remittance_date": submission.esic_remittance_date if submission else None,
-                        "rc_remittance_date": submission.rc_remittance_date if submission else None,
-                        "lwf_remittance_date": submission.lwf_remittance_date if submission else None,
+                        "male_employees": summary.get("male_employees"),
+                        "female_employees": summary.get("female_employees"),
+                        "gross_wages": summary.get("gross_wages"),
+                        "net_wages": summary.get("net_wages"),
+                        "pf_remittance_date": summary.get("pf_remittance_date"),
+                        "esic_remittance_date": summary.get("esic_remittance_date"),
+
+                        "rc_remittance_date": (
+                            "Not Applicable"
+                            if summary.get("pt_rc_not_applicable")
+                            else summary.get("rc_remittance_date")
+                        ),
+
+                        "lwf_remittance_date": (
+                            "Not Applicable"
+                            if summary.get("lwf_not_applicable")
+                            else summary.get("lwf_remittance_date")
+                        ),
                     },
 
                     "payroll_data": payroll_data,
