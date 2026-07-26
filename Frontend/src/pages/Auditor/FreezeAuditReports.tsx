@@ -1167,15 +1167,15 @@ return hasExceptional ? (
     </p>
   </div>
 
-  {/* TABLE with proper vertical scroll */}
-  <div className="max-h-[420px] overflow-hidden">
+  {/* TABLE with reliable vertical scroll */}
+  <div style={{ height: 420 }}>
     <Table
       rowKey={(_, index) => index?.toString() || "row"}
       size="middle"
       pagination={false}
       className="compliance-table"
       tableLayout="fixed"
-      scroll={{ x: 1600, y: 380 }}
+      scroll={{ x: 1600, y: 360 }}
       dataSource={selectedReport.entries || []}
       locale={{
         emptyText: (
