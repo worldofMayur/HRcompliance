@@ -1506,7 +1506,7 @@ if (effectiveReuploadMode) {
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
-  width={1280}
+  width={1100}
   centered
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
@@ -1529,211 +1529,205 @@ if (effectiveReuploadMode) {
   okText="Submit Compliance Documents"
   okButtonProps={{ size: "large" }}
 >
-  <div className="max-h-[68vh] overflow-hidden">
-    <div className="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory px-2">
-      {payrollData.map((row, index) => (
-        <div
-          key={row.month}
-          className="min-w-[920px] flex-shrink-0 bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow transition-all snap-start"
-        >
-          {/* Month Title */}
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-            {row.month}
-          </h3>
+  <div className="max-h-[70vh] overflow-y-auto pr-1 space-y-5">
+    {payrollData.map((row, index) => (
+      <div
+        key={row.month}
+        className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
+      >
+        {/* Month Title */}
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+          {row.month}
+        </h3>
 
-          {/* All fields in ONE row */}
-          <div className="flex items-end gap-4">
-            {/* Male Employees */}
-            <div className="w-[110px] shrink-0">
-              <Label>Male Employees</Label>
-              <InputField
-                type="number"
-                value={row.male_employees ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].male_employees =
-                    e.target.value === "" ? undefined : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+        {/* All fields in ONE row */}
+        <div className="flex items-end gap-4 flex-wrap">
+          {/* Male Employees */}
+          <div className="w-[110px]">
+            <Label>Male Employees</Label>
+            <InputField
+              type="number"
+              value={row.male_employees ?? ""}
+              onChange={(e) => {
+                const temp = [...payrollData];
+                temp[index].male_employees =
+                  e.target.value === "" ? undefined : Number(e.target.value);
+                setPayrollData(temp);
+              }}
+              className="h-9 text-sm"
+            />
+          </div>
 
-            {/* Female Employees */}
-            <div className="w-[110px] shrink-0">
-              <Label>Female Employees</Label>
-              <InputField
-                type="number"
-                value={row.female_employees ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].female_employees =
-                    e.target.value === "" ? undefined : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+          {/* Female Employees */}
+          <div className="w-[110px]">
+            <Label>Female Employees</Label>
+            <InputField
+              type="number"
+              value={row.female_employees ?? ""}
+              onChange={(e) => {
+                const temp = [...payrollData];
+                temp[index].female_employees =
+                  e.target.value === "" ? undefined : Number(e.target.value);
+                setPayrollData(temp);
+              }}
+              className="h-9 text-sm"
+            />
+          </div>
 
-            {/* Gross Wages */}
-            <div className="w-[120px] shrink-0">
-              <Label>Gross Wages</Label>
-              <InputField
-                type="number"
-                value={row.gross_wages ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].gross_wages =
-                    e.target.value === "" ? undefined : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+          {/* Gross Wages */}
+          <div className="w-[120px]">
+            <Label>Gross Wages</Label>
+            <InputField
+              type="number"
+              value={row.gross_wages ?? ""}
+              onChange={(e) => {
+                const temp = [...payrollData];
+                temp[index].gross_wages =
+                  e.target.value === "" ? undefined : Number(e.target.value);
+                setPayrollData(temp);
+              }}
+              className="h-9 text-sm"
+            />
+          </div>
 
-            {/* Net Wages */}
-            <div className="w-[120px] shrink-0">
-              <Label>Net Wages</Label>
-              <InputField
-                type="number"
-                value={row.net_wages ?? ""}
-                onChange={(e) => {
-                  const temp = [...payrollData];
-                  temp[index].net_wages =
-                    e.target.value === "" ? undefined : Number(e.target.value);
-                  setPayrollData(temp);
-                }}
-                className="h-9 text-sm"
-              />
-            </div>
+          {/* Net Wages */}
+          <div className="w-[120px]">
+            <Label>Net Wages</Label>
+            <InputField
+              type="number"
+              value={row.net_wages ?? ""}
+              onChange={(e) => {
+                const temp = [...payrollData];
+                temp[index].net_wages =
+                  e.target.value === "" ? undefined : Number(e.target.value);
+                setPayrollData(temp);
+              }}
+              className="h-9 text-sm"
+            />
+          </div>
 
-            {/* PF Remittance Date */}
-            <div className="w-[140px] shrink-0 flex flex-col">
-              <Label>PF Remittance Date</Label>
-              <DatePicker
-                selected={
-                  row.pf_remittance_date
-                    ? parseApiDate(row.pf_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].pf_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].pf_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+          {/* PF Remittance Date */}
+          <div className="w-[140px] flex flex-col">
+            <Label>PF Remittance Date</Label>
+            <DatePicker
+              selected={
+                row.pf_remittance_date
+                  ? parseApiDate(row.pf_remittance_date)
+                  : null
+              }
+              onChange={(date: Date | null) => {
+                const temp = [...payrollData];
+                temp[index].pf_remittance_date = date ? formatForAPI(date) : "";
+                setPayrollData(temp);
+              }}
+              onChangeRaw={(e) => {
+                const value = e.target.value;
+                const temp = [...payrollData];
+                const parsed = parseDate(value);
+                temp[index].pf_remittance_date = parsed
+                  ? formatForAPI(parsed)
+                  : value;
+                setPayrollData(temp);
+              }}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="dd/mm/yyyy"
+              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+            />
+          </div>
 
-            {/* ESIC Remittance Date */}
-            <div className="w-[140px] shrink-0 flex flex-col">
-              <Label>ESIC Remittance Date</Label>
-              <DatePicker
-                selected={
-                  row.esic_remittance_date
-                    ? parseApiDate(row.esic_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].esic_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].esic_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+          {/* ESIC Remittance Date */}
+          <div className="w-[140px] flex flex-col">
+            <Label>ESIC Remittance Date</Label>
+            <DatePicker
+              selected={
+                row.esic_remittance_date
+                  ? parseApiDate(row.esic_remittance_date)
+                  : null
+              }
+              onChange={(date: Date | null) => {
+                const temp = [...payrollData];
+                temp[index].esic_remittance_date = date
+                  ? formatForAPI(date)
+                  : "";
+                setPayrollData(temp);
+              }}
+              onChangeRaw={(e) => {
+                const value = e.target.value;
+                const temp = [...payrollData];
+                const parsed = parseDate(value);
+                temp[index].esic_remittance_date = parsed
+                  ? formatForAPI(parsed)
+                  : value;
+                setPayrollData(temp);
+              }}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="dd/mm/yyyy"
+              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+            />
+          </div>
 
-            {/* RC Remittance Date */}
-            <div className="w-[140px] shrink-0 flex flex-col">
-              <Label>RC Remittance Date</Label>
-              <DatePicker
-                selected={
-                  row.rc_remittance_date
-                    ? parseApiDate(row.rc_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].rc_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].rc_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+          {/* RC Remittance Date */}
+          <div className="w-[140px] flex flex-col">
+            <Label>RC Remittance Date</Label>
+            <DatePicker
+              selected={
+                row.rc_remittance_date
+                  ? parseApiDate(row.rc_remittance_date)
+                  : null
+              }
+              onChange={(date: Date | null) => {
+                const temp = [...payrollData];
+                temp[index].rc_remittance_date = date ? formatForAPI(date) : "";
+                setPayrollData(temp);
+              }}
+              onChangeRaw={(e) => {
+                const value = e.target.value;
+                const temp = [...payrollData];
+                const parsed = parseDate(value);
+                temp[index].rc_remittance_date = parsed
+                  ? formatForAPI(parsed)
+                  : value;
+                setPayrollData(temp);
+              }}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="dd/mm/yyyy"
+              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+            />
+          </div>
 
-            {/* LWF Remittance Date */}
-            <div className="w-[140px] shrink-0 flex flex-col">
-              <Label>LWF Remittance Date</Label>
-              <DatePicker
-                selected={
-                  row.lwf_remittance_date
-                    ? parseApiDate(row.lwf_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const temp = [...payrollData];
-                  temp[index].lwf_remittance_date = date
-                    ? formatForAPI(date)
-                    : "";
-                  setPayrollData(temp);
-                }}
-                onChangeRaw={(e) => {
-                  const value = e.target.value;
-                  const temp = [...payrollData];
-                  const parsed = parseDate(value);
-                  temp[index].lwf_remittance_date = parsed
-                    ? formatForAPI(parsed)
-                    : value;
-                  setPayrollData(temp);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
-              />
-            </div>
+          {/* LWF Remittance Date */}
+          <div className="w-[140px] flex flex-col">
+            <Label>LWF Remittance Date</Label>
+            <DatePicker
+              selected={
+                row.lwf_remittance_date
+                  ? parseApiDate(row.lwf_remittance_date)
+                  : null
+              }
+              onChange={(date: Date | null) => {
+                const temp = [...payrollData];
+                temp[index].lwf_remittance_date = date
+                  ? formatForAPI(date)
+                  : "";
+                setPayrollData(temp);
+              }}
+              onChangeRaw={(e) => {
+                const value = e.target.value;
+                const temp = [...payrollData];
+                const parsed = parseDate(value);
+                temp[index].lwf_remittance_date = parsed
+                  ? formatForAPI(parsed)
+                  : value;
+                setPayrollData(temp);
+              }}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="dd/mm/yyyy"
+              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+            />
           </div>
         </div>
-      ))}
-    </div>
+      </div>
+    ))}
   </div>
 </Modal>
     </div>
