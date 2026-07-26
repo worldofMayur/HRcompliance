@@ -1501,15 +1501,6 @@ if (effectiveReuploadMode) {
         </div>
       )}
 
-      {/* ================= COMPLIANCE SUMMARY MODAL ================= */}
-
-
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
-{/* ================= COMPLIANCE SUMMARY MODAL ================= */}
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
@@ -1534,20 +1525,23 @@ if (effectiveReuploadMode) {
     submitCompliance();
   }}
   okText="Submit Compliance Documents"
-  okButtonProps={{ size: "large" }}
+  okButtonProps={{ 
+    size: "large",
+    style: { height: 42, fontWeight: 500 }
+  }}
 >
-  <div className="max-h-[72vh] overflow-y-auto pr-2 space-y-6">
+  <div className="max-h-[68vh] overflow-y-auto pr-2 space-y-5">
     {payrollData.map((row, index) => (
       <div
         key={row.month}
-        className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"
+        className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
       >
         {/* Month Title */}
-        <h3 className="text-base font-semibold text-gray-900 mb-5 pb-3 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900 mb-4 pb-2.5 border-b border-gray-100">
           {row.month}
         </h3>
 
-        {/* Clean grid with better spacing */}
+        {/* Clean grid */}
         <div className="grid grid-cols-8 gap-4">
           {/* Male Employees */}
           <div>
@@ -1638,7 +1632,8 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              style={{ height: "40px" }}
             />
           </div>
 
@@ -1669,7 +1664,8 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              style={{ height: "40px" }}
             />
           </div>
 
@@ -1699,10 +1695,11 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              style={{ height: "40px" }}
             />
             <Checkbox
-              className="mt-2.5"
+              className="mt-2"
               checked={!!row.pt_rc_not_applicable}
               onChange={(e) => {
                 const temp = [...payrollData];
@@ -1745,10 +1742,11 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              style={{ height: "40px" }}
             />
             <Checkbox
-              className="mt-2.5"
+              className="mt-2"
               checked={!!row.lwf_not_applicable}
               onChange={(e) => {
                 const temp = [...payrollData];
