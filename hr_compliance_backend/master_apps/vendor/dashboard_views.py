@@ -1280,6 +1280,15 @@ class ExceptionalDocumentListAPIView(APIView):
         ])
 
 
+from collections import defaultdict
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from master_apps.principle_employee.models import PrincipalEmployer
+from master_apps.vendor.compliance_models import VendorComplianceSubmission
+
+
 class DocumentWiseRemittanceTrendAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1295,24 +1304,57 @@ class DocumentWiseRemittanceTrendAPIView(APIView):
                 status=404,
             )
 
-        from collections import defaultdict
+        # -----------------------------------------
+        # Optional Filters
+        # -----------------------------------------
+        vendors = request.GET.getlist("vendors")
+        audit_periods = request.GET.getlist("audit_periods")
+        documents = request.GET.getlist("documents")
 
         queryset = VendorComplianceSubmission.objects.filter(
             principal_employer=pe,
-            pf_remittance_date__isnull=False,
-        ).order_by("audit_period")
+        )
 
-        trend = defaultdict(lambda: {
-            "total_day": 0,
-            "count": 0,
-            "before_15": 0,
-            "after_15": 0,
-        })
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if audit_periods:
+            queryset = queryset.filter(audit_period__in=audit_periods)
+
+        # -----------------------------------------
+        # Decide which remittance field to use
+        # Default = PF
+        # -----------------------------------------
+        date_field = "pf_remittance_date"
+
+        if documents:
+            document_name = documents[0].strip().lower()
+
+            if "esic" in document_name:
+                date_field = "esic_remittance_date"
+
+        queryset = queryset.exclude(**{
+            f"{date_field}__isnull": True
+        }).order_by("audit_period")
+
+        trend = defaultdict(
+            lambda: {
+                "total_day": 0,
+                "count": 0,
+                "before_15": 0,
+                "after_15": 0,
+            }
+        )
 
         for submission in queryset:
-            month = submission.audit_period
 
-            day = submission.pf_remittance_date.day
+            remittance_date = getattr(submission, date_field)
+
+            if not remittance_date:
+                continue
+
+            month = submission.audit_period
+            day = remittance_date.day
 
             trend[month]["total_day"] += day
             trend[month]["count"] += 1
@@ -1325,13 +1367,18 @@ class DocumentWiseRemittanceTrendAPIView(APIView):
         response = []
 
         for month, values in trend.items():
-            response.append({
-                "month": month,
-                "remittance_day": round(
-                    values["total_day"] / values["count"], 1
-                ),
-                "before_15": values["before_15"],
-                "after_15": values["after_15"],
-            })
+
+            response.append(
+                {
+                    "month": month,
+                    "remittance_day": round(
+                        values["total_day"] / values["count"]
+                    ),
+                    "before_15": values["before_15"],
+                    "after_15": values["after_15"],
+                }
+            )
+
+        response.sort(key=lambda x: x["month"])
 
         return Response(response)
