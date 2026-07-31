@@ -27,7 +27,9 @@ from .models import (
     PrincipalEmployer,
     PrincipalEmployerDocument,
     PrincipalEmployerBranch,
+    PrincipalEmployerBranchDocument,
 )
+
 from .serializers import (
     PrincipalEmployerSerializer,
     PrincipalEmployerDocumentSerializer,
@@ -498,8 +500,29 @@ class PrincipalEmployerBranchCreateAPIView(APIView):
                 serializer = PrincipalEmployerBranchSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 branch = serializer.save()
-                print("Saved document:", branch.document)
-                print("Saved path:", branch.document.path if branch.document else "NO DOCUMENT")
+
+                # =============================
+                # SAVE MULTIPLE DOCUMENTS
+                # =============================
+                documents = request.FILES.getlist("documents")
+
+                for file in documents:
+                    PrincipalEmployerBranchDocument.objects.create(
+                        branch=branch,
+                        document=file,
+                    )
+
+                # =============================
+                # BACKWARD COMPATIBILITY
+                # (Keep existing single document support)
+                # =============================
+                single_document = request.FILES.get("document")
+
+                if single_document:
+                    branch.document = single_document
+                    branch.save(update_fields=["document"])
+
+                branch.refresh_from_db()
 
                 return Response(
                     PrincipalEmployerBranchSerializer(branch).data,
@@ -552,6 +575,28 @@ class PrincipalEmployerBranchUpdateAPIView(APIView):
 
         serializer.is_valid(raise_exception=True)
         updated_branch = serializer.save()
+
+        # =============================
+        # SAVE NEWLY UPLOADED DOCUMENTS
+        # =============================
+        documents = request.FILES.getlist("documents")
+
+        for file in documents:
+            PrincipalEmployerBranchDocument.objects.create(
+                branch=updated_branch,
+                document=file,
+            )
+
+        # =============================
+        # BACKWARD COMPATIBILITY
+        # =============================
+        single_document = request.FILES.get("document")
+
+        if single_document:
+            updated_branch.document = single_document
+            updated_branch.save(update_fields=["document"])
+
+        updated_branch.refresh_from_db()
 
         return Response(
             PrincipalEmployerBranchSerializer(updated_branch).data,
@@ -630,7 +675,7 @@ class PrincipalEmployerBranchDocumentZipAPIView(APIView):
 
         branches = PrincipalEmployerBranch.objects.filter(
             principal_employer=pe
-        ).exclude(document="")
+        )
 
         if not branches.exists():
             return Response(
@@ -648,17 +693,17 @@ class PrincipalEmployerBranchDocumentZipAPIView(APIView):
 
             for branch in branches:
 
-                if (
-                    branch.document
-                    and os.path.exists(branch.document.path)
-                ):
+                for document in branch.documents.all():
 
-                    zip_file.write(
-                        branch.document.path,
-                        arcname=os.path.basename(
-                            branch.document.name
+                    if (
+                        document.document
+                        and os.path.exists(document.document.path)
+                    ):
+
+                        zip_file.write(
+                            document.document.path,
+                            arcname=f"{branch.short_name}/{os.path.basename(document.document.name)}"
                         )
-                    )
 
         zip_buffer.seek(0)
 
@@ -671,6 +716,62 @@ class PrincipalEmployerBranchDocumentZipAPIView(APIView):
             "Content-Disposition"
         ] = (
             f'attachment; filename="{pe.short_name}_branch_documents.zip"'
+        )
+
+        return response
+
+
+class DownloadBranchDocumentsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, branch_id):
+
+        branch = get_object_or_404(
+            PrincipalEmployerBranch,
+            pk=branch_id
+        )
+
+        documents = branch.documents.all()
+
+        if not documents.exists():
+            return Response(
+                {"error": "No documents found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        zip_buffer = BytesIO()
+
+        with zipfile.ZipFile(
+            zip_buffer,
+            "w",
+            zipfile.ZIP_DEFLATED,
+        ) as zip_file:
+
+            for doc in documents:
+
+                if (
+                    doc.document
+                    and os.path.exists(doc.document.path)
+                ):
+
+                    zip_file.write(
+                        doc.document.path,
+                        arcname=os.path.basename(
+                            doc.document.name
+                        ),
+                    )
+
+        zip_buffer.seek(0)
+
+        response = HttpResponse(
+            zip_buffer.read(),
+            content_type="application/zip",
+        )
+
+        response[
+            "Content-Disposition"
+        ] = (
+            f'attachment; filename="{branch.short_name}_documents.zip"'
         )
 
         return response

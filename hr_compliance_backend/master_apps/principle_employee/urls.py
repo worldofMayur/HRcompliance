@@ -11,7 +11,8 @@ from .views import (
     PrincipalEmployerBranchListAPIView,
     PrincipalEmployerBranchUpdateAPIView,
     PrincipalEmployerDocumentZipAPIView,
-    PrincipalEmployerBranchDocumentZipAPIView,   # ✅ Add this
+    PrincipalEmployerBranchDocumentZipAPIView,
+    DownloadBranchDocumentsAPIView,   # ✅ Add this
 )
 
 urlpatterns = [
@@ -74,8 +75,14 @@ urlpatterns = [
     ),
 
     path(
-        "<int:pe_id>/download-branch-documents/",
+        "principal-employer/<int:pe_id>/download-branch-documents/",
         PrincipalEmployerBranchDocumentZipAPIView.as_view(),
+        name="branch-document-zip",
+    ),
+    path(
+        "principal-employer/branch/<int:branch_id>/download-documents/",
+        DownloadBranchDocumentsAPIView.as_view(),
+        name="branch-download-documents",
     ),
 ]
 

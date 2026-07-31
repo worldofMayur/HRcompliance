@@ -10,7 +10,7 @@ import Button from "../../components/ui/button/Button";
 
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { Checkbox } from "antd";
+import { Checkbox, Tooltip } from "antd";
 import "antd/dist/reset.css";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -136,8 +136,8 @@ export default function PrincipleEmployeeForm() {
     short_name: "",
     address: "",
     status: "active",
-    document: null,
-    existingDocument: null,
+    documents: [],
+    existingDocuments: [],
   });
 
   useEffect(() => {
@@ -197,11 +197,14 @@ const startEditing = (branch) => {
 };
 
   const resetBranchForm = () => {
-    setBranchData({
+  setBranchData({
       state: "",
       short_name: "",
       address: "",
-    });
+      status: "active",
+      documents: [],
+      existingDocuments: [],
+  });
   };
 
 const handleBranchUpdate = async (branchId: number) => {
@@ -212,9 +215,9 @@ const handleBranchUpdate = async (branchId: number) => {
   formData.append("address", branchData.address);
   formData.append("status", branchData.status);
 
-  if (branchData.document) {
-    formData.append("document", branchData.document);
-  }
+  branchData.documents.forEach((file) => {
+    formData.append("documents", file);
+  });
 
   const res = await api.put(
     `/api/principal-employer/branch/${branchId}/update/`,
@@ -240,11 +243,12 @@ const handleBranchUpdate = async (branchId: number) => {
 
   // Reset form
   setBranchData({
-    state: "",
-    short_name: "",
-    address: "",
-    status: "active",
-    document: null,
+      state: "",
+      short_name: "",
+      address: "",
+      status: "active",
+      documents: [],
+      existingDocuments: [],
   });
 };
 
@@ -260,9 +264,9 @@ const handleBranchSubmit = async () => {
   formData.append("address", branchData.address);
   formData.append("status", branchData.status);
 
-  if (branchData.document) {
-    formData.append("document", branchData.document);
-  }
+  branchData.documents.forEach((file) => {
+    formData.append("documents", file);
+  });
 
 const res = await api.post(
   "/api/principal-employer/branch/create/",
@@ -322,11 +326,12 @@ const res = await api.post(
 
   // Reset form
   setBranchData({
-    state: "",
-    short_name: "",
-    address: "",
-    status: "active",
-    document: null,
+      state: "",
+      short_name: "",
+      address: "",
+      status: "active",
+      documents: [],
+      existingDocuments: [],
   });
 };
   /* =========================
@@ -1519,65 +1524,48 @@ finally {
               />
             </div>
 
-            {/* DOCUMENT */}
-            <div>
-              <Label>Upload Document (Optional)</Label>
+{/* DOCUMENTS */}
+<div>
+  <Label>Upload Documents (Optional)</Label>
 
-              <div className="mt-2 space-y-3">
+  <label className="flex items-center justify-between h-10 w-full px-4 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 bg-white transition">
 
-                {/* EXISTING DOCUMENT */}
-                {branchData.existingDocument && !branchData.document && (
-                  <div className="flex items-center justify-between text-sm bg-white px-4 py-1.5 rounded-lg border">
-                    <a
-                      href={`${API_BASE}${branchData.existingDocument}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      View Current Document
-                    </a>
+    <span className="text-sm text-gray-600 truncate">
+      {branchData.documents.length
+        ? `${branchData.documents.length} file(s) selected`
+        : "Click to upload documents"}
+    </span>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setBranchData({
-                          ...branchData,
-                          existingDocument: null,
-                        })
-                      }
-                      className="text-xs text-red-500 hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
+    <span className="text-xs text-gray-400">
+      PDF, DOC, XLS (Max 3MB)
+    </span>
 
-                {/* UPLOAD BOX */}
-<label className="flex items-center justify-between h-10 w-full px-4 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 bg-white transition">                  <span className="text-sm text-gray-600 truncate">
-                    {branchData.document
-                      ? branchData.document.name
-                      : "Click to upload document"}
-                  </span>
+    <input
+      type="file"
+      multiple
+      className="hidden"
+      onChange={(e) =>
+        setBranchData({
+          ...branchData,
+          documents: Array.from(e.target.files || []),
+        })
+      }
+    />
+  </label>
 
-                  <span className="text-xs text-gray-400">
-                    PDF, DOC, XLS (Max 3MB)
-                  </span>
-
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={(e) =>
-                      setBranchData({
-                        ...branchData,
-                        document: e.target.files?.[0] || null,
-                      })
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-
-          </div>
+  {branchData.documents.length > 0 && (
+    <div className="mt-3 space-y-1">
+      {branchData.documents.map((file, index) => (
+        <div
+          key={index}
+          className="text-sm text-gray-700"
+        >
+          • {file.name}
+        </div>
+      ))}
+    </div>
+  )}
+</div>          </div>
 
           {/* FORM BUTTONS */}
           <div className="flex justify-end gap-4">
@@ -1588,11 +1576,12 @@ finally {
             onClick={() => {
               setEditingBranchId(null);
               setBranchData({
-                state: "",
-                short_name: "",
-                address: "",
-                status: "active",
-                document: null,
+                  state: "",
+                  short_name: "",
+                  address: "",
+                  status: "active",
+                  documents: [],
+                  existingDocuments: [],
               });
             }}
           >
@@ -1812,43 +1801,79 @@ finally {
                       </td>
 
                       <td className="px-5 py-3 text-sm">
-                        {branch.document ? (
-                          <a
-                            href={`${API_BASE}${branch.document}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline"
+                        {branch.documents?.length ? (
+                          <Tooltip
+                            title={
+                              <>
+                              {branch.documents.map((doc, index) => (
+                                <div key={doc.id || index}>
+                                  📄 {doc.file_name || doc.document?.split("/").pop()}
+                                </div>
+                              ))}
+                              </>
+                            }
                           >
-                            View
-                          </a>
+                            <a
+                              href="#"
+                              onClick={async (e) => {
+                                e.preventDefault();
+
+                                const response = await api.get(
+                                  `/api/principal-employer/branch/${branch.id}/download-documents/`,
+                                  {
+                                    responseType: "blob",
+                                  }
+                                );
+
+                                const url = window.URL.createObjectURL(
+                                  new Blob([response.data])
+                                );
+
+                                const link = document.createElement("a");
+
+                                link.href = url;
+                                link.download = `${branch.short_name}_documents.zip`;
+
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+
+                                window.URL.revokeObjectURL(url);
+                              }}
+                              className="text-blue-600 underline cursor-pointer"
+                            >
+                              Show Uploaded Documents ({branch.documents.length})
+                            </a>
+                          </Tooltip>
                         ) : (
                           "—"
                         )}
                       </td>
 
                       <td className="px-5 py-3 text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-9 px-4 text-sm"
-                          onClick={() => {
-                            setEditingBranchId(branch.id);
-                            setBranchData({
-                              state: branch.state,
-                              short_name: branch.short_name,
-                              address: branch.address,
-                              status: branch.status,
-                              document: null,
-                              existingDocument: branch.document || null,
-                            });
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 px-4 text-sm"
+                        onClick={() => {
+                          setEditingBranchId(branch.id);
 
-                            document
-                              .getElementById("branch-form")
-                              ?.scrollIntoView({ behavior: "smooth" });
-                          }}
-                        >
-                          Edit
-                        </Button>
+                          setBranchData({
+                            state: branch.state,
+                            short_name: branch.short_name,
+                            address: branch.address,
+                            status: branch.status,
+                            documents: [],
+                            existingDocuments: branch.documents || [],
+                          });
+
+                          document
+                            .getElementById("branch-form")
+                            ?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                      >
+                        Edit
+                      </Button>
                       </td>
 
                     </tr>

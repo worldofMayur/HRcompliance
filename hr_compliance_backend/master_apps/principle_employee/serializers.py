@@ -3,6 +3,7 @@ from .models import (
     PrincipalEmployer,
     PrincipalEmployerDocument,
     PrincipalEmployerBranch,
+    PrincipalEmployerBranchDocument,
 )
 from .validators import validate_document_file
 
@@ -15,6 +16,23 @@ class PrincipalEmployerDocumentSerializer(serializers.ModelSerializer):
     def validate_document(self, file):
         validate_document_file(file)
         return file
+
+class PrincipalEmployerBranchDocumentSerializer(serializers.ModelSerializer):
+
+    file_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PrincipalEmployerBranchDocument
+        fields = [
+            "id",
+            "document",
+            "file_name",
+            "uploaded_at",
+        ]
+
+    def get_file_name(self, obj):
+        import os
+        return os.path.basename(obj.document.name)
 
 
 class PrincipalEmployerSerializer(serializers.ModelSerializer):
@@ -67,9 +85,38 @@ class PrincipalEmployerSerializer(serializers.ModelSerializer):
 # BRANCH SERIALIZER
 # =========================
 class PrincipalEmployerBranchSerializer(serializers.ModelSerializer):
+
+    documents = PrincipalEmployerBranchDocumentSerializer(
+        many=True,
+        read_only=True
+    )
+
     class Meta:
         model = PrincipalEmployerBranch
         fields = "__all__"
+
+    def validate(self, data):
+        required = [
+            "principal_employer",
+            "state",
+            "short_name",
+            "address"
+        ]
+
+        missing = [
+            field for field in required
+            if not data.get(field)
+        ]
+
+        if missing:
+            raise serializers.ValidationError(
+                {
+                    field: "This field is required"
+                    for field in missing
+                }
+            )
+
+        return data
 
     def validate(self, data):
         required = [
