@@ -1540,17 +1540,35 @@ finally {
       PDF, DOC, XLS (Max 3MB)
     </span>
 
-    <input
-      type="file"
-      multiple
-      className="hidden"
-      onChange={(e) =>
-        setBranchData({
-          ...branchData,
-          documents: Array.from(e.target.files || []),
-        })
-      }
-    />
+<input
+  type="file"
+  multiple
+  className="hidden"
+  onChange={(e) => {
+    const files = Array.from(e.target.files || []);
+
+    setBranchData((prev) => {
+      const existing = [...prev.documents];
+
+      files.forEach((file) => {
+        const alreadyExists = existing.some(
+          (f) => f.name === file.name && f.size === file.size
+        );
+
+        if (!alreadyExists) {
+          existing.push(file);
+        }
+      });
+
+      return {
+        ...prev,
+        documents: existing,
+      };
+    });
+
+    e.target.value = "";
+  }}
+/>
   </label>
 
   {branchData.documents.length > 0 && (
