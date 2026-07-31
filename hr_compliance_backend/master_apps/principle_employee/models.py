@@ -88,6 +88,25 @@ def pe_document_upload_path(instance, filename):
     return f"principle_employee/{pe_short}/{filename}"
 
 
+def branch_document_upload_path(instance, filename):
+    pe_short = (
+        instance.branch.principal_employer.short_name
+        .replace(" ", "_")
+    )
+
+    branch_name = (
+        instance.branch.short_name
+        .replace(" ", "_")
+    )
+
+    return (
+        f"principal_employer_branches/"
+        f"{pe_short}/"
+        f"{branch_name}/"
+        f"{filename}"
+    )
+
+
 # =========================
 # PRINCIPAL EMPLOYER DOCUMENT
 # =========================
@@ -143,3 +162,24 @@ class PrincipalEmployerBranch(models.Model):
 
     def __str__(self):
         return f"{self.short_name} - {self.state}"
+
+
+class PrincipalEmployerBranchDocument(models.Model):
+
+    branch = models.ForeignKey(
+        PrincipalEmployerBranch,
+        on_delete=models.CASCADE,
+        related_name="documents",
+    )
+
+    document = models.FileField(
+        upload_to=branch_document_upload_path,
+        validators=[validate_document_file],
+    )
+
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return os.path.basename(self.document.name)
