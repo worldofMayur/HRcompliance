@@ -27,6 +27,8 @@ from django.db.models import F
 from django.db.models import Sum
 from django.db.models.functions import ExtractYear
 from django.db.models import Q
+from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 
 # =========================
 # KPI
@@ -2435,41 +2437,77 @@ class VendorWiseCCTrendAPIView(APIView):
                 vendor_id__in=vendors
             )
 
-        trend = []
+        from datetime import datetime
+        from dateutil.relativedelta import relativedelta
 
-        audit_periods = (
+
+        # --------------------------
+        # Monthly aggregation
+        # --------------------------
+
+        db_trend = (
             queryset
-            .values_list(
-                "audit_period",
-                flat=True
+            .exclude(cc_issued_at__isnull=True)
+            .annotate(
+                month=TruncMonth("cc_issued_at")
             )
-            .distinct()
+            .values("month")
+            .annotate(
+                ccIssued=Count("id"),
+                exceptionalCC=Count(
+                    "id",
+                    filter=Q(
+                        has_exceptional_approval=True
+                    ),
+                ),
+            )
+            .order_by("month")
         )
 
-        for audit in audit_periods:
+        trend_map = {
+            item["month"].strftime("%b %Y"): {
+                "ccIssued": item["ccIssued"],
+                "exceptionalCC": item["exceptionalCC"],
+            }
+            for item in db_trend
+        }
 
-            cc = queryset.filter(
-                audit_period=audit,
-                is_cc_issued=True,
-            ).count()
+        # --------------------------
+        # Generate last 12 months
+        # --------------------------
 
-            exceptional = queryset.filter(
-                audit_period=audit,
-                is_cc_issued=True,
-                has_exceptional_approval=True,
-            ).count()
+        # ------------------------------------
+        # Generate Jan-Dec for selected year
+        # ------------------------------------
 
-            trend.append({
-                "audit_period": audit,
-                "ccIssued": cc,
-                "exceptionalCC": exceptional,
+        selected_year = int(year) if year else datetime.today().year
+
+        months = []
+
+        for month_no in range(1, 13):
+
+            month = datetime(selected_year, month_no, 1)
+
+            key = month.strftime("%b %Y")
+
+            months.append({
+                "audit_period": key,
+                "ccIssued": trend_map.get(
+                    key,
+                    {}
+                ).get(
+                    "ccIssued",
+                    0,
+                ),
+                "exceptionalCC": trend_map.get(
+                    key,
+                    {}
+                ).get(
+                    "exceptionalCC",
+                    0,
+                ),
             })
 
-        trend = sorted(
-            trend,
-            key=lambda x: x["audit_period"]
-        )
-
         return Response({
-            "trend": trend
+            "trend": months
         })
