@@ -23,6 +23,7 @@ from calendar import month_abbr
 from collections import defaultdict
 from django.db.models.functions import ExtractYear
 from django.db.models import Q
+from django.db.models import F
 
 # =========================
 # KPI
@@ -1578,3 +1579,428 @@ class DocumentWiseAvailableYearsAPIView(APIView):
                 "years": years
             }
         )
+
+
+class ComplianceDashboardFiltersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        )
+
+        # -----------------------------
+        # Selected Filters
+        # -----------------------------
+
+        selected_states = request.GET.getlist("states")
+
+        selected_branches = request.GET.getlist("branches")
+
+        selected_vendors = request.GET.getlist("vendors")
+
+        # -----------------------------
+        # State
+        # -----------------------------
+
+        states = (
+            VendorComplianceSubmission.objects
+            .filter(principal_employer=pe)
+            .values_list(
+                "state",
+                flat=True,
+            )
+            .distinct()
+            .order_by("state")
+        )
+
+        # -----------------------------
+        # Branch
+        # -----------------------------
+
+        if selected_states:
+            queryset = queryset.filter(
+                state__in=selected_states
+            )
+
+        branches = (
+            queryset
+            .values(
+                "branch_id",
+                "branch__short_name",
+            )
+            .distinct()
+            .order_by(
+                "branch__short_name"
+            )
+        )
+
+        # -----------------------------
+        # Vendor
+        # -----------------------------
+
+        if selected_branches:
+            queryset = queryset.filter(
+                branch_id__in=selected_branches
+            )
+
+        vendors = (
+            queryset
+            .values(
+                "vendor_id",
+                "vendor__name",
+            )
+            .distinct()
+            .order_by(
+                "vendor__name"
+            )
+        )
+
+        # -----------------------------
+        # Audit Period
+        # -----------------------------
+
+        if selected_vendors:
+            queryset = queryset.filter(
+                vendor_id__in=selected_vendors
+            )
+
+        audit_periods = (
+            queryset
+            .values_list(
+                "audit_period",
+                flat=True,
+            )
+            .distinct()
+            .order_by(
+                "audit_period"
+            )
+        )
+
+        return Response({
+
+            "states": [
+                {
+                    "id": s,
+                    "name": s,
+                }
+                for s in states
+            ],
+
+            "branches": [
+                {
+                    "id": b["branch_id"],
+                    "name": b["branch__short_name"],
+                }
+                for b in branches
+            ],
+
+            "vendors": [
+                {
+                    "id": v["vendor_id"],
+                    "name": v["vendor__name"],
+                }
+                for v in vendors
+            ],
+
+            "audit_periods": [
+                {
+                    "id": a,
+                    "name": a,
+                }
+                for a in audit_periods
+            ],
+        })
+
+
+class ComplianceDashboardSummaryV2APIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        )
+
+        # ----------------------------------------
+        # Filters
+        # ----------------------------------------
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+        audit_periods = request.GET.getlist("audit_periods")
+
+        if states:
+            queryset = queryset.filter(
+                state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        if audit_periods:
+            queryset = queryset.filter(
+                audit_period__in=audit_periods
+            )
+
+        # ----------------------------------------
+        # Summary Cards
+        # ----------------------------------------
+
+        cc_issued = queryset.filter(
+            is_cc_issued=True
+        ).count()
+
+        exceptional_cc = queryset.filter(
+            has_exceptional_approval=True,
+            is_cc_issued=True,
+        ).count()
+
+        under_audit = queryset.filter(
+            workflow_status__in=[
+                WorkflowStatus.SUBMITTED,
+                WorkflowStatus.UNDER_REVIEW,
+                WorkflowStatus.REUPLOAD_REQUESTED,
+                WorkflowStatus.REUPLOADED,
+            ]
+        ).count()
+
+        document_not_submitted = queryset.filter(
+            workflow_status__in=[
+                WorkflowStatus.DRAFT,
+                WorkflowStatus.SAVED,
+            ]
+        ).count()
+
+        return Response(
+            {
+                "ccIssued": cc_issued,
+                "exceptionalCC": exceptional_cc,
+                "underAudit": under_audit,
+                "documentNotSubmitted": document_not_submitted,
+            }
+        )
+
+
+class ComplianceDashboardMonthlyTrendV2APIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        )
+
+        # -----------------------------
+        # Filters
+        # -----------------------------
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+        audit_periods = request.GET.getlist("audit_periods")
+
+        if states:
+            queryset = queryset.filter(state__in=states)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if audit_periods:
+            queryset = queryset.filter(
+                audit_period__in=audit_periods
+            )
+
+        periods = (
+            queryset.values_list(
+                "audit_period",
+                flat=True,
+            )
+            .distinct()
+            .order_by("-audit_period")[:6]
+        )
+
+        periods = list(periods)[::-1]
+
+        response = []
+
+        for period in periods:
+
+            rows = queryset.filter(
+                audit_period=period
+            )
+
+            response.append({
+                "month": period,
+
+                "ccIssued": rows.filter(
+                    is_cc_issued=True
+                ).count(),
+
+                "exceptionalCC": rows.filter(
+                    has_exceptional_approval=True,
+                    is_cc_issued=True,
+                ).count(),
+
+                "underAudit": rows.filter(
+                    workflow_status__in=[
+                        WorkflowStatus.SUBMITTED,
+                        WorkflowStatus.UNDER_REVIEW,
+                        WorkflowStatus.REUPLOAD_REQUESTED,
+                        WorkflowStatus.REUPLOADED,
+                    ]
+                ).count(),
+
+                "documentNotSubmitted": rows.filter(
+                    workflow_status__in=[
+                        WorkflowStatus.DRAFT,
+                        WorkflowStatus.SAVED,
+                    ]
+                ).count(),
+            })
+
+        return Response(response)
+
+
+class ComplianceDashboardDistributionV2APIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        )
+
+        # ----------------------------------------
+        # Filters
+        # ----------------------------------------
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+        audit_periods = request.GET.getlist("audit_periods")
+
+        if states:
+            queryset = queryset.filter(
+                state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        if audit_periods:
+            queryset = queryset.filter(
+                audit_period__in=audit_periods
+            )
+
+        response = {
+            "ccIssued": queryset.filter(
+                is_cc_issued=True
+            ).count(),
+
+            "exceptionalCC": queryset.filter(
+                has_exceptional_approval=True,
+                is_cc_issued=True,
+            ).count(),
+
+            "underAudit": queryset.filter(
+                workflow_status__in=[
+                    WorkflowStatus.SUBMITTED,
+                    WorkflowStatus.UNDER_REVIEW,
+                    WorkflowStatus.REUPLOAD_REQUESTED,
+                    WorkflowStatus.REUPLOADED,
+                ]
+            ).count(),
+
+            "documentNotSubmitted": queryset.filter(
+                workflow_status__in=[
+                    WorkflowStatus.DRAFT,
+                    WorkflowStatus.SAVED,
+                ]
+            ).count(),
+        }

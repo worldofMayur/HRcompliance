@@ -4,28 +4,32 @@ import ReactApexChart from "react-apexcharts";
 interface TrendItem {
   month: string;
   ccIssued: number;
-  complied: number;
-  nonComplied: number;
+  exceptionalCC: number;
+  underAudit: number;
+  documentNotSubmitted: number;
 }
 
 interface Props {
   data: TrendItem[];
 }
 
-export default function ComplianceMonthlyTrendChart({ data }: Props) {
+export default function ComplianceMonthlyTrendChart({
+  data,
+}: Props) {
   const options: ApexCharts.ApexOptions = {
     chart: {
       type: "bar",
+      height: 360,
       toolbar: {
         show: false,
       },
-      height: 320,
     },
 
     plotOptions: {
       bar: {
-        borderRadius: 5,
+        horizontal: false,
         columnWidth: "55%",
+        borderRadius: 6,
       },
     },
 
@@ -33,10 +37,17 @@ export default function ComplianceMonthlyTrendChart({ data }: Props) {
       enabled: false,
     },
 
+    stroke: {
+      show: true,
+      width: 1,
+      colors: ["transparent"],
+    },
+
     colors: [
       "#1677ff",
-      "#52c41a",
-      "#ff4d4f",
+      "#722ed1",
+      "#fa8c16",
+      "#f5222d",
     ],
 
     xaxis: {
@@ -44,16 +55,21 @@ export default function ComplianceMonthlyTrendChart({ data }: Props) {
       title: {
         text: "Audit Period",
       },
+      labels: {
+        rotate: -30,
+      },
     },
 
     yaxis: {
       title: {
-        text: "Vendor Count",
+        text: "Count",
       },
+      min: 0,
     },
 
     legend: {
       position: "top",
+      horizontalAlign: "center",
     },
 
     tooltip: {
@@ -72,12 +88,16 @@ export default function ComplianceMonthlyTrendChart({ data }: Props) {
       data: data.map((d) => d.ccIssued),
     },
     {
-      name: "Complied",
-      data: data.map((d) => d.complied),
+      name: "Exceptional CC",
+      data: data.map((d) => d.exceptionalCC),
     },
     {
-      name: "Non Complied",
-      data: data.map((d) => d.nonComplied),
+      name: "Under Audit",
+      data: data.map((d) => d.underAudit),
+    },
+    {
+      name: "Document Not Submitted",
+      data: data.map((d) => d.documentNotSubmitted),
     },
   ];
 
@@ -86,7 +106,7 @@ export default function ComplianceMonthlyTrendChart({ data }: Props) {
       options={options}
       series={series}
       type="bar"
-      height={300}
+      height={340}
     />
   );
 }

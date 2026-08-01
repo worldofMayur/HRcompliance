@@ -1,40 +1,32 @@
-import { Card, Typography, Space, Button, Row, Col } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import { Card, Typography, Space, Row, Col, message } from "antd";
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
 import ComplianceSummaryCards from "./components/ComplianceSummaryCards";
 import ComplianceMonthlyTrendChart from "./components/ComplianceMonthlyTrendChart";
-import VendorWiseComplianceChart from "./components/VendorWiseComplianceChart";
 import CompliancePieChart from "./components/CompliancePieChart";
+import MultiSelectCheckbox from "../../../components/MultiSelectCheckbox";
 
 const { Text } = Typography;
 
 interface ComplianceSummary {
   ccIssued: number;
-  underReview: number;
-  reupload: number;
-  exceptional: number;
-  complied: number;
-  nonComplied: number;
+  exceptionalCC: number;
+  underAudit: number;
+  documentNotSubmitted: number;
 }
 
 interface MonthlyTrend {
   month: string;
   ccIssued: number;
-  complied: number;
-  nonComplied: number;
+  exceptionalCC: number;
+  underAudit: number;
+  documentNotSubmitted: number;
 }
 
-interface VendorWiseData {
-  vendor__name: string;
-  vendor__short_name: string;
-  total: number;
-  cc_issued: number;
-  complied: number;
-  non_complied: number;
-  exceptional: number;
-  under_review: number;
+interface DropdownOption {
+  id: string;
+  name: string;
 }
 
 export default function VendorComplianceDashboard() {
@@ -43,35 +35,82 @@ export default function VendorComplianceDashboard() {
 
   const [summary, setSummary] = useState<ComplianceSummary>({
     ccIssued: 0,
-    underReview: 0,
-    reupload: 0,
-    exceptional: 0,
-    complied: 0,
-    nonComplied: 0,
+    exceptionalCC: 0,
+    underAudit: 0,
+    documentNotSubmitted: 0,
   });
 
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
-  const [vendorWise, setVendorWise] = useState<VendorWiseData[]>([]);
   const [distribution, setDistribution] = useState<Record<string, number>>({});
+
+  const [states, setStates] = useState<string[]>([]);
+  const [branches, setBranches] = useState<string[]>([]);
+  const [vendors, setVendors] = useState<string[]>([]);
+  const [auditPeriods, setAuditPeriods] = useState<string[]>([]);
+
+  const [stateOptions, setStateOptions] = useState<DropdownOption[]>([]);
+  const [branchOptions, setBranchOptions] = useState<DropdownOption[]>([]);
+  const [vendorOptions, setVendorOptions] = useState<DropdownOption[]>([]);
+  const [auditPeriodOptions, setAuditPeriodOptions] = useState<DropdownOption[]>([]);
+
+  const loadFilters = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      states.forEach((x) => params.append("states", x));
+      branches.forEach((x) => params.append("branches", x));
+      vendors.forEach((x) => params.append("vendors", x));
+
+      const res = await axios.get(
+        "/api/vendor/dashboard/compliance/filters/",
+        {
+          params,
+        }
+      );
+
+      setStateOptions(res.data.states || []);
+      setBranchOptions(res.data.branches || []);
+      setVendorOptions(res.data.vendors || []);
+      setAuditPeriodOptions(res.data.audit_periods || []);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to load filters.");
+    }
+  };
+
+  useEffect(() => {
+    loadFilters();
+  }, [states, branches, vendors]);
 
   useEffect(() => {
     fetchDashboard();
-  }, []);
+  }, [states, branches, vendors, auditPeriods]);
 
   const fetchDashboard = async () => {
     try {
       setLoading(true);
 
-      const [summaryRes, monthlyTrendRes, vendorRes, distRes] = await Promise.all([
-        axios.get("/api/vendor/dashboard/compliance/summary/"),
-        axios.get("/api/vendor/dashboard/compliance/monthly-trend/"),
-        axios.get("/api/vendor/dashboard/compliance/vendor-wise/"),
-        axios.get("/api/vendor/dashboard/compliance/status-distribution/"),
+      const params = new URLSearchParams();
+
+      states.forEach((x) => params.append("states", x));
+      branches.forEach((x) => params.append("branches", x));
+      vendors.forEach((x) => params.append("vendors", x));
+      auditPeriods.forEach((x) => params.append("audit_periods", x));
+
+      const [summaryRes, monthlyTrendRes, distRes] = await Promise.all([
+        axios.get("/api/vendor/dashboard/compliance/summary-v2/", {
+          params,
+        }),
+        axios.get("/api/vendor/dashboard/compliance/monthly-trend-v2/", {
+          params,
+        }),
+        axios.get("/api/vendor/dashboard/compliance/distribution-v2/", {
+          params,
+        }),
       ]);
 
       setSummary(summaryRes.data);
       setMonthlyTrend(monthlyTrendRes.data);
-      setVendorWise(vendorRes.data);
       setDistribution(distRes.data.distribution || {});
 
       setLastUpdated(new Date());
@@ -84,18 +123,69 @@ export default function VendorComplianceDashboard() {
 
   return (
     <>
-      {/* Refresh Button */}
-      <div className="flex justify-end mb-4">
-        <Button
-          type="primary"
-          icon={<ReloadOutlined />}
-          onClick={fetchDashboard}
-          loading={loading}
-          size="middle"
-        >
-          Refresh Dashboard
-        </Button>
-      </div>
+      {/* Filters */}
+      <Card
+        className="mb-5"
+        title="Dashboard Filters"
+      >
+        <Row gutter={[16, 16]}>
+          <Col xs={24} md={6}>
+            <label className="mb-1 block font-medium">State</label>
+            <MultiSelectCheckbox
+              options={stateOptions}
+              value={states}
+              onChange={(value) => {
+                setStates(value);
+                setBranches([]);
+                setVendors([]);
+                setAuditPeriods([]);
+              }}
+              placeholder="Select State"
+              allLabel="All States"
+            />
+          </Col>
+
+          <Col xs={24} md={6}>
+            <label className="mb-1 block font-medium">Branch</label>
+            <MultiSelectCheckbox
+              options={branchOptions}
+              value={branches}
+              onChange={(value) => {
+                setBranches(value);
+                setVendors([]);
+                setAuditPeriods([]);
+              }}
+              placeholder="Select Branch"
+              allLabel="All Branches"
+            />
+          </Col>
+
+          <Col xs={24} md={6}>
+            <label className="mb-1 block font-medium">Vendor</label>
+            <MultiSelectCheckbox
+              options={vendorOptions}
+              value={vendors}
+              onChange={(value) => {
+                setVendors(value);
+                setAuditPeriods([]);
+              }}
+              placeholder="Select Vendor"
+              allLabel="All Vendors"
+            />
+          </Col>
+
+          <Col xs={24} md={6}>
+            <label className="mb-1 block font-medium">Audit Period</label>
+            <MultiSelectCheckbox
+              options={auditPeriodOptions}
+              value={auditPeriods}
+              onChange={setAuditPeriods}
+              placeholder="Select Audit Period"
+              allLabel="All Audit Periods"
+            />
+          </Col>
+        </Row>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6">
         {/* Summary Cards */}
@@ -149,19 +239,6 @@ export default function VendorComplianceDashboard() {
             </Card>
           </Col>
         </Row>
-
-        {/* Vendor Wise Compliance */}
-        <Card
-          loading={loading}
-          title={
-            <Space>
-              <span>🏢</span>
-              <span>Vendor Wise Compliance</span>
-            </Space>
-          }
-        >
-          <VendorWiseComplianceChart data={vendorWise} />
-        </Card>
       </div>
 
       {/* Footer */}

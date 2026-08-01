@@ -5,16 +5,75 @@ interface Props {
   data: Record<string, number>;
 }
 
-export default function CompliancePieChart({ data }: Props) {
-  const labels = Object.keys(data);
-  const values = Object.values(data);
+export default function CompliancePieChart({
+  data,
+}: Props) {
+  const labels = [
+    "CC Issued",
+    "Exceptional CC",
+    "Under Audit",
+    "Document Not Submitted",
+  ];
+
+  const values = [
+    data.ccIssued ?? 0,
+    data.exceptionalCC ?? 0,
+    data.underAudit ?? 0,
+    data.documentNotSubmitted ?? 0,
+  ];
 
   const options: ApexCharts.ApexOptions = {
-    chart: { type: "pie", height: 350 },
+    chart: {
+      type: "pie",
+      height: 360,
+      toolbar: {
+        show: false,
+      },
+    },
+
     labels,
-    colors: ["#52c41a", "#ff4d4f", "#faad14", "#1677ff", "#eb2f96"],
-    legend: { position: "bottom" },
-    responsive: [{ breakpoint: 480, options: { chart: { width: 300 } } }],
+
+    colors: [
+      "#1677ff",
+      "#722ed1",
+      "#fa8c16",
+      "#f5222d",
+    ],
+
+    legend: {
+      position: "bottom",
+      fontSize: "13px",
+    },
+
+    dataLabels: {
+      enabled: true,
+      formatter: (val: number) => `${val.toFixed(1)}%`,
+    },
+
+    tooltip: {
+      y: {
+        formatter: (value: number) => `${value} Records`,
+      },
+    },
+
+    stroke: {
+      colors: ["#ffffff"],
+      width: 2,
+    },
+
+    responsive: [
+      {
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 300,
+          },
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    ],
   };
 
   return (
@@ -22,7 +81,7 @@ export default function CompliancePieChart({ data }: Props) {
       options={options}
       series={values}
       type="pie"
-      height={320}
+      height={340}
     />
   );
 }

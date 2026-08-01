@@ -1,87 +1,94 @@
-import { Card, Col, Row, Statistic } from "antd";
+import {
+  Card,
+  Col,
+  Row,
+  Statistic,
+} from "antd";
+
+import {
+  CheckCircleOutlined,
+  SafetyCertificateOutlined,
+  ClockCircleOutlined,
+  FileExclamationOutlined,
+} from "@ant-design/icons";
 
 interface Props {
   data?: {
     ccIssued: number;
-    underReview: number;
-    reupload: number;
-    exceptional: number;
-    complied: number;
-    nonComplied: number;
+    exceptionalCC: number;
+    underAudit: number;
+    documentNotSubmitted: number;
   };
 }
 
-export default function ComplianceSummaryCards({ data }: Props) {
+export default function ComplianceSummaryCards({
+  data,
+}: Props) {
   const summary = data || {
     ccIssued: 0,
-    underReview: 0,
-    reupload: 0,
-    exceptional: 0,
-    complied: 0,
-    nonComplied: 0,
+    exceptionalCC: 0,
+    underAudit: 0,
+    documentNotSubmitted: 0,
   };
 
+  const cards = [
+    {
+      title: "CC Issued",
+      value: summary.ccIssued,
+      color: "#1677ff",
+      icon: <CheckCircleOutlined />,
+    },
+    {
+      title: "Exceptional CC Issued",
+      value: summary.exceptionalCC,
+      color: "#722ed1",
+      icon: <SafetyCertificateOutlined />,
+    },
+    {
+      title: "Under Audit",
+      value: summary.underAudit,
+      color: "#fa8c16",
+      icon: <ClockCircleOutlined />,
+    },
+    {
+      title: "Document Not Submitted",
+      value: summary.documentNotSubmitted,
+      color: "#f5222d",
+      icon: <FileExclamationOutlined />,
+    },
+  ];
+
   return (
-    <Row gutter={[8, 8]}>
-      <Col span={4}>
-        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-          <Statistic
-            title="CC Issued"
-            value={summary.ccIssued}
-            valueStyle={{ fontSize: 20, fontWeight: 600 }}
-          />
-        </Card>
-      </Col>
-
-      <Col span={4}>
-        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-          <Statistic
-            title="Under Review"
-            value={summary.underReview}
-            valueStyle={{ fontSize: 20, fontWeight: 600 }}
-          />
-        </Card>
-      </Col>
-
-      <Col span={4}>
-        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-          <Statistic
-            title="Reupload"
-            value={summary.reupload}
-            valueStyle={{ fontSize: 20, fontWeight: 600 }}
-          />
-        </Card>
-      </Col>
-
-      <Col span={4}>
-        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-          <Statistic
-            title="Exceptional"
-            value={summary.exceptional}
-            valueStyle={{ fontSize: 20, fontWeight: 600 }}
-          />
-        </Card>
-      </Col>
-
-      <Col span={4}>
-        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-          <Statistic
-            title="Complied"
-            value={summary.complied}
-            valueStyle={{ fontSize: 20, fontWeight: 600 }}
-          />
-        </Card>
-      </Col>
-
-      <Col span={4}>
-        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-          <Statistic
-            title="Non Complied"
-            value={summary.nonComplied}
-            valueStyle={{ fontSize: 20, fontWeight: 600 }}
-          />
-        </Card>
-      </Col>
+    <Row gutter={[16, 16]}>
+      {cards.map((card) => (
+        <Col
+          xs={24}
+          sm={12}
+          xl={6}
+          key={card.title}
+        >
+          <Card
+            hoverable
+            size="small"
+            styles={{
+              body: {
+                padding: 18,
+              },
+            }}
+          >
+            <Statistic
+              title={card.title}
+              value={card.value}
+              prefix={card.icon}
+              valueStyle={{
+                color: card.color,
+                fontSize: 28,
+                fontWeight: 700,
+              }}
+            />
+          </Card>
+        </Col>
+      ))}
     </Row>
   );
 }

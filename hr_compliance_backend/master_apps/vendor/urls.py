@@ -46,6 +46,10 @@ from .dashboard_views import (
     DocumentWiseRemittanceTrendAPIView,
     DocumentWiseComplianceTrendAPIView,
     DocumentWiseAvailableYearsAPIView,
+    ComplianceDashboardFiltersAPIView,
+    ComplianceDashboardSummaryV2APIView,
+    ComplianceDashboardMonthlyTrendV2APIView,
+    ComplianceDashboardDistributionV2APIView,
 
 )
 
@@ -149,6 +153,29 @@ urlpatterns = [
     path(
         "dashboard/compliance/monthly-trend/",
         ComplianceDashboardMonthlyTrendAPIView.as_view(),
+    ),
+    # ==========================================
+    # Compliance Dashboard V2
+    # ==========================================
+
+    path(
+        "dashboard/compliance/filters/",
+        ComplianceDashboardFiltersAPIView.as_view(),
+    ),
+
+    path(
+        "dashboard/compliance/summary-v2/",
+        ComplianceDashboardSummaryV2APIView.as_view(),
+    ),
+
+    path(
+        "dashboard/compliance/monthly-trend-v2/",
+        ComplianceDashboardMonthlyTrendV2APIView.as_view(),
+    ),
+
+    path(
+        "dashboard/compliance/distribution-v2/",
+        ComplianceDashboardDistributionV2APIView.as_view(),
     ),
     path(
         "dashboard/document-reference/",
