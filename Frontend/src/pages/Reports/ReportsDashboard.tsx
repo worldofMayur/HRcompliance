@@ -19,12 +19,20 @@ export default function ReportsDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Centered Page Title */}
+      <div className="text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          Reports & Dashboards
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Live analytics and report generation
+        </p>
+      </div>
 
       {/* Main Layout */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ================= LEFT: Live Dashboard ================= */}
         <div className="relative min-w-0">
-
           <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm dark:border-blue-900/50 dark:bg-gray-900">
             {selectedReport === "branch" && <BranchVendorDashboard />}
             {selectedReport === "compliance" && <VendorComplianceDashboard />}
