@@ -2075,11 +2075,17 @@ class ComplianceDashboardGenderDistributionAPIView(APIView):
                 audit_period__in=audit_periods
             )
 
-        male = queryset.aggregate(
+        from master_apps.vendor.compliance_models import VendorCompliancePayroll
+
+        male = VendorCompliancePayroll.objects.filter(
+            submission__in=queryset
+        ).aggregate(
             total=Sum("male_employees")
         )["total"] or 0
 
-        female = queryset.aggregate(
+        female = VendorCompliancePayroll.objects.filter(
+            submission__in=queryset
+        ).aggregate(
             total=Sum("female_employees")
         )["total"] or 0
 
