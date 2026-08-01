@@ -81,11 +81,6 @@ export default function DocumentWiseComplianceDashboard() {
   return (
     <div className="space-y-4">
 
-      {/* KPI Cards */}
-      <DocumentWiseSummaryCards
-        data={chartData}
-      />
-
       {/* Chart */}
       <div className="rounded-xl border bg-white p-4 shadow-sm">
 
