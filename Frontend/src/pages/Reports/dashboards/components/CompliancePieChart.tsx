@@ -22,10 +22,12 @@ export default function CompliancePieChart({
     data.documentNotSubmitted ?? 0,
   ];
 
+  const total = values.reduce((sum, value) => sum + value, 0);
+
   const options: ApexCharts.ApexOptions = {
     chart: {
-      type: "pie",
-      height: 360,
+      type: "donut",
+      height: 420,
       toolbar: {
         show: false,
       },
@@ -40,25 +42,85 @@ export default function CompliancePieChart({
       "#f5222d",
     ],
 
+    plotOptions: {
+      pie: {
+        expandOnClick: true,
+        donut: {
+          size: "68%",
+
+          labels: {
+            show: true,
+
+            name: {
+              show: true,
+              fontSize: "16px",
+              fontWeight: 600,
+            },
+
+            value: {
+              show: true,
+              fontSize: "24px",
+              fontWeight: 700,
+            },
+
+            total: {
+              show: true,
+              showAlways: true,
+              label: "Total",
+
+              formatter: () => {
+                return total.toString();
+              },
+            },
+          },
+        },
+      },
+    },
+
     legend: {
       position: "bottom",
-      fontSize: "13px",
+      fontSize: "14px",
+      fontWeight: 600,
+      itemMargin: {
+        horizontal: 14,
+        vertical: 8,
+      },
+      markers: {
+        width: 12,
+        height: 12,
+        radius: 12,
+      },
     },
 
     dataLabels: {
       enabled: true,
-      formatter: (val: number) => `${val.toFixed(1)}%`,
-    },
 
-    tooltip: {
-      y: {
-        formatter: (value: number) => `${value} Records`,
+      formatter: (val: number) => {
+        if (val < 5) return "";
+
+        return `${val.toFixed(1)}%`;
+      },
+
+      style: {
+        fontSize: "14px",
+        fontWeight: "bold",
+        colors: ["#fff"],
+      },
+
+      dropShadow: {
+        enabled: false,
       },
     },
 
     stroke: {
-      colors: ["#ffffff"],
-      width: 2,
+      colors: ["#fff"],
+      width: 3,
+    },
+
+    tooltip: {
+      y: {
+        formatter: (value: number) => `${value} Vendors`,
+      },
     },
 
     responsive: [
@@ -66,10 +128,12 @@ export default function CompliancePieChart({
         breakpoint: 768,
         options: {
           chart: {
-            height: 300,
+            height: 340,
           },
+
           legend: {
             position: "bottom",
+            fontSize: "12px",
           },
         },
       },
@@ -80,8 +144,8 @@ export default function CompliancePieChart({
     <ReactApexChart
       options={options}
       series={values}
-      type="pie"
-      height={340}
+      type="donut"
+      height={400}
     />
   );
 }
