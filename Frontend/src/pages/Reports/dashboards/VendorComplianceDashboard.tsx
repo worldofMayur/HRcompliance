@@ -8,6 +8,7 @@ import ComplianceMonthlyTrendChart from "./components/ComplianceMonthlyTrendChar
 import CompliancePieChart from "./components/CompliancePieChart";
 import GenderDistributionChart from "./components/GenderDistributionChart";
 import MultiSelectCheckbox from "../../../components/MultiSelectCheckbox";
+import VendorWiseCCTrendChart from "./components/VendorWiseCCTrendChart";
 
 const { Text } = Typography;
 
@@ -81,6 +82,26 @@ export default function VendorComplianceDashboard() {
     useState<DropdownOption[]>([]);
   const [natureServiceOptions, setNatureServiceOptions] =
     useState<DropdownOption[]>([]);
+
+  const currentYear = new Date().getFullYear();
+
+  const [ccYear, setCcYear] = useState(currentYear);
+  const [ccYears, setCcYears] = useState<number[]>([]);
+
+  const [ccStates, setCcStates] = useState<string[]>([]);
+  const [ccBranches, setCcBranches] = useState<string[]>([]);
+  const [ccVendors, setCcVendors] = useState<string[]>([]);
+
+  const [ccStateOptions, setCcStateOptions] =
+    useState<DropdownOption[]>([]);
+
+  const [ccBranchOptions, setCcBranchOptions] =
+    useState<DropdownOption[]>([]);
+
+  const [ccVendorOptions, setCcVendorOptions] =
+    useState<DropdownOption[]>([]);
+
+  const [ccTrend, setCcTrend] = useState<any[]>([]);
 
   const loadFilters = async () => {
     try {
@@ -157,6 +178,23 @@ export default function VendorComplianceDashboard() {
   ]);
 
   useEffect(() => {
+  loadCCYears();
+}, []);
+
+useEffect(() => {
+  loadCCFilters();
+}, [ccStates, ccBranches]);
+
+useEffect(() => {
+  fetchCCTrend();
+}, [
+  ccYear,
+  ccStates,
+  ccBranches,
+  ccVendors,
+]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       fetchDashboard();
     }, 5 * 60 * 1000);
@@ -223,6 +261,76 @@ export default function VendorComplianceDashboard() {
       console.error("Gender Filters:", err);
     }
   };
+
+  const loadCCYears = async () => {
+  try {
+    const res = await axios.get(
+      "/api/vendor/dashboard/vendor-wise-cc-years/"
+    );
+
+    setCcYears(res.data.years || []);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const loadCCFilters = async () => {
+
+  try {
+
+    const params = new URLSearchParams();
+
+    ccStates.forEach(x => params.append("states", x));
+    ccBranches.forEach(x => params.append("branches", x));
+
+    const res = await axios.get(
+      "/api/vendor/dashboard/vendor-wise-cc-filters/",
+      {
+        params,
+      }
+    );
+
+    setCcStateOptions(res.data.states || []);
+    setCcBranchOptions(res.data.branches || []);
+    setCcVendorOptions(res.data.vendors || []);
+
+  } catch (err) {
+
+    console.error(err);
+
+  }
+
+};
+
+
+const fetchCCTrend = async () => {
+
+  try {
+
+    const params = new URLSearchParams();
+
+    params.append("year", String(ccYear));
+
+    ccStates.forEach(x => params.append("states", x));
+    ccBranches.forEach(x => params.append("branches", x));
+    ccVendors.forEach(x => params.append("vendors", x));
+
+    const res = await axios.get(
+      "/api/vendor/dashboard/vendor-wise-cc-trend/",
+      {
+        params,
+      }
+    );
+
+    setCcTrend(res.data.trend || []);
+
+  } catch (err) {
+
+    console.error(err);
+
+  }
+
+};
 
   return (
     <>
@@ -441,13 +549,91 @@ export default function VendorComplianceDashboard() {
         </Col>
           {/* RIGHT CARD */}
           <Col xs={24} xl={12}>
-            <Card
-              title="New Dashboard"
-              loading={loading}
-              style={{ height: "100%" }}
-            >
-              {/* Next dashboard */}
-            </Card>
+<Card
+  title="Vendor Wise CC Trend"
+  loading={loading}
+  style={{ height: "100%" }}
+>
+  <Row gutter={[16, 16]}>
+
+    <Col xs={24} md={6}>
+      <label className="mb-1 block font-medium">
+        State
+      </label>
+
+      <MultiSelectCheckbox
+        options={ccStateOptions}
+        value={ccStates}
+        onChange={(value) => {
+          setCcStates(value);
+          setCcBranches([]);
+          setCcVendors([]);
+        }}
+        placeholder="Select State"
+        allLabel="All States"
+      />
+    </Col>
+
+    <Col xs={24} md={6}>
+      <label className="mb-1 block font-medium">
+        Branch
+      </label>
+
+      <MultiSelectCheckbox
+        options={ccBranchOptions}
+        value={ccBranches}
+        onChange={(value) => {
+          setCcBranches(value);
+          setCcVendors([]);
+        }}
+        placeholder="Select Branch"
+        allLabel="All Branches"
+      />
+    </Col>
+
+    <Col xs={24} md={6}>
+      <label className="mb-1 block font-medium">
+        Vendor
+      </label>
+
+      <MultiSelectCheckbox
+        options={ccVendorOptions}
+        value={ccVendors}
+        onChange={setCcVendors}
+        placeholder="Select Vendor"
+        allLabel="All Vendors"
+      />
+    </Col>
+
+    <Col xs={24} md={6}>
+      <label className="mb-1 block font-medium">
+        Year
+      </label>
+
+      <select
+        className="w-full rounded-md border px-3 py-2"
+        value={ccYear}
+        onChange={(e) => setCcYear(Number(e.target.value))}
+      >
+        {ccYears.map((year) => (
+          <option
+            key={year}
+            value={year}
+          >
+            {year}
+          </option>
+        ))}
+      </select>
+    </Col>
+
+  </Row>
+
+  <div className="mt-6">
+    <VendorWiseCCTrendChart
+      data={ccTrend}
+    />
+  </div>
+</Card>
           </Col>
         </Row>
       </div>

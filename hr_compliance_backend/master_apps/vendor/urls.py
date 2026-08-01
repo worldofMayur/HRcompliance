@@ -52,6 +52,9 @@ from .dashboard_views import (
     ComplianceDashboardDistributionV2APIView,
     ComplianceDashboardGenderDistributionAPIView,
     ComplianceDashboardGenderFiltersAPIView,
+    VendorWiseCCTrendYearsAPIView,
+    VendorWiseCCTrendFiltersAPIView,
+    VendorWiseCCTrendAPIView,
 
 )
 
@@ -182,6 +185,20 @@ urlpatterns = [
     path(
         "dashboard/compliance/gender-filters/",
         ComplianceDashboardGenderFiltersAPIView.as_view(),
+    ),
+    path(
+        "dashboard/vendor-wise-cc-years/",
+        VendorWiseCCTrendYearsAPIView.as_view(),
+    ),
+
+    path(
+        "dashboard/vendor-wise-cc-filters/",
+        VendorWiseCCTrendFiltersAPIView.as_view(),
+    ),
+
+    path(
+        "dashboard/vendor-wise-cc-trend/",
+        VendorWiseCCTrendAPIView.as_view(),
     ),
 
     path(

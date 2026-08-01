@@ -25,6 +25,8 @@ from django.db.models.functions import ExtractYear
 from django.db.models import Q
 from django.db.models import F
 from django.db.models import Sum
+from django.db.models.functions import ExtractYear
+from django.db.models import Q
 
 # =========================
 # KPI
@@ -2231,4 +2233,242 @@ class ComplianceDashboardGenderFiltersAPIView(APIView):
                 }
                 for x in audit_periods_data
             ],
+        })
+
+
+
+class VendorWiseCCTrendYearsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = (
+            VendorComplianceSubmission.objects.filter(
+                principal_employer=pe,
+                is_cc_issued=True,
+                cc_issued_at__isnull=False,
+            )
+            .annotate(
+                year=ExtractYear("cc_issued_at")
+            )
+            .values_list(
+                "year",
+                flat=True,
+            )
+            .distinct()
+            .order_by("-year")
+        )
+
+        return Response({
+            "years": list(queryset)
+        })
+
+
+class VendorWiseCCTrendFiltersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            is_cc_issued=True,
+        )
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+
+        if states:
+            queryset = queryset.filter(
+                state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        state_data = (
+            queryset.values_list(
+                "state",
+                flat=True,
+            )
+            .distinct()
+            .order_by("state")
+        )
+
+        branch_data = (
+            queryset.values(
+                "branch_id",
+                "branch__short_name",
+            )
+            .distinct()
+            .order_by("branch__short_name")
+        )
+
+        vendor_data = (
+            queryset.values(
+                "vendor_id",
+                "vendor__name",
+            )
+            .distinct()
+            .order_by("vendor__name")
+        )
+
+        return Response({
+
+            "states": [
+                {
+                    "id": s,
+                    "name": s,
+                }
+                for s in state_data
+            ],
+
+            "branches": [
+                {
+                    "id": str(b["branch_id"]),
+                    "name": b["branch__short_name"],
+                }
+                for b in branch_data
+            ],
+
+            "vendors": [
+                {
+                    "id": str(v["vendor_id"]),
+                    "name": v["vendor__name"],
+                }
+                for v in vendor_data
+            ],
+
+        })
+
+
+class VendorWiseCCTrendAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            is_cc_issued=True,
+        )
+
+        # -----------------------------
+        # Filters
+        # -----------------------------
+
+        year = request.GET.get("year")
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+
+        if year:
+            queryset = queryset.filter(
+                created_at__year=year
+            )
+
+        if states:
+            queryset = queryset.filter(
+                state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        trend = []
+
+        audit_periods = (
+            queryset
+            .values_list(
+                "audit_period",
+                flat=True
+            )
+            .distinct()
+        )
+
+        for audit in audit_periods:
+
+            cc = queryset.filter(
+                audit_period=audit,
+                is_cc_issued=True,
+            ).count()
+
+            exceptional = queryset.filter(
+                audit_period=audit,
+                is_cc_issued=True,
+                has_exceptional_approval=True,
+            ).count()
+
+            trend.append({
+                "audit_period": audit,
+                "ccIssued": cc,
+                "exceptionalCC": exceptional,
+            })
+
+        trend = sorted(
+            trend,
+            key=lambda x: x["audit_period"]
+        )
+
+        return Response({
+            "trend": trend
         })
