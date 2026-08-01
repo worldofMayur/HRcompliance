@@ -1,4 +1,5 @@
 import { Card, Typography, Space, Row, Col, message } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
 
@@ -193,9 +194,77 @@ export default function VendorComplianceDashboard() {
             />
           </Col>
         </Row>
-      </Card>
+</Card>
 
-      <div className="grid grid-cols-1 gap-6">
+{/* Live Dashboard */}
+
+<div className="mb-5 flex items-center justify-between border-b border-gray-100 pb-4">
+
+  <div>
+
+    <h3 className="text-lg font-semibold text-gray-900">
+      Live Dashboard
+    </h3>
+
+    <p className="mt-1 text-sm text-gray-500">
+      Compliance statistics update automatically.
+    </p>
+
+  </div>
+
+  <div className="flex flex-col items-end">
+
+    {loading ? (
+
+      <div
+        className="
+          flex items-center gap-2
+          rounded-full
+          bg-blue-50
+          px-3 py-1.5
+          text-xs font-medium
+          text-blue-700
+        "
+      >
+
+        <ReloadOutlined spin />
+
+        Refreshing...
+
+      </div>
+
+    ) : (
+
+      <div className="flex items-center gap-2 text-xs text-green-600">
+
+        <span className="h-2 w-2 rounded-full bg-green-500" />
+
+        Live Dashboard
+
+      </div>
+
+    )}
+
+    <span className="mt-1 text-[11px] text-gray-400">
+      Auto refresh every 5 mins
+    </span>
+
+    <span className="text-[11px] text-gray-400">
+      Updated{" "}
+      {lastUpdated.toLocaleString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </span>
+
+  </div>
+
+</div>
+
+<div className="grid grid-cols-1 gap-6">
         {/* Summary Cards */}
         <Card
           loading={loading}
@@ -246,42 +315,7 @@ export default function VendorComplianceDashboard() {
               <CompliancePieChart data={distribution} />
             </Card>
 
-            <div className="mb-5 flex items-center justify-between rounded-lg border bg-white px-5 py-3 shadow-sm">
-              <div className="flex items-center gap-3">
-                <span className="relative flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
-                </span>
-
-                <Text strong className="text-green-700">
-                  Live Dashboard
-                </Text>
-
-                <Text type="secondary">
-                  <div className="flex items-center gap-2">
-                    {loading && (
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-                    )}
-
-                    <Text type="secondary">
-                      Auto Refresh every 5 minutes
-                    </Text>
-                  </div>
-                </Text>
-              </div>
-
-              <Text type="secondary">
-                Last Updated :
-                {" "}
-                {lastUpdated.toLocaleString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </div>
+            
           </Col>
         </Row>
       </div>
