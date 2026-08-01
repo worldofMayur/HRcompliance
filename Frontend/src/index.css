@@ -129,6 +129,31 @@ input[type="number"]{
     -moz-appearance:textfield;
 }
 
+.apexcharts-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.apexcharts-tooltip-title {
+  display: none !important;
+}
+
+.apexcharts-datalabel {
+  font-weight: 700 !important;
+  fill: #fff !important;
+}
+
+.apexcharts-pie-area {
+  transition: all .25s ease;
+}
+
+.apexcharts-pie-series path:hover {
+  filter: brightness(1.08);
+  cursor: pointer;
+}
+
 .audit-table-highlighted .ant-table-tbody > tr > td {
   vertical-align: top;
   padding-top: 10px !important;
