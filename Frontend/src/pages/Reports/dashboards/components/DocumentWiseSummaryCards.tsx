@@ -1,128 +1,89 @@
 import {
-  CalendarOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
   FileDoneOutlined,
+  EyeOutlined,
+  UploadOutlined,
+  StarOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 
-interface TrendData {
-  month: string;
-  pf: number;
-  esic: number;
-  pf_before_15: number;
-  pf_after_15: number;
-  esic_before_15: number;
-  esic_after_15: number;
-}
-
 interface Props {
-  data: TrendData[];
+  data?: {
+    ccIssued: number;
+    underReview: number;
+    reupload: number;
+    exceptional: number;
+    complied: number;
+    nonComplied: number;
+  };
 }
 
-export default function DocumentWiseSummaryCards({
-  data,
-}: Props) {
-
-  const totalPFBefore15 = data.reduce(
-    (sum, item) => sum + item.pf_before_15,
-    0
-  );
-
-  const totalPFAfter15 = data.reduce(
-    (sum, item) => sum + item.pf_after_15,
-    0
-  );
-
-  const totalESICBefore15 = data.reduce(
-    (sum, item) => sum + item.esic_before_15,
-    0
-  );
-
-  const totalESICAfter15 = data.reduce(
-    (sum, item) => sum + item.esic_after_15,
-    0
-  );
-
-  const avgPF =
-    data.filter((x) => x.pf > 0).length > 0
-      ? (
-          data.reduce((sum, item) => sum + item.pf, 0) /
-          data.filter((x) => x.pf > 0).length
-        ).toFixed(1)
-      : "0";
-
-  const avgESIC =
-    data.filter((x) => x.esic > 0).length > 0
-      ? (
-          data.reduce((sum, item) => sum + item.esic, 0) /
-          data.filter((x) => x.esic > 0).length
-        ).toFixed(1)
-      : "0";
+export default function ComplianceSummaryCards({ data }: Props) {
+  const summary = data || {
+    ccIssued: 0,
+    underReview: 0,
+    reupload: 0,
+    exceptional: 0,
+    complied: 0,
+    nonComplied: 0,
+  };
 
   const cards = [
     {
-      title: "Average PF Day",
-      value: avgPF,
-      icon: <CalendarOutlined className="text-lg text-blue-600" />,
-      bg: "bg-blue-50 border-blue-100",
+      title: "CC ISSUED",
+      value: summary.ccIssued,
+      bg: "bg-blue-50",
+      icon: <FileDoneOutlined className="text-blue-500 text-sm" />,
     },
     {
-      title: "Average ESIC Day",
-      value: avgESIC,
-      icon: <FileDoneOutlined className="text-lg text-green-600" />,
-      bg: "bg-green-50 border-green-100",
+      title: "UNDER REVIEW",
+      value: summary.underReview,
+      bg: "bg-cyan-50",
+      icon: <EyeOutlined className="text-cyan-500 text-sm" />,
     },
     {
-      title: "PF Before 15th",
-      value: totalPFBefore15,
-      icon: <CheckCircleOutlined className="text-lg text-emerald-600" />,
-      bg: "bg-emerald-50 border-emerald-100",
+      title: "REUPLOAD",
+      value: summary.reupload,
+      bg: "bg-orange-50",
+      icon: <UploadOutlined className="text-orange-500 text-sm" />,
     },
     {
-      title: "PF After 15th",
-      value: totalPFAfter15,
-      icon: <ClockCircleOutlined className="text-lg text-orange-600" />,
-      bg: "bg-orange-50 border-orange-100",
+      title: "EXCEPTIONAL",
+      value: summary.exceptional,
+      bg: "bg-purple-50",
+      icon: <StarOutlined className="text-purple-500 text-sm" />,
     },
     {
-      title: "ESIC Before 15th",
-      value: totalESICBefore15,
-      icon: <CheckCircleOutlined className="text-lg text-cyan-600" />,
-      bg: "bg-cyan-50 border-cyan-100",
+      title: "COMPLIED",
+      value: summary.complied,
+      bg: "bg-emerald-50",
+      icon: <CheckCircleOutlined className="text-emerald-500 text-sm" />,
     },
     {
-      title: "ESIC After 15th",
-      value: totalESICAfter15,
-      icon: <ClockCircleOutlined className="text-lg text-red-600" />,
-      bg: "bg-red-50 border-red-100",
+      title: "NON COMPLIED",
+      value: summary.nonComplied,
+      bg: "bg-rose-50",
+      icon: <CloseCircleOutlined className="text-rose-500 text-sm" />,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
+    <div className="grid grid-cols-6 gap-3">
       {cards.map((card) => (
         <div
           key={card.title}
-          className={`rounded-lg border ${card.bg} px-4 py-3 shadow-sm transition duration-200 hover:shadow-md`}
+          className={`relative rounded-xl ${card.bg} px-3 py-2.5`}
         >
-          <div className="flex items-center justify-between">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+            {card.title}
+          </div>
 
-            <div>
+          <div className="mt-1 text-xl font-semibold text-gray-900">
+            {card.value}
+          </div>
 
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                {card.title}
-              </p>
-
-              <h2 className="mt-1 text-2xl font-bold text-gray-900">
-                {card.value}
-              </h2>
-
-            </div>
-
-            <div className="rounded-full bg-white p-2 shadow-sm">
-              {card.icon}
-            </div>
-
+          <div className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm">
+            {card.icon}
           </div>
         </div>
       ))}
