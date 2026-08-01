@@ -22,40 +22,64 @@ export default function ComplianceSummaryCards({ data }: Props) {
   };
 
   return (
-    <Row gutter={[16, 16]}>
-      <Col span={8}>
-        <Card>
-          <Statistic title="CC Issued" value={summary.ccIssued} />
+    <Row gutter={[8, 8]}>
+      <Col span={4}>
+        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
+          <Statistic
+            title="CC Issued"
+            value={summary.ccIssued}
+            valueStyle={{ fontSize: 20, fontWeight: 600 }}
+          />
         </Card>
       </Col>
 
-      <Col span={8}>
-        <Card>
-          <Statistic title="Under Review" value={summary.underReview} />
+      <Col span={4}>
+        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
+          <Statistic
+            title="Under Review"
+            value={summary.underReview}
+            valueStyle={{ fontSize: 20, fontWeight: 600 }}
+          />
         </Card>
       </Col>
 
-      <Col span={8}>
-        <Card>
-          <Statistic title="Reupload" value={summary.reupload} />
+      <Col span={4}>
+        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
+          <Statistic
+            title="Reupload"
+            value={summary.reupload}
+            valueStyle={{ fontSize: 20, fontWeight: 600 }}
+          />
         </Card>
       </Col>
 
-      <Col span={8}>
-        <Card>
-          <Statistic title="Exceptional" value={summary.exceptional} />
+      <Col span={4}>
+        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
+          <Statistic
+            title="Exceptional"
+            value={summary.exceptional}
+            valueStyle={{ fontSize: 20, fontWeight: 600 }}
+          />
         </Card>
       </Col>
 
-      <Col span={8}>
-        <Card>
-          <Statistic title="Complied" value={summary.complied} />
+      <Col span={4}>
+        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
+          <Statistic
+            title="Complied"
+            value={summary.complied}
+            valueStyle={{ fontSize: 20, fontWeight: 600 }}
+          />
         </Card>
       </Col>
 
-      <Col span={8}>
-        <Card>
-          <Statistic title="Non Complied" value={summary.nonComplied} />
+      <Col span={4}>
+        <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
+          <Statistic
+            title="Non Complied"
+            value={summary.nonComplied}
+            valueStyle={{ fontSize: 20, fontWeight: 600 }}
+          />
         </Card>
       </Col>
     </Row>
