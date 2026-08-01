@@ -24,6 +24,7 @@ from collections import defaultdict
 from django.db.models.functions import ExtractYear
 from django.db.models import Q
 from django.db.models import F
+from django.db.models import Sum
 
 # =========================
 # KPI
@@ -2007,4 +2008,185 @@ class ComplianceDashboardDistributionV2APIView(APIView):
 
         return Response({
             "distribution": response
+        })
+
+
+class ComplianceDashboardGenderDistributionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            is_cc_issued=True,
+        )
+
+        # -----------------------------
+        # Filters
+        # -----------------------------
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+        services = request.GET.getlist("services")
+
+        if states:
+            queryset = queryset.filter(state__in=states)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if services:
+            queryset = queryset.filter(
+                vendor__nature_of_services__in=services
+            )
+
+        male = queryset.aggregate(
+            total=Sum("male_employees")
+        )["total"] or 0
+
+        female = queryset.aggregate(
+            total=Sum("female_employees")
+        )["total"] or 0
+
+        return Response({
+            "male": male,
+            "female": female,
+        })
+
+
+class ComplianceDashboardGenderFiltersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe,
+            is_cc_issued=True,
+        )
+
+        # -----------------------------
+        # Current Selections
+        # -----------------------------
+
+        states = request.GET.getlist("states")
+        branches = request.GET.getlist("branches")
+        vendors = request.GET.getlist("vendors")
+
+        if states:
+            queryset = queryset.filter(
+                state__in=states
+            )
+
+        if branches:
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        states_data = (
+            queryset.values_list(
+                "state",
+                flat=True,
+            )
+            .distinct()
+            .order_by("state")
+        )
+
+        branches_data = (
+            queryset.values(
+                "branch__id",
+                "branch__branch_name",
+            )
+            .distinct()
+            .order_by("branch__branch_name")
+        )
+
+        vendors_data = (
+            queryset.values(
+                "vendor__id",
+                "vendor__name",
+            )
+            .distinct()
+            .order_by("vendor__name")
+        )
+
+        services_data = (
+            queryset.values_list(
+                "vendor__nature_of_services",
+                flat=True,
+            )
+            .distinct()
+            .order_by("vendor__nature_of_services")
+        )
+
+        return Response({
+
+            "states": [
+                {
+                    "id": x,
+                    "name": x,
+                }
+                for x in states_data
+            ],
+
+            "branches": [
+                {
+                    "id": x["branch__id"],
+                    "name": x["branch__branch_name"],
+                }
+                for x in branches_data
+            ],
+
+            "vendors": [
+                {
+                    "id": x["vendor__id"],
+                    "name": x["vendor__name"],
+                }
+                for x in vendors_data
+            ],
+
+            "services": [
+                {
+                    "id": x,
+                    "name": x,
+                }
+                for x in services_data
+            ],
         })

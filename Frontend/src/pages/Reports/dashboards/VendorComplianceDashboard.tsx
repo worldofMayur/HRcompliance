@@ -6,6 +6,7 @@ import axios from "../../../utils/api";
 import ComplianceSummaryCards from "./components/ComplianceSummaryCards";
 import ComplianceMonthlyTrendChart from "./components/ComplianceMonthlyTrendChart";
 import CompliancePieChart from "./components/CompliancePieChart";
+import GenderDistributionChart from "./components/GenderDistributionChart";
 import MultiSelectCheckbox from "../../../components/MultiSelectCheckbox";
 
 const { Text } = Typography;
@@ -28,6 +29,11 @@ interface MonthlyTrend {
 interface DropdownOption {
   id: string;
   name: string;
+}
+
+interface GenderDistribution {
+  male: number;
+  female: number;
 }
 
 export default function VendorComplianceDashboard() {
@@ -54,6 +60,29 @@ export default function VendorComplianceDashboard() {
   const [vendorOptions, setVendorOptions] = useState<DropdownOption[]>([]);
   const [auditPeriodOptions, setAuditPeriodOptions] = useState<DropdownOption[]>([]);
 
+  const [genderData, setGenderData] =
+  useState<GenderDistribution>({
+    male: 0,
+    female: 0,
+  });
+
+  const [genderStates, setGenderStates] = useState<string[]>([]);
+  const [genderBranches, setGenderBranches] = useState<string[]>([]);
+  const [genderVendors, setGenderVendors] = useState<string[]>([]);
+  const [natureServices, setNatureServices] = useState<string[]>([]);
+
+  const [genderStateOptions, setGenderStateOptions] =
+  useState<DropdownOption[]>([]);
+
+  const [genderBranchOptions, setGenderBranchOptions] =
+  useState<DropdownOption[]>([]);
+
+  const [genderVendorOptions, setGenderVendorOptions] =
+  useState<DropdownOption[]>([]);
+
+  const [natureServiceOptions, setNatureServiceOptions] =
+  useState<DropdownOption[]>([]);
+
   const loadFilters = async () => {
     try {
       const params = new URLSearchParams();
@@ -79,21 +108,87 @@ export default function VendorComplianceDashboard() {
     }
   };
 
-  useEffect(() => {
+const fetchGenderChart = async () => {
+  try {
+    const params = new URLSearchParams();
+
+    genderStates.forEach((x) =>
+      params.append("states", x)
+    );
+
+    genderBranches.forEach((x) =>
+      params.append("branches", x)
+    );
+
+    genderVendors.forEach((x) =>
+      params.append("vendors", x)
+    );
+
+    natureServices.forEach((x) =>
+      params.append(
+        "nature_of_services",
+        x
+      )
+    );
+
+    const res = await axios.get(
+      "/api/vendor/dashboard/compliance/gender-distribution/",
+      {
+        params,
+      }
+    );
+
+    setGenderData(res.data);
+
+  } catch (err) {
+    console.error(
+      "Gender Distribution:",
+      err
+    );
+  }
+};
+
+useEffect(() => {
     loadFilters();
-  }, [states, branches, vendors]);
+}, [
+    states,
+    branches,
+    vendors,
+]);
 
-  useEffect(() => {
+useEffect(() => {
     fetchDashboard();
-  }, [states, branches, vendors, auditPeriods]);
+}, [
+    states,
+    branches,
+    vendors,
+    auditPeriods,
+]);
 
-  useEffect(() => {
+useEffect(() => {
+    loadGenderFilters();
+}, [
+    genderStates,
+    genderBranches,
+    genderVendors,
+]);
+
+useEffect(() => {
+    fetchGenderChart();
+}, [
+    genderStates,
+    genderBranches,
+    genderVendors,
+    natureServices,
+]);
+
+useEffect(() => {
     const interval = setInterval(() => {
-      fetchDashboard();
+        fetchDashboard();
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+}, []);
 
   const fetchDashboard = async () => {
     try {
@@ -129,6 +224,50 @@ export default function VendorComplianceDashboard() {
       setLoading(false);
     }
   };
+
+const loadGenderFilters = async () => {
+  try {
+    const params = new URLSearchParams();
+
+    genderStates.forEach((x) =>
+      params.append("states", x)
+    );
+
+    genderBranches.forEach((x) =>
+      params.append("branches", x)
+    );
+
+    genderVendors.forEach((x) =>
+      params.append("vendors", x)
+    );
+
+    const res = await axios.get(
+      "/api/vendor/dashboard/compliance/gender-filters/",
+      {
+        params,
+      }
+    );
+
+    setGenderStateOptions(
+      res.data.states || []
+    );
+
+    setGenderBranchOptions(
+      res.data.branches || []
+    );
+
+    setGenderVendorOptions(
+      res.data.vendors || []
+    );
+
+    setNatureServiceOptions(
+      res.data.services || []
+    );
+
+  } catch (err) {
+    console.error("Gender Filters:", err);
+  }
+};
 
   return (
     <>
@@ -245,6 +384,99 @@ export default function VendorComplianceDashboard() {
             
           </Col>
         </Row>
+
+<Card
+    title="Employee Gender Distribution"
+    loading={loading}
+>
+  <Row gutter={[16,16]}>
+
+    <Col span={24}>
+      <Row gutter={[16,16]}>
+
+        <Col xs={24} md={6}>
+          <label className="mb-1 block font-medium">
+            State
+          </label>
+
+          <MultiSelectCheckbox
+            options={genderStateOptions}
+            value={genderStates}
+            onChange={(value) => {
+              setGenderStates(value);
+              setGenderBranches([]);
+              setGenderVendors([]);
+              setNatureServices([]);
+            }}
+            placeholder="Select State"
+            allLabel="All States"
+          />
+        </Col>
+
+        <Col xs={24} md={6}>
+          <label className="mb-1 block font-medium">
+            Branch
+          </label>
+
+          <MultiSelectCheckbox
+            options={genderBranchOptions}
+            value={genderBranches}
+            onChange={(value) => {
+              setGenderBranches(value);
+              setGenderVendors([]);
+              setNatureServices([]);
+            }}
+            placeholder="Select Branch"
+            allLabel="All Branches"
+          />
+        </Col>
+
+        <Col xs={24} md={6}>
+          <label className="mb-1 block font-medium">
+            Vendor
+          </label>
+
+          <MultiSelectCheckbox
+            options={genderVendorOptions}
+            value={genderVendors}
+            onChange={(value) => {
+              setGenderVendors(value);
+              setNatureServices([]);
+            }}
+            placeholder="Select Vendor"
+            allLabel="All Vendors"
+          />
+        </Col>
+
+        <Col xs={24} md={6}>
+          <label className="mb-1 block font-medium">
+            Nature Of Services
+          </label>
+
+          <MultiSelectCheckbox
+            options={natureServiceOptions}
+            value={natureServices}
+            onChange={setNatureServices}
+            placeholder="Select Service"
+            allLabel="All Services"
+          />
+        </Col>
+
+      </Row>
+    </Col>
+
+    <Col xs={24} lg={12}>
+      <GenderDistributionChart
+        data={genderData}
+      />
+    </Col>
+
+    <Col xs={24} lg={12}>
+
+    </Col>
+
+  </Row>
+</Card>
       </div>
 
     </>

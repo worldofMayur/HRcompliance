@@ -50,6 +50,8 @@ from .dashboard_views import (
     ComplianceDashboardSummaryV2APIView,
     ComplianceDashboardMonthlyTrendV2APIView,
     ComplianceDashboardDistributionV2APIView,
+    ComplianceDashboardGenderDistributionAPIView,
+    ComplianceDashboardGenderFiltersAPIView,
 
 )
 
@@ -176,6 +178,15 @@ urlpatterns = [
     path(
         "dashboard/compliance/distribution-v2/",
         ComplianceDashboardDistributionV2APIView.as_view(),
+    ),
+    path(
+        "dashboard/compliance/gender-filters/",
+        ComplianceDashboardGenderFiltersAPIView.as_view(),
+    ),
+
+    path(
+        "dashboard/compliance/gender-distribution/",
+        ComplianceDashboardGenderDistributionAPIView.as_view(),
     ),
     path(
         "dashboard/document-reference/",
