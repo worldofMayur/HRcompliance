@@ -2437,10 +2437,6 @@ class VendorWiseCCTrendAPIView(APIView):
                 vendor_id__in=vendors
             )
 
-        from datetime import datetime
-        from dateutil.relativedelta import relativedelta
-
-
         # --------------------------
         # Monthly aggregation
         # --------------------------
