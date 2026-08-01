@@ -1,34 +1,28 @@
-from django.db.models import Count
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-
-from master_apps.principle_employee.models import PrincipalEmployer
-from master_apps.vendor.mapping_models import VendorBranchMapping
-from django.utils import timezone
-from datetime import datetime
-from django.db.models import Count, Q
-from master_apps.vendor.compliance_models import VendorComplianceSubmission
-from master_apps.vendor.constants import WorkflowStatus
-import re
-from master_apps.principle_employee.models import PrincipalEmployerBranch
-from django.db.models import Avg, Count, Q
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-
-from master_apps.principle_employee.models import PrincipalEmployer
-from master_apps.vendor.compliance_models import VendorComplianceSubmission
-from calendar import month_abbr
 from collections import defaultdict
-from django.db.models.functions import ExtractYear
-from django.db.models import Q
-from django.db.models import F
-from django.db.models import Sum
-from django.db.models.functions import ExtractYear
-from django.db.models import Q
-from django.db.models import Count, Q
-from django.db.models.functions import TruncMonth
+from datetime import datetime
+from calendar import month_abbr
+import re
+
+from django.utils import timezone
+
+from django.db.models import Avg, Count, F, Q, Sum
+from django.db.models.functions import ExtractYear, TruncMonth
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from master_apps.principle_employee.models import (
+    PrincipalEmployer,
+    PrincipalEmployerBranch,
+)
+
+from master_apps.vendor.constants import WorkflowStatus
+from master_apps.vendor.compliance_models import (
+    VendorCompliancePayroll,
+    VendorComplianceSubmission,
+)
+from master_apps.vendor.mapping_models import VendorBranchMapping
 
 # =========================
 # KPI
@@ -1793,14 +1787,32 @@ class ComplianceDashboardSummaryV2APIView(APIView):
         # Summary Cards
         # ----------------------------------------
 
-        cc_issued = queryset.filter(
-            is_cc_issued=True
-        ).count()
+        ccIssued = (
+            queryset.filter(
+                is_cc_issued=True
+            )
+            .values(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
+            .distinct()
+            .count()
+        )
 
-        exceptional_cc = queryset.filter(
-            has_exceptional_approval=True,
-            is_cc_issued=True,
-        ).count()
+        exceptionalCC = (
+            queryset.filter(
+                is_cc_issued=True,
+                has_exceptional_approval=True,
+            )
+            .values(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
+            .distinct()
+            .count()
+        )
 
         under_audit = queryset.filter(
             workflow_status__in=[
@@ -1820,8 +1832,8 @@ class ComplianceDashboardSummaryV2APIView(APIView):
 
         return Response(
             {
-                "ccIssued": cc_issued,
-                "exceptionalCC": exceptional_cc,
+                "ccIssued": ccIssued,
+                "exceptionalCC": exceptionalCC,
                 "underAudit": under_audit,
                 "documentNotSubmitted": document_not_submitted,
             }
@@ -1899,14 +1911,32 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
             response.append({
                 "month": period,
 
-                "ccIssued": rows.filter(
-                    is_cc_issued=True
-                ).count(),
+                "ccIssued": (
+                    rows.filter(
+                        is_cc_issued=True,
+                    )
+                    .values(
+                        "vendor_id",
+                        "branch_id",
+                        "audit_period",
+                    )
+                    .distinct()
+                    .count()
+                ),
 
-                "exceptionalCC": rows.filter(
-                    has_exceptional_approval=True,
-                    is_cc_issued=True,
-                ).count(),
+                "exceptionalCC": (
+                    rows.filter(
+                        has_exceptional_approval=True,
+                        is_cc_issued=True,
+                    )
+                    .values(
+                        "vendor_id",
+                        "branch_id",
+                        "audit_period",
+                    )
+                    .distinct()
+                    .count()
+                ),
 
                 "underAudit": rows.filter(
                     workflow_status__in=[
@@ -1984,14 +2014,32 @@ class ComplianceDashboardDistributionV2APIView(APIView):
             )
 
         response = {
-            "ccIssued": queryset.filter(
-                is_cc_issued=True
-            ).count(),
+            "ccIssued": (
+                queryset.filter(
+                    is_cc_issued=True,
+                )
+                .values(
+                    "vendor_id",
+                    "branch_id",
+                    "audit_period",
+                )
+                .distinct()
+                .count()
+            ),
 
-            "exceptionalCC": queryset.filter(
-                has_exceptional_approval=True,
-                is_cc_issued=True,
-            ).count(),
+            "exceptionalCC": (
+                queryset.filter(
+                    has_exceptional_approval=True,
+                    is_cc_issued=True,
+                )
+                .values(
+                    "vendor_id",
+                    "branch_id",
+                    "audit_period",
+                )
+                .distinct()
+                .count()
+            ),
 
             "underAudit": queryset.filter(
                 workflow_status__in=[
@@ -2447,26 +2495,42 @@ class VendorWiseCCTrendAPIView(APIView):
             .annotate(
                 month=TruncMonth("cc_issued_at")
             )
-            .values("month")
+            .values(
+                "month",
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
             .annotate(
-                ccIssued=Count("id"),
-                exceptionalCC=Count(
+                exceptional=Count(
                     "id",
-                    filter=Q(
-                        has_exceptional_approval=True
-                    ),
+                    filter=Q(has_exceptional_approval=True)
                 ),
             )
             .order_by("month")
         )
 
-        trend_map = {
-            item["month"].strftime("%b %Y"): {
-                "ccIssued": item["ccIssued"],
-                "exceptionalCC": item["exceptionalCC"],
-            }
-            for item in db_trend
-        }
+        monthly = {}
+
+        for row in db_trend:
+
+            key = row["month"].strftime("%b %Y")
+
+            if key not in monthly:
+                monthly[key] = {
+                    "ccIssued": 0,
+                    "exceptionalCC": 0,
+                }
+
+            # One unique CC
+            monthly[key]["ccIssued"] += 1
+
+            # Count as Exceptional CC if any document
+            # in that CC has exceptional approval
+            if row["exceptional"] > 0:
+                monthly[key]["exceptionalCC"] += 1
+
+        trend_map = monthly
 
         # --------------------------
         # Generate last 12 months
