@@ -90,7 +90,7 @@ export default function VendorComplianceDashboard() {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchDashboard();
-    }, 5 * 60 * 1000);
+    }, 10 * 1000); // 10 seconds
 
     return () => clearInterval(interval);
   }, []);
