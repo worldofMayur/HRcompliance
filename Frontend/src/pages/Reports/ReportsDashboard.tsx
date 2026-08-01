@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Select, Card } from "antd";
 import VendorComplianceDashboard from "./dashboards/VendorComplianceDashboard";
-
-const { Option } = Select;
+import BranchVendorDashboard from "./dashboards/BranchVendorDashboard";
+import ExceptionalApprovalDashboard from "./dashboards/ExceptionalApprovalDashboard";
+import DocumentWiseComplianceDashboard from "./dashboards/DocumentWiseComplianceDashboard";
 
 import BranchReport from "./reports/BranchReport";
 import ComplianceReport from "./reports/ComplianceReport";
@@ -10,62 +11,49 @@ import ExceptionalReport from "./reports/ExceptionalReport";
 import DocumentWiseReport from "./reports/DocumentWiseReport";
 
 import { ReportType } from "./data/reportConfig";
-import BranchVendorDashboard from "./dashboards/BranchVendorDashboard";
-import ExceptionalApprovalDashboard from "./dashboards/ExceptionalApprovalDashboard";
-import DocumentWiseComplianceDashboard from "./dashboards/DocumentWiseComplianceDashboard";
+
+const { Option } = Select;
 
 export default function ReportsDashboard() {
-  const [selectedReport, setSelectedReport] = useState<ReportType>("branch");
+  const [selectedReport, setSelectedReport] = useState<ReportType>("compliance");
 
   return (
-    <div className="space-y-5">
-
-      {/* Compact Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Reports & Dashboard
-          </h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Dashboard analytics and report generation
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          Reports & Dashboard
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Dashboard analytics and report generation
+        </p>
       </div>
 
       {/* Main Layout */}
-      <div className="grid gap-6 xl:grid-cols-[78%_22%]">
-
-        {/* ================= Dashboard ================= */}
-        <div className="relative rounded-3xl border border-blue-200 bg-white p-6 shadow-lg dark:border-blue-900 dark:bg-gray-900">
-
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        {/* ================= LEFT: Live Dashboard ================= */}
+        <div className="relative min-w-0">
           {/* Live Badge */}
-          <div className="absolute -top-3 left-6 rounded-full bg-blue-600 px-4 py-1 text-xs font-medium text-white shadow-md">
+          <div className="absolute -top-3 left-6 z-10 rounded-full bg-blue-600 px-4 py-1 text-xs font-semibold text-white shadow-md">
             📊 LIVE DASHBOARD
           </div>
 
-          {selectedReport === "branch" && (
-            <BranchVendorDashboard />
-          )}
-
-          {selectedReport === "compliance" && (
-            <VendorComplianceDashboard />
-          )}
-
-          {selectedReport === "exception" && (
-            <ExceptionalApprovalDashboard />
-          )}
-
-          {selectedReport === "document" && (
-            <DocumentWiseComplianceDashboard />
-          )}
+          <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm dark:border-blue-900/50 dark:bg-gray-900">
+            {selectedReport === "branch" && <BranchVendorDashboard />}
+            {selectedReport === "compliance" && <VendorComplianceDashboard />}
+            {selectedReport === "exception" && <ExceptionalApprovalDashboard />}
+            {selectedReport === "document" && <DocumentWiseComplianceDashboard />}
+          </div>
         </div>
 
-        {/* ================= Sidebar ================= */}
-        <div className="sticky top-6 self-start space-y-6">
-
+        {/* ================= RIGHT: Sidebar ================= */}
+        <div className="space-y-5 xl:sticky xl:top-6 xl:self-start">
           {/* Report Type */}
-          <Card className="shadow-sm">
-            <label className="mb-3 block text-sm font-semibold text-gray-700">
+          <Card
+            className="shadow-sm"
+            styles={{ body: { padding: "16px 18px" } }}
+          >
+            <label className="mb-2.5 block text-sm font-semibold text-gray-700 dark:text-gray-200">
               Report Type
             </label>
 
@@ -75,34 +63,21 @@ export default function ReportsDashboard() {
               value={selectedReport}
               onChange={(value) => setSelectedReport(value)}
             >
-              <Option value="branch">
-                Branch Wise Vendor Mapping
-              </Option>
-
-              <Option value="compliance">
-                Vendor Compliance Status
-              </Option>
-
-              <Option value="exception">
-                Exceptional Approval Report
-              </Option>
-
-              <Option value="document">
-                Document Wise Compliance Status
-              </Option>
+              <Option value="branch">Branch Wise Vendor Mapping</Option>
+              <Option value="compliance">Vendor Compliance Status</Option>
+              <Option value="exception">Exceptional Approval Report</Option>
+              <Option value="document">Document Wise Compliance Status</Option>
             </Select>
           </Card>
 
-          {/* Filters */}
-          <div className="space-y-5">
+          {/* Report Filters + Download */}
+          <div className="space-y-4">
             {selectedReport === "branch" && <BranchReport />}
             {selectedReport === "compliance" && <ComplianceReport />}
             {selectedReport === "exception" && <ExceptionalReport />}
             {selectedReport === "document" && <DocumentWiseReport />}
           </div>
-
         </div>
-
       </div>
     </div>
   );
