@@ -24,10 +24,6 @@ export default function ReportsDashboard() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ================= LEFT: Live Dashboard ================= */}
         <div className="relative min-w-0">
-          {/* Live Badge */}
-          <div className="absolute -top-3 left-6 z-10 rounded-full bg-blue-600 px-4 py-1 text-xs font-semibold text-white shadow-md">
-            📊 LIVE DASHBOARD
-          </div>
 
           <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm dark:border-blue-900/50 dark:bg-gray-900">
             {selectedReport === "branch" && <BranchVendorDashboard />}
