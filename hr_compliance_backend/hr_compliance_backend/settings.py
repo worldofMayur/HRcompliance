@@ -106,9 +106,9 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT", "3306"),
+        "CONN_MAX_AGE": 300,
         "OPTIONS": {
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-            # Add this for better stability in containers:
             "connect_timeout": 10,
         },
     }
@@ -243,3 +243,19 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
 }
+
+# ==========================================================
+# SESSION & COOKIE SECURITY
+# ==========================================================
+
+SESSION_COOKIE_SECURE = not DEBUG
+
+SESSION_COOKIE_HTTPONLY = True
+
+SESSION_COOKIE_SAMESITE = "Lax"
+
+SESSION_COOKIE_AGE = 60 * 60 * 8
+
+SESSION_SAVE_EVERY_REQUEST = True
+
+CSRF_COOKIE_SECURE = not DEBUG
