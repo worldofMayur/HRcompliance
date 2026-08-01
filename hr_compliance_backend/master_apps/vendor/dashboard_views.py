@@ -19,7 +19,10 @@ from rest_framework.response import Response
 
 from master_apps.principle_employee.models import PrincipalEmployer
 from master_apps.vendor.compliance_models import VendorComplianceSubmission
-
+from calendar import month_abbr
+from collections import defaultdict
+from django.db.models.functions import ExtractYear
+from django.db.models import Q
 
 # =========================
 # KPI
@@ -1382,3 +1385,196 @@ class DocumentWiseRemittanceTrendAPIView(APIView):
         response.sort(key=lambda x: x["month"])
 
         return Response(response)
+
+
+class DocumentWiseComplianceTrendAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        selected_year = int(
+            request.GET.get(
+                "year",
+                timezone.now().year,
+            )
+        )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        )
+
+        vendors = request.GET.getlist("vendors")
+        branches = request.GET.getlist("branches")
+        states = request.GET.getlist("states")
+
+        if vendors:
+            queryset = queryset.filter(vendor_id__in=vendors)
+
+        if branches:
+            queryset = queryset.filter(branch_id__in=branches)
+
+        if states:
+            queryset = queryset.filter(state__in=states)
+
+        trend = {}
+
+        for month in range(1, 13):
+
+            trend[month] = {
+
+                "month": month_abbr[month],
+
+                "pf_total": 0,
+                "pf_count": 0,
+                "pf_before_15": 0,
+                "pf_after_15": 0,
+
+                "esic_total": 0,
+                "esic_count": 0,
+                "esic_before_15": 0,
+                "esic_after_15": 0,
+            }
+
+        for submission in queryset:
+
+            # -------------------------
+            # PF
+            # -------------------------
+
+            if (
+                submission.pf_remittance_date and
+                submission.pf_remittance_date.year == selected_year
+            ):
+
+                month = submission.pf_remittance_date.month
+                day = submission.pf_remittance_date.day
+
+                trend[month]["pf_total"] += day
+                trend[month]["pf_count"] += 1
+
+                if day <= 15:
+                    trend[month]["pf_before_15"] += 1
+                else:
+                    trend[month]["pf_after_15"] += 1
+
+            # -------------------------
+            # ESIC
+            # -------------------------
+
+            if (
+                submission.esic_remittance_date and
+                submission.esic_remittance_date.year == selected_year
+            ):
+
+                month = submission.esic_remittance_date.month
+                day = submission.esic_remittance_date.day
+
+                trend[month]["esic_total"] += day
+                trend[month]["esic_count"] += 1
+
+                if day <= 15:
+                    trend[month]["esic_before_15"] += 1
+                else:
+                    trend[month]["esic_after_15"] += 1
+
+        response = []
+
+        for month in range(1, 13):
+
+            item = trend[month]
+
+            response.append({
+
+                "month": item["month"],
+
+                "pf": round(
+                    item["pf_total"] / item["pf_count"],
+                    1
+                ) if item["pf_count"] else 0,
+
+                "esic": round(
+                    item["esic_total"] / item["esic_count"],
+                    1
+                ) if item["esic_count"] else 0,
+
+                "pf_before_15": item["pf_before_15"],
+                "pf_after_15": item["pf_after_15"],
+
+                "esic_before_15": item["esic_before_15"],
+                "esic_after_15": item["esic_after_15"],
+            })
+
+        return Response({
+            "year": selected_year,
+            "trend": response,
+        })
+
+
+class DocumentWiseAvailableYearsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(user=request.user)
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        queryset = VendorComplianceSubmission.objects.filter(
+            principal_employer=pe
+        ).filter(
+            Q(pf_remittance_date__isnull=False) |
+            Q(esic_remittance_date__isnull=False)
+        )
+
+        years = set()
+
+        pf_years = (
+            queryset
+            .exclude(pf_remittance_date__isnull=True)
+            .annotate(year=ExtractYear("pf_remittance_date"))
+            .values_list("year", flat=True)
+            .distinct()
+        )
+
+        esic_years = (
+            queryset
+            .exclude(esic_remittance_date__isnull=True)
+            .annotate(year=ExtractYear("esic_remittance_date"))
+            .values_list("year", flat=True)
+            .distinct()
+        )
+
+        years.update(pf_years)
+        years.update(esic_years)
+
+        years = sorted(
+            [y for y in years if y is not None],
+            reverse=True,
+        )
+
+        return Response(
+            {
+                "years": years
+            }
+        )

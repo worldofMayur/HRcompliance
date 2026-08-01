@@ -1,88 +1,236 @@
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
-import { Table } from "antd";
+import { useEffect, useState } from "react";
+import { Table, Select, Spin, Empty, message } from "antd";
 
-const data = [
-  {
-    month: "Jan",
-    remittance_day: 12,
-    before_15: 18,
-    after_15: 4,
-  },
-  {
-    month: "Feb",
-    remittance_day: 14,
-    before_15: 20,
-    after_15: 2,
-  },
-  {
-    month: "Mar",
-    remittance_day: 17,
-    before_15: 14,
-    after_15: 8,
-  },
-];
+import api from "../../../utils/api";
+
+import DocumentWiseTrendChart from "./components/DocumentWiseTrendChart";
+import DocumentWiseSummaryCards from "./components/DocumentWiseSummaryCards";
+
+const { Option } = Select;
+
+interface TrendData {
+  month: string;
+  pf: number;
+  esic: number;
+  pf_before_15: number;
+  pf_after_15: number;
+  esic_before_15: number;
+  esic_after_15: number;
+}
 
 export default function DocumentWiseComplianceDashboard() {
+
+  const currentYear = new Date().getFullYear();
+
+  const [year, setYear] = useState(currentYear);
+  const [years, setYears] = useState<number[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [chartData, setChartData] = useState<TrendData[]>([]);
+
+  const loadYears = async () => {
+  try {
+    const res = await api.get(
+      "/api/vendor/dashboard/document-wise-years/"
+    );
+
+    setYears(res.data.years || []);
+
+    if (
+      res.data.years?.length &&
+      !res.data.years.includes(year)
+    ) {
+      setYear(res.data.years[0]);
+    }
+  } catch (error) {
+    console.error(error);
+    message.error("Failed to load years.");
+  }
+};
+
+  const loadTrend = async () => {
+
+    setLoading(true);
+
+    try {
+
+      const res = await api.get(
+        "/api/vendor/dashboard/document-wise-compliance-trend/",
+        {
+          params: {
+            year,
+          },
+        }
+      );
+
+      setChartData(res.data.trend);
+
+    } catch (error) {
+
+      console.error(error);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  useEffect(() => {
+    loadYears();
+  }, []);
+
+  useEffect(() => {
+    if (year) {
+      loadTrend();
+    }
+  }, [year]);
+
   return (
     <div className="space-y-6">
 
-      <div className="rounded-xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold">
-          PF & ESIC Remittance Trend
-        </h2>
+      {/* Header */}
 
-        <ResponsiveContainer width="100%" height={380}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
+      <div className="flex items-center justify-between">
 
-            <XAxis dataKey="month" />
+        <div>
 
-            <YAxis
-              domain={[1, 31]}
-              label={{
-                value: "Remittance Day",
-                angle: -90,
-                position: "insideLeft",
-              }}
-            />
+          <h2 className="text-xl font-semibold">
+            PF & ESIC Remittance Trend
+          </h2>
 
-            <Tooltip />
+          <p className="text-gray-500 text-sm">
+            Monthly average remittance day comparison
+          </p>
 
-            <Line
-              type="monotone"
-              dataKey="remittance_day"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        </div>
+
+        <Select
+          value={year}
+          style={{ width: 140 }}
+          onChange={setYear}
+        >
+          {years.map((yr) => (
+            <Option
+              key={yr}
+              value={yr}
+            >
+              {yr}
+            </Option>
+          ))}
+        </Select>
+
       </div>
 
-      <Table
-        rowKey="month"
-        pagination={false}
-        dataSource={data}
-        columns={[
-          {
-            title: "Audit Month",
-            dataIndex: "month",
-          },
-          {
-            title: "Before 15th",
-            dataIndex: "before_15",
-          },
-          {
-            title: "After 15th",
-            dataIndex: "after_15",
-          },
-        ]}
+      {/* KPI */}
+
+      <DocumentWiseSummaryCards
+        data={chartData}
       />
+
+      {/* Chart */}
+
+      <div className="rounded-xl border bg-white p-6 shadow-sm">
+
+        {loading ? (
+
+          <div className="flex h-[420px] items-center justify-center">
+
+            <Spin size="large" />
+
+          </div>
+
+        ) : chartData.length ? (
+
+          <DocumentWiseTrendChart
+            data={chartData}
+          />
+
+        ) : (
+
+          <Empty
+            description="No PF / ESIC remittance data found for the selected year."
+          />
+
+        )}
+
+      </div>
+
+      {/* Table */}
+
+      <Table
+
+        rowKey="month"
+
+        pagination={false}
+
+        dataSource={chartData}
+
+        columns={[
+
+          {
+
+            title: "Month",
+
+            dataIndex: "month",
+
+          },
+
+          {
+
+            title: "PF Avg Day",
+
+            dataIndex: "pf",
+
+          },
+
+          {
+
+            title: "ESIC Avg Day",
+
+            dataIndex: "esic",
+
+          },
+
+          {
+
+            title: "PF Before 15",
+
+            dataIndex: "pf_before_15",
+
+          },
+
+          {
+
+            title: "PF After 15",
+
+            dataIndex: "pf_after_15",
+
+          },
+
+          {
+
+            title: "ESIC Before 15",
+
+            dataIndex: "esic_before_15",
+
+          },
+
+          {
+
+            title: "ESIC After 15",
+
+            dataIndex: "esic_after_15",
+
+          },
+
+        ]}
+
+      />
+
     </div>
   );
+
 }

@@ -44,6 +44,9 @@ from .dashboard_views import (
     ExceptionalVendorListAPIView,
     ExceptionalDocumentListAPIView,
     DocumentWiseRemittanceTrendAPIView,
+    DocumentWiseComplianceTrendAPIView,
+    DocumentWiseAvailableYearsAPIView,
+
 )
 
 # Report Views Import
@@ -115,12 +118,20 @@ urlpatterns = [
         BranchDashboardStateSummaryAPIView.as_view(),
     ),
     path(
+        "dashboard/document-wise-compliance-trend/",
+        DocumentWiseComplianceTrendAPIView.as_view(),
+    ),
+    path(
         "dashboard/exceptional/top-vendors/",
         TopExceptionalVendorsAPIView.as_view(),
     ),
     path(
         "dashboard/branch/monthly-trend/",
         BranchDashboardMonthlyTrendAPIView.as_view(),
+    ),
+    path(
+        "dashboard/document-wise-years/",
+        DocumentWiseAvailableYearsAPIView.as_view(),
     ),
 
     path(
