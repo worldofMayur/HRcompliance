@@ -86,6 +86,14 @@ export default function VendorComplianceDashboard() {
     fetchDashboard();
   }, [states, branches, vendors, auditPeriods]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDashboard();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchDashboard = async () => {
     try {
       setLoading(true);
@@ -237,23 +245,47 @@ export default function VendorComplianceDashboard() {
             >
               <CompliancePieChart data={distribution} />
             </Card>
+
+            <div className="mb-5 flex items-center justify-between rounded-lg border bg-white px-5 py-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+                </span>
+
+                <Text strong className="text-green-700">
+                  Live Dashboard
+                </Text>
+
+                <Text type="secondary">
+                  <div className="flex items-center gap-2">
+                    {loading && (
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                    )}
+
+                    <Text type="secondary">
+                      Auto Refresh every 5 minutes
+                    </Text>
+                  </div>
+                </Text>
+              </div>
+
+              <Text type="secondary">
+                Last Updated :
+                {" "}
+                {lastUpdated.toLocaleString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+            </div>
           </Col>
         </Row>
       </div>
 
-      {/* Footer */}
-      <div className="text-center mt-6">
-        <Text type="secondary" style={{ fontSize: 13 }}>
-          Updated:{" "}
-          {lastUpdated.toLocaleString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-      </div>
     </>
   );
 }
