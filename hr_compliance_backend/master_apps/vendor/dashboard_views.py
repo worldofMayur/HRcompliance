@@ -2416,7 +2416,8 @@ class VendorWiseCCTrendAPIView(APIView):
 
         if year:
             queryset = queryset.filter(
-                created_at__year=year
+                cc_issued_at__isnull=False,
+                cc_issued_at__year=year
             )
 
         if states:
