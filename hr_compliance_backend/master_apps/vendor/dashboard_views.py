@@ -2004,3 +2004,7 @@ class ComplianceDashboardDistributionV2APIView(APIView):
                 ]
             ).count(),
         }
+
+        return Response({
+            "distribution": response
+        })
