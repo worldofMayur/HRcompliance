@@ -22,7 +22,7 @@ export default function ReportsDashboard() {
       {/* Centered Page Title */}
       <div className="text-center">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Reports & Dashboards
+
         </h1>
       </div>
 
