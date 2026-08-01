@@ -5,7 +5,7 @@ import re
 
 from django.utils import timezone
 
-from django.db.models import Avg, Count, F, Q, Sum
+from django.db.models import Avg, Count, F, Min, Q, Sum
 from django.db.models.functions import ExtractYear, TruncMonth
 
 from rest_framework.permissions import IsAuthenticated
@@ -2129,15 +2129,32 @@ class ComplianceDashboardGenderDistributionAPIView(APIView):
 
         from master_apps.vendor.compliance_models import VendorCompliancePayroll
 
-        male = VendorCompliancePayroll.objects.filter(
-            submission__in=queryset
-        ).aggregate(
+        # One submission per Vendor + Branch + Audit Period
+        submission_ids = (
+            queryset.order_by("id")
+            .values(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
+            .annotate(
+                submission_id=Min("id")
+            )
+            .values_list(
+                "submission_id",
+                flat=True,
+            )
+        )
+
+        payroll_queryset = VendorCompliancePayroll.objects.filter(
+            submission_id__in=submission_ids
+        )
+
+        male = payroll_queryset.aggregate(
             total=Sum("male_employees")
         )["total"] or 0
 
-        female = VendorCompliancePayroll.objects.filter(
-            submission__in=queryset
-        ).aggregate(
+        female = payroll_queryset.aggregate(
             total=Sum("female_employees")
         )["total"] or 0
 
