@@ -71,6 +71,11 @@ export default function VendorComplianceDashboard() {
   const [genderVendors, setGenderVendors] = useState<string[]>([]);
   const [natureServices, setNatureServices] = useState<string[]>([]);
 
+  const [genderAuditPeriods, setGenderAuditPeriods] = useState<string[]>([]);
+
+  const [genderAuditPeriodOptions, setGenderAuditPeriodOptions] =
+    useState<DropdownOption[]>([]);
+
   const [genderStateOptions, setGenderStateOptions] =
   useState<DropdownOption[]>([]);
 
@@ -131,6 +136,10 @@ const fetchGenderChart = async () => {
       )
     );
 
+    genderAuditPeriods.forEach((x) =>
+      params.append("audit_periods", x)
+    );
+
     const res = await axios.get(
       "/api/vendor/dashboard/compliance/gender-distribution/",
       {
@@ -174,12 +183,13 @@ useEffect(() => {
 ]);
 
 useEffect(() => {
-    fetchGenderChart();
+  fetchGenderChart();
 }, [
-    genderStates,
-    genderBranches,
-    genderVendors,
-    natureServices,
+  genderStates,
+  genderBranches,
+  genderVendors,
+  natureServices,
+  genderAuditPeriods,
 ]);
 
 useEffect(() => {
@@ -262,6 +272,10 @@ const loadGenderFilters = async () => {
 
     setNatureServiceOptions(
       res.data.services || []
+    );
+
+    setGenderAuditPeriodOptions(
+      res.data.audit_periods || []
     );
 
   } catch (err) {
@@ -459,6 +473,20 @@ const loadGenderFilters = async () => {
             onChange={setNatureServices}
             placeholder="Select Service"
             allLabel="All Services"
+          />
+        </Col>
+
+        <Col xs={24} md={6}>
+          <label className="mb-1 block font-medium">
+            Audit Period
+          </label>
+
+          <MultiSelectCheckbox
+            options={genderAuditPeriodOptions}
+            value={genderAuditPeriods}
+            onChange={setGenderAuditPeriods}
+            placeholder="Select Audit Period"
+            allLabel="All Audit Periods"
           />
         </Col>
 

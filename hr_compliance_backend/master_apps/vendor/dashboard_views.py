@@ -2041,6 +2041,7 @@ class ComplianceDashboardGenderDistributionAPIView(APIView):
         branches = request.GET.getlist("branches")
         vendors = request.GET.getlist("vendors")
         services = request.GET.getlist("services")
+        audit_periods = request.GET.getlist("audit_periods")
 
         if states:
             queryset = queryset.filter(state__in=states)
@@ -2054,6 +2055,11 @@ class ComplianceDashboardGenderDistributionAPIView(APIView):
         if services:
             queryset = queryset.filter(
                 vendor__nature_of_services__in=services
+            )
+        
+        if audit_periods:
+            queryset = queryset.filter(
+                audit_period__in=audit_periods
             )
 
         male = queryset.aggregate(
@@ -2131,11 +2137,11 @@ class ComplianceDashboardGenderFiltersAPIView(APIView):
 
         branches_data = (
             queryset.values(
-                "branch__id",
-                "branch__branch_name",
+                "branch_id",
+                "branch__short_name",
             )
             .distinct()
-            .order_by("branch__branch_name")
+            .order_by("branch__short_name")
         )
 
         vendors_data = (
@@ -2156,6 +2162,15 @@ class ComplianceDashboardGenderFiltersAPIView(APIView):
             .order_by("vendor__nature_of_services")
         )
 
+        audit_periods_data = (
+            queryset.values_list(
+                "audit_period",
+                flat=True,
+            )
+            .distinct()
+            .order_by("audit_period")
+        )
+
         return Response({
 
             "states": [
@@ -2168,8 +2183,8 @@ class ComplianceDashboardGenderFiltersAPIView(APIView):
 
             "branches": [
                 {
-                    "id": x["branch__id"],
-                    "name": x["branch__branch_name"],
+                    "id": x["branch_id"],
+                    "name": x["branch__short_name"],
                 }
                 for x in branches_data
             ],
@@ -2188,5 +2203,13 @@ class ComplianceDashboardGenderFiltersAPIView(APIView):
                     "name": x,
                 }
                 for x in services_data
+            ],
+
+            "audit_periods": [
+                {
+                    "id": x,
+                    "name": x,
+                }
+                for x in audit_periods_data
             ],
         })
