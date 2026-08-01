@@ -2029,9 +2029,22 @@ class ComplianceDashboardGenderDistributionAPIView(APIView):
             )
 
         queryset = VendorComplianceSubmission.objects.filter(
-            principal_employer=pe,
-            is_cc_issued=True,
+            principal_employer=pe
         )
+
+        print("===================================")
+        print("TOTAL:", queryset.count())
+
+        for q in queryset:
+            print(
+                "ID:", q.id,
+                "| CC:", q.is_cc_issued,
+                "| State:", q.state,
+                "| Audit:", q.audit_period,
+                "| Male:", q.male_employees,
+                "| Female:", q.female_employees,
+            )
+        print("===================================")
 
         # -----------------------------
         # Filters
