@@ -201,12 +201,6 @@ export default function VendorComplianceDashboard() {
         {/* Summary Cards */}
         <Card
           loading={loading}
-          title={
-            <Space>
-              <span>📊</span>
-              <span>Vendor Compliance Summary</span>
-            </Space>
-          }
         >
           <ComplianceSummaryCards data={summary} />
         </Card>
