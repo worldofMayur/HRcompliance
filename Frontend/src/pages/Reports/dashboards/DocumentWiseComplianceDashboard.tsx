@@ -19,42 +19,37 @@ interface TrendData {
 }
 
 export default function DocumentWiseComplianceDashboard() {
-
   const currentYear = new Date().getFullYear();
 
   const [year, setYear] = useState(currentYear);
   const [years, setYears] = useState<number[]>([]);
-
   const [loading, setLoading] = useState(false);
-
   const [chartData, setChartData] = useState<TrendData[]>([]);
 
   const loadYears = async () => {
-  try {
-    const res = await api.get(
-      "/api/vendor/dashboard/document-wise-years/"
-    );
+    try {
+      const res = await api.get(
+        "/api/vendor/dashboard/document-wise-years/"
+      );
 
-    setYears(res.data.years || []);
+      setYears(res.data.years || []);
 
-    if (
-      res.data.years?.length &&
-      !res.data.years.includes(year)
-    ) {
-      setYear(res.data.years[0]);
+      if (
+        res.data.years?.length &&
+        !res.data.years.includes(currentYear)
+      ) {
+        setYear(res.data.years[0]);
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to load years.");
     }
-  } catch (error) {
-    console.error(error);
-    message.error("Failed to load years.");
-  }
-};
+  };
 
   const loadTrend = async () => {
-
     setLoading(true);
 
     try {
-
       const res = await api.get(
         "/api/vendor/dashboard/document-wise-compliance-trend/",
         {
@@ -64,18 +59,13 @@ export default function DocumentWiseComplianceDashboard() {
         }
       );
 
-      setChartData(res.data.trend);
-
+      setChartData(res.data.trend || []);
     } catch (error) {
-
       console.error(error);
-
+      message.error("Failed to load dashboard.");
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   useEffect(() => {
@@ -89,148 +79,119 @@ export default function DocumentWiseComplianceDashboard() {
   }, [year]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
 
-      {/* Header */}
-
-      <div className="flex items-center justify-between">
-
-        <div>
-
-          <h2 className="text-xl font-semibold">
-            PF & ESIC Remittance Trend
-          </h2>
-
-          <p className="text-gray-500 text-sm">
-            Monthly average remittance day comparison
-          </p>
-
-        </div>
-
-        <Select
-          value={year}
-          style={{ width: 140 }}
-          onChange={setYear}
-        >
-          {years.map((yr) => (
-            <Option
-              key={yr}
-              value={yr}
-            >
-              {yr}
-            </Option>
-          ))}
-        </Select>
-
-      </div>
-
-      {/* KPI */}
-
+      {/* KPI Cards */}
       <DocumentWiseSummaryCards
         data={chartData}
       />
 
       {/* Chart */}
+      <div className="rounded-xl border bg-white p-4 shadow-sm">
 
-      <div className="rounded-xl border bg-white p-6 shadow-sm">
+        {/* Chart Header */}
+        <div className="mb-4 flex items-center justify-between">
 
-        {loading ? (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              PF & ESIC Remittance Trend
+            </h2>
 
-          <div className="flex h-[420px] items-center justify-center">
+            <p className="text-xs text-gray-500">
+              Monthly average remittance day comparison
+            </p>
+          </div>
 
-            <Spin size="large" />
+          <div className="flex items-center gap-3">
+
+            <span className="text-sm font-medium text-gray-600">
+              Year
+            </span>
+
+            <Select
+              value={year}
+              style={{ width: 110 }}
+              onChange={setYear}
+            >
+              {years.map((yr) => (
+                <Option
+                  key={yr}
+                  value={yr}
+                >
+                  {yr}
+                </Option>
+              ))}
+            </Select>
 
           </div>
 
-        ) : chartData.length ? (
+        </div>
 
+        {loading ? (
+          <div className="flex h-[520px] items-center justify-center">
+            <Spin
+              size="large"
+              tip="Loading Trend..."
+            />
+          </div>
+        ) : chartData.length ? (
           <DocumentWiseTrendChart
             data={chartData}
           />
-
         ) : (
-
-          <Empty
-            description="No PF / ESIC remittance data found for the selected year."
-          />
-
+          <div className="flex h-[520px] items-center justify-center">
+            <Empty
+              description="No PF / ESIC remittance data found for the selected year."
+            />
+          </div>
         )}
 
       </div>
 
       {/* Table */}
 
-      <Table
+      <div className="rounded-xl border bg-white p-4 shadow-sm">
 
-        rowKey="month"
+        <Table
+          rowKey="month"
+          size="small"
+          pagination={false}
+          dataSource={chartData}
+          scroll={{ x: 900 }}
+          columns={[
+            {
+              title: "Month",
+              dataIndex: "month",
+            },
+            {
+              title: "PF Avg Day",
+              dataIndex: "pf",
+            },
+            {
+              title: "ESIC Avg Day",
+              dataIndex: "esic",
+            },
+            {
+              title: "PF Before 15",
+              dataIndex: "pf_before_15",
+            },
+            {
+              title: "PF After 15",
+              dataIndex: "pf_after_15",
+            },
+            {
+              title: "ESIC Before 15",
+              dataIndex: "esic_before_15",
+            },
+            {
+              title: "ESIC After 15",
+              dataIndex: "esic_after_15",
+            },
+          ]}
+        />
 
-        pagination={false}
-
-        dataSource={chartData}
-
-        columns={[
-
-          {
-
-            title: "Month",
-
-            dataIndex: "month",
-
-          },
-
-          {
-
-            title: "PF Avg Day",
-
-            dataIndex: "pf",
-
-          },
-
-          {
-
-            title: "ESIC Avg Day",
-
-            dataIndex: "esic",
-
-          },
-
-          {
-
-            title: "PF Before 15",
-
-            dataIndex: "pf_before_15",
-
-          },
-
-          {
-
-            title: "PF After 15",
-
-            dataIndex: "pf_after_15",
-
-          },
-
-          {
-
-            title: "ESIC Before 15",
-
-            dataIndex: "esic_before_15",
-
-          },
-
-          {
-
-            title: "ESIC After 15",
-
-            dataIndex: "esic_after_15",
-
-          },
-
-        ]}
-
-      />
+      </div>
 
     </div>
   );
-
 }

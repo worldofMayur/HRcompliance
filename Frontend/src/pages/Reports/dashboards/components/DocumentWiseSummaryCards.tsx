@@ -63,60 +63,66 @@ export default function DocumentWiseSummaryCards({
     {
       title: "Average PF Day",
       value: avgPF,
-      icon: <CalendarOutlined className="text-blue-600 text-2xl" />,
-      bg: "bg-blue-50",
+      icon: <CalendarOutlined className="text-lg text-blue-600" />,
+      bg: "bg-blue-50 border-blue-100",
     },
     {
       title: "Average ESIC Day",
       value: avgESIC,
-      icon: <FileDoneOutlined className="text-green-600 text-2xl" />,
-      bg: "bg-green-50",
+      icon: <FileDoneOutlined className="text-lg text-green-600" />,
+      bg: "bg-green-50 border-green-100",
     },
     {
       title: "PF Before 15th",
       value: totalPFBefore15,
-      icon: <CheckCircleOutlined className="text-emerald-600 text-2xl" />,
-      bg: "bg-emerald-50",
+      icon: <CheckCircleOutlined className="text-lg text-emerald-600" />,
+      bg: "bg-emerald-50 border-emerald-100",
     },
     {
       title: "PF After 15th",
       value: totalPFAfter15,
-      icon: <ClockCircleOutlined className="text-orange-600 text-2xl" />,
-      bg: "bg-orange-50",
+      icon: <ClockCircleOutlined className="text-lg text-orange-600" />,
+      bg: "bg-orange-50 border-orange-100",
     },
     {
       title: "ESIC Before 15th",
       value: totalESICBefore15,
-      icon: <CheckCircleOutlined className="text-cyan-600 text-2xl" />,
-      bg: "bg-cyan-50",
+      icon: <CheckCircleOutlined className="text-lg text-cyan-600" />,
+      bg: "bg-cyan-50 border-cyan-100",
     },
     {
       title: "ESIC After 15th",
       value: totalESICAfter15,
-      icon: <ClockCircleOutlined className="text-red-600 text-2xl" />,
-      bg: "bg-red-50",
+      icon: <ClockCircleOutlined className="text-lg text-red-600" />,
+      bg: "bg-red-50 border-red-100",
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
       {cards.map((card) => (
         <div
           key={card.title}
-          className={`rounded-xl border ${card.bg} p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
+          className={`rounded-lg border ${card.bg} px-4 py-3 shadow-sm transition duration-200 hover:shadow-md`}
         >
           <div className="flex items-center justify-between">
+
             <div>
-              <p className="text-sm font-medium text-gray-500">
+
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                 {card.title}
               </p>
 
-              <h2 className="mt-2 text-3xl font-bold text-gray-900">
+              <h2 className="mt-1 text-2xl font-bold text-gray-900">
                 {card.value}
               </h2>
+
             </div>
 
-            <div>{card.icon}</div>
+            <div className="rounded-full bg-white p-2 shadow-sm">
+              {card.icon}
+            </div>
+
           </div>
         </div>
       ))}
