@@ -547,94 +547,81 @@ const fetchCCTrend = async () => {
             </div>
           </Card>
         </Col>
-          {/* RIGHT CARD */}
-          <Col xs={24} xl={12}>
-<Card
-  title="Vendor Wise CC Trend"
-  loading={loading}
-  style={{ height: "100%" }}
->
-  <Row gutter={[16, 16]}>
+{/* RIGHT CARD - Vendor Wise CC Trend */}
+<Col xs={24} xl={12}>
+  <Card
+    title="Vendor Wise CC Trend"
+    loading={loading}
+    style={{ height: "100%" }}
+  >
+    {/* Filters Row */}
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+      {/* Left side - Multi Selects */}
+      <div className="flex flex-1 flex-wrap gap-4">
+        <div className="min-w-[160px] flex-1">
+          <label className="mb-1 block font-medium">State</label>
+          <MultiSelectCheckbox
+            options={ccStateOptions}
+            value={ccStates}
+            onChange={(value) => {
+              setCcStates(value);
+              setCcBranches([]);
+              setCcVendors([]);
+            }}
+            placeholder="Select State"
+            allLabel="All States"
+          />
+        </div>
 
-    <Col xs={24} md={6}>
-      <label className="mb-1 block font-medium">
-        State
-      </label>
+        <div className="min-w-[160px] flex-1">
+          <label className="mb-1 block font-medium">Branch</label>
+          <MultiSelectCheckbox
+            options={ccBranchOptions}
+            value={ccBranches}
+            onChange={(value) => {
+              setCcBranches(value);
+              setCcVendors([]);
+            }}
+            placeholder="Select Branch"
+            allLabel="All Branches"
+          />
+        </div>
 
-      <MultiSelectCheckbox
-        options={ccStateOptions}
-        value={ccStates}
-        onChange={(value) => {
-          setCcStates(value);
-          setCcBranches([]);
-          setCcVendors([]);
-        }}
-        placeholder="Select State"
-        allLabel="All States"
-      />
-    </Col>
+        <div className="min-w-[160px] flex-1">
+          <label className="mb-1 block font-medium">Vendor</label>
+          <MultiSelectCheckbox
+            options={ccVendorOptions}
+            value={ccVendors}
+            onChange={setCcVendors}
+            placeholder="Select Vendor"
+            allLabel="All Vendors"
+          />
+        </div>
+      </div>
 
-    <Col xs={24} md={6}>
-      <label className="mb-1 block font-medium">
-        Branch
-      </label>
+      {/* Right side - Year (separated) */}
+      <div className="w-28">
+        <label className="mb-1 block font-medium">Year</label>
+        <select
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          value={ccYear}
+          onChange={(e) => setCcYear(Number(e.target.value))}
+        >
+          {ccYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
 
-      <MultiSelectCheckbox
-        options={ccBranchOptions}
-        value={ccBranches}
-        onChange={(value) => {
-          setCcBranches(value);
-          setCcVendors([]);
-        }}
-        placeholder="Select Branch"
-        allLabel="All Branches"
-      />
-    </Col>
-
-    <Col xs={24} md={6}>
-      <label className="mb-1 block font-medium">
-        Vendor
-      </label>
-
-      <MultiSelectCheckbox
-        options={ccVendorOptions}
-        value={ccVendors}
-        onChange={setCcVendors}
-        placeholder="Select Vendor"
-        allLabel="All Vendors"
-      />
-    </Col>
-
-    <Col xs={24} md={6}>
-      <label className="mb-1 block font-medium">
-        Year
-      </label>
-
-      <select
-        className="w-full rounded-md border px-3 py-2"
-        value={ccYear}
-        onChange={(e) => setCcYear(Number(e.target.value))}
-      >
-        {ccYears.map((year) => (
-          <option
-            key={year}
-            value={year}
-          >
-            {year}
-          </option>
-        ))}
-      </select>
-    </Col>
-
-  </Row>
-
-  <div className="mt-6">
-    <VendorWiseCCTrendChart
-      data={ccTrend}
-    />
-  </div>
-</Card>
-          </Col>
+    {/* Chart */}
+    <div className="mt-2">
+      <VendorWiseCCTrendChart data={ccTrend} />
+    </div>
+  </Card>
+</Col>
         </Row>
       </div>
     </>
