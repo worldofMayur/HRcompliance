@@ -2933,37 +2933,25 @@ class AuditorComplianceRemarksAPIView(APIView):
                     continue
 
                 timeline.append({
-
-                    "document_name":
-                        submission.document.name,
-
-                    "remark":
-                        version.vendor_remark,
-
-                    "version":
-                        version.version,
-
-                    "type":
-                        (
-                            "Re-upload"
-                            if version.is_reupload
-                            else "Initial Upload"
-                        ),
-
-                    "is_reuploaded":
-                        version.is_reupload,
-
-                    "created_at":
-                        version.uploaded_at,
+                    "remark": version.vendor_remark,
+                    "version": version.version,
+                    "type": (
+                        "Re-upload"
+                        if version.is_reupload
+                        else "Initial Upload"
+                    ),
+                    "is_reuploaded": version.is_reupload,
+                    "created_at": version.uploaded_at,
                 })
 
         timeline.sort(
-            key=lambda x: x["created_at"]
+            key=lambda x: x["created_at"],
+            reverse=True,
         )
 
         return Response(timeline)
-
         
+
 class AuditorCompliancePeriodAPIView(APIView):
 
     permission_classes = [IsAuthenticated]

@@ -1680,25 +1680,8 @@ const canFreezeReport =
 
                 <div>
 
-                  <Typography.Text strong>
-                    {item.document_name}
-                  </Typography.Text>
-
                   <div className="mt-1">
 
-                    <Tag
-                        color={
-                            item.is_reuploaded
-                                ? "volcano"
-                                : "success"
-                        }
-                    >
-                        {item.type}
-                    </Tag>
-
-                    <Tag color="geekblue">
-                        Version {item.version}
-                    </Tag>
 
                   </div>
 
@@ -1716,26 +1699,17 @@ const canFreezeReport =
 
               </div>
 
-              <div
-                className="
-                  mt-2
-                  rounded-lg
-                  border
-                  border-gray-200
-                  bg-gray-50
-                  p-3
-                "
-              >
-                <Typography.Text
-                  strong
-                  className="text-gray-700"
+              <div className="mt-2">
+                <Typography.Paragraph
+                  style={{
+                    marginBottom: 0,
+                    whiteSpace: "pre-wrap",
+                    color: "#374151",
+                    lineHeight: 1.7,
+                  }}
                 >
-                  Vendor Remark
-                </Typography.Text>
-
-                <div className="mt-1 text-gray-600">
                   {item.remark}
-                </div>
+                </Typography.Paragraph>
               </div>
 
             </div>
