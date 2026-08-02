@@ -30,19 +30,19 @@ export default function CompliancePieChart({ data }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={340}>
-      <PieChart>
+      <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
         <Pie
           data={chartData}
           dataKey="value"
           nameKey="name"
           cx="50%"
-          cy="50%"
-          innerRadius={72}
-          outerRadius={108}
+          cy="42%"                 // ← moved up because of Legend
+          innerRadius={70}
+          outerRadius={105}
           paddingAngle={4}
           cornerRadius={8}
           label={({ percent }) =>
-            percent && percent > 0.06
+            percent && percent > 0.07
               ? `${(percent * 100).toFixed(1)}%`
               : ""
           }
@@ -75,7 +75,7 @@ export default function CompliancePieChart({ data }: Props) {
           align="center"
           iconType="circle"
           iconSize={10}
-          wrapperStyle={{ paddingTop: 16 }}
+          wrapperStyle={{ paddingTop: 12 }}
           formatter={(value, entry: any) => {
             const count = entry.payload.value;
             const percent = ((count / total) * 100).toFixed(1);
@@ -90,10 +90,10 @@ export default function CompliancePieChart({ data }: Props) {
           }}
         />
 
-        {/* Center Total - perfectly centered */}
+        {/* Center text – aligned with cy="42%" */}
         <text
           x="50%"
-          y="47%"
+          y="39%"
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize={32}
@@ -105,7 +105,7 @@ export default function CompliancePieChart({ data }: Props) {
 
         <text
           x="50%"
-          y="56%"
+          y="48%"
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize={13}
