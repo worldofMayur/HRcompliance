@@ -213,10 +213,11 @@ const downloadCC = async (
     const token =
       localStorage.getItem("access_token");
 
-      const safeUrl = pdfUrl.replace(
-          "http://apii.complianceclearance.com",
-          API_BASE
-      );
+    const safeUrl = pdfUrl
+        .replace("http://apii.complianceclearance.com", API_BASE)
+        .replace("https://apii.complianceclearance.com", API_BASE)
+        .replace("http://api-demo.complianceclearance.com", API_BASE)
+        .replace("https://api-demo.complianceclearance.com", API_BASE);
 
     console.log("PDF URL:", safeUrl);
 
