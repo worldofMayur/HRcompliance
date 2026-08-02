@@ -1095,7 +1095,7 @@ const columns = [
 {
   title: "Audit Requirement",
   width: 150,          // decreased
-  align: "center" as const,
+  align: "left" as const,
   render: (_: any, record: any) => (
     <div className="space-y-1">
       <div className="text-xs text-gray-600">
@@ -1117,7 +1117,7 @@ const columns = [
 {
   title: "Audit Particulars",
   width: 220,          // decreased
-  align: "center" as const,
+  align: "left" as const,
   dataIndex: "audit_particulars",
   render: (text: string) => (
     <div
@@ -1141,7 +1141,7 @@ const columns = [
       {
         title: "Guidelines For Auditor",
         width: 220,      // decreased
-        align: "center" as const,
+        align: "left" as const,
         dataIndex: "auditor_guide",
         render: (text: any) => (
           <div className="space-y-1">
@@ -1159,7 +1159,7 @@ const columns = [
   {
     title: "Compliance Status",
     width: 220,
-    align: "center" as const,
+    align: "left" as const,
     render: (_: any, record: any) => (
       <select
         value={record.status || ""}
@@ -1195,7 +1195,7 @@ const columns = [
   {
     title: "Auditor Observation",
     width: 220,
-    align: "center" as const,
+    align: "left" as const,
     render: (_: any, record: any) => (
       <TextArea
         autoSize={{
@@ -1227,7 +1227,7 @@ const columns = [
   {
     title: "Action Recommendation",
     width: 220,
-    align: "center" as const,
+    align: "left" as const,
     render: (_: any, record: any) => (
       <TextArea
         autoSize={{
