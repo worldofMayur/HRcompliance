@@ -263,56 +263,58 @@ const getStatusStyles = (
     return filtered;
   }, [notifications, search, filter, sortBy]);
 
-const handleDownloadPDF = async (
-  url: string
-) => {
-    console.log("VENDOR NEW BUILD LOADED", url);
+const handleDownloadPDF = async (url: string) => {
+
+  console.log("========== DOWNLOAD START ==========");
+  console.log("API_BASE:", API_BASE);
+  console.log("Original URL:", url);
+
   try {
 
-    const token =
-      localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token");
+
+    console.log("TOKEN EXISTS:", !!token);
 
     const safeUrl = url.replace(
       "http://apii.complianceclearance.com",
       API_BASE
     );
 
-      console.log("PDF URL:", safeUrl);
+    console.log("SAFE URL:", safeUrl);
 
-      const response = await fetch(safeUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const response = await fetch(safeUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("STATUS:", response.status);
+    console.log("OK:", response.ok);
 
     if (!response.ok) {
+
+      const text = await response.text();
+
+      console.log("ERROR RESPONSE:", text);
+
       throw new Error(
-        `Failed to open PDF (${response.status})`
+        `Failed (${response.status})`
       );
     }
 
-    const blob =
-      await response.blob();
+    const blob = await response.blob();
 
-    const blobUrl =
-      window.URL.createObjectURL(blob);
+    console.log("BLOB SIZE:", blob.size);
 
-    window.open(
-      blobUrl,
-      "_blank",
-      "noopener,noreferrer"
-    );
+    const blobUrl = URL.createObjectURL(blob);
+
+    window.open(blobUrl, "_blank");
 
   } catch (err) {
 
-    console.error(
-      "PDF OPEN ERROR:",
-      err
-    );
+    console.error(err);
 
-    alert(
-      "Unable to open Compliance Certificate."
-    );
+    alert("Unable to open Compliance Certificate.");
   }
 };
 
@@ -863,7 +865,13 @@ const getRelativeTime = (date: string) => {
 
                         onClick={(e) => {
 
+                          e.preventDefault();
                           e.stopPropagation();
+
+                          console.log("===== BUTTON CLICKED =====");
+                          console.log("Notification:", n);
+                          console.log("Data:", d);
+                          console.log("PDF URL:", d.pdf_download_url);
 
                           handleDownloadPDF(
                             d.pdf_download_url
