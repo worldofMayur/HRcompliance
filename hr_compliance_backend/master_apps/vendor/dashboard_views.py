@@ -23,6 +23,7 @@ from master_apps.vendor.compliance_models import (
     VendorComplianceSubmission,
 )
 from master_apps.vendor.mapping_models import VendorBranchMapping
+from master_apps.vendor.mapping_models import VendorBranchMapping
 
 # =========================
 # KPI
@@ -1814,21 +1815,72 @@ class ComplianceDashboardSummaryV2APIView(APIView):
             .count()
         )
 
-        under_audit = queryset.filter(
-            workflow_status__in=[
-                WorkflowStatus.SUBMITTED,
-                WorkflowStatus.UNDER_REVIEW,
-                WorkflowStatus.REUPLOAD_REQUESTED,
-                WorkflowStatus.REUPLOADED,
-            ]
-        ).count()
+        under_audit = (
+            queryset.filter(
+                workflow_status__in=[
+                    WorkflowStatus.SUBMITTED,
+                    WorkflowStatus.UNDER_REVIEW,
+                    WorkflowStatus.REUPLOAD_REQUESTED,
+                    WorkflowStatus.REUPLOADED,
+                ]
+            )
+            .values(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
+            .distinct()
+            .count()
+        )
 
-        document_not_submitted = queryset.filter(
-            workflow_status__in=[
-                WorkflowStatus.DRAFT,
-                WorkflowStatus.SAVED,
-            ]
-        ).count()
+        document_not_submitted = 0
+
+        audit_groups = (
+            queryset.values(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
+            .distinct()
+        )
+
+        for group in audit_groups:
+
+            vendor_id = group["vendor_id"]
+            branch_id = group["branch_id"]
+            audit_period = group["audit_period"]
+
+            mapping = (
+                VendorBranchMapping.objects
+                .filter(
+                    principal_employer=pe,
+                    vendor_id=vendor_id,
+                    branch_id=branch_id,
+                )
+                .prefetch_related("documents")
+                .order_by("-start_date")
+                .first()
+            )
+
+            if not mapping:
+                continue
+
+            expected = mapping.documents.count()
+
+            submitted = (
+                VendorComplianceSubmission.objects
+                .filter(
+                    principal_employer=pe,
+                    vendor_id=vendor_id,
+                    branch_id=branch_id,
+                    audit_period=audit_period,
+                )
+                .values("document_id")
+                .distinct()
+                .count()
+            )
+
+            document_not_submitted += max(expected - submitted, 0)
 
         return Response(
             {
@@ -1876,13 +1928,19 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         audit_periods = request.GET.getlist("audit_periods")
 
         if states:
-            queryset = queryset.filter(state__in=states)
+            queryset = queryset.filter(
+                state__in=states
+            )
 
         if branches:
-            queryset = queryset.filter(branch_id__in=branches)
+            queryset = queryset.filter(
+                branch_id__in=branches
+            )
 
         if vendors:
-            queryset = queryset.filter(vendor_id__in=vendors)
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
 
         if audit_periods:
             queryset = queryset.filter(
@@ -1908,7 +1966,64 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                 audit_period=period
             )
 
+            # -----------------------------------
+            # Document Not Submitted
+            # -----------------------------------
+
+            document_not_submitted = 0
+
+            audit_groups = (
+                rows.values(
+                    "vendor_id",
+                    "branch_id",
+                    "audit_period",
+                )
+                .distinct()
+            )
+
+            for group in audit_groups:
+
+                vendor_id = group["vendor_id"]
+                branch_id = group["branch_id"]
+                audit_period = group["audit_period"]
+
+                mapping = (
+                    VendorBranchMapping.objects
+                    .filter(
+                        principal_employer=pe,
+                        vendor_id=vendor_id,
+                        branch_id=branch_id,
+                    )
+                    .prefetch_related("documents")
+                    .order_by("-start_date")
+                    .first()
+                )
+
+                if not mapping:
+                    continue
+
+                expected = mapping.documents.count()
+
+                submitted = (
+                    VendorComplianceSubmission.objects
+                    .filter(
+                        principal_employer=pe,
+                        vendor_id=vendor_id,
+                        branch_id=branch_id,
+                        audit_period=audit_period,
+                    )
+                    .values("document_id")
+                    .distinct()
+                    .count()
+                )
+
+                document_not_submitted += max(
+                    expected - submitted,
+                    0,
+                )
+
             response.append({
+
                 "month": period,
 
                 "ccIssued": (
@@ -1938,21 +2053,25 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                     .count()
                 ),
 
-                "underAudit": rows.filter(
-                    workflow_status__in=[
-                        WorkflowStatus.SUBMITTED,
-                        WorkflowStatus.UNDER_REVIEW,
-                        WorkflowStatus.REUPLOAD_REQUESTED,
-                        WorkflowStatus.REUPLOADED,
-                    ]
-                ).count(),
+                "underAudit": (
+                    rows.filter(
+                        workflow_status__in=[
+                            WorkflowStatus.SUBMITTED,
+                            WorkflowStatus.UNDER_REVIEW,
+                            WorkflowStatus.REUPLOAD_REQUESTED,
+                            WorkflowStatus.REUPLOADED,
+                        ]
+                    )
+                    .values(
+                        "vendor_id",
+                        "branch_id",
+                        "audit_period",
+                    )
+                    .distinct()
+                    .count()
+                ),
 
-                "documentNotSubmitted": rows.filter(
-                    workflow_status__in=[
-                        WorkflowStatus.DRAFT,
-                        WorkflowStatus.SAVED,
-                    ]
-                ).count(),
+                "documentNotSubmitted": document_not_submitted,
             })
 
         return Response(response)
@@ -2013,6 +2132,62 @@ class ComplianceDashboardDistributionV2APIView(APIView):
                 audit_period__in=audit_periods
             )
 
+        # ----------------------------------------
+        # Document Not Submitted
+        # ----------------------------------------
+
+        document_not_submitted = 0
+
+        audit_groups = (
+            queryset.values(
+                "vendor_id",
+                "branch_id",
+                "audit_period",
+            )
+            .distinct()
+        )
+
+        for group in audit_groups:
+
+            vendor_id = group["vendor_id"]
+            branch_id = group["branch_id"]
+            audit_period = group["audit_period"]
+
+            mapping = (
+                VendorBranchMapping.objects
+                .filter(
+                    principal_employer=pe,
+                    vendor_id=vendor_id,
+                    branch_id=branch_id,
+                )
+                .prefetch_related("documents")
+                .order_by("-start_date")
+                .first()
+            )
+
+            if not mapping:
+                continue
+
+            expected = mapping.documents.count()
+
+            submitted = (
+                VendorComplianceSubmission.objects
+                .filter(
+                    principal_employer=pe,
+                    vendor_id=vendor_id,
+                    branch_id=branch_id,
+                    audit_period=audit_period,
+                )
+                .values("document_id")
+                .distinct()
+                .count()
+            )
+
+            document_not_submitted += max(
+                expected - submitted,
+                0,
+            )
+
         response = {
             "ccIssued": (
                 queryset.filter(
@@ -2041,27 +2216,30 @@ class ComplianceDashboardDistributionV2APIView(APIView):
                 .count()
             ),
 
-            "underAudit": queryset.filter(
-                workflow_status__in=[
-                    WorkflowStatus.SUBMITTED,
-                    WorkflowStatus.UNDER_REVIEW,
-                    WorkflowStatus.REUPLOAD_REQUESTED,
-                    WorkflowStatus.REUPLOADED,
-                ]
-            ).count(),
+            "underAudit": (
+                queryset.filter(
+                    workflow_status__in=[
+                        WorkflowStatus.SUBMITTED,
+                        WorkflowStatus.UNDER_REVIEW,
+                        WorkflowStatus.REUPLOAD_REQUESTED,
+                        WorkflowStatus.REUPLOADED,
+                    ]
+                )
+                .values(
+                    "vendor_id",
+                    "branch_id",
+                    "audit_period",
+                )
+                .distinct()
+                .count()
+            ),
 
-            "documentNotSubmitted": queryset.filter(
-                workflow_status__in=[
-                    WorkflowStatus.DRAFT,
-                    WorkflowStatus.SAVED,
-                ]
-            ).count(),
+            "documentNotSubmitted": document_not_submitted,
         }
 
         return Response({
             "distribution": response
         })
-
 
 class ComplianceDashboardGenderDistributionAPIView(APIView):
     permission_classes = [IsAuthenticated]
