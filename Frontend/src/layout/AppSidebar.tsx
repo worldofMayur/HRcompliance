@@ -33,7 +33,12 @@ const AppSidebar: React.FC = () => {
     loadingBarRef.current?.complete();
   }, [location.pathname]);
 
-  const handleNavigation = () => {
+  const handleNavigation = (path: string) => {
+    // Already on this page → don't show loading
+    if (isActive(path)) {
+      return;
+    }
+
     loadingBarRef.current?.continuousStart(30);
   };
 
@@ -55,7 +60,7 @@ const AppSidebar: React.FC = () => {
         height={2}
         shadow="0 0 10px rgba(37,99,235,0.35)"
         ref={loadingBarRef}
-        waitingTime={300}
+        waitingTime={80}
       />
 
       <aside
@@ -86,7 +91,7 @@ const AppSidebar: React.FC = () => {
         >
           <Link
             to="/TailAdmin/"
-            onClick={handleNavigation}
+            onClick={() => handleNavigation("/TailAdmin/")}
             className="group/logo flex flex-col items-center gap-0 rounded-2xl px-2 py-1 transition-all duration-300"
           >
             <img
@@ -134,7 +139,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="principle-employee"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/principle-employee")}
                     className={menuClass("/principle-employee")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -151,7 +156,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="vendor"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/vendor")}
                     className={menuClass("/vendor")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -168,7 +173,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="auditor"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/auditor")}
                     className={menuClass("/auditor")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -185,7 +190,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="audit-checklist"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/audit-checklist")}
                     className={menuClass("/audit-checklist")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -202,7 +207,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="documents"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/documents")}
                     className={menuClass("/documents")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -223,7 +228,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="reports-dashboard"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/dashboard")}
                     className={menuClass("/dashboard")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -240,7 +245,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="vendor-mapping"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/vendor-mapping")}
                     className={menuClass("/vendor-mapping")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -257,7 +262,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="manage-vendor"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/manage-vendor")}
                     className={menuClass("/manage-vendor")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -274,7 +279,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="freeze-audit-reports"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/freeze-audit-reports")}
                     className={menuClass("/freeze-audit-reports")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -291,7 +296,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="pe-notifications"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/vendor-notifications")}
                     className={menuClass("/vendor-notifications")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -312,7 +317,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="vendor-compliance"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/vendor-compliance")}
                     className={menuClass("/vendor-compliance")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -329,7 +334,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="manage-cc-emails"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/manage-cc-emails")}
                     className={menuClass("/manage-cc-emails")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -346,7 +351,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="vendor-notifications"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/vendor-notifications")}
                     className={menuClass("/vendor-notifications")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -367,7 +372,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="auditor-dashboard"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/auditor-dashboard")}
                     className={menuClass("/auditor-dashboard")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -384,7 +389,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="freeze-audit-reports"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/freeze-audit-reports")}
                     className={menuClass("/freeze-audit-reports")}
                   >
                     <span className="menu-item-icon-size shrink-0">
@@ -401,7 +406,7 @@ const AppSidebar: React.FC = () => {
                 <li>
                   <Link
                     to="auditor-notifications"
-                    onClick={handleNavigation}
+                    onClick={() => handleNavigation("/auditor-notifications")}
                     className={menuClass("/auditor-notifications")}
                   >
                     <span className="menu-item-icon-size shrink-0">
