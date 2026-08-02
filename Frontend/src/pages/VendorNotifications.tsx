@@ -275,10 +275,9 @@ const handleDownloadPDF = async (url: string) => {
 
     console.log("TOKEN EXISTS:", !!token);
 
-    const safeUrl = url.replace(
-      "http://apii.complianceclearance.com",
-      API_BASE
-    );
+    const safeUrl = url
+        .replace("http://apii.complianceclearance.com", API_BASE)
+        .replace("https://apii.complianceclearance.com", API_BASE);
 
     console.log("SAFE URL:", safeUrl);
 
