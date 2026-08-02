@@ -1930,7 +1930,7 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         year = int(
             request.GET.get(
                 "year",
-                now().year,
+                timezone.now().year,
             )
         )
 
@@ -1963,24 +1963,19 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         # Helper: expand audit_period → list of month indexes (0-11)
         # -----------------------------------
         def get_months_covered(audit_period: str, frequency: str, year: int):
-            """
-            Returns list of month indexes (0=Jan ... 11=Dec)
-            that this audit_period covers in the given year.
-            """
             if not audit_period:
                 return []
 
-            period = audit_period.strip()
+            period = str(audit_period).strip()
             freq = (frequency or "").strip().upper()
 
-            # Extract year from period string if present
+            # Extract year from the period string
             period_year = None
             for part in period.split():
                 if part.isdigit() and len(part) == 4:
                     period_year = int(part)
                     break
 
-            # If period belongs to a different year → skip
             if period_year and period_year != year:
                 return []
 
@@ -1990,14 +1985,14 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                 "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11,
             }
 
-            # ---------- MONTHLY ----------
+            # MONTHLY
             if freq == "MONTHLY":
-                for m_name, idx in month_map.items():
-                    if period.startswith(m_name):
+                for name, idx in month_map.items():
+                    if period.startswith(name):
                         return [idx]
                 return []
 
-            # ---------- QUARTERLY ----------
+            # QUARTERLY
             if freq == "QUARTERLY":
                 quarters = {
                     "Jan-Mar": [0, 1, 2],
@@ -2010,25 +2005,24 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                         return months
                 return []
 
-            # ---------- HALF YEARLY ----------
+            # HALF YEARLY
             if freq in ["HALF_YEARLY", "HALF YEARLY", "HALF-YEARLY"]:
-                if "Jan-Jun" in period or "Jan-Jul" in period:
+                if any(x in period for x in ["Jan-Jun", "Jan-Jul", "Jan - Jun"]):
                     return [0, 1, 2, 3, 4, 5]
-                if "Jul-Dec" in period or "Jul-Jan" in period:
+                if any(x in period for x in ["Jul-Dec", "Jul-Jan", "Jul - Dec"]):
                     return [6, 7, 8, 9, 10, 11]
                 return []
 
-            # ---------- ANNUALLY ----------
+            # ANNUALLY
             if freq == "ANNUALLY":
                 return list(range(12))
 
-            # Fallback: try to parse any month names present
+            # Fallback
             found = []
-            for m_name, idx in month_map.items():
-                if m_name in period:
+            for name, idx in month_map.items():
+                if name in period:
                     found.append(idx)
             return found
-
         # -----------------------------------
         # Initialize 12 empty month buckets
         # -----------------------------------
