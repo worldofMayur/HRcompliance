@@ -85,6 +85,12 @@ export default function VendorComplianceDashboard() {
 
   const currentYear = new Date().getFullYear();
 
+  const [trendYear, setTrendYear] =
+    useState(currentYear);
+
+  const [trendYears, setTrendYears] =
+    useState<number[]>([]);
+
   const [ccYear, setCcYear] = useState(currentYear);
   const [ccYears, setCcYears] = useState<number[]>([]);
 
@@ -161,7 +167,13 @@ export default function VendorComplianceDashboard() {
 
   useEffect(() => {
     fetchDashboard();
-  }, [states, branches, vendors, auditPeriods]);
+  }, [
+    states,
+    branches,
+    vendors,
+    auditPeriods,
+    trendYear,
+  ]);
 
   useEffect(() => {
     loadGenderFilters();
@@ -178,8 +190,12 @@ export default function VendorComplianceDashboard() {
   ]);
 
   useEffect(() => {
-  loadCCYears();
-}, []);
+    loadCCYears();
+  }, []);
+
+  useEffect(() => {
+    loadTrendYears();
+  }, []);
 
 useEffect(() => {
   loadCCFilters();
@@ -207,6 +223,10 @@ useEffect(() => {
       setLoading(true);
 
       const params = new URLSearchParams();
+      params.append(
+        "year",
+        String(trendYear)
+      );
 
       states.forEach((x) => params.append("states", x));
       branches.forEach((x) => params.append("branches", x));
@@ -263,16 +283,34 @@ useEffect(() => {
   };
 
   const loadCCYears = async () => {
-  try {
-    const res = await axios.get(
-      "/api/vendor/dashboard/vendor-wise-cc-years/"
-    );
+    try {
+      const res = await axios.get(
+        "/api/vendor/dashboard/vendor-wise-cc-years/"
+      );
 
-    setCcYears(res.data.years || []);
-  } catch (err) {
-    console.error(err);
-  }
-};
+      setCcYears(res.data.years || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadTrendYears = async () => {
+    try {
+
+      const res = await axios.get(
+        "/api/vendor/dashboard/compliance/monthly-trend-years/"
+      );
+
+      setTrendYears(
+        res.data.years || []
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
+  };
 
 const loadCCFilters = async () => {
 
@@ -414,9 +452,31 @@ const fetchCCTrend = async () => {
                 </Space>
               }
               extra={
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Audit Period
-                </Text>
+                <select
+                  className="
+                    rounded-md
+                    border
+                    border-gray-300
+                    px-3
+                    py-1
+                    text-sm
+                  "
+                  value={trendYear}
+                  onChange={(e) =>
+                    setTrendYear(
+                      Number(e.target.value)
+                    )
+                  }
+                >
+                  {trendYears.map((year) => (
+                    <option
+                      key={year}
+                      value={year}
+                    >
+                      {year}
+                    </option>
+                  ))}
+                </select>
               }
             >
               <ComplianceMonthlyTrendChart data={monthlyTrend} />

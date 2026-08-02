@@ -2077,6 +2077,59 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         return Response(response)
 
 
+class ComplianceDashboardMonthlyTrendYearsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        if request.user.role != "PE":
+            return Response(
+                {"error": "Unauthorized"},
+                status=403,
+            )
+
+        try:
+            pe = PrincipalEmployer.objects.get(
+                user=request.user
+            )
+
+        except PrincipalEmployer.DoesNotExist:
+            return Response(
+                {"error": "Principal Employer not found"},
+                status=404,
+            )
+
+        years = (
+            VendorComplianceSubmission.objects
+            .filter(
+                principal_employer=pe,
+            )
+            .exclude(audit_period__isnull=True)
+            .values_list(
+                "audit_period",
+                flat=True,
+            )
+        )
+
+        year_set = set()
+
+        import re
+
+        for period in years:
+
+            match = re.search(r"\b(20\d{2})\b", period or "")
+
+            if match:
+                year_set.add(int(match.group(1)))
+
+        return Response({
+            "years": sorted(
+                year_set,
+                reverse=True,
+            )
+        })
+
+
 class ComplianceDashboardDistributionV2APIView(APIView):
     permission_classes = [IsAuthenticated]
 

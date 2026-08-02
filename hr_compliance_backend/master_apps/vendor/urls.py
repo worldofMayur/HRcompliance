@@ -55,6 +55,7 @@ from .dashboard_views import (
     VendorWiseCCTrendYearsAPIView,
     VendorWiseCCTrendFiltersAPIView,
     VendorWiseCCTrendAPIView,
+    ComplianceDashboardMonthlyTrendYearsAPIView
 
 )
 
@@ -199,6 +200,10 @@ urlpatterns = [
     path(
         "dashboard/vendor-wise-cc-trend/",
         VendorWiseCCTrendAPIView.as_view(),
+    ),
+    path(
+        "dashboard/compliance/monthly-trend-years/",
+        ComplianceDashboardMonthlyTrendYearsAPIView.as_view(),
     ),
 
     path(
