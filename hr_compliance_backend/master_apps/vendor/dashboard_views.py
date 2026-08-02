@@ -1891,6 +1891,75 @@ class ComplianceDashboardSummaryV2APIView(APIView):
             }
         )
 
+MONTH_MAP = {
+    "Jan": 0,
+    "Feb": 1,
+    "Mar": 2,
+    "Apr": 3,
+    "May": 4,
+    "Jun": 5,
+    "Jul": 6,
+    "Aug": 7,
+    "Sep": 8,
+    "Oct": 9,
+    "Nov": 10,
+    "Dec": 11,
+}
+
+
+def extract_year(period):
+    import re
+
+    match = re.search(r"(20\d{2})", period or "")
+
+    if match:
+        return int(match.group(1))
+
+    return None
+
+
+def get_months(period, frequency):
+
+    if not period:
+        return []
+
+    frequency = (frequency or "").upper()
+
+    if frequency == "MONTHLY":
+
+        for month, index in MONTH_MAP.items():
+
+            if period.startswith(month):
+                return [index]
+
+    elif frequency == "QUARTERLY":
+
+        if "Jan-Mar" in period:
+            return [0, 1, 2]
+
+        if "Apr-Jun" in period:
+            return [3, 4, 5]
+
+        if "Jul-Sep" in period:
+            return [6, 7, 8]
+
+        if "Oct-Dec" in period:
+            return [9, 10, 11]
+
+    elif frequency == "HALF_YEARLY":
+
+        if "Jan-Jun" in period:
+            return [0, 1, 2, 3, 4, 5]
+
+        if "Jul-Dec" in period:
+            return [6, 7, 8, 9, 10, 11]
+
+    elif frequency == "ANNUALLY":
+
+        return list(range(12))
+
+    return []
+
 
 class ComplianceDashboardMonthlyTrendV2APIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1904,10 +1973,7 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
             )
 
         try:
-            pe = PrincipalEmployer.objects.get(
-                user=request.user
-            )
-
+            pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
             return Response(
                 {"error": "Principal Employer not found"},
@@ -1921,7 +1987,6 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         # -----------------------------
         # Filters
         # -----------------------------
-
         states = request.GET.getlist("states")
         branches = request.GET.getlist("branches")
         vendors = request.GET.getlist("vendors")
@@ -1935,24 +2000,16 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         )
 
         if states:
-            queryset = queryset.filter(
-                state__in=states
-            )
+            queryset = queryset.filter(state__in=states)
 
         if branches:
-            queryset = queryset.filter(
-                branch_id__in=branches
-            )
+            queryset = queryset.filter(branch_id__in=branches)
 
         if vendors:
-            queryset = queryset.filter(
-                vendor_id__in=vendors
-            )
+            queryset = queryset.filter(vendor_id__in=vendors)
 
         if audit_periods:
-            queryset = queryset.filter(
-                audit_period__in=audit_periods
-            )
+            queryset = queryset.filter(audit_period__in=audit_periods)
 
         MONTHS = [
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -1970,11 +2027,7 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
             freq = (frequency or "").strip().upper()
 
             # Extract year from the period string
-            period_year = None
-            for part in period.split():
-                if part.isdigit() and len(part) == 4:
-                    period_year = int(part)
-                    break
+            period_year = extract_year(period)
 
             if period_year and period_year != year:
                 return []
@@ -1985,14 +2038,14 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                 "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11,
             }
 
-            # MONTHLY
+            # ---------- MONTHLY ----------
             if freq == "MONTHLY":
                 for name, idx in month_map.items():
                     if period.startswith(name):
                         return [idx]
                 return []
 
-            # QUARTERLY
+            # ---------- QUARTERLY ----------
             if freq == "QUARTERLY":
                 quarters = {
                     "Jan-Mar": [0, 1, 2],
@@ -2005,7 +2058,7 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                         return months
                 return []
 
-            # HALF YEARLY
+            # ---------- HALF YEARLY ----------
             if freq in ["HALF_YEARLY", "HALF YEARLY", "HALF-YEARLY"]:
                 if any(x in period for x in ["Jan-Jun", "Jan-Jul", "Jan - Jun"]):
                     return [0, 1, 2, 3, 4, 5]
@@ -2013,16 +2066,17 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                     return [6, 7, 8, 9, 10, 11]
                 return []
 
-            # ANNUALLY
+            # ---------- ANNUALLY ----------
             if freq == "ANNUALLY":
                 return list(range(12))
 
-            # Fallback
+            # Fallback – try to find any month names
             found = []
             for name, idx in month_map.items():
                 if name in period:
                     found.append(idx)
             return found
+
         # -----------------------------------
         # Initialize 12 empty month buckets
         # -----------------------------------
@@ -2042,7 +2096,6 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         # -----------------------------------
         submissions = queryset.select_related("vendor", "branch").all()
 
-        # Cache mappings to avoid repeated DB hits
         mapping_cache = {}
 
         for sub in submissions:
@@ -2075,7 +2128,6 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
             if not months_covered:
                 continue
 
-            # Unique key for distinct counting
             unique_key = (sub.vendor_id, sub.branch_id, sub.audit_period)
 
             for month_idx in months_covered:
@@ -2097,9 +2149,8 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                     bucket["underAudit"].add(unique_key)
 
         # -----------------------------------
-        # Document Not Submitted (period-based, then distribute)
+        # Document Not Submitted
         # -----------------------------------
-        # Group by vendor + branch + audit_period
         period_groups = (
             queryset
             .values("vendor_id", "branch_id", "audit_period")
@@ -2112,6 +2163,7 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
             audit_period = group["audit_period"]
 
             mapping = mapping_cache.get((vendor_id, branch_id))
+
             if not mapping:
                 mapping = (
                     VendorBranchMapping.objects
@@ -2173,6 +2225,7 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
             })
 
         return Response(response)
+
 
 class ComplianceDashboardMonthlyTrendYearsAPIView(APIView):
     permission_classes = [IsAuthenticated]
