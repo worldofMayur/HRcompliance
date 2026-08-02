@@ -36,7 +36,7 @@ export default function CompliancePieChart({ data }: Props) {
           dataKey="value"
           nameKey="name"
           cx="50%"
-          cy="42%"                 // ← moved up because of Legend
+          cy="35%"                 // ← moved up because of Legend
           innerRadius={70}
           outerRadius={105}
           paddingAngle={4}
