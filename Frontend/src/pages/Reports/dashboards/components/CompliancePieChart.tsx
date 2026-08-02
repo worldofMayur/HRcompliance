@@ -18,73 +18,52 @@ const COLORS = [
   "#EF4444", // Document Not Submitted
 ];
 
-export default function CompliancePieChart({
-  data,
-}: Props) {
+export default function CompliancePieChart({ data }: Props) {
   const chartData = [
-    {
-      name: "CC Issued",
-      value: data.ccIssued ?? 0,
-    },
-    {
-      name: "Exceptional CC",
-      value: data.exceptionalCC ?? 0,
-    },
-    {
-      name: "Under Audit",
-      value: data.underAudit ?? 0,
-    },
-    {
-      name: "Document Not Submitted",
-      value: data.documentNotSubmitted ?? 0,
-    },
+    { name: "CC Issued", value: data.ccIssued ?? 0 },
+    { name: "Exceptional CC", value: data.exceptionalCC ?? 0 },
+    { name: "Under Audit", value: data.underAudit ?? 0 },
+    { name: "Document Not Submitted", value: data.documentNotSubmitted ?? 0 },
   ];
 
-  const total =
-    chartData.reduce(
-      (sum, item) => sum + item.value,
-      0
-    ) || 1;
+  const total = chartData.reduce((sum, item) => sum + item.value, 0) || 1;
 
   return (
-    <ResponsiveContainer
-      width="100%"
-      height={320}
-    >
+    <ResponsiveContainer width="100%" height={340}>
       <PieChart>
-
         <Pie
           data={chartData}
           dataKey="value"
           nameKey="name"
           cx="50%"
-          cy="42%"
-          innerRadius={70}
-          outerRadius={105}
-          paddingAngle={5}
-          cornerRadius={10}
+          cy="45%"
+          innerRadius={72}
+          outerRadius={108}
+          paddingAngle={4}
+          cornerRadius={8}
+          // Only show label if slice is reasonably large
           label={({ percent }) =>
-            percent && percent > 0
+            percent && percent > 0.06
               ? `${(percent * 100).toFixed(1)}%`
               : ""
           }
+          labelLine={false}
         >
           {chartData.map((_, index) => (
-            <Cell
-              key={index}
-              fill={COLORS[index]}
-            />
+            <Cell key={`cell-${index}`} fill={COLORS[index]} stroke="#fff" strokeWidth={2} />
           ))}
         </Pie>
 
         <Tooltip
-          formatter={(value: number) => [
-            `${value} Records (${(
-              (value / total) *
-              100
-            ).toFixed(1)}%)`,
-            "Count",
+          formatter={(value: number, name: string) => [
+            `${value} (${((value / total) * 100).toFixed(1)}%)`,
+            name,
           ]}
+          contentStyle={{
+            borderRadius: 8,
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+          }}
         />
 
         <Legend
@@ -92,40 +71,44 @@ export default function CompliancePieChart({
           align="center"
           iconType="circle"
           iconSize={10}
+          wrapperStyle={{ paddingTop: 16 }}
           formatter={(value, entry: any) => {
             const count = entry.payload.value;
-
-            return `${value} (${(
-              (count / total) *
-              100
-            ).toFixed(1)}%)`;
+            const percent = ((count / total) * 100).toFixed(1);
+            return (
+              <span style={{ color: "#374151", fontSize: 13 }}>
+                {value}{" "}
+                <span style={{ color: "#6b7280" }}>
+                  ({percent}%)
+                </span>
+              </span>
+            );
           }}
         />
 
+        {/* Center Total */}
         <text
           x="50%"
-          y="43%"
+          y="42%"
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={34}
+          fontSize={32}
           fontWeight={700}
-          fill="#1f2937"
+          fill="#111827"
         >
           {total}
         </text>
-
         <text
           x="50%"
           y="51%"
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={14}
+          fontSize={13}
           fontWeight={500}
           fill="#6b7280"
         >
           Total
         </text>
-
       </PieChart>
     </ResponsiveContainer>
   );
