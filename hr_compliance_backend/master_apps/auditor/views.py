@@ -469,6 +469,7 @@ class DownloadCCPDFAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, audit_id):
+        print("===== DownloadCCPDFAPIView HIT =====")
 
         import os
 
