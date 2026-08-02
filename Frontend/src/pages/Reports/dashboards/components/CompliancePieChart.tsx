@@ -12,10 +12,10 @@ interface Props {
 }
 
 const COLORS = [
-  "#1677ff",
-  "#722ed1",
-  "#fa8c16",
-  "#f5222d",
+  "#22C55E", // CC Issued
+  "#F59E0B", // Exceptional CC
+  "#3B82F6", // Under Audit
+  "#EF4444", // Document Not Submitted
 ];
 
 export default function CompliancePieChart({

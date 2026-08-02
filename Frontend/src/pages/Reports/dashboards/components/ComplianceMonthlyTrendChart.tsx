@@ -44,10 +44,10 @@ export default function ComplianceMonthlyTrendChart({
     },
 
     colors: [
-      "#1677ff",
-      "#722ed1",
-      "#fa8c16",
-      "#f5222d",
+      "#22C55E", // CC Issued - Green
+      "#F59E0B", // Exceptional CC - Amber
+      "#3B82F6", // Under Audit - Blue
+      "#EF4444", // Document Not Submitted - Red
     ],
 
     xaxis: {

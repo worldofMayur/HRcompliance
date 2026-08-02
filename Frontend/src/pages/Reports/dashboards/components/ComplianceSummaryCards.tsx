@@ -31,32 +31,32 @@ export default function ComplianceSummaryCards({
     documentNotSubmitted: 0,
   };
 
-  const cards = [
-    {
-      title: "CC Issued",
-      value: summary.ccIssued,
-      color: "#1677ff",
-      icon: <CheckCircleOutlined />,
-    },
-    {
-      title: "Exceptional CC Issued",
-      value: summary.exceptionalCC,
-      color: "#722ed1",
-      icon: <SafetyCertificateOutlined />,
-    },
-    {
-      title: "Under Audit",
-      value: summary.underAudit,
-      color: "#fa8c16",
-      icon: <ClockCircleOutlined />,
-    },
-    {
-      title: "Document Not Submitted",
-      value: summary.documentNotSubmitted,
-      color: "#f5222d",
-      icon: <FileExclamationOutlined />,
-    },
-  ];
+const cards = [
+  {
+    title: "CC Issued",
+    value: summary.ccIssued,
+    color: "#22C55E", // Green
+    icon: <CheckCircleOutlined />,
+  },
+  {
+    title: "Exceptional CC Issued",
+    value: summary.exceptionalCC,
+    color: "#F59E0B", // Amber
+    icon: <SafetyCertificateOutlined />,
+  },
+  {
+    title: "Under Audit",
+    value: summary.underAudit,
+    color: "#3B82F6", // Blue
+    icon: <ClockCircleOutlined />,
+  },
+  {
+    title: "Document Not Submitted",
+    value: summary.documentNotSubmitted,
+    color: "#EF4444", // Red
+    icon: <FileExclamationOutlined />,
+  },
+];
 
   return (
     <Row gutter={[16, 16]}>

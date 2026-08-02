@@ -31,7 +31,10 @@ export default function VendorWiseCCTrendChart({
       },
     },
 
-    colors: ["#1677ff", "#52c41a"],
+    colors: [
+    "#22C55E", // CC Issued
+    "#F59E0B", // Exceptional CC
+    ],
 
     stroke: {
       curve: "smooth",
