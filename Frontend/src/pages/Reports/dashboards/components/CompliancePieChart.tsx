@@ -36,12 +36,11 @@ export default function CompliancePieChart({ data }: Props) {
           dataKey="value"
           nameKey="name"
           cx="50%"
-          cy="45%"
+          cy="50%"
           innerRadius={72}
           outerRadius={108}
           paddingAngle={4}
           cornerRadius={8}
-          // Only show label if slice is reasonably large
           label={({ percent }) =>
             percent && percent > 0.06
               ? `${(percent * 100).toFixed(1)}%`
@@ -50,7 +49,12 @@ export default function CompliancePieChart({ data }: Props) {
           labelLine={false}
         >
           {chartData.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index]} stroke="#fff" strokeWidth={2} />
+            <Cell
+              key={`cell-${index}`}
+              fill={COLORS[index]}
+              stroke="#fff"
+              strokeWidth={2}
+            />
           ))}
         </Pie>
 
@@ -86,10 +90,10 @@ export default function CompliancePieChart({ data }: Props) {
           }}
         />
 
-        {/* Center Total */}
+        {/* Center Total - perfectly centered */}
         <text
           x="50%"
-          y="42%"
+          y="47%"
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize={32}
@@ -98,9 +102,10 @@ export default function CompliancePieChart({ data }: Props) {
         >
           {total}
         </text>
+
         <text
           x="50%"
-          y="51%"
+          y="56%"
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize={13}
