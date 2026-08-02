@@ -15,8 +15,8 @@ interface Props {
 }
 
 const COLORS = [
-  "#2563eb",
-  "#ec4899",
+  "#3B82F6", // Male - Blue
+  "#A855F7", // Female - Purple
 ];
 
 export default function GenderDistributionChart({
@@ -90,26 +90,26 @@ export default function GenderDistributionChart({
         />
 
         <text
-          x="50%"
-          y="43%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={28}
-          fontWeight={700}
-          fill="#111827"
+        x="50%"
+        y="43%"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={28}
+        fontWeight={700}
+        fill="#1F2937"
         >
-          {totalEmployees}
+        {totalEmployees}
         </text>
 
         <text
-          x="50%"
-          y="52%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={13}
-          fill="#6b7280"
+        x="50%"
+        y="52%"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={13}
+        fill="#6B7280"
         >
-          Employees
+        Employees
         </text>
 
       </PieChart>
