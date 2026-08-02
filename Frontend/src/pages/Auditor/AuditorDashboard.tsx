@@ -1643,84 +1643,54 @@ const canFreezeReport =
           </div>
         )}
 
-        {remarksData.length > 0 && (
-  <div className="mx-4 mt-3">
-
+{remarksData.length > 0 && (
+  <div className="mx-4 mt-2 mb-1">
     <Card
+      size="small"
+      className="!shadow-none border-gray-200"
+      styles={{
+        body: { padding: "10px 16px 6px" },
+        header: { padding: "8px 16px", minHeight: 36 },
+      }}
       title={
-        <div>
-          <div className="flex items-center gap-2">
-            <span>📝</span>
-            <span className="font-semibold">
-              Vendor Submission History
-            </span>
-          </div>
-
-          <div className="text-xs text-gray-500 mt-1">
-            Review vendor upload remarks before auditing.
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm">📝</span>
+          <span className="font-semibold text-sm">Vendor Submission History</span>
+          <span className="text-xs text-gray-400 font-normal">
+            · Review vendor upload remarks before auditing
+          </span>
         </div>
       }
-      size="small"
     >
-
       <Timeline
+        className="!mt-0 !mb-0 compact-timeline"
         items={remarksData.map((item: any) => ({
-
-          color:
-            item.is_reuploaded
-              ? "orange"
-              : "green",
-
+          color: item.is_reuploaded ? "orange" : "green",
           children: (
+            <div className="flex justify-between items-start gap-6 -mt-0.5 pb-1">
+              <Typography.Text
+                style={{
+                  margin: 0,
+                  whiteSpace: "pre-wrap",
+                  color: "#374151",
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                }}
+              >
+                {item.remark || "Uploaded"}
+              </Typography.Text>
 
-            <div className="pb-2">
-
-              <div className="flex justify-between items-start">
-
-                <div>
-
-                  <div className="mt-1">
-
-
-                  </div>
-
-                </div>
-
-                <Typography.Text
-                  type="secondary"
-                >
-                  {dayjs(
-                    item.created_at
-                  ).format(
-                    "DD MMM YYYY • hh:mm A"
-                  )}
-                </Typography.Text>
-
-              </div>
-
-              <div className="mt-2">
-                <Typography.Paragraph
-                  style={{
-                    marginBottom: 0,
-                    whiteSpace: "pre-wrap",
-                    color: "#374151",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {item.remark}
-                </Typography.Paragraph>
-              </div>
-
+              <Typography.Text
+                type="secondary"
+                className="text-xs whitespace-nowrap shrink-0 pt-0.5"
+              >
+                {dayjs(item.created_at).format("DD MMM YYYY • hh:mm A")}
+              </Typography.Text>
             </div>
-
-          )
-
+          ),
         }))}
       />
-
     </Card>
-
   </div>
 )}
 
