@@ -431,12 +431,17 @@ class VendorComplianceFileVersion(models.Model):
         default=1
     )
 
-    uploaded_at = models.DateTimeField(
-        auto_now_add=True
-    )
-
     is_reupload = models.BooleanField(
         default=False
+    )
+
+    vendor_remark = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
     )
 
     def __str__(self):

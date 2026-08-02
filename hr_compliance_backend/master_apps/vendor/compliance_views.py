@@ -242,14 +242,11 @@ class VendorSubmitComplianceAPIView(APIView):
                 )
 
                 VendorComplianceFileVersion.objects.create(
-
                     submission=latest_submission,
-
                     file=latest_submission.main_file,
-
                     version=latest_submission.version,
-
-                    is_reupload=False
+                    is_reupload=False,
+                    vendor_remark=general_remark,
                 )
 
                 # ===============================
@@ -698,7 +695,8 @@ def reupload_compliance(request):
                     submission=submission,
                     file=uploaded_file,
                     version=submission.version,
-                    is_reupload=True
+                    is_reupload=True,
+                    vendor_remark=general_remark,
                 )
 
                 # IMPORTANT:

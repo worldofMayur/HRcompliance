@@ -11,6 +11,20 @@ import {
   Checkbox,
   Upload,
 } from "antd";
+import {
+  Card,
+  Collapse,
+  Alert,
+  Tag,
+  Typography,
+} from "antd";
+
+import {
+  FileTextOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+
+import dayjs from "dayjs";
 import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
 
 import InputField from "../../components/form/input/InputField";
@@ -47,6 +61,21 @@ export default function AuditorDashboard() {
   const [selectedState, setSelectedState] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [remarksData, setRemarksData] = useState<any[]>([]);
+
+  const groupedRemarks = remarksData.reduce(
+  (acc: any, item: any) => {
+
+    if (!acc[item.document_name]) {
+      acc[item.document_name] = [];
+    }
+
+    acc[item.document_name].push(item);
+
+    return acc;
+
+  },
+  {}
+);
   const [auditPeriod, setAuditPeriod] = useState("");
   const [frequencyBase, setFrequencyBase] = useState("");
   const [mappingStartDate, setMappingStartDate] = useState<any>(null);
@@ -1634,7 +1663,117 @@ const canFreezeReport =
           </div>
         )}
 
-        {/* Vendor Remarks block will be added here */}
+{remarksData.length > 0 && (
+  <div className="mx-4 mt-4">
+
+    <Card
+      title="📝 Vendor Submission History"
+      size="small"
+    >
+
+      <Typography.Text
+        type="secondary"
+      >
+        Review all vendor uploads and remarks before auditing.
+      </Typography.Text>
+
+      <Collapse
+        className="mt-4"
+        accordion={false}
+      >
+
+        {Object.entries(groupedRemarks).map(
+          ([documentName, uploads]: any) => (
+
+            <Collapse.Panel
+
+              key={documentName}
+
+              header={
+                <div className="flex items-center gap-2">
+
+                  <FileTextOutlined />
+
+                  <span>{documentName}</span>
+
+                </div>
+              }
+
+              extra={
+                <Tag color="blue">
+                  {uploads.length} Uploads
+                </Tag>
+              }
+
+            >
+
+              {uploads.map(
+                (upload: any) => (
+
+                  <Card
+                    key={`${documentName}-${upload.version}`}
+                    size="small"
+                    className="mb-3"
+                  >
+
+                    <div className="flex justify-between">
+
+                      <div>
+
+                        <Tag
+                          color={
+                            upload.is_reuploaded
+                              ? "orange"
+                              : "green"
+                          }
+                        >
+                          {upload.type}
+                        </Tag>
+
+                        <Tag color="blue">
+                          Version {upload.version}
+                        </Tag>
+
+                      </div>
+
+                      <Typography.Text
+                        type="secondary"
+                      >
+                        {dayjs(
+                          upload.created_at
+                        ).format(
+                          "DD MMM YYYY • hh:mm A"
+                        )}
+                      </Typography.Text>
+
+                    </div>
+
+                    <Alert
+                      className="mt-3"
+                      type="info"
+                      showIcon
+                      message="Vendor Remark"
+                      description={
+                        upload.remark
+                      }
+                    />
+
+                  </Card>
+
+                )
+              )}
+
+            </Collapse.Panel>
+
+          )
+        )}
+
+      </Collapse>
+
+    </Card>
+
+  </div>
+)}
 
         {/* Stats bar will be added here */}
 

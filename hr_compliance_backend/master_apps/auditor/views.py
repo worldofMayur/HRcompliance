@@ -2909,43 +2909,61 @@ class AuditorComplianceRemarksAPIView(APIView):
             .filter(
                 branch_id=branch_id,
                 vendor_id=vendor_id,
-                audit_period=audit_period
+                audit_period=audit_period,
             )
-            .select_related("document")
-            .order_by("submitted_at")
         )
 
         timeline = []
 
-        for sub in submissions:
+        for submission in submissions:
 
-            # ONLY VENDOR REMARKS
-            remark = sub.general_remark
+            versions = (
+                submission.file_versions
+                .select_related("submission__document")
+                .order_by("uploaded_at")
+            )
 
-            if not remark or not remark.strip():
-                continue
+            for version in versions:
 
-            timeline.append({
+                if (
+                    not version.vendor_remark
+                    or
+                    not version.vendor_remark.strip()
+                ):
+                    continue
 
-                "document_name":
-                    sub.document.name if sub.document else "",
+                timeline.append({
 
-                "remark": remark,
+                    "document_name":
+                        submission.document.name,
 
-                "workflow_status":
-                    sub.workflow_status,
+                    "remark":
+                        version.vendor_remark,
 
-                "is_reuploaded":
-                    sub.is_reuploaded,
+                    "version":
+                        version.version,
 
-                "created_at":
-                    sub.reuploaded_at
-                    if sub.reuploaded_at
-                    else sub.submitted_at,
-            })
+                    "type":
+                        (
+                            "Re-upload"
+                            if version.is_reupload
+                            else "Initial Upload"
+                        ),
+
+                    "is_reuploaded":
+                        version.is_reupload,
+
+                    "created_at":
+                        version.uploaded_at,
+                })
+
+        timeline.sort(
+            key=lambda x: x["created_at"]
+        )
 
         return Response(timeline)
 
+        
 class AuditorCompliancePeriodAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
