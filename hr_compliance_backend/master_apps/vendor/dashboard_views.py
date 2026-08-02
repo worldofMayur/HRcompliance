@@ -1927,6 +1927,13 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
         vendors = request.GET.getlist("vendors")
         audit_periods = request.GET.getlist("audit_periods")
 
+        year = int(
+            request.GET.get(
+                "year",
+                now().year,
+            )
+        )
+
         if states:
             queryset = queryset.filter(
                 state__in=states
@@ -1947,46 +1954,171 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                 audit_period__in=audit_periods
             )
 
-        periods = (
-            queryset.values_list(
-                "audit_period",
-                flat=True,
+        MONTHS = [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ]
+
+        # -----------------------------------
+        # Helper: expand audit_period → list of month indexes (0-11)
+        # -----------------------------------
+        def get_months_covered(audit_period: str, frequency: str, year: int):
+            """
+            Returns list of month indexes (0=Jan ... 11=Dec)
+            that this audit_period covers in the given year.
+            """
+            if not audit_period:
+                return []
+
+            period = audit_period.strip()
+            freq = (frequency or "").strip().upper()
+
+            # Extract year from period string if present
+            period_year = None
+            for part in period.split():
+                if part.isdigit() and len(part) == 4:
+                    period_year = int(part)
+                    break
+
+            # If period belongs to a different year → skip
+            if period_year and period_year != year:
+                return []
+
+            month_map = {
+                "Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3,
+                "May": 4, "Jun": 5, "Jul": 6, "Aug": 7,
+                "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11,
+            }
+
+            # ---------- MONTHLY ----------
+            if freq == "MONTHLY":
+                for m_name, idx in month_map.items():
+                    if period.startswith(m_name):
+                        return [idx]
+                return []
+
+            # ---------- QUARTERLY ----------
+            if freq == "QUARTERLY":
+                quarters = {
+                    "Jan-Mar": [0, 1, 2],
+                    "Apr-Jun": [3, 4, 5],
+                    "Jul-Sep": [6, 7, 8],
+                    "Oct-Dec": [9, 10, 11],
+                }
+                for key, months in quarters.items():
+                    if key in period:
+                        return months
+                return []
+
+            # ---------- HALF YEARLY ----------
+            if freq in ["HALF_YEARLY", "HALF YEARLY", "HALF-YEARLY"]:
+                if "Jan-Jun" in period or "Jan-Jul" in period:
+                    return [0, 1, 2, 3, 4, 5]
+                if "Jul-Dec" in period or "Jul-Jan" in period:
+                    return [6, 7, 8, 9, 10, 11]
+                return []
+
+            # ---------- ANNUALLY ----------
+            if freq == "ANNUALLY":
+                return list(range(12))
+
+            # Fallback: try to parse any month names present
+            found = []
+            for m_name, idx in month_map.items():
+                if m_name in period:
+                    found.append(idx)
+            return found
+
+        # -----------------------------------
+        # Initialize 12 empty month buckets
+        # -----------------------------------
+        monthly_data = {
+            m: {
+                "month": m,
+                "ccIssued": set(),
+                "exceptionalCC": set(),
+                "underAudit": set(),
+                "documentNotSubmitted": 0,
+            }
+            for m in MONTHS
+        }
+
+        # -----------------------------------
+        # Process every submission once
+        # -----------------------------------
+        submissions = queryset.select_related("vendor", "branch").all()
+
+        # Cache mappings to avoid repeated DB hits
+        mapping_cache = {}
+
+        for sub in submissions:
+            key = (sub.vendor_id, sub.branch_id)
+
+            if key not in mapping_cache:
+                mapping = (
+                    VendorBranchMapping.objects
+                    .filter(
+                        principal_employer=pe,
+                        vendor_id=sub.vendor_id,
+                        branch_id=sub.branch_id,
+                    )
+                    .order_by("-start_date")
+                    .first()
+                )
+                mapping_cache[key] = mapping
+            else:
+                mapping = mapping_cache[key]
+
+            if not mapping:
+                continue
+
+            months_covered = get_months_covered(
+                sub.audit_period,
+                mapping.frequency,
+                year,
             )
+
+            if not months_covered:
+                continue
+
+            # Unique key for distinct counting
+            unique_key = (sub.vendor_id, sub.branch_id, sub.audit_period)
+
+            for month_idx in months_covered:
+                month_name = MONTHS[month_idx]
+                bucket = monthly_data[month_name]
+
+                if sub.is_cc_issued:
+                    bucket["ccIssued"].add(unique_key)
+
+                if sub.has_exceptional_approval and sub.is_cc_issued:
+                    bucket["exceptionalCC"].add(unique_key)
+
+                if sub.workflow_status in [
+                    WorkflowStatus.SUBMITTED,
+                    WorkflowStatus.UNDER_REVIEW,
+                    WorkflowStatus.REUPLOAD_REQUESTED,
+                    WorkflowStatus.REUPLOADED,
+                ]:
+                    bucket["underAudit"].add(unique_key)
+
+        # -----------------------------------
+        # Document Not Submitted (period-based, then distribute)
+        # -----------------------------------
+        # Group by vendor + branch + audit_period
+        period_groups = (
+            queryset
+            .values("vendor_id", "branch_id", "audit_period")
             .distinct()
-            .order_by("-audit_period")[:6]
         )
 
-        periods = list(periods)[::-1]
+        for group in period_groups:
+            vendor_id = group["vendor_id"]
+            branch_id = group["branch_id"]
+            audit_period = group["audit_period"]
 
-        response = []
-
-        for period in periods:
-
-            rows = queryset.filter(
-                audit_period=period
-            )
-
-            # -----------------------------------
-            # Document Not Submitted
-            # -----------------------------------
-
-            document_not_submitted = 0
-
-            audit_groups = (
-                rows.values(
-                    "vendor_id",
-                    "branch_id",
-                    "audit_period",
-                )
-                .distinct()
-            )
-
-            for group in audit_groups:
-
-                vendor_id = group["vendor_id"]
-                branch_id = group["branch_id"]
-                audit_period = group["audit_period"]
-
+            mapping = mapping_cache.get((vendor_id, branch_id))
+            if not mapping:
                 mapping = (
                     VendorBranchMapping.objects
                     .filter(
@@ -1998,84 +2130,55 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
                     .order_by("-start_date")
                     .first()
                 )
+                mapping_cache[(vendor_id, branch_id)] = mapping
 
-                if not mapping:
-                    continue
+            if not mapping:
+                continue
 
-                expected = mapping.documents.count()
+            expected = mapping.documents.count()
 
-                submitted = (
-                    VendorComplianceSubmission.objects
-                    .filter(
-                        principal_employer=pe,
-                        vendor_id=vendor_id,
-                        branch_id=branch_id,
-                        audit_period=audit_period,
-                    )
-                    .values("document_id")
-                    .distinct()
-                    .count()
+            submitted = (
+                VendorComplianceSubmission.objects
+                .filter(
+                    principal_employer=pe,
+                    vendor_id=vendor_id,
+                    branch_id=branch_id,
+                    audit_period=audit_period,
                 )
+                .values("document_id")
+                .distinct()
+                .count()
+            )
 
-                document_not_submitted += max(
-                    expected - submitted,
-                    0,
-                )
+            shortfall = max(expected - submitted, 0)
+            if shortfall == 0:
+                continue
 
+            months_covered = get_months_covered(
+                audit_period,
+                mapping.frequency,
+                year,
+            )
+
+            for month_idx in months_covered:
+                month_name = MONTHS[month_idx]
+                monthly_data[month_name]["documentNotSubmitted"] += shortfall
+
+        # -----------------------------------
+        # Build final response
+        # -----------------------------------
+        response = []
+        for m in MONTHS:
+            bucket = monthly_data[m]
             response.append({
-
-                "month": period,
-
-                "ccIssued": (
-                    rows.filter(
-                        is_cc_issued=True,
-                    )
-                    .values(
-                        "vendor_id",
-                        "branch_id",
-                        "audit_period",
-                    )
-                    .distinct()
-                    .count()
-                ),
-
-                "exceptionalCC": (
-                    rows.filter(
-                        has_exceptional_approval=True,
-                        is_cc_issued=True,
-                    )
-                    .values(
-                        "vendor_id",
-                        "branch_id",
-                        "audit_period",
-                    )
-                    .distinct()
-                    .count()
-                ),
-
-                "underAudit": (
-                    rows.filter(
-                        workflow_status__in=[
-                            WorkflowStatus.SUBMITTED,
-                            WorkflowStatus.UNDER_REVIEW,
-                            WorkflowStatus.REUPLOAD_REQUESTED,
-                            WorkflowStatus.REUPLOADED,
-                        ]
-                    )
-                    .values(
-                        "vendor_id",
-                        "branch_id",
-                        "audit_period",
-                    )
-                    .distinct()
-                    .count()
-                ),
-
-                "documentNotSubmitted": document_not_submitted,
+                "month": m,
+                "ccIssued": len(bucket["ccIssued"]),
+                "exceptionalCC": len(bucket["exceptionalCC"]),
+                "underAudit": len(bucket["underAudit"]),
+                "documentNotSubmitted": bucket["documentNotSubmitted"],
             })
 
         return Response(response)
-
 
 class ComplianceDashboardMonthlyTrendYearsAPIView(APIView):
     permission_classes = [IsAuthenticated]
