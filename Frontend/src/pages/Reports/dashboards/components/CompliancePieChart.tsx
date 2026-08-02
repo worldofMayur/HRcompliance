@@ -48,7 +48,7 @@ export default function CompliancePieChart({
   return (
     <ResponsiveContainer
       width="100%"
-      height={360}
+      height={320}
     >
       <PieChart>
 
@@ -58,8 +58,8 @@ export default function CompliancePieChart({
           nameKey="name"
           cx="50%"
           cy="45%"
-          innerRadius={70}
-          outerRadius={105}
+          innerRadius={60}
+          outerRadius={90}
           paddingAngle={3}
           cornerRadius={6}
           label={({ percent }) =>

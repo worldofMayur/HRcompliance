@@ -439,9 +439,9 @@ const fetchCCTrend = async () => {
           <ComplianceSummaryCards data={summary} />
         </Card>
 
-        <Row gutter={[16, 16]}>
-          {/* Monthly Trend */}
-          <Col xs={24} xl={12}>
+          <Row gutter={[16, 16]}>
+            {/* Monthly Trend */}
+            <Col xs={24} xl={17}>
             <Card
               style={{ height: "100%" }}
               loading={loading}
@@ -484,7 +484,7 @@ const fetchCCTrend = async () => {
           </Col>
 
           {/* Compliance Status Distribution */}
-          <Col xs={24} xl={12}>
+          <Col xs={24} xl={7}>
             <Card
               style={{ height: "100%" }}
               loading={loading}

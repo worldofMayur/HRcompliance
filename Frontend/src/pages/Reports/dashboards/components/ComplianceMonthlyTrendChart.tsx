@@ -106,7 +106,7 @@ export default function ComplianceMonthlyTrendChart({
       options={options}
       series={series}
       type="bar"
-      height={340}
+      height={380}
     />
   );
 }
