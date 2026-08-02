@@ -2914,12 +2914,12 @@ class AuditorComplianceRemarksAPIView(APIView):
         )
 
         timeline = []
+        seen = set()
 
         for submission in submissions:
 
             versions = (
                 submission.file_versions
-                .select_related("submission__document")
                 .order_by("uploaded_at")
             )
 
@@ -2932,8 +2932,23 @@ class AuditorComplianceRemarksAPIView(APIView):
                 ):
                     continue
 
+                remark = version.vendor_remark.strip()
+
+                key = (
+                    remark,
+                    version.uploaded_at.replace(
+                        second=0,
+                        microsecond=0,
+                    ),
+                )
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
+
                 timeline.append({
-                    "remark": version.vendor_remark,
+                    "remark": remark,
                     "version": version.version,
                     "type": (
                         "Re-upload"
@@ -2950,7 +2965,7 @@ class AuditorComplianceRemarksAPIView(APIView):
         )
 
         return Response(timeline)
-        
+
 
 class AuditorCompliancePeriodAPIView(APIView):
 
