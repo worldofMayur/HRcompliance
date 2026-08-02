@@ -101,9 +101,41 @@ const ExceptionalStateSummaryTable: React.FC = () => {
         })
       );
 
-      setData(formatted);
+      const totalRow: ExceptionalStateData = {
+        key: "total",
+        state: "Total",
+        branch_count: formatted.reduce(
+          (sum, row) => sum + row.branch_count,
+          0
+        ),
+        vendor_count: formatted.reduce(
+          (sum, row) => sum + row.vendor_count,
+          0
+        ),
+        jan: formatted.reduce((sum, row) => sum + row.jan, 0),
+        feb: formatted.reduce((sum, row) => sum + row.feb, 0),
+        mar: formatted.reduce((sum, row) => sum + row.mar, 0),
+        apr: formatted.reduce((sum, row) => sum + row.apr, 0),
+        may: formatted.reduce((sum, row) => sum + row.may, 0),
+        jun: formatted.reduce((sum, row) => sum + row.jun, 0),
+        jul: formatted.reduce((sum, row) => sum + row.jul, 0),
+        aug: formatted.reduce((sum, row) => sum + row.aug, 0),
+        sep: formatted.reduce((sum, row) => sum + row.sep, 0),
+        oct: formatted.reduce((sum, row) => sum + row.oct, 0),
+        nov: formatted.reduce((sum, row) => sum + row.nov, 0),
+        dec: formatted.reduce((sum, row) => sum + row.dec, 0),
+      };
+
+      setData([
+        ...formatted,
+        totalRow,
+      ]);
+
     } catch (error) {
-      console.error("Failed to load Exceptional Dashboard", error);
+      console.error(
+        "Failed to load Exceptional Dashboard",
+        error
+      );
     } finally {
       setLoading(false);
     }
@@ -126,6 +158,11 @@ const ExceptionalStateSummaryTable: React.FC = () => {
         sticky
         tableLayout="fixed"
         scroll={{ x: "max-content", y: 360 }}
+        rowClassName={(record) =>
+          record.key === "total"
+            ? "font-bold bg-gray-50"
+            : ""
+        }
       />
     </Card>
   );
