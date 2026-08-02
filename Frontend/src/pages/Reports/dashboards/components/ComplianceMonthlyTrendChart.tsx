@@ -17,18 +17,23 @@ export default function ComplianceMonthlyTrendChart({
   data,
 }: Props) {
   const options: ApexCharts.ApexOptions = {
-    chart: {
-      type: "bar",
-      height: 360,
-      toolbar: {
-        show: false,
-      },
+  chart: {
+    type: "bar",
+    height: 390,
+    toolbar: {
+      show: false,
     },
+    animations: {
+      enabled: true,
+      easing: "easeinout",
+      speed: 700,
+    },
+  },
 
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: "55%",
+        columnWidth: "72%",
         borderRadius: 6,
       },
     },
@@ -56,15 +61,23 @@ export default function ComplianceMonthlyTrendChart({
         text: "Audit Period",
       },
       labels: {
-        rotate: -30,
+        rotate: 0,
+        hideOverlappingLabels: false,
+        trim: false,
+        style: {
+          fontSize: "12px",
+          fontWeight: 500,
+        },
       },
     },
 
     yaxis: {
+      min: 0,
+      forceNiceScale: true,
+      tickAmount: 5,
       title: {
         text: "Count",
       },
-      min: 0,
     },
 
     legend: {
@@ -75,10 +88,12 @@ export default function ComplianceMonthlyTrendChart({
     tooltip: {
       shared: true,
       intersect: false,
+      theme: "light",
     },
 
     grid: {
-      borderColor: "#f0f0f0",
+      borderColor: "#E5E7EB",
+      strokeDashArray: 4,
     },
   };
 

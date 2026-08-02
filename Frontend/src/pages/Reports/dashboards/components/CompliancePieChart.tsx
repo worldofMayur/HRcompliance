@@ -40,10 +40,11 @@ export default function CompliancePieChart({
     },
   ];
 
-  const total = chartData.reduce(
-    (sum, item) => sum + item.value,
-    0
-  );
+  const total =
+    chartData.reduce(
+      (sum, item) => sum + item.value,
+      0
+    ) || 1;
 
   return (
     <ResponsiveContainer
@@ -57,11 +58,11 @@ export default function CompliancePieChart({
           dataKey="value"
           nameKey="name"
           cx="50%"
-          cy="45%"
-          innerRadius={60}
-          outerRadius={90}
-          paddingAngle={3}
-          cornerRadius={6}
+          cy="42%"
+          innerRadius={70}
+          outerRadius={105}
+          paddingAngle={5}
+          cornerRadius={10}
           label={({ percent }) =>
             percent && percent > 0
               ? `${(percent * 100).toFixed(1)}%`
@@ -89,6 +90,8 @@ export default function CompliancePieChart({
         <Legend
           verticalAlign="bottom"
           align="center"
+          iconType="circle"
+          iconSize={10}
           formatter={(value, entry: any) => {
             const count = entry.payload.value;
 
@@ -104,7 +107,7 @@ export default function CompliancePieChart({
           y="43%"
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={28}
+          fontSize={34}
           fontWeight={700}
           fill="#1f2937"
         >
@@ -116,7 +119,8 @@ export default function CompliancePieChart({
           y="51%"
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={13}
+          fontSize={14}
+          fontWeight={500}
           fill="#6b7280"
         >
           Total
