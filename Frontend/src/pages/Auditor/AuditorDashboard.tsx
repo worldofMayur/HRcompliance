@@ -13,16 +13,11 @@ import {
 } from "antd";
 import {
   Card,
-  Collapse,
-  Alert,
+  Timeline,
   Tag,
   Typography,
+  Alert,
 } from "antd";
-
-import {
-  FileTextOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
 
 import dayjs from "dayjs";
 import { DownloadOutlined, SyncOutlined, UploadOutlined } from "@ant-design/icons";
@@ -61,21 +56,6 @@ export default function AuditorDashboard() {
   const [selectedState, setSelectedState] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [remarksData, setRemarksData] = useState<any[]>([]);
-
-  const groupedRemarks = remarksData.reduce(
-  (acc: any, item: any) => {
-
-    if (!acc[item.document_name]) {
-      acc[item.document_name] = [];
-    }
-
-    acc[item.document_name].push(item);
-
-    return acc;
-
-  },
-  {}
-);
   const [auditPeriod, setAuditPeriod] = useState("");
   const [frequencyBase, setFrequencyBase] = useState("");
   const [mappingStartDate, setMappingStartDate] = useState<any>(null);
@@ -1663,112 +1643,107 @@ const canFreezeReport =
           </div>
         )}
 
-{remarksData.length > 0 && (
-  <div className="mx-4 mt-4">
+        {remarksData.length > 0 && (
+  <div className="mx-4 mt-3">
 
     <Card
-      title="📝 Vendor Submission History"
+      title={
+        <div>
+          <div className="flex items-center gap-2">
+            <span>📝</span>
+            <span className="font-semibold">
+              Vendor Submission History
+            </span>
+          </div>
+
+          <div className="text-xs text-gray-500 mt-1">
+            Review vendor upload remarks before auditing.
+          </div>
+        </div>
+      }
       size="small"
     >
 
-      <Typography.Text
-        type="secondary"
-      >
-        Review all vendor uploads and remarks before auditing.
-      </Typography.Text>
+      <Timeline
+        items={remarksData.map((item: any) => ({
 
-      <Collapse
-        className="mt-4"
-        accordion={false}
-      >
+          color:
+            item.is_reuploaded
+              ? "orange"
+              : "green",
 
-        {Object.entries(groupedRemarks).map(
-          ([documentName, uploads]: any) => (
+          children: (
 
-            <Collapse.Panel
+            <div className="pb-2">
 
-              key={documentName}
+              <div className="flex justify-between items-start">
 
-              header={
-                <div className="flex items-center gap-2">
+                <div>
 
-                  <FileTextOutlined />
+                  <Typography.Text strong>
+                    {item.document_name}
+                  </Typography.Text>
 
-                  <span>{documentName}</span>
+                  <div className="mt-1">
+
+                    <Tag
+                        color={
+                            item.is_reuploaded
+                                ? "volcano"
+                                : "success"
+                        }
+                    >
+                        {item.type}
+                    </Tag>
+
+                    <Tag color="geekblue">
+                        Version {item.version}
+                    </Tag>
+
+                  </div>
 
                 </div>
-              }
 
-              extra={
-                <Tag color="blue">
-                  {uploads.length} Uploads
-                </Tag>
-              }
+                <Typography.Text
+                  type="secondary"
+                >
+                  {dayjs(
+                    item.created_at
+                  ).format(
+                    "DD MMM YYYY • hh:mm A"
+                  )}
+                </Typography.Text>
 
-            >
+              </div>
 
-              {uploads.map(
-                (upload: any) => (
+              <div
+                className="
+                  mt-2
+                  rounded-lg
+                  border
+                  border-gray-200
+                  bg-gray-50
+                  p-3
+                "
+              >
+                <Typography.Text
+                  strong
+                  className="text-gray-700"
+                >
+                  Vendor Remark
+                </Typography.Text>
 
-                  <Card
-                    key={`${documentName}-${upload.version}`}
-                    size="small"
-                    className="mb-3"
-                  >
+                <div className="mt-1 text-gray-600">
+                  {item.remark}
+                </div>
+              </div>
 
-                    <div className="flex justify-between">
-
-                      <div>
-
-                        <Tag
-                          color={
-                            upload.is_reuploaded
-                              ? "orange"
-                              : "green"
-                          }
-                        >
-                          {upload.type}
-                        </Tag>
-
-                        <Tag color="blue">
-                          Version {upload.version}
-                        </Tag>
-
-                      </div>
-
-                      <Typography.Text
-                        type="secondary"
-                      >
-                        {dayjs(
-                          upload.created_at
-                        ).format(
-                          "DD MMM YYYY • hh:mm A"
-                        )}
-                      </Typography.Text>
-
-                    </div>
-
-                    <Alert
-                      className="mt-3"
-                      type="info"
-                      showIcon
-                      message="Vendor Remark"
-                      description={
-                        upload.remark
-                      }
-                    />
-
-                  </Card>
-
-                )
-              )}
-
-            </Collapse.Panel>
+            </div>
 
           )
-        )}
 
-      </Collapse>
+        }))}
+      />
 
     </Card>
 
