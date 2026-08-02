@@ -1103,7 +1103,7 @@ if (exceptionalFiles) {
 const columns = [
 {
   title: "Audit Requirement",
-  width: 150,          // decreased
+  width: 145,          // decreased
   align: "left" as const,
   render: (_: any, record: any) => (
     <div className="space-y-1">
@@ -1125,7 +1125,7 @@ const columns = [
 
 {
   title: "Audit Particulars",
-  width: 220,          // decreased
+  width: 190,          // decreased
   align: "left" as const,
   dataIndex: "audit_particulars",
   render: (text: string) => (
@@ -1149,7 +1149,7 @@ const columns = [
   ? [
       {
         title: "Guidelines For Auditor",
-        width: 220,      // decreased
+        width: 190,      // decreased
         align: "left" as const,
         dataIndex: "auditor_guide",
         render: (text: any) => (
@@ -1167,7 +1167,7 @@ const columns = [
 
   {
     title: "Compliance Status",
-    width: 220,
+    width: 155,
     align: "left" as const,
     render: (_: any, record: any) => (
       <select
@@ -1203,7 +1203,7 @@ const columns = [
 
   {
     title: "Auditor Observation",
-    width: 220,
+    width: 180,
     align: "left" as const,
     render: (_: any, record: any) => (
       <TextArea
@@ -1235,7 +1235,7 @@ const columns = [
 
   {
     title: "Action Recommendation",
-    width: 220,
+    width: 180,
     align: "left" as const,
     render: (_: any, record: any) => (
       <TextArea
@@ -1569,69 +1569,81 @@ const canFreezeReport =
   {/* WRAPPER */}
   <div className="h-full flex flex-col bg-gray-50/40">
 
-    {/* 1. METADATA BAR */}
-    <div className="shrink-0 bg-white border-b px-5 py-3">
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
-        <div>
-          <span className="text-gray-400 text-xs">PE</span>
-          <div className="font-semibold text-gray-800">
-            {peList.find(p => p.id == selectedPE)?.short_name || "-"}
-          </div>
-        </div>
-        <div>
-          <span className="text-gray-400 text-xs">Vendor</span>
-          <div className="font-semibold text-gray-800">
-            {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
-          </div>
-        </div>
-        <div>
-          <span className="text-gray-400 text-xs">State</span>
-          <div className="font-semibold text-gray-800">{selectedState || "-"}</div>
-        </div>
-        <div>
-          <span className="text-gray-400 text-xs">Branch</span>
-          <div className="font-semibold text-gray-800">
-            {branches.find(b => b.id == selectedBranch)?.name || "-"}
-          </div>
-        </div>
-        <div>
-          <span className="text-gray-400 text-xs">Period</span>
-          <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
-        </div>
-
-        <div className="ml-auto flex items-center gap-3">
-  <Button
-    type="primary"
-    size="small"
-    icon={<DownloadOutlined />}
-    onClick={downloadZip}
-    className="h-8 text-xs font-medium"
-  >
-    Download Audit Documents
-  </Button>
-
-  <Button
-    type="primary"
-    size="small"
-    onClick={() => setComplianceModalOpen(true)}
-    className="h-8 text-xs font-medium"
-  >
-    View Compliance Summary
-  </Button>
-
-  <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
-    Mapping Active:{" "}
-    {mappingStartDate
-      ? new Date(mappingStartDate).toLocaleDateString("en-IN")
-      : "-"}{" "}
-    →{" "}
-    {mappingEndDate
-      ? new Date(mappingEndDate).toLocaleDateString("en-IN")
-      : "-"}
-  </span>
-</div>
+{/* 1. METADATA BAR */}
+<div className="shrink-0 bg-white border-b px-5 py-3">
+  <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
+    
+    {/* PE */}
+    <div>
+      <span className="text-gray-400 text-xs">PE</span>
+      <div className="font-semibold text-gray-800">
+        {peList.find(p => p.id == selectedPE)?.short_name || "-"}
       </div>
     </div>
+
+    {/* Vendor */}
+    <div>
+      <span className="text-gray-400 text-xs">Vendor</span>
+      <div className="font-semibold text-gray-800">
+        {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
+      </div>
+    </div>
+
+    {/* State */}
+    <div>
+      <span className="text-gray-400 text-xs">State</span>
+      <div className="font-semibold text-gray-800">{selectedState || "-"}</div>
+    </div>
+
+    {/* Branch */}
+    <div>
+      <span className="text-gray-400 text-xs">Branch</span>
+      <div className="font-semibold text-gray-800">
+        {branches.find(b => b.id == selectedBranch)?.name || "-"}
+      </div>
+    </div>
+
+    {/* Period */}
+    <div>
+      <span className="text-gray-400 text-xs">Period</span>
+      <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
+    </div>
+
+    {/* Mapping Active - right after Period */}
+    <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
+      Mapping Active:{" "}
+      {mappingStartDate
+        ? new Date(mappingStartDate).toLocaleDateString("en-IN")
+        : "-"}{" "}
+      →{" "}
+      {mappingEndDate
+        ? new Date(mappingEndDate).toLocaleDateString("en-IN")
+        : "-"}
+    </span>
+
+    {/* Buttons on the right */}
+    <div className="ml-auto flex items-center gap-3">
+      <Button
+        type="primary"
+        icon={<DownloadOutlined />}
+        onClick={downloadZip}
+        className="h-9 px-6 text-sm font-medium !bg-blue-600 hover:!bg-blue-700"
+      >
+        Download Audit Documents
+      </Button>
+
+      <Button
+        type="primary"
+        onClick={() => setComplianceModalOpen(true)}
+        className="h-9 px-6 text-sm font-medium !bg-blue-600 hover:!bg-blue-700"
+      >
+        View Compliance Summary
+      </Button>
+    </div>
+
+  </div>
+</div>
+
 
     {/* 2. FULL WIDTH TABLE AREA */}
     <div className="flex-1 flex overflow-hidden">
@@ -1715,7 +1727,7 @@ const canFreezeReport =
                 bordered
                 size="small"
                 className="audit-table-highlighted"
-                scroll={{ y: "calc(88vh - 340px)", x: 1800 }}
+                scroll={{ y: "calc(88vh - 340px)", x: "max-content" }}
               />
             </div>
           )}
