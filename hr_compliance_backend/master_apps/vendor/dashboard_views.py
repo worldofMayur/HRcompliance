@@ -1838,54 +1838,56 @@ class ComplianceDashboardSummaryV2APIView(APIView):
             .count()
         )
 
+        # ----------------------------------------
+        # Document Not Submitted (fixed)
+        # ----------------------------------------
+
         document_not_submitted = 0
 
-        audit_groups = (
-            queryset.values(
-                "vendor_id",
-                "branch_id",
+        mappings = VendorBranchMapping.objects.filter(
+            principal_employer=pe
+        ).prefetch_related("documents")
+
+        if states:
+            mappings = mappings.filter(branch__state__in=states)
+
+        if branches:
+            mappings = mappings.filter(branch_id__in=branches)
+
+        if vendors:
+            mappings = mappings.filter(vendor_id__in=vendors)
+
+        # If audit periods are selected, use those.
+        # Otherwise use all audit periods available after filters.
+        selected_periods = audit_periods or list(
+            queryset.values_list(
                 "audit_period",
-            )
-            .distinct()
+                flat=True,
+            ).distinct()
         )
 
-        for group in audit_groups:
-
-            vendor_id = group["vendor_id"]
-            branch_id = group["branch_id"]
-            audit_period = group["audit_period"]
-
-            mapping = (
-                VendorBranchMapping.objects
-                .filter(
-                    principal_employer=pe,
-                    vendor_id=vendor_id,
-                    branch_id=branch_id,
-                )
-                .prefetch_related("documents")
-                .order_by("-start_date")
-                .first()
-            )
-
-            if not mapping:
-                continue
+        for mapping in mappings:
 
             expected = mapping.documents.count()
 
-            submitted = (
-                VendorComplianceSubmission.objects
-                .filter(
-                    principal_employer=pe,
-                    vendor_id=vendor_id,
-                    branch_id=branch_id,
-                    audit_period=audit_period,
-                )
-                .values("document_id")
-                .distinct()
-                .count()
-            )
+            for audit_period in selected_periods:
 
-            document_not_submitted += max(expected - submitted, 0)
+                submitted = (
+                    VendorComplianceSubmission.objects.filter(
+                        principal_employer=pe,
+                        vendor_id=mapping.vendor_id,
+                        branch_id=mapping.branch_id,
+                        audit_period=audit_period,
+                    )
+                    .values("document_id")
+                    .distinct()
+                    .count()
+                )
+
+                document_not_submitted += max(
+                    expected - submitted,
+                    0,
+                )
 
         return Response(
             {
@@ -1895,7 +1897,7 @@ class ComplianceDashboardSummaryV2APIView(APIView):
                 "documentNotSubmitted": document_not_submitted,
             }
         )
-
+        
 MONTH_MAP = {
     "Jan": 0,
     "Feb": 1,
