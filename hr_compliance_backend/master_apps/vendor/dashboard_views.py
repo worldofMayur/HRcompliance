@@ -2711,21 +2711,25 @@ class VendorWiseCCTrendYearsAPIView(APIView):
             VendorComplianceSubmission.objects.filter(
                 principal_employer=pe,
                 is_cc_issued=True,
-                cc_issued_at__isnull=False,
-            )
-            .annotate(
-                year=ExtractYear("cc_issued_at")
             )
             .values_list(
-                "year",
+                "audit_period",
                 flat=True,
             )
-            .distinct()
-            .order_by("-year")
         )
 
+        years = set()
+
+        import re
+
+        for period in queryset:
+            match = re.search(r"(20\d{2})", period or "")
+
+            if match:
+                years.add(int(match.group(1)))
+
         return Response({
-            "years": list(queryset)
+            "years": sorted(years, reverse=True)
         })
 
 

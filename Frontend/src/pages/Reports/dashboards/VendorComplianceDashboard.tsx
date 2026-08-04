@@ -679,9 +679,26 @@ const fetchCCTrend = async () => {
     options={ccAuditPeriodOptions}
     value={ccAuditPeriods}
     onChange={(value) => {
-      setCcAuditPeriods(value);
-      setCcStates([]);
-      setCcBranches([]);
+
+        setCcAuditPeriods(value);
+
+        setCcStates([]);
+
+        setCcBranches([]);
+
+        // Auto select Year from Audit Period
+        if (value.length > 0) {
+
+            const selectedPeriod = value[value.length - 1];
+
+            const match = selectedPeriod.match(/\d{4}/);
+
+            if (match) {
+                setCcYear(Number(match[0]));
+            }
+
+        }
+
     }}
     placeholder="Select Audit Period"
     allLabel="All Audit Periods"
