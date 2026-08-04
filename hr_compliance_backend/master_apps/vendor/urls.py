@@ -208,7 +208,7 @@ urlpatterns = [
     ),
 
     path(
-        "vendor/dashboard/document-not-submitted-details/",
+        "dashboard/document-not-submitted-details/",
         DocumentNotSubmittedDetailsAPIView.as_view(),
     ),
 
