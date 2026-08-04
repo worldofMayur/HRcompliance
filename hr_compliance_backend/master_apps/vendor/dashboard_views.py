@@ -30,6 +30,88 @@ from collections import defaultdict
 
 from django.db.models import Count, Q, Max
 
+
+def build_missing_documents(pe, states, branches, vendors, audit_periods):
+    """
+    Shared logic used by Summary, Details and Distribution APIs.
+    Guarantees identical filtering between card and modal.
+    """
+
+    # 1. Start from submissions and apply ALL filters
+    queryset = VendorComplianceSubmission.objects.filter(
+        principal_employer=pe
+    )
+
+    if states:
+        queryset = queryset.filter(state__in=states)
+    if branches:
+        queryset = queryset.filter(branch_id__in=branches)
+    if vendors:
+        queryset = queryset.filter(vendor_id__in=vendors)
+    if audit_periods:
+        queryset = queryset.filter(audit_period__in=audit_periods)
+
+    # 2. Only keep mappings that actually appear in the filtered submissions
+    mappings = (
+        VendorBranchMapping.objects
+        .filter(
+            principal_employer=pe,
+            vendor_id__in=queryset.values("vendor_id"),
+            branch_id__in=queryset.values("branch_id"),
+        )
+        .select_related("vendor", "branch")
+        .prefetch_related("documents")
+        .distinct()
+    )
+
+    # 3. Decide which audit periods to check
+    if audit_periods:
+        selected_periods = audit_periods
+    else:
+        selected_periods = list(
+            queryset.values_list("audit_period", flat=True).distinct()
+        )
+
+    details = []
+
+    for mapping in mappings:
+        expected = mapping.documents.count()
+
+        for audit_period in selected_periods:
+            submitted = (
+                VendorComplianceSubmission.objects
+                .filter(
+                    principal_employer=pe,
+                    vendor_id=mapping.vendor_id,
+                    branch_id=mapping.branch_id,
+                    audit_period=audit_period,
+                )
+                .values("document_id")
+                .distinct()
+                .count()
+            )
+
+            missing = max(expected - submitted, 0)
+
+            if missing > 0:
+                details.append({
+                    "vendor": mapping.vendor.name,
+                    "branch": mapping.branch.short_name,
+                    "state": mapping.branch.state,
+                    "audit_period": audit_period,
+                    "frequency": mapping.frequency,
+                    "expected_documents": expected,
+                    "submitted_documents": submitted,
+                    "missing_documents": missing,
+                })
+
+    details.sort(
+        key=lambda x: (x["vendor"], x["branch"], x["audit_period"])
+    )
+
+    return details
+
+
 # =========================
 # KPI
 # =========================
@@ -1740,21 +1822,12 @@ class ComplianceDashboardSummaryV2APIView(APIView):
     def get(self, request):
 
         if request.user.role != "PE":
-            return Response(
-                {"error": "Unauthorized"},
-                status=403,
-            )
+            return Response({"error": "Unauthorized"}, status=403)
 
         try:
-            pe = PrincipalEmployer.objects.get(
-                user=request.user
-            )
-
+            pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
-            return Response(
-                {"error": "Principal Employer not found"},
-                status=404,
-            )
+            return Response({"error": "Principal Employer not found"}, status=404)
 
         queryset = VendorComplianceSubmission.objects.filter(
             principal_employer=pe
@@ -1763,45 +1836,26 @@ class ComplianceDashboardSummaryV2APIView(APIView):
         # ----------------------------------------
         # Filters
         # ----------------------------------------
-
         states = request.GET.getlist("states")
         branches = request.GET.getlist("branches")
         vendors = request.GET.getlist("vendors")
         audit_periods = request.GET.getlist("audit_periods")
 
         if states:
-            queryset = queryset.filter(
-                state__in=states
-            )
-
+            queryset = queryset.filter(state__in=states)
         if branches:
-            queryset = queryset.filter(
-                branch_id__in=branches
-            )
-
+            queryset = queryset.filter(branch_id__in=branches)
         if vendors:
-            queryset = queryset.filter(
-                vendor_id__in=vendors
-            )
-
+            queryset = queryset.filter(vendor_id__in=vendors)
         if audit_periods:
-            queryset = queryset.filter(
-                audit_period__in=audit_periods
-            )
+            queryset = queryset.filter(audit_period__in=audit_periods)
 
         # ----------------------------------------
         # Summary Cards
         # ----------------------------------------
-
         ccIssued = (
-            queryset.filter(
-                is_cc_issued=True
-            )
-            .values(
-                "vendor_id",
-                "branch_id",
-                "audit_period",
-            )
+            queryset.filter(is_cc_issued=True)
+            .values("vendor_id", "branch_id", "audit_period")
             .distinct()
             .count()
         )
@@ -1811,11 +1865,7 @@ class ComplianceDashboardSummaryV2APIView(APIView):
                 is_cc_issued=True,
                 has_exceptional_approval=True,
             )
-            .values(
-                "vendor_id",
-                "branch_id",
-                "audit_period",
-            )
+            .values("vendor_id", "branch_id", "audit_period")
             .distinct()
             .count()
         )
@@ -1829,74 +1879,28 @@ class ComplianceDashboardSummaryV2APIView(APIView):
                     WorkflowStatus.REUPLOADED,
                 ]
             )
-            .values(
-                "vendor_id",
-                "branch_id",
-                "audit_period",
-            )
+            .values("vendor_id", "branch_id", "audit_period")
             .distinct()
             .count()
         )
 
         # ----------------------------------------
-        # Document Not Submitted (fixed)
+        # Document Not Submitted (FIXED)
         # ----------------------------------------
-
-        document_not_submitted = 0
-
-        mappings = VendorBranchMapping.objects.filter(
-            principal_employer=pe
-        ).prefetch_related("documents")
-
-        if states:
-            mappings = mappings.filter(branch__state__in=states)
-
-        if branches:
-            mappings = mappings.filter(branch_id__in=branches)
-
-        if vendors:
-            mappings = mappings.filter(vendor_id__in=vendors)
-
-        # If audit periods are selected, use those.
-        # Otherwise use all audit periods available after filters.
-        selected_periods = audit_periods or list(
-            queryset.values_list(
-                "audit_period",
-                flat=True,
-            ).distinct()
+        details = build_missing_documents(
+            pe, states, branches, vendors, audit_periods
         )
 
-        for mapping in mappings:
+        # Count the number of missing audit periods (not documents)
+        document_not_submitted = len(details)
 
-            expected = mapping.documents.count()
+        return Response({
+            "ccIssued": ccIssued,
+            "exceptionalCC": exceptionalCC,
+            "underAudit": under_audit,
+            "documentNotSubmitted": document_not_submitted,
+        })
 
-            for audit_period in selected_periods:
-
-                submitted = (
-                    VendorComplianceSubmission.objects.filter(
-                        principal_employer=pe,
-                        vendor_id=mapping.vendor_id,
-                        branch_id=mapping.branch_id,
-                        audit_period=audit_period,
-                    )
-                    .values("document_id")
-                    .distinct()
-                    .count()
-                )
-
-                document_not_submitted += max(
-                    expected - submitted,
-                    0,
-                )
-
-        return Response(
-            {
-                "ccIssued": ccIssued,
-                "exceptionalCC": exceptionalCC,
-                "underAudit": under_audit,
-                "documentNotSubmitted": document_not_submitted,
-            }
-        )
 
 MONTH_MAP = {
     "Jan": 0,
@@ -2215,7 +2219,8 @@ class ComplianceDashboardMonthlyTrendV2APIView(APIView):
 
             for month_idx in months_covered:
                 month_name = MONTHS[month_idx]
-                monthly_data[month_name]["documentNotSubmitted"] += shortfall
+                # Count 1 missing audit period (not the number of documents)
+                monthly_data[month_name]["documentNotSubmitted"] += 1
 
         # -----------------------------------
         # Build final response
@@ -2293,21 +2298,12 @@ class ComplianceDashboardDistributionV2APIView(APIView):
     def get(self, request):
 
         if request.user.role != "PE":
-            return Response(
-                {"error": "Unauthorized"},
-                status=403,
-            )
+            return Response({"error": "Unauthorized"}, status=403)
 
         try:
-            pe = PrincipalEmployer.objects.get(
-                user=request.user
-            )
-
+            pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
-            return Response(
-                {"error": "Principal Employer not found"},
-                status=404,
-            )
+            return Response({"error": "Principal Employer not found"}, status=404)
 
         queryset = VendorComplianceSubmission.objects.filter(
             principal_employer=pe
@@ -2316,116 +2312,44 @@ class ComplianceDashboardDistributionV2APIView(APIView):
         # ----------------------------------------
         # Filters
         # ----------------------------------------
-
         states = request.GET.getlist("states")
         branches = request.GET.getlist("branches")
         vendors = request.GET.getlist("vendors")
         audit_periods = request.GET.getlist("audit_periods")
 
         if states:
-            queryset = queryset.filter(
-                state__in=states
-            )
-
+            queryset = queryset.filter(state__in=states)
         if branches:
-            queryset = queryset.filter(
-                branch_id__in=branches
-            )
-
+            queryset = queryset.filter(branch_id__in=branches)
         if vendors:
-            queryset = queryset.filter(
-                vendor_id__in=vendors
-            )
-
+            queryset = queryset.filter(vendor_id__in=vendors)
         if audit_periods:
-            queryset = queryset.filter(
-                audit_period__in=audit_periods
-            )
+            queryset = queryset.filter(audit_period__in=audit_periods)
 
         # ----------------------------------------
-        # Document Not Submitted
+        # Document Not Submitted (FIXED – now uses shared helper)
         # ----------------------------------------
-
-        document_not_submitted = 0
-
-        audit_groups = (
-            queryset.values(
-                "vendor_id",
-                "branch_id",
-                "audit_period",
-            )
-            .distinct()
+        details = build_missing_documents(
+            pe, states, branches, vendors, audit_periods
         )
-
-        for group in audit_groups:
-
-            vendor_id = group["vendor_id"]
-            branch_id = group["branch_id"]
-            audit_period = group["audit_period"]
-
-            mapping = (
-                VendorBranchMapping.objects
-                .filter(
-                    principal_employer=pe,
-                    vendor_id=vendor_id,
-                    branch_id=branch_id,
-                )
-                .prefetch_related("documents")
-                .order_by("-start_date")
-                .first()
-            )
-
-            if not mapping:
-                continue
-
-            expected = mapping.documents.count()
-
-            submitted = (
-                VendorComplianceSubmission.objects
-                .filter(
-                    principal_employer=pe,
-                    vendor_id=vendor_id,
-                    branch_id=branch_id,
-                    audit_period=audit_period,
-                )
-                .values("document_id")
-                .distinct()
-                .count()
-            )
-
-            document_not_submitted += max(
-                expected - submitted,
-                0,
-            )
+        document_not_submitted = len(details)
 
         response = {
             "ccIssued": (
-                queryset.filter(
-                    is_cc_issued=True,
-                )
-                .values(
-                    "vendor_id",
-                    "branch_id",
-                    "audit_period",
-                )
+                queryset.filter(is_cc_issued=True)
+                .values("vendor_id", "branch_id", "audit_period")
                 .distinct()
                 .count()
             ),
-
             "exceptionalCC": (
                 queryset.filter(
                     has_exceptional_approval=True,
                     is_cc_issued=True,
                 )
-                .values(
-                    "vendor_id",
-                    "branch_id",
-                    "audit_period",
-                )
+                .values("vendor_id", "branch_id", "audit_period")
                 .distinct()
                 .count()
             ),
-
             "underAudit": (
                 queryset.filter(
                     workflow_status__in=[
@@ -2435,21 +2359,17 @@ class ComplianceDashboardDistributionV2APIView(APIView):
                         WorkflowStatus.REUPLOADED,
                     ]
                 )
-                .values(
-                    "vendor_id",
-                    "branch_id",
-                    "audit_period",
-                )
+                .values("vendor_id", "branch_id", "audit_period")
                 .distinct()
                 .count()
             ),
-
             "documentNotSubmitted": document_not_submitted,
         }
 
         return Response({
             "distribution": response
         })
+
 
 class ComplianceDashboardGenderDistributionAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -3078,126 +2998,20 @@ class DocumentNotSubmittedDetailsAPIView(APIView):
     def get(self, request):
 
         if request.user.role != "PE":
-            return Response(
-                {"error": "Unauthorized"},
-                status=403,
-            )
+            return Response({"error": "Unauthorized"}, status=403)
 
         try:
-            pe = PrincipalEmployer.objects.get(
-                user=request.user
-            )
-
+            pe = PrincipalEmployer.objects.get(user=request.user)
         except PrincipalEmployer.DoesNotExist:
-            return Response(
-                {"error": "Principal Employer not found"},
-                status=404,
-            )
+            return Response({"error": "Principal Employer not found"}, status=404)
 
         states = request.GET.getlist("states")
         branches = request.GET.getlist("branches")
         vendors = request.GET.getlist("vendors")
         audit_periods = request.GET.getlist("audit_periods")
 
-        mappings = (
-            VendorBranchMapping.objects
-            .filter(
-                principal_employer=pe
-            )
-            .select_related(
-                "vendor",
-                "branch",
-            )
-            .prefetch_related(
-                "documents",
-            )
-        )
-
-        if states:
-            mappings = mappings.filter(
-                branch__state__in=states
-            )
-
-        if branches:
-            mappings = mappings.filter(
-                branch_id__in=branches
-            )
-
-        if vendors:
-            mappings = mappings.filter(
-                vendor_id__in=vendors
-            )
-
-        # If Audit Period is not selected,
-        # calculate for all available audit periods.
-        if audit_periods:
-            selected_periods = audit_periods
-        else:
-            selected_periods = list(
-                VendorComplianceSubmission.objects.filter(
-                    principal_employer=pe
-                )
-                .values_list(
-                    "audit_period",
-                    flat=True,
-                )
-                .distinct()
-            )
-
-        details = []
-
-        for mapping in mappings:
-
-            expected = mapping.documents.count()
-
-            for audit_period in selected_periods:
-
-                submitted = (
-                    VendorComplianceSubmission.objects.filter(
-                        principal_employer=pe,
-                        vendor_id=mapping.vendor_id,
-                        branch_id=mapping.branch_id,
-                        audit_period=audit_period,
-                    )
-                    .values("document_id")
-                    .distinct()
-                    .count()
-                )
-
-                missing = max(
-                    expected - submitted,
-                    0,
-                )
-
-                if missing == 0:
-                    continue
-
-                details.append({
-
-                    "vendor": mapping.vendor.name,
-
-                    "branch": mapping.branch.short_name,
-
-                    "state": mapping.branch.state,
-
-                    "audit_period": audit_period,
-
-                    "frequency": mapping.frequency,
-
-                    "expected_documents": expected,
-
-                    "submitted_documents": submitted,
-
-                    "missing_documents": missing,
-
-                })
-
-        details.sort(
-            key=lambda x: (
-                x["vendor"],
-                x["branch"],
-                x["audit_period"],
-            )
+        details = build_missing_documents(
+            pe, states, branches, vendors, audit_periods
         )
 
         return Response(details)
