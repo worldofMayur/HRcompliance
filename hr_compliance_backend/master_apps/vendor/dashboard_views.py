@@ -34,10 +34,12 @@ from django.db.models import Count, Q, Max
 def build_missing_documents(pe, states, branches, vendors, audit_periods):
     """
     Shared logic used by Summary, Details and Distribution APIs.
-    Guarantees identical filtering between card and modal.
+    Fully consistent with the submission filters.
     """
 
-    # 1. Start from submissions and apply ALL filters
+    # -------------------------------------------------
+    # 1. Base queryset with all filters applied
+    # -------------------------------------------------
     queryset = VendorComplianceSubmission.objects.filter(
         principal_employer=pe
     )
@@ -51,20 +53,9 @@ def build_missing_documents(pe, states, branches, vendors, audit_periods):
     if audit_periods:
         queryset = queryset.filter(audit_period__in=audit_periods)
 
-    # 2. Only keep mappings that actually appear in the filtered submissions
-    mappings = (
-        VendorBranchMapping.objects
-        .filter(
-            principal_employer=pe,
-            vendor_id__in=queryset.values("vendor_id"),
-            branch_id__in=queryset.values("branch_id"),
-        )
-        .select_related("vendor", "branch")
-        .prefetch_related("documents")
-        .distinct()
-    )
-
-    # 3. Decide which audit periods to check
+    # -------------------------------------------------
+    # 2. Decide which audit periods to check
+    # -------------------------------------------------
     if audit_periods:
         selected_periods = audit_periods
     else:
@@ -72,9 +63,39 @@ def build_missing_documents(pe, states, branches, vendors, audit_periods):
             queryset.values_list("audit_period", flat=True).distinct()
         )
 
+    # -------------------------------------------------
+    # 3. Get all unique (vendor, branch) pairs that exist
+    #    under the current filters
+    # -------------------------------------------------
+    pairs = (
+        queryset
+        .values("vendor_id", "branch_id")
+        .distinct()
+    )
+
     details = []
 
-    for mapping in mappings:
+    for pair in pairs:
+        vendor_id = pair["vendor_id"]
+        branch_id = pair["branch_id"]
+
+        # Find the latest mapping for this vendor + branch
+        mapping = (
+            VendorBranchMapping.objects
+            .filter(
+                principal_employer=pe,
+                vendor_id=vendor_id,
+                branch_id=branch_id,
+            )
+            .select_related("vendor", "branch")
+            .prefetch_related("documents")
+            .order_by("-start_date")
+            .first()
+        )
+
+        if not mapping:
+            continue
+
         expected = mapping.documents.count()
 
         for audit_period in selected_periods:
@@ -82,8 +103,8 @@ def build_missing_documents(pe, states, branches, vendors, audit_periods):
                 VendorComplianceSubmission.objects
                 .filter(
                     principal_employer=pe,
-                    vendor_id=mapping.vendor_id,
-                    branch_id=mapping.branch_id,
+                    vendor_id=vendor_id,
+                    branch_id=branch_id,
                     audit_period=audit_period,
                 )
                 .values("document_id")
@@ -110,7 +131,6 @@ def build_missing_documents(pe, states, branches, vendors, audit_periods):
     )
 
     return details
-
 
 # =========================
 # KPI
