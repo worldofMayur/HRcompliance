@@ -1,4 +1,14 @@
-import { Card, Typography, Space, Row, Col, message } from "antd";
+import {
+  Card,
+  Typography,
+  Space,
+  Row,
+  Col,
+  message,
+  Modal,
+  Table,
+  Tag,
+} from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import axios from "../../../utils/api";
@@ -35,6 +45,17 @@ interface DropdownOption {
 interface GenderDistribution {
   male: number;
   female: number;
+}
+
+interface MissingDocumentDetail {
+  vendor: string;
+  state: string;
+  branch: string;
+  audit_period: string;
+  frequency: string;
+  expected_documents: number;
+  submitted_documents: number;
+  missing_documents: number;
 }
 
 export default function VendorComplianceDashboard() {
@@ -85,11 +106,8 @@ export default function VendorComplianceDashboard() {
 
   const currentYear = new Date().getFullYear();
 
-  const [trendYear, setTrendYear] =
-    useState(currentYear);
-
-  const [trendYears, setTrendYears] =
-    useState<number[]>([]);
+  const [trendYear, setTrendYear] = useState(currentYear);
+  const [trendYears, setTrendYears] = useState<number[]>([]);
 
   const [ccYear, setCcYear] = useState(currentYear);
   const [ccYears, setCcYears] = useState<number[]>([]);
@@ -99,19 +117,18 @@ export default function VendorComplianceDashboard() {
   const [ccVendors, setCcVendors] = useState<string[]>([]);
   const [ccAuditPeriods, setCcAuditPeriods] = useState<string[]>([]);
 
-  const [ccStateOptions, setCcStateOptions] =
-    useState<DropdownOption[]>([]);
-
-  const [ccBranchOptions, setCcBranchOptions] =
-    useState<DropdownOption[]>([]);
-
-  const [ccVendorOptions, setCcVendorOptions] =
-    useState<DropdownOption[]>([]);
-
+  const [ccStateOptions, setCcStateOptions] = useState<DropdownOption[]>([]);
+  const [ccBranchOptions, setCcBranchOptions] = useState<DropdownOption[]>([]);
+  const [ccVendorOptions, setCcVendorOptions] = useState<DropdownOption[]>([]);
   const [ccAuditPeriodOptions, setCcAuditPeriodOptions] =
-  useState<DropdownOption[]>([]);
+    useState<DropdownOption[]>([]);
 
   const [ccTrend, setCcTrend] = useState<any[]>([]);
+
+  // Missing Documents Modal
+  const [missingModalOpen, setMissingModalOpen] = useState(false);
+  const [missingLoading, setMissingLoading] = useState(false);
+  const [missingData, setMissingData] = useState<MissingDocumentDetail[]>([]);
 
   const loadFilters = async () => {
     try {
@@ -171,13 +188,7 @@ export default function VendorComplianceDashboard() {
 
   useEffect(() => {
     fetchDashboard();
-  }, [
-    states,
-    branches,
-    vendors,
-    auditPeriods,
-    trendYear,
-  ]);
+  }, [states, branches, vendors, auditPeriods, trendYear]);
 
   useEffect(() => {
     loadGenderFilters();
@@ -201,24 +212,13 @@ export default function VendorComplianceDashboard() {
     loadTrendYears();
   }, []);
 
-useEffect(() => {
-  loadCCFilters();
-}, [
-  ccVendors,
-  ccAuditPeriods,
-  ccStates,
-  ccBranches,
-]);
+  useEffect(() => {
+    loadCCFilters();
+  }, [ccVendors, ccAuditPeriods, ccStates, ccBranches]);
 
-useEffect(() => {
-  fetchCCTrend();
-}, [
-  ccYear,
-  ccVendors,
-  ccAuditPeriods,
-  ccStates,
-  ccBranches,
-]);
+  useEffect(() => {
+    fetchCCTrend();
+  }, [ccYear, ccVendors, ccAuditPeriods, ccStates, ccBranches]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -233,10 +233,7 @@ useEffect(() => {
       setLoading(true);
 
       const params = new URLSearchParams();
-      params.append(
-        "year",
-        String(trendYear)
-      );
+      params.append("year", String(trendYear));
 
       states.forEach((x) => params.append("states", x));
       branches.forEach((x) => params.append("branches", x));
@@ -306,94 +303,92 @@ useEffect(() => {
 
   const loadTrendYears = async () => {
     try {
-
       const res = await axios.get(
         "/api/vendor/dashboard/compliance/monthly-trend-years/"
       );
 
-      setTrendYears(
-        res.data.years || []
-      );
-
+      setTrendYears(res.data.years || []);
     } catch (err) {
-
       console.error(err);
-
     }
   };
 
-const loadCCFilters = async () => {
+  const loadCCFilters = async () => {
+    try {
+      const params = new URLSearchParams();
 
-  try {
+      ccVendors.forEach((x) => params.append("vendors", x));
+      ccAuditPeriods.forEach((x) => params.append("audit_periods", x));
+      ccStates.forEach((x) => params.append("states", x));
+      ccBranches.forEach((x) => params.append("branches", x));
 
-    const params = new URLSearchParams();
+      const res = await axios.get(
+        "/api/vendor/dashboard/vendor-wise-cc-filters/",
+        {
+          params,
+        }
+      );
 
-    ccVendors.forEach(x => params.append("vendors", x));
+      setCcStateOptions(res.data.states || []);
+      setCcBranchOptions(res.data.branches || []);
+      setCcVendorOptions(res.data.vendors || []);
+      setCcAuditPeriodOptions(res.data.audit_periods || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    ccAuditPeriods.forEach(x =>
-      params.append("audit_periods", x)
-    );
+  const fetchMissingDocuments = async () => {
+    try {
+      setMissingLoading(true);
 
-    ccStates.forEach(x => params.append("states", x));
+      const params = new URLSearchParams();
 
-    ccBranches.forEach(x => params.append("branches", x));
+      states.forEach((x) => params.append("states", x));
+      branches.forEach((x) => params.append("branches", x));
+      vendors.forEach((x) => params.append("vendors", x));
+      auditPeriods.forEach((x) => params.append("audit_periods", x));
 
-    const res = await axios.get(
-      "/api/vendor/dashboard/vendor-wise-cc-filters/",
-      {
-        params,
-      }
-    );
+      const res = await axios.get(
+        "/api/vendor/dashboard/document-not-submitted-details/",
+        {
+          params,
+        }
+      );
 
-    setCcStateOptions(res.data.states || []);
-    setCcBranchOptions(res.data.branches || []);
-    setCcVendorOptions(res.data.vendors || []);
+      setMissingData(res.data);
+      setMissingModalOpen(true);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to load missing documents.");
+    } finally {
+      setMissingLoading(false);
+    }
+  };
 
-    setCcAuditPeriodOptions(
-      res.data.audit_periods || []
-    );
+  const fetchCCTrend = async () => {
+    try {
+      const params = new URLSearchParams();
 
-  } catch (err) {
+      params.append("year", String(ccYear));
 
-    console.error(err);
+      ccAuditPeriods.forEach((x) => params.append("audit_periods", x));
+      ccStates.forEach((x) => params.append("states", x));
+      ccBranches.forEach((x) => params.append("branches", x));
+      ccVendors.forEach((x) => params.append("vendors", x));
 
-  }
+      const res = await axios.get(
+        "/api/vendor/dashboard/vendor-wise-cc-trend/",
+        {
+          params,
+        }
+      );
 
-};
-
-
-const fetchCCTrend = async () => {
-
-  try {
-
-    const params = new URLSearchParams();
-
-    params.append("year", String(ccYear));
-
-    ccAuditPeriods.forEach(x =>
-        params.append("audit_periods", x)
-    );
-
-    ccStates.forEach(x => params.append("states", x));
-    ccBranches.forEach(x => params.append("branches", x));
-    ccVendors.forEach(x => params.append("vendors", x));
-
-    const res = await axios.get(
-      "/api/vendor/dashboard/vendor-wise-cc-trend/",
-      {
-        params,
-      }
-    );
-
-    setCcTrend(res.data.trend || []);
-
-  } catch (err) {
-
-    console.error(err);
-
-  }
-
-};
+      setCcTrend(res.data.trend || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <>
@@ -461,12 +456,19 @@ const fetchCCTrend = async () => {
       <div className="grid grid-cols-1 gap-6">
         {/* Summary Cards */}
         <Card loading={loading}>
-          <ComplianceSummaryCards data={summary} />
+          <ComplianceSummaryCards
+            data={summary}
+            onDocumentNotSubmittedClick={() => {
+              if (summary.documentNotSubmitted > 0) {
+                fetchMissingDocuments();
+              }
+            }}
+          />
         </Card>
 
-          <Row gutter={[16, 16]}>
-            {/* Monthly Trend */}
-            <Col xs={24} xl={17}>
+        <Row gutter={[16, 16]}>
+          {/* Monthly Trend */}
+          <Col xs={24} xl={17}>
             <Card
               style={{
                 height: "100%",
@@ -490,17 +492,10 @@ const fetchCCTrend = async () => {
                     text-sm
                   "
                   value={trendYear}
-                  onChange={(e) =>
-                    setTrendYear(
-                      Number(e.target.value)
-                    )
-                  }
+                  onChange={(e) => setTrendYear(Number(e.target.value))}
                 >
                   {trendYears.map((year) => (
-                    <option
-                      key={year}
-                      value={year}
-                    >
+                    <option key={year} value={year}>
                       {year}
                     </option>
                   ))}
@@ -513,11 +508,11 @@ const fetchCCTrend = async () => {
 
           {/* Compliance Status Distribution */}
           <Col xs={24} xl={7}>
-          <Card
-            style={{
-              height: "100%",
-              minHeight: 470,
-            }}
+            <Card
+              style={{
+                height: "100%",
+                minHeight: 470,
+              }}
               loading={loading}
               title={
                 <Space>
@@ -531,239 +526,292 @@ const fetchCCTrend = async () => {
           </Col>
         </Row>
 
-        {/* ================= Gender Distribution (Updated Layout) ================= */}
+        {/* ================= Gender Distribution ================= */}
         <Row gutter={[16, 16]}>
-        {/* LEFT CARD */}
-        <Col xs={24} xl={12}>
-          <Card
-            title="Employee Gender Distribution"
-            loading={loading}
-            style={{ height: "100%" }}
-          >
-            <Row gutter={[16, 16]}>
-              {/* First row - 3 dropdowns */}
-              <Col xs={24} md={8}>
-                <label className="mb-1 block font-medium">State</label>
-                <MultiSelectCheckbox
-                  options={genderStateOptions}
-                  value={genderStates}
-                  onChange={(value) => {
-                    setGenderStates(value);
-                    setGenderBranches([]);
-                    setGenderVendors([]);
-                    setNatureServices([]);
-                  }}
-                  placeholder="Select State"
-                  allLabel="All States"
-                />
-              </Col>
+          {/* LEFT CARD */}
+          <Col xs={24} xl={12}>
+            <Card
+              title="Employee Gender Distribution"
+              loading={loading}
+              style={{ height: "100%" }}
+            >
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={8}>
+                  <label className="mb-1 block font-medium">State</label>
+                  <MultiSelectCheckbox
+                    options={genderStateOptions}
+                    value={genderStates}
+                    onChange={(value) => {
+                      setGenderStates(value);
+                      setGenderBranches([]);
+                      setGenderVendors([]);
+                      setNatureServices([]);
+                    }}
+                    placeholder="Select State"
+                    allLabel="All States"
+                  />
+                </Col>
 
-              <Col xs={24} md={8}>
-                <label className="mb-1 block font-medium">Branch</label>
-                <MultiSelectCheckbox
-                  options={genderBranchOptions}
-                  value={genderBranches}
-                  onChange={(value) => {
-                    setGenderBranches(value);
-                    setGenderVendors([]);
-                    setNatureServices([]);
-                  }}
-                  placeholder="Select Branch"
-                  allLabel="All Branches"
-                />
-              </Col>
+                <Col xs={24} md={8}>
+                  <label className="mb-1 block font-medium">Branch</label>
+                  <MultiSelectCheckbox
+                    options={genderBranchOptions}
+                    value={genderBranches}
+                    onChange={(value) => {
+                      setGenderBranches(value);
+                      setGenderVendors([]);
+                      setNatureServices([]);
+                    }}
+                    placeholder="Select Branch"
+                    allLabel="All Branches"
+                  />
+                </Col>
 
-              <Col xs={24} md={8}>
-                <label className="mb-1 block font-medium">Vendor</label>
-                <MultiSelectCheckbox
-                  options={genderVendorOptions}
-                  value={genderVendors}
-                  onChange={(value) => {
-                    setGenderVendors(value);
-                    setNatureServices([]);
-                  }}
-                  placeholder="Select Vendor"
-                  allLabel="All Vendors"
-                />
-              </Col>
+                <Col xs={24} md={8}>
+                  <label className="mb-1 block font-medium">Vendor</label>
+                  <MultiSelectCheckbox
+                    options={genderVendorOptions}
+                    value={genderVendors}
+                    onChange={(value) => {
+                      setGenderVendors(value);
+                      setNatureServices([]);
+                    }}
+                    placeholder="Select Vendor"
+                    allLabel="All Vendors"
+                  />
+                </Col>
 
-              {/* Second row - 2 dropdowns */}
-              <Col xs={24} md={8}>
-                <label className="mb-1 block font-medium">
-                  Nature Of Services
-                </label>
-                <MultiSelectCheckbox
-                  options={natureServiceOptions}
-                  value={natureServices}
-                  onChange={setNatureServices}
-                  placeholder="Select Service"
-                  allLabel="All Services"
-                />
-              </Col>
+                <Col xs={24} md={8}>
+                  <label className="mb-1 block font-medium">
+                    Nature Of Services
+                  </label>
+                  <MultiSelectCheckbox
+                    options={natureServiceOptions}
+                    value={natureServices}
+                    onChange={setNatureServices}
+                    placeholder="Select Service"
+                    allLabel="All Services"
+                  />
+                </Col>
 
-              <Col xs={24} md={8}>
-                <label className="mb-1 block font-medium">
-                  Audit Period
-                </label>
-                <MultiSelectCheckbox
-                  options={genderAuditPeriodOptions}
-                  value={genderAuditPeriods}
-                  onChange={setGenderAuditPeriods}
-                  placeholder="Select Audit Period"
-                  allLabel="All Audit Periods"
-                />
-              </Col>
-            </Row>
+                <Col xs={24} md={8}>
+                  <label className="mb-1 block font-medium">
+                    Audit Period
+                  </label>
+                  <MultiSelectCheckbox
+                    options={genderAuditPeriodOptions}
+                    value={genderAuditPeriods}
+                    onChange={setGenderAuditPeriods}
+                    placeholder="Select Audit Period"
+                    allLabel="All Audit Periods"
+                  />
+                </Col>
+              </Row>
 
-            {/* Donut Chart */}
-            <div className="mt-6 flex justify-center">
-              <GenderDistributionChart data={genderData} />
-            </div>
-
-            {/* Male & Female Count */}
-            <div className="mt-4 flex justify-center gap-10">
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-blue-600">
-                  {genderData.male}
-                </div>
-                <div className="text-sm text-gray-500">Male</div>
+              <div className="mt-6 flex justify-center">
+                <GenderDistributionChart data={genderData} />
               </div>
 
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-pink-500">
-                  {genderData.female}
+              <div className="mt-4 flex justify-center gap-10">
+                <div className="text-center">
+                  <div className="text-2xl font-semibold text-blue-600">
+                    {genderData.male}
+                  </div>
+                  <div className="text-sm text-gray-500">Male</div>
                 </div>
-                <div className="text-sm text-gray-500">Female</div>
+
+                <div className="text-center">
+                  <div className="text-2xl font-semibold text-pink-500">
+                    {genderData.female}
+                  </div>
+                  <div className="text-sm text-gray-500">Female</div>
+                </div>
               </div>
-            </div>
-          </Card>
-        </Col>
-{/* RIGHT CARD - Vendor Wise CC Trend */}
-<Col xs={24} xl={12}>
-  <Card
-    title="Vendor Wise CC Trend"
-    loading={loading}
-    style={{ height: "100%" }}
-  >
-    {/* Filters Row */}
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
-      {/* Left side - Multi Selects */}
-      <div className="flex flex-1 flex-wrap gap-4">
-{/* Vendor */}
-<div className="min-w-[220px] flex-1">
-  <label className="mb-1 block font-medium">
-    Vendor
-  </label>
+            </Card>
+          </Col>
 
-  <MultiSelectCheckbox
-    options={ccVendorOptions}
-    value={ccVendors}
-    onChange={(value) => {
-      setCcVendors(value);
-      setCcAuditPeriods([]);
-      setCcStates([]);
-      setCcBranches([]);
-    }}
-    placeholder="Select Vendor"
-    allLabel="All Vendors"
-  />
-</div>
+          {/* RIGHT CARD - Vendor Wise CC Trend */}
+          <Col xs={24} xl={12}>
+            <Card
+              title="Vendor Wise CC Trend"
+              loading={loading}
+              style={{ height: "100%" }}
+            >
+              {/* Filters Row */}
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+                {/* Left side - Multi Selects */}
+                <div className="flex flex-1 flex-wrap gap-4">
+                  {/* Vendor */}
+                  <div className="min-w-[220px] flex-1">
+                    <label className="mb-1 block font-medium">Vendor</label>
+                    <MultiSelectCheckbox
+                      options={ccVendorOptions}
+                      value={ccVendors}
+                      onChange={(value) => {
+                        setCcVendors(value);
+                        setCcAuditPeriods([]);
+                        setCcStates([]);
+                        setCcBranches([]);
 
-{/* Audit Period */}
-<div className="min-w-[220px] flex-1">
-  <label className="mb-1 block font-medium">
-    Audit Period
-  </label>
+                        // Reset to latest available year
+                        if (ccYears.length > 0) {
+                          setCcYear(ccYears[0]);
+                        }
+                      }}
+                      placeholder="Select Vendor"
+                      allLabel="All Vendors"
+                    />
+                  </div>
 
-  <MultiSelectCheckbox
-    options={ccAuditPeriodOptions}
-    value={ccAuditPeriods}
-    onChange={(value) => {
+                  {/* Audit Period */}
+                  <div className="min-w-[220px] flex-1">
+                    <label className="mb-1 block font-medium">
+                      Audit Period
+                    </label>
+                    <MultiSelectCheckbox
+                      options={ccAuditPeriodOptions}
+                      value={ccAuditPeriods}
+                      onChange={(value) => {
+                        setCcAuditPeriods(value);
+                        setCcStates([]);
+                        setCcBranches([]);
 
-        setCcAuditPeriods(value);
+                        if (value.length > 0) {
+                          // Auto select Year from Audit Period
+                          const selectedPeriod = value[value.length - 1];
+                          const match = selectedPeriod.match(/\d{4}/);
 
-        setCcStates([]);
+                          if (match) {
+                            setCcYear(Number(match[0]));
+                          }
+                        } else {
+                          // Reset to latest year when Audit Period is cleared
+                          if (ccYears.length > 0) {
+                            setCcYear(ccYears[0]);
+                          }
+                        }
+                      }}
+                      placeholder="Select Audit Period"
+                      allLabel="All Audit Periods"
+                    />
+                  </div>
 
-        setCcBranches([]);
+                  {/* State */}
+                  <div className="min-w-[180px] flex-1">
+                    <label className="mb-1 block font-medium">State</label>
+                    <MultiSelectCheckbox
+                      options={ccStateOptions}
+                      value={ccStates}
+                      onChange={(value) => {
+                        setCcStates(value);
+                        setCcBranches([]);
+                      }}
+                      placeholder="Select State"
+                      allLabel="All States"
+                    />
+                  </div>
 
-        // Auto select Year from Audit Period
-        if (value.length > 0) {
+                  {/* Branch */}
+                  <div className="min-w-[180px] flex-1">
+                    <label className="mb-1 block font-medium">Branch</label>
+                    <MultiSelectCheckbox
+                      options={ccBranchOptions}
+                      value={ccBranches}
+                      onChange={setCcBranches}
+                      placeholder="Select Branch"
+                      allLabel="All Branches"
+                    />
+                  </div>
+                </div>
 
-            const selectedPeriod = value[value.length - 1];
+                {/* Right side - Year */}
+                <div className="w-28">
+                  <label className="mb-1 block font-medium">Year</label>
+                  <select
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                    value={ccYear}
+                    onChange={(e) => setCcYear(Number(e.target.value))}
+                  >
+                    {ccYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-            const match = selectedPeriod.match(/\d{4}/);
-
-            if (match) {
-                setCcYear(Number(match[0]));
-            }
-
-        }
-
-    }}
-    placeholder="Select Audit Period"
-    allLabel="All Audit Periods"
-  />
-</div>
-
-{/* State */}
-<div className="min-w-[180px] flex-1">
-  <label className="mb-1 block font-medium">
-    State
-  </label>
-
-  <MultiSelectCheckbox
-    options={ccStateOptions}
-    value={ccStates}
-    onChange={(value) => {
-      setCcStates(value);
-      setCcBranches([]);
-    }}
-    placeholder="Select State"
-    allLabel="All States"
-  />
-</div>
-
-{/* Branch */}
-<div className="min-w-[180px] flex-1">
-  <label className="mb-1 block font-medium">
-    Branch
-  </label>
-
-  <MultiSelectCheckbox
-    options={ccBranchOptions}
-    value={ccBranches}
-    onChange={setCcBranches}
-    placeholder="Select Branch"
-    allLabel="All Branches"
-  />
-</div>
-      </div>
-
-      {/* Right side - Year (separated) */}
-      <div className="w-28">
-        <label className="mb-1 block font-medium">Year</label>
-        <select
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          value={ccYear}
-          onChange={(e) => setCcYear(Number(e.target.value))}
-        >
-          {ccYears.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-
-    {/* Chart */}
-    <div className="mt-2">
-      <VendorWiseCCTrendChart data={ccTrend} />
-    </div>
-  </Card>
-</Col>
+              {/* Chart */}
+              <div className="mt-2">
+                <VendorWiseCCTrendChart data={ccTrend} />
+              </div>
+            </Card>
+          </Col>
         </Row>
       </div>
+
+      {/* Missing Documents Modal */}
+      <Modal
+        title="Document Not Submitted Details"
+        open={missingModalOpen}
+        footer={null}
+        width={1200}
+        onCancel={() => setMissingModalOpen(false)}
+      >
+        <Table
+          loading={missingLoading}
+          rowKey={(row) =>
+            `${row.vendor}-${row.branch}-${row.audit_period}`
+          }
+          pagination={{
+            pageSize: 10,
+          }}
+          scroll={{
+            x: 1200,
+            y: 500,
+          }}
+          columns={[
+            {
+              title: "Vendor",
+              dataIndex: "vendor",
+            },
+            {
+              title: "State",
+              dataIndex: "state",
+            },
+            {
+              title: "Branch",
+              dataIndex: "branch",
+            },
+            {
+              title: "Audit Period",
+              dataIndex: "audit_period",
+            },
+            {
+              title: "Frequency",
+              dataIndex: "frequency",
+              render: (value) => <Tag color="blue">{value}</Tag>,
+            },
+            {
+              title: "Expected",
+              dataIndex: "expected_documents",
+              align: "center",
+            },
+            {
+              title: "Submitted",
+              dataIndex: "submitted_documents",
+              align: "center",
+            },
+            {
+              title: "Missing",
+              dataIndex: "missing_documents",
+              align: "center",
+              render: (value) => <Tag color="red">{value}</Tag>,
+            },
+          ]}
+          dataSource={missingData}
+        />
+      </Modal>
     </>
   );
 }
