@@ -1,7 +1,7 @@
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -117,8 +117,9 @@ export default function DocumentWiseTrendChart({
       width="100%"
       height={450}
     >
-      <LineChart
+      <BarChart
         data={data}
+        barCategoryGap="30%"
         margin={{
           top: 20,
           right: 35,
@@ -127,10 +128,11 @@ export default function DocumentWiseTrendChart({
         }}
       >
 
-        <CartesianGrid
-          strokeDasharray="4 4"
-          vertical={false}
-        />
+    <CartesianGrid
+        strokeDasharray="3 3"
+        stroke="#E5E7EB"
+        vertical={false}
+    />
 
         <XAxis
           dataKey="month"
@@ -156,11 +158,12 @@ export default function DocumentWiseTrendChart({
         />
 
         <Legend
-          verticalAlign="top"
-          align="right"
-          wrapperStyle={{
+        verticalAlign="top"
+        align="center"
+        iconType="circle"
+        wrapperStyle={{
             paddingBottom: 20,
-          }}
+        }}
         />
 
         <ReferenceLine
@@ -174,37 +177,23 @@ export default function DocumentWiseTrendChart({
           }}
         />
 
-        <Line
-          type="monotone"
-          dataKey="pf"
-          name="PF"
-          stroke="#2563eb"
-          strokeWidth={4}
-          dot={{
-            r: 5,
-          }}
-          activeDot={{
-            r: 8,
-          }}
-          animationDuration={1200}
+        <Bar
+        dataKey="esic"
+        name="ESIC"
+        fill="#22C55E"
+        radius={[6, 6, 0, 0]}
+        maxBarSize={26}
         />
 
-        <Line
-          type="monotone"
-          dataKey="esic"
-          name="ESIC"
-          stroke="#10b981"
-          strokeWidth={4}
-          dot={{
-            r: 5,
-          }}
-          activeDot={{
-            r: 8,
-          }}
-          animationDuration={1200}
+        <Bar
+        dataKey="pf"
+        name="PF"
+        fill="#3B82F6"
+        radius={[6, 6, 0, 0]}
+        maxBarSize={26}
         />
 
-      </LineChart>
+      </BarChart>
     </ResponsiveContainer>
   );
 }
