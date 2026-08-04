@@ -24,6 +24,11 @@ from master_apps.vendor.compliance_models import (
 )
 from master_apps.vendor.mapping_models import VendorBranchMapping
 from master_apps.vendor.mapping_models import VendorBranchMapping
+import re
+
+from collections import defaultdict
+
+from django.db.models import Count, Q, Max
 
 # =========================
 # KPI
