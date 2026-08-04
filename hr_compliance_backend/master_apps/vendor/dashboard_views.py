@@ -2756,8 +2756,20 @@ class VendorWiseCCTrendFiltersAPIView(APIView):
             is_cc_issued=True,
         )
 
+        vendors = request.GET.getlist("vendors")
+        audit_periods = request.GET.getlist("audit_periods")
         states = request.GET.getlist("states")
         branches = request.GET.getlist("branches")
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        if audit_periods:
+            queryset = queryset.filter(
+                audit_period__in=audit_periods
+            )
 
         if states:
             queryset = queryset.filter(
@@ -2796,6 +2808,15 @@ class VendorWiseCCTrendFiltersAPIView(APIView):
             .order_by("vendor__name")
         )
 
+        audit_period_data = (
+            queryset.values_list(
+                "audit_period",
+                flat=True,
+            )
+            .distinct()
+            .order_by("audit_period")
+        )
+
         return Response({
 
             "states": [
@@ -2822,8 +2843,15 @@ class VendorWiseCCTrendFiltersAPIView(APIView):
                 for v in vendor_data
             ],
 
-        })
+            "audit_periods": [
+                {
+                    "id": a,
+                    "name": a,
+                }
+                for a in audit_period_data
+            ],
 
+        })
 
 class VendorWiseCCTrendAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -2858,14 +2886,25 @@ class VendorWiseCCTrendAPIView(APIView):
 
         year = request.GET.get("year")
 
+        vendors = request.GET.getlist("vendors")
+        audit_periods = request.GET.getlist("audit_periods")
         states = request.GET.getlist("states")
         branches = request.GET.getlist("branches")
-        vendors = request.GET.getlist("vendors")
 
         if year:
             queryset = queryset.filter(
                 cc_issued_at__isnull=False,
                 cc_issued_at__year=year
+            )
+
+        if vendors:
+            queryset = queryset.filter(
+                vendor_id__in=vendors
+            )
+
+        if audit_periods:
+            queryset = queryset.filter(
+                audit_period__in=audit_periods
             )
 
         if states:
@@ -2876,11 +2915,6 @@ class VendorWiseCCTrendAPIView(APIView):
         if branches:
             queryset = queryset.filter(
                 branch_id__in=branches
-            )
-
-        if vendors:
-            queryset = queryset.filter(
-                vendor_id__in=vendors
             )
 
         # --------------------------

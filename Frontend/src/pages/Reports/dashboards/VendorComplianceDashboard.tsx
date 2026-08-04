@@ -97,6 +97,7 @@ export default function VendorComplianceDashboard() {
   const [ccStates, setCcStates] = useState<string[]>([]);
   const [ccBranches, setCcBranches] = useState<string[]>([]);
   const [ccVendors, setCcVendors] = useState<string[]>([]);
+  const [ccAuditPeriods, setCcAuditPeriods] = useState<string[]>([]);
 
   const [ccStateOptions, setCcStateOptions] =
     useState<DropdownOption[]>([]);
@@ -106,6 +107,9 @@ export default function VendorComplianceDashboard() {
 
   const [ccVendorOptions, setCcVendorOptions] =
     useState<DropdownOption[]>([]);
+
+  const [ccAuditPeriodOptions, setCcAuditPeriodOptions] =
+  useState<DropdownOption[]>([]);
 
   const [ccTrend, setCcTrend] = useState<any[]>([]);
 
@@ -199,15 +203,21 @@ export default function VendorComplianceDashboard() {
 
 useEffect(() => {
   loadCCFilters();
-}, [ccStates, ccBranches]);
+}, [
+  ccVendors,
+  ccAuditPeriods,
+  ccStates,
+  ccBranches,
+]);
 
 useEffect(() => {
   fetchCCTrend();
 }, [
   ccYear,
+  ccVendors,
+  ccAuditPeriods,
   ccStates,
   ccBranches,
-  ccVendors,
 ]);
 
   useEffect(() => {
@@ -318,7 +328,14 @@ const loadCCFilters = async () => {
 
     const params = new URLSearchParams();
 
+    ccVendors.forEach(x => params.append("vendors", x));
+
+    ccAuditPeriods.forEach(x =>
+      params.append("audit_periods", x)
+    );
+
     ccStates.forEach(x => params.append("states", x));
+
     ccBranches.forEach(x => params.append("branches", x));
 
     const res = await axios.get(
@@ -331,6 +348,10 @@ const loadCCFilters = async () => {
     setCcStateOptions(res.data.states || []);
     setCcBranchOptions(res.data.branches || []);
     setCcVendorOptions(res.data.vendors || []);
+
+    setCcAuditPeriodOptions(
+      res.data.audit_periods || []
+    );
 
   } catch (err) {
 
@@ -348,6 +369,10 @@ const fetchCCTrend = async () => {
     const params = new URLSearchParams();
 
     params.append("year", String(ccYear));
+
+    ccAuditPeriods.forEach(x =>
+        params.append("audit_periods", x)
+    );
 
     ccStates.forEach(x => params.append("states", x));
     ccBranches.forEach(x => params.append("branches", x));
@@ -624,45 +649,77 @@ const fetchCCTrend = async () => {
     <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
       {/* Left side - Multi Selects */}
       <div className="flex flex-1 flex-wrap gap-4">
-        <div className="min-w-[160px] flex-1">
-          <label className="mb-1 block font-medium">State</label>
-          <MultiSelectCheckbox
-            options={ccStateOptions}
-            value={ccStates}
-            onChange={(value) => {
-              setCcStates(value);
-              setCcBranches([]);
-              setCcVendors([]);
-            }}
-            placeholder="Select State"
-            allLabel="All States"
-          />
-        </div>
+{/* Vendor */}
+<div className="min-w-[220px] flex-1">
+  <label className="mb-1 block font-medium">
+    Vendor
+  </label>
 
-        <div className="min-w-[160px] flex-1">
-          <label className="mb-1 block font-medium">Branch</label>
-          <MultiSelectCheckbox
-            options={ccBranchOptions}
-            value={ccBranches}
-            onChange={(value) => {
-              setCcBranches(value);
-              setCcVendors([]);
-            }}
-            placeholder="Select Branch"
-            allLabel="All Branches"
-          />
-        </div>
+  <MultiSelectCheckbox
+    options={ccVendorOptions}
+    value={ccVendors}
+    onChange={(value) => {
+      setCcVendors(value);
+      setCcAuditPeriods([]);
+      setCcStates([]);
+      setCcBranches([]);
+    }}
+    placeholder="Select Vendor"
+    allLabel="All Vendors"
+  />
+</div>
 
-        <div className="min-w-[160px] flex-1">
-          <label className="mb-1 block font-medium">Vendor</label>
-          <MultiSelectCheckbox
-            options={ccVendorOptions}
-            value={ccVendors}
-            onChange={setCcVendors}
-            placeholder="Select Vendor"
-            allLabel="All Vendors"
-          />
-        </div>
+{/* Audit Period */}
+<div className="min-w-[220px] flex-1">
+  <label className="mb-1 block font-medium">
+    Audit Period
+  </label>
+
+  <MultiSelectCheckbox
+    options={ccAuditPeriodOptions}
+    value={ccAuditPeriods}
+    onChange={(value) => {
+      setCcAuditPeriods(value);
+      setCcStates([]);
+      setCcBranches([]);
+    }}
+    placeholder="Select Audit Period"
+    allLabel="All Audit Periods"
+  />
+</div>
+
+{/* State */}
+<div className="min-w-[180px] flex-1">
+  <label className="mb-1 block font-medium">
+    State
+  </label>
+
+  <MultiSelectCheckbox
+    options={ccStateOptions}
+    value={ccStates}
+    onChange={(value) => {
+      setCcStates(value);
+      setCcBranches([]);
+    }}
+    placeholder="Select State"
+    allLabel="All States"
+  />
+</div>
+
+{/* Branch */}
+<div className="min-w-[180px] flex-1">
+  <label className="mb-1 block font-medium">
+    Branch
+  </label>
+
+  <MultiSelectCheckbox
+    options={ccBranchOptions}
+    value={ccBranches}
+    onChange={setCcBranches}
+    placeholder="Select Branch"
+    allLabel="All Branches"
+  />
+</div>
       </div>
 
       {/* Right side - Year (separated) */}
