@@ -2895,12 +2895,6 @@ class VendorWiseCCTrendAPIView(APIView):
         states = request.GET.getlist("states")
         branches = request.GET.getlist("branches")
 
-        if year:
-            queryset = queryset.filter(
-                cc_issued_at__isnull=False,
-                cc_issued_at__year=year
-            )
-
         if vendors:
             queryset = queryset.filter(
                 vendor_id__in=vendors
@@ -2921,87 +2915,149 @@ class VendorWiseCCTrendAPIView(APIView):
                 branch_id__in=branches
             )
 
-        # --------------------------
-        # Monthly aggregation
-        # --------------------------
-
-        db_trend = (
-            queryset
-            .exclude(cc_issued_at__isnull=True)
-            .annotate(
-                month=TruncMonth("cc_issued_at")
-            )
-            .values(
-                "month",
-                "vendor_id",
-                "branch_id",
-                "audit_period",
-            )
-            .annotate(
-                exceptional=Count(
-                    "id",
-                    filter=Q(has_exceptional_approval=True)
-                ),
-            )
-            .order_by("month")
-        )
-
-        monthly = {}
-
-        for row in db_trend:
-
-            key = row["month"].strftime("%b %Y")
-
-            if key not in monthly:
-                monthly[key] = {
-                    "ccIssued": 0,
-                    "exceptionalCC": 0,
-                }
-
-            # One unique CC
-            monthly[key]["ccIssued"] += 1
-
-            # Count as Exceptional CC if any document
-            # in that CC has exceptional approval
-            if row["exceptional"] > 0:
-                monthly[key]["exceptionalCC"] += 1
-
-        trend_map = monthly
-
-        # --------------------------
-        # Generate last 12 months
-        # --------------------------
-
-        # ------------------------------------
-        # Generate Jan-Dec for selected year
-        # ------------------------------------
+        # -----------------------------
+        # Year filter based on audit_period (not cc_issued_at)
+        # -----------------------------
 
         selected_year = int(year) if year else datetime.today().year
 
+        if year:
+            all_periods = (
+                queryset.values_list("audit_period", flat=True)
+                .distinct()
+            )
+
+            matching_periods = []
+            for period in all_periods:
+                if not period:
+                    continue
+
+                match = re.search(r"(20\d{2})", str(period))
+                if match:
+                    if int(match.group(1)) == selected_year:
+                        matching_periods.append(period)
+                else:
+                    # Period has no year (e.g. "Jul-Dec") → apply to selected year
+                    matching_periods.append(period)
+
+            queryset = queryset.filter(
+                audit_period__in=matching_periods
+            )
+
+        # -----------------------------
+        # Helper: expand audit_period → list of month numbers (1-12)
+        # -----------------------------
+
+        def get_months_from_audit_period(period, target_year):
+            if not period:
+                return []
+
+            period = str(period).strip()
+
+            # Extract year if present
+            year_match = re.search(r"(20\d{2})", period)
+            period_year = int(year_match.group(1)) if year_match else None
+
+            if period_year is not None and period_year != target_year:
+                return []
+
+            # Remove year part for pattern matching
+            clean = re.sub(r"\s*20\d{2}\s*", "", period).strip().lower()
+
+            month_map = {
+                "jan": 1, "january": 1,
+                "feb": 2, "february": 2,
+                "mar": 3, "march": 3,
+                "apr": 4, "april": 4,
+                "may": 5,
+                "jun": 6, "june": 6,
+                "jul": 7, "july": 7,
+                "aug": 8, "august": 8,
+                "sep": 9, "sept": 9, "september": 9,
+                "oct": 10, "october": 10,
+                "nov": 11, "november": 11,
+                "dec": 12, "december": 12,
+            }
+
+            # Annual / full year
+            if clean in ("", "annual", "yearly", "year", "full year"):
+                return list(range(1, 13))
+
+            # Single month: "Jan", "January"
+            if clean in month_map:
+                return [month_map[clean]]
+
+            # Range: "Jan-Mar", "Jan - Mar", "January-March", "Jul-Dec"
+            range_match = re.match(r"([a-z]+)\s*-\s*([a-z]+)", clean)
+            if range_match:
+                start_str = range_match.group(1)
+                end_str = range_match.group(2)
+                start = month_map.get(start_str)
+                end = month_map.get(end_str)
+
+                if start and end:
+                    if start <= end:
+                        return list(range(start, end + 1))
+                    else:
+                        # Rare wrap-around (Dec-Jan)
+                        return list(range(start, 13)) + list(range(1, end + 1))
+
+            # Fallback: collect any month names present
+            found = []
+            for name, num in month_map.items():
+                if name in clean:
+                    found.append(num)
+            if found:
+                return sorted(set(found))
+
+            return []
+
+        # -----------------------------
+        # Unique CCs (vendor + branch + audit_period)
+        # + whether any exceptional approval exists
+        # -----------------------------
+
+        unique_ccs = (
+            queryset
+            .exclude(audit_period__isnull=True)
+            .exclude(audit_period="")
+            .values("vendor_id", "branch_id", "audit_period")
+            .annotate(
+                is_exceptional=Max("has_exceptional_approval")
+            )
+        )
+
+        # -----------------------------
+        # Build trend by expanding each audit_period into months
+        # -----------------------------
+
+        from collections import defaultdict
+        trend_map = defaultdict(lambda: {"ccIssued": 0, "exceptionalCC": 0})
+
+        for row in unique_ccs:
+            months = get_months_from_audit_period(
+                row["audit_period"],
+                selected_year,
+            )
+
+            for month_no in months:
+                trend_map[month_no]["ccIssued"] += 1
+                if row["is_exceptional"]:
+                    trend_map[month_no]["exceptionalCC"] += 1
+
+        # -----------------------------
+        # Generate Jan–Dec for the selected year
+        # -----------------------------
+
         months = []
-
         for month_no in range(1, 13):
-
-            month = datetime(selected_year, month_no, 1)
-
-            key = month.strftime("%b %Y")
+            month_date = datetime(selected_year, month_no, 1)
+            key = month_date.strftime("%b %Y")
 
             months.append({
                 "audit_period": key,
-                "ccIssued": trend_map.get(
-                    key,
-                    {}
-                ).get(
-                    "ccIssued",
-                    0,
-                ),
-                "exceptionalCC": trend_map.get(
-                    key,
-                    {}
-                ).get(
-                    "exceptionalCC",
-                    0,
-                ),
+                "ccIssued": trend_map[month_no]["ccIssued"],
+                "exceptionalCC": trend_map[month_no]["exceptionalCC"],
             })
 
         return Response({
