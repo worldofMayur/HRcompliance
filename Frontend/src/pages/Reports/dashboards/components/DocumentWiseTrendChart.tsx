@@ -2,6 +2,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -128,11 +129,11 @@ export default function DocumentWiseTrendChart({
         }}
       >
 
-    <CartesianGrid
-        strokeDasharray="3 3"
-        stroke="#E5E7EB"
-        vertical={false}
-    />
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="#E5E7EB"
+          vertical={false}
+        />
 
         <XAxis
           dataKey="month"
@@ -158,12 +159,12 @@ export default function DocumentWiseTrendChart({
         />
 
         <Legend
-        verticalAlign="top"
-        align="center"
-        iconType="circle"
-        wrapperStyle={{
+          verticalAlign="top"
+          align="center"
+          iconType="circle"
+          wrapperStyle={{
             paddingBottom: 20,
-        }}
+          }}
         />
 
         <ReferenceLine
@@ -178,20 +179,44 @@ export default function DocumentWiseTrendChart({
         />
 
         <Bar
-        dataKey="esic"
-        name="ESIC"
-        fill="#22C55E"
-        radius={[6, 6, 0, 0]}
-        maxBarSize={26}
-        />
+          dataKey="esic"
+          name="ESIC"
+          radius={[6, 6, 0, 0]}
+          maxBarSize={26}
+        >
+          {data.map((item, index) => (
+            <Cell
+              key={`esic-${index}`}
+              fill={
+                item.esic === 0
+                  ? "#CBD5E1"
+                  : item.esic_after_15 > 0
+                  ? "#F59E0B"     // Light Amber
+                  : "#4ADE80"     // Light Green
+              }
+            />
+          ))}
+        </Bar>
 
         <Bar
-        dataKey="pf"
-        name="PF"
-        fill="#3B82F6"
-        radius={[6, 6, 0, 0]}
-        maxBarSize={26}
-        />
+          dataKey="pf"
+          name="PF"
+          radius={[6, 6, 0, 0]}
+          maxBarSize={26}
+        >
+          {data.map((item, index) => (
+            <Cell
+              key={`pf-${index}`}
+              fill={
+                item.pf === 0
+                  ? "#94A3B8"
+                  : item.pf_after_15 > 0
+                  ? "#D97706"     // Dark Amber
+                  : "#15803D"     // Dark Green
+              }
+            />
+          ))}
+        </Bar>
 
       </BarChart>
     </ResponsiveContainer>
