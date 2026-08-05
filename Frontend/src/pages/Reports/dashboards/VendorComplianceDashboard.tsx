@@ -8,9 +8,12 @@ import {
   Modal,
   Table,
   Tag,
+  Input,
+  Select,
+  Button,
 } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { useEffect, useState, useMemo } from "react";
 import axios from "../../../utils/api";
 
 import ComplianceSummaryCards from "./components/ComplianceSummaryCards";
@@ -123,12 +126,129 @@ export default function VendorComplianceDashboard() {
   const [ccAuditPeriodOptions, setCcAuditPeriodOptions] =
     useState<DropdownOption[]>([]);
 
+  // Month support
+  const [ccMonthOptions, setCcMonthOptions] = useState<DropdownOption[]>([]);
+  const [monthToAuditPeriod, setMonthToAuditPeriod] =
+    useState<Record<string, string>>({});
+
   const [ccTrend, setCcTrend] = useState<any[]>([]);
 
   // Missing Documents Modal
   const [missingModalOpen, setMissingModalOpen] = useState(false);
   const [missingLoading, setMissingLoading] = useState(false);
   const [missingData, setMissingData] = useState<MissingDocumentDetail[]>([]);
+
+  // Modal filters
+  const [missingSearch, setMissingSearch] = useState("");
+  const [missingStateFilter, setMissingStateFilter] = useState<string[]>([]);
+  const [missingBranchFilter, setMissingBranchFilter] = useState<string[]>([]);
+  const [missingVendorFilter, setMissingVendorFilter] = useState<string[]>([]);
+  const [missingPeriodFilter, setMissingPeriodFilter] = useState<string[]>([]);
+  const [missingFrequencyFilter, setMissingFrequencyFilter] = useState<string[]>([]);
+
+  // ---------- Unique options for modal filters ----------
+  const missingStateOptions = useMemo(() => {
+    return Array.from(
+      new Set(missingData.map((d) => d.state).filter(Boolean))
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [missingData]);
+
+  const missingBranchOptions = useMemo(() => {
+    return Array.from(
+      new Set(missingData.map((d) => d.branch).filter(Boolean))
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [missingData]);
+
+  const missingVendorOptions = useMemo(() => {
+    return Array.from(
+      new Set(missingData.map((d) => d.vendor).filter(Boolean))
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [missingData]);
+
+  const missingPeriodOptions = useMemo(() => {
+    return Array.from(
+      new Set(missingData.map((d) => d.audit_period).filter(Boolean))
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [missingData]);
+
+  const missingFrequencyOptions = useMemo(() => {
+    return Array.from(
+      new Set(missingData.map((d) => d.frequency).filter(Boolean))
+    )
+      .sort()
+      .map((s) => ({ label: s, value: s }));
+  }, [missingData]);
+
+  // ---------- Filtered data ----------
+  const filteredMissingData = useMemo(() => {
+    const search = missingSearch.trim().toLowerCase();
+
+    return missingData.filter((row) => {
+      const matchesSearch =
+        !search ||
+        row.vendor?.toLowerCase().includes(search) ||
+        row.state?.toLowerCase().includes(search) ||
+        row.branch?.toLowerCase().includes(search) ||
+        row.audit_period?.toLowerCase().includes(search) ||
+        row.frequency?.toLowerCase().includes(search);
+
+      const matchesState =
+        missingStateFilter.length === 0 ||
+        missingStateFilter.includes(row.state);
+
+      const matchesBranch =
+        missingBranchFilter.length === 0 ||
+        missingBranchFilter.includes(row.branch);
+
+      const matchesVendor =
+        missingVendorFilter.length === 0 ||
+        missingVendorFilter.includes(row.vendor);
+
+      const matchesPeriod =
+        missingPeriodFilter.length === 0 ||
+        missingPeriodFilter.includes(row.audit_period);
+
+      const matchesFrequency =
+        missingFrequencyFilter.length === 0 ||
+        missingFrequencyFilter.includes(row.frequency);
+
+      return (
+        matchesSearch &&
+        matchesState &&
+        matchesBranch &&
+        matchesVendor &&
+        matchesPeriod &&
+        matchesFrequency
+      );
+    });
+  }, [
+    missingData,
+    missingSearch,
+    missingStateFilter,
+    missingBranchFilter,
+    missingVendorFilter,
+    missingPeriodFilter,
+    missingFrequencyFilter,
+  ]);
+
+  const resetMissingFilters = () => {
+    setMissingSearch("");
+    setMissingStateFilter([]);
+    setMissingBranchFilter([]);
+    setMissingVendorFilter([]);
+    setMissingPeriodFilter([]);
+    setMissingFrequencyFilter([]);
+  };
+
+  // -------------------- Data loading --------------------
 
   const loadFilters = async () => {
     try {
@@ -140,9 +260,7 @@ export default function VendorComplianceDashboard() {
 
       const res = await axios.get(
         "/api/vendor/dashboard/compliance/filters/",
-        {
-          params,
-        }
+        { params }
       );
 
       setStateOptions(res.data.states || []);
@@ -171,9 +289,7 @@ export default function VendorComplianceDashboard() {
 
       const res = await axios.get(
         "/api/vendor/dashboard/compliance/gender-distribution/",
-        {
-          params,
-        }
+        { params }
       );
 
       setGenderData(res.data);
@@ -274,9 +390,7 @@ export default function VendorComplianceDashboard() {
 
       const res = await axios.get(
         "/api/vendor/dashboard/compliance/gender-filters/",
-        {
-          params,
-        }
+        { params }
       );
 
       setGenderStateOptions(res.data.states || []);
@@ -294,7 +408,6 @@ export default function VendorComplianceDashboard() {
       const res = await axios.get(
         "/api/vendor/dashboard/vendor-wise-cc-years/"
       );
-
       setCcYears(res.data.years || []);
     } catch (err) {
       console.error(err);
@@ -306,7 +419,6 @@ export default function VendorComplianceDashboard() {
       const res = await axios.get(
         "/api/vendor/dashboard/compliance/monthly-trend-years/"
       );
-
       setTrendYears(res.data.years || []);
     } catch (err) {
       console.error(err);
@@ -324,15 +436,17 @@ export default function VendorComplianceDashboard() {
 
       const res = await axios.get(
         "/api/vendor/dashboard/vendor-wise-cc-filters/",
-        {
-          params,
-        }
+        { params }
       );
 
       setCcStateOptions(res.data.states || []);
       setCcBranchOptions(res.data.branches || []);
       setCcVendorOptions(res.data.vendors || []);
       setCcAuditPeriodOptions(res.data.audit_periods || []);
+
+      // Month support
+      setCcMonthOptions(res.data.months || []);
+      setMonthToAuditPeriod(res.data.month_to_audit_period || {});
     } catch (err) {
       console.error(err);
     }
@@ -341,6 +455,7 @@ export default function VendorComplianceDashboard() {
   const fetchMissingDocuments = async () => {
     try {
       setMissingLoading(true);
+      resetMissingFilters(); // clear previous filters
 
       const params = new URLSearchParams();
 
@@ -351,12 +466,10 @@ export default function VendorComplianceDashboard() {
 
       const res = await axios.get(
         "/api/vendor/dashboard/document-not-submitted-details/",
-        {
-          params,
-        }
+        { params }
       );
 
-      setMissingData(res.data);
+      setMissingData(res.data || []);
       setMissingModalOpen(true);
     } catch (err) {
       console.error(err);
@@ -369,19 +482,28 @@ export default function VendorComplianceDashboard() {
   const fetchCCTrend = async () => {
     try {
       const params = new URLSearchParams();
-
       params.append("year", String(ccYear));
 
-      ccAuditPeriods.forEach((x) => params.append("audit_periods", x));
+      // Map selected months → original audit periods
+      const mappedAuditPeriods = Array.from(
+        new Set(
+          ccAuditPeriods.map(
+            (month) => monthToAuditPeriod[month] || month
+          )
+        )
+      );
+
+      mappedAuditPeriods.forEach((period) =>
+        params.append("audit_periods", period)
+      );
+
       ccStates.forEach((x) => params.append("states", x));
       ccBranches.forEach((x) => params.append("branches", x));
       ccVendors.forEach((x) => params.append("vendors", x));
 
       const res = await axios.get(
         "/api/vendor/dashboard/vendor-wise-cc-trend/",
-        {
-          params,
-        }
+        { params }
       );
 
       setCcTrend(res.data.trend || []);
@@ -470,10 +592,7 @@ export default function VendorComplianceDashboard() {
           {/* Monthly Trend */}
           <Col xs={24} xl={17}>
             <Card
-              style={{
-                height: "100%",
-                minHeight: 470,
-              }}
+              style={{ height: "100%", minHeight: 470 }}
               loading={loading}
               title={
                 <Space>
@@ -483,14 +602,7 @@ export default function VendorComplianceDashboard() {
               }
               extra={
                 <select
-                  className="
-                    rounded-md
-                    border
-                    border-gray-300
-                    px-3
-                    py-1
-                    text-sm
-                  "
+                  className="rounded-md border border-gray-300 px-3 py-1 text-sm"
                   value={trendYear}
                   onChange={(e) => setTrendYear(Number(e.target.value))}
                 >
@@ -509,10 +621,7 @@ export default function VendorComplianceDashboard() {
           {/* Compliance Status Distribution */}
           <Col xs={24} xl={7}>
             <Card
-              style={{
-                height: "100%",
-                minHeight: 470,
-              }}
+              style={{ height: "100%", minHeight: 470 }}
               loading={loading}
               title={
                 <Space>
@@ -528,7 +637,6 @@ export default function VendorComplianceDashboard() {
 
         {/* ================= Gender Distribution ================= */}
         <Row gutter={[16, 16]}>
-          {/* LEFT CARD */}
           <Col xs={24} xl={12}>
             <Card
               title="Employee Gender Distribution"
@@ -637,9 +745,7 @@ export default function VendorComplianceDashboard() {
               loading={loading}
               style={{ height: "100%" }}
             >
-              {/* Filters Row */}
               <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
-                {/* Left side - Multi Selects */}
                 <div className="flex flex-1 flex-wrap gap-4">
                   {/* Vendor */}
                   <div className="min-w-[220px] flex-1">
@@ -653,7 +759,6 @@ export default function VendorComplianceDashboard() {
                         setCcStates([]);
                         setCcBranches([]);
 
-                        // Reset to latest available year
                         if (ccYears.length > 0) {
                           setCcYear(ccYears[0]);
                         }
@@ -663,13 +768,11 @@ export default function VendorComplianceDashboard() {
                     />
                   </div>
 
-                  {/* Audit Period */}
+                  {/* Month */}
                   <div className="min-w-[220px] flex-1">
-                    <label className="mb-1 block font-medium">
-                      Audit Period
-                    </label>
+                    <label className="mb-1 block font-medium">Month</label>
                     <MultiSelectCheckbox
-                      options={ccAuditPeriodOptions}
+                      options={ccMonthOptions}
                       value={ccAuditPeriods}
                       onChange={(value) => {
                         setCcAuditPeriods(value);
@@ -677,22 +780,17 @@ export default function VendorComplianceDashboard() {
                         setCcBranches([]);
 
                         if (value.length > 0) {
-                          // Auto select Year from Audit Period
-                          const selectedPeriod = value[value.length - 1];
-                          const match = selectedPeriod.match(/\d{4}/);
-
+                          const selected = value[value.length - 1];
+                          const match = selected.match(/\d{4}/);
                           if (match) {
                             setCcYear(Number(match[0]));
                           }
-                        } else {
-                          // Reset to latest year when Audit Period is cleared
-                          if (ccYears.length > 0) {
-                            setCcYear(ccYears[0]);
-                          }
+                        } else if (ccYears.length > 0) {
+                          setCcYear(ccYears[0]);
                         }
                       }}
-                      placeholder="Select Audit Period"
-                      allLabel="All Audit Periods"
+                      placeholder="Select Month"
+                      allLabel="All Months"
                     />
                   </div>
 
@@ -724,7 +822,7 @@ export default function VendorComplianceDashboard() {
                   </div>
                 </div>
 
-                {/* Right side - Year */}
+                {/* Year */}
                 <div className="w-28">
                   <label className="mb-1 block font-medium">Year</label>
                   <select
@@ -741,7 +839,6 @@ export default function VendorComplianceDashboard() {
                 </div>
               </div>
 
-              {/* Chart */}
               <div className="mt-2">
                 <VendorWiseCCTrendChart data={ccTrend} />
               </div>
@@ -750,66 +847,184 @@ export default function VendorComplianceDashboard() {
         </Row>
       </div>
 
-      {/* Missing Documents Modal */}
+      {/* ================= Missing Documents Modal ================= */}
       <Modal
         title="Document Not Submitted Details"
         open={missingModalOpen}
         footer={null}
-        width={1200}
-        onCancel={() => setMissingModalOpen(false)}
+        width={1280}
+        destroyOnClose
+        onCancel={() => {
+          setMissingModalOpen(false);
+          resetMissingFilters();
+        }}
       >
+        {/* Filters */}
+        <div className="mb-4 space-y-3">
+          {/* Search */}
+          <Input
+            allowClear
+            placeholder="Search by Vendor, State, Branch, Audit Period or Frequency..."
+            prefix={<SearchOutlined className="text-gray-400" />}
+            value={missingSearch}
+            onChange={(e) => setMissingSearch(e.target.value)}
+            className="max-w-md"
+          />
+
+          {/* Dropdown filters */}
+          <Row gutter={[12, 12]}>
+            <Col xs={24} sm={12} md={8} lg={4}>
+              <Select
+                mode="multiple"
+                allowClear
+                showSearch
+                placeholder="State"
+                value={missingStateFilter}
+                onChange={setMissingStateFilter}
+                options={missingStateOptions}
+                className="w-full"
+                maxTagCount="responsive"
+              />
+            </Col>
+
+            <Col xs={24} sm={12} md={8} lg={4}>
+              <Select
+                mode="multiple"
+                allowClear
+                showSearch
+                placeholder="Branch"
+                value={missingBranchFilter}
+                onChange={setMissingBranchFilter}
+                options={missingBranchOptions}
+                className="w-full"
+                maxTagCount="responsive"
+              />
+            </Col>
+
+            <Col xs={24} sm={12} md={8} lg={5}>
+              <Select
+                mode="multiple"
+                allowClear
+                showSearch
+                placeholder="Vendor"
+                value={missingVendorFilter}
+                onChange={setMissingVendorFilter}
+                options={missingVendorOptions}
+                className="w-full"
+                maxTagCount="responsive"
+              />
+            </Col>
+
+            <Col xs={24} sm={12} md={8} lg={5}>
+              <Select
+                mode="multiple"
+                allowClear
+                showSearch
+                placeholder="Audit Period"
+                value={missingPeriodFilter}
+                onChange={setMissingPeriodFilter}
+                options={missingPeriodOptions}
+                className="w-full"
+                maxTagCount="responsive"
+              />
+            </Col>
+
+            <Col xs={24} sm={12} md={8} lg={4}>
+              <Select
+                mode="multiple"
+                allowClear
+                showSearch
+                placeholder="Frequency"
+                value={missingFrequencyFilter}
+                onChange={setMissingFrequencyFilter}
+                options={missingFrequencyOptions}
+                className="w-full"
+                maxTagCount="responsive"
+              />
+            </Col>
+
+            <Col xs={24} sm={12} md={8} lg={2}>
+              <Button
+                onClick={resetMissingFilters}
+                className="w-full"
+              >
+                Clear
+              </Button>
+            </Col>
+          </Row>
+
+          <div className="text-sm text-gray-500">
+            Showing <strong>{filteredMissingData.length}</strong> of{" "}
+            <strong>{missingData.length}</strong> records
+          </div>
+        </div>
+
+        {/* Table */}
         <Table
           loading={missingLoading}
           rowKey={(row) =>
-            `${row.vendor}-${row.branch}-${row.audit_period}`
+            `${row.vendor}-${row.branch}-${row.audit_period}-${row.frequency}`
           }
           pagination={{
             pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
+            showTotal: (total) => `Total ${total} items`,
           }}
           scroll={{
             x: 1200,
-            y: 500,
+            y: 480,
           }}
           columns={[
             {
               title: "Vendor",
               dataIndex: "vendor",
+              width: 200,
+              ellipsis: true,
             },
             {
               title: "State",
               dataIndex: "state",
+              width: 120,
             },
             {
               title: "Branch",
               dataIndex: "branch",
+              width: 140,
+              ellipsis: true,
             },
             {
               title: "Audit Period",
               dataIndex: "audit_period",
+              width: 140,
             },
             {
               title: "Frequency",
               dataIndex: "frequency",
+              width: 110,
               render: (value) => <Tag color="blue">{value}</Tag>,
             },
             {
               title: "Expected",
               dataIndex: "expected_documents",
               align: "center",
+              width: 100,
             },
             {
               title: "Submitted",
               dataIndex: "submitted_documents",
               align: "center",
+              width: 100,
             },
             {
               title: "Missing",
               dataIndex: "missing_documents",
               align: "center",
+              width: 100,
               render: (value) => <Tag color="red">{value}</Tag>,
             },
           ]}
-          dataSource={missingData}
+          dataSource={filteredMissingData}
         />
       </Modal>
     </>

@@ -2768,6 +2768,91 @@ class VendorWiseCCTrendFiltersAPIView(APIView):
             .order_by("audit_period")
         )
 
+        # ---------- Generate months from audit_periods ----------
+        import calendar
+        import re
+
+        month_set = set()
+        month_to_audit_period = {}
+
+        for period in audit_period_data:
+
+            if not period:
+                continue
+
+            period = str(period)
+
+            year_match = re.search(r"(20\d{2})", period)
+
+            if year_match:
+                year = int(year_match.group(1))
+            else:
+                continue
+
+            clean = re.sub(r"\s*20\d{2}\s*", "", period).strip().lower()
+
+            month_map = {
+                "jan": 1,
+                "feb": 2,
+                "mar": 3,
+                "apr": 4,
+                "may": 5,
+                "jun": 6,
+                "jul": 7,
+                "aug": 8,
+                "sep": 9,
+                "oct": 10,
+                "nov": 11,
+                "dec": 12,
+            }
+
+            # Annual
+            if clean in ("annual", "year", "yearly", ""):
+                months = range(1, 13)
+
+            # Range like Jan-Mar
+            elif "-" in clean:
+                start, end = [
+                    x.strip()[:3]
+                    for x in clean.split("-")
+                ]
+
+                start_no = month_map.get(start)
+                end_no = month_map.get(end)
+
+                if start_no and end_no:
+                    months = range(start_no, end_no + 1)
+                else:
+                    months = []
+
+            # Single month
+            else:
+                month_no = month_map.get(clean[:3])
+                months = [month_no] if month_no else []
+
+            for m in months:
+
+                label = f"{calendar.month_abbr[m]} {year}"
+
+                month_set.add(
+                    (
+                        year,
+                        m,
+                        label,
+                    )
+                )
+
+                month_to_audit_period[label] = period
+
+        month_data = [
+            {
+                "id": label,
+                "name": label,
+            }
+            for _, _, label in sorted(month_set)
+        ]
+        # -------------------------------------------------------
+
         return Response({
 
             "states": [
@@ -2802,7 +2887,12 @@ class VendorWiseCCTrendFiltersAPIView(APIView):
                 for a in audit_period_data
             ],
 
+            "months": month_data,
+
+            "month_to_audit_period": month_to_audit_period,
+
         })
+        
 
 class VendorWiseCCTrendAPIView(APIView):
     permission_classes = [IsAuthenticated]
