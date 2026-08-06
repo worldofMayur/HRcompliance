@@ -340,7 +340,20 @@ const handleSave = async () => {
 
       <ComponentCard title="Document Master">
         {/* HEADER / TOOLBAR */}
-        <div className="mb-6 flex items-end justify-between border-b border-gray-100 pb-4">
+        <div
+          className="
+            mb-6
+            flex
+            flex-col
+            gap-4
+            border-b
+            border-gray-100
+            pb-4
+            xl:flex-row
+            xl:items-end
+            xl:justify-between
+          "
+        >
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Document Master
@@ -356,7 +369,18 @@ const handleSave = async () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div
+            className="
+              flex
+              w-full
+              flex-col
+              gap-3
+              sm:flex-row
+              sm:flex-wrap
+              xl:w-auto
+              xl:flex-nowrap
+            "
+          >
             <Input
               placeholder="Search document..."
               value={search}
@@ -364,11 +388,28 @@ const handleSave = async () => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="h-9 w-[240px]"
+              className="
+              h-10
+              w-full
+              sm:w-72
+              xl:w-60
+              "
             />
 
             <select
-className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm appearance-none"
+            className="
+            h-10
+            w-full
+            rounded-lg
+            border
+            border-gray-300
+            bg-white
+            px-4
+            pr-8
+            text-sm
+            appearance-none
+            sm:w-56
+            "
             value={companyFilter}
             onChange={(e) => {
               setCompanyFilter(e.target.value);
@@ -394,7 +435,19 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
           </select>
 
             <select
-className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm appearance-none"
+              className="
+              h-10
+              w-full
+              rounded-lg
+              border
+              border-gray-300
+              bg-white
+              px-4
+              pr-8
+              text-sm
+              appearance-none
+              sm:w-48
+              "
               value={frequencyFilter}
               onChange={(e) => {
                 setFrequencyFilter(e.target.value);
@@ -409,13 +462,13 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
               <option value="one_time">One Time</option>
             </select>
 
-            <Button onClick={openAdd} className="h-9">+ Add Document</Button>
+            <Button onClick={openAdd} className="h-10 w-full sm:w-auto">+ Add Document</Button>
 
             <Button
               variant="outline"
               disabled={!selectedIds.length}
               onClick={handleBulkDelete}
-              className="h-10"
+              className="h-10 w-full sm:w-auto"
             >
               Delete Selected
             </Button>
@@ -424,7 +477,7 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
               variant="outline"
               onClick={handleExport}
               disabled={!filteredDocs.length}
-              className="h-10"
+              className="h-10 w-full sm:w-auto"
             >
               Export Excel
             </Button>
@@ -432,8 +485,8 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
         </div>
 
         {/* TABLE */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <Table>
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+          <Table className="min-w-[900px] w-full">
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableCell isHeader className="w-12 px-4 text-center">
@@ -578,7 +631,18 @@ className="h-10 rounded-lg border border-gray-300 bg-white px-4 pr-8 text-sm app
       {/* ADD / EDIT MODAL */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-lg rounded-xl bg-white p-6">
+          <div
+          className="
+            mx-4
+            w-full
+            max-w-lg
+            rounded-xl
+            bg-white
+            p-6
+            max-h-[90vh]
+            overflow-y-auto
+          "
+        >
             <h3 className="mb-4 text-lg font-semibold">
               {editDoc ? "Edit Document" : "Add Document"}
             </h3>

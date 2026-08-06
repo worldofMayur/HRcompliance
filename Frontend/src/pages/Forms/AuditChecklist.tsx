@@ -694,7 +694,15 @@ const data = filteredChecklists.map(c => ({
   <form onSubmit={handleSubmit} className="space-y-6">
 
     {/* FORM GRID */}
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div
+      className="
+        grid
+        grid-cols-1
+        sm:grid-cols-2
+        xl:grid-cols-3
+        gap-5
+      "
+    >
 
       {/* STATE */}
 {/* STATE (SEARCHABLE) */}
@@ -764,7 +772,15 @@ const data = filteredChecklists.map(c => ({
 <div className="space-y-1 relative" ref={actRef}>
   <Label>Act</Label>
 
-  <div className="flex gap-2 items-start">
+  <div
+    className="
+      flex
+      flex-col
+      gap-3
+      sm:flex-row
+      sm:items-start
+    "
+  >
 
     {/* DROPDOWN */}
     <div className="relative w-full">
@@ -819,7 +835,14 @@ const data = filteredChecklists.map(c => ({
     <Button
       type="button"
       onClick={() => setShowActModal(true)}
-      className="h-11 px-4 whitespace-nowrap shrink-0"
+      className="
+        h-11
+        w-full
+        sm:w-auto
+        px-4
+        whitespace-nowrap
+        shrink-0
+        "
     >
       + Add
     </Button>
@@ -948,7 +971,20 @@ const data = filteredChecklists.map(c => ({
       }
     }}
     placeholder="Enter checklist point..."
-    className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:ring-2 focus:ring-blue-100 outline-none"
+    className="
+      w-full
+      min-h-[120px]
+      resize-y
+      rounded-lg
+      border
+      border-gray-200
+      px-4
+      py-3
+      text-sm
+      focus:ring-2
+      focus:ring-blue-100
+      outline-none
+      "
   />
 
   {/* CHECKLIST LIST */}
@@ -1003,11 +1039,21 @@ const data = filteredChecklists.map(c => ({
 )}
 
     {/* ACTIONS */}
-    <div className="flex justify-end gap-3 border-t pt-5">
+    <div
+      className="
+        flex
+        flex-col-reverse
+        gap-3
+        border-t
+        pt-5
+        sm:flex-row
+        sm:justify-end
+      "
+    >
     <Button
       type="button"
       variant="outline"
-      className="h-10"
+      className="h-10 w-full sm:w-auto"
       onClick={() => {
           setFormData({
             state: "",
@@ -1026,7 +1072,10 @@ const data = filteredChecklists.map(c => ({
         Reset
       </Button>
 
-      <Button type="submit">
+      <Button
+          type="submit"
+          className="w-full sm:w-auto"
+      >
         {isEditMode
           ? "Update Checklist"
           : "Save Checklist"}
@@ -1039,7 +1088,17 @@ const data = filteredChecklists.map(c => ({
     {/* ADD ACT MODAL */}
     {showActModal && (
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-xl w-96 space-y-4">
+        <div
+          className="
+          mx-4
+          w-full
+          max-w-md
+          rounded-xl
+          bg-white
+          p-6
+          space-y-4
+          "
+      >
 
           <h2 className="text-lg font-semibold">Add Act</h2>
 
@@ -1051,7 +1110,8 @@ const data = filteredChecklists.map(c => ({
           />
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowActModal(false)}>
+            <Button
+            className="w-full sm:w-auto" variant="outline" onClick={() => setShowActModal(false)}>
               Cancel
             </Button>
             <Button onClick={handleCreateAct}>
@@ -1067,24 +1127,65 @@ const data = filteredChecklists.map(c => ({
 <ComponentCard title="Audit Checklist Master" className="mt-8">
 
   {/* 🔹 HEADER / FILTER BAR */}
-  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+  <div
+    className="
+      mb-5
+      flex
+      flex-col
+      gap-4
+      xl:flex-row
+      xl:items-center
+      xl:justify-between
+    "
+  >
 
     {/* SEARCH */}
     <input
       placeholder="Search checklist..."
       value={search}
       onChange={(e) => setSearch(e.target.value)}
-      className="h-10 w-full md:w-72 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+      className="
+      h-10
+      w-full
+      rounded-lg
+      border
+      border-gray-200
+      px-4
+      text-sm
+      transition
+      focus:outline-none
+      focus:ring-2
+      focus:ring-blue-100
+      sm:w-80
+      xl:w-72
+      "
     />
 
     {/* FILTERS + ACTIONS */}
-    <div className="flex flex-wrap items-center gap-2">
+    <div
+      className="
+        flex
+        w-full
+        flex-wrap
+        gap-2
+        xl:w-auto
+      "
+    >
 
   {/* ✅ STATE FILTER (ADD HERE) */}
   <select
     value={stateFilter}
     onChange={(e) => setStateFilter(e.target.value)}
-    className="h-10 rounded-lg border border-gray-200 px-3 text-sm"
+    className="
+    h-10
+    w-full
+    rounded-lg
+    border
+    border-gray-200
+    px-3
+    text-sm
+    sm:w-56
+    "
   >
     <option value="">All States</option>
     {[...states]
@@ -1104,8 +1205,9 @@ const data = filteredChecklists.map(c => ({
 
   {/* EXISTING BUTTONS */}
   <Button
-    variant="outline"
-    size="sm"
+      variant="outline"
+      size="sm"
+      className="w-full sm:w-auto"
     onClick={exportExcel}
     disabled={!filteredChecklists.length}
   >
@@ -1115,6 +1217,7 @@ const data = filteredChecklists.map(c => ({
   <Button
     variant="outline"
     size="sm"
+    className="w-full sm:w-auto"
     onClick={deleteSelected}
     disabled={!selectedIds.length}
   >
@@ -1124,6 +1227,7 @@ const data = filteredChecklists.map(c => ({
   <Button
     variant="outline"
     size="sm"
+    className="w-full sm:w-auto"
     onClick={exportPDF}
     disabled={!filteredChecklists.length}
   >
@@ -1230,7 +1334,9 @@ const data = filteredChecklists.map(c => ({
 
       {/* ✅ GROUPED GUIDELINES */}
       <td className="px-5 py-4 w-[700px] min-w-[700px] max-w-[700px]">
-      <div className="whitespace-pre-line">
+      <div
+          className="whitespace-pre-line break-words"
+      >
         {Array.isArray(c.auditor_guide) ? (
           c.auditor_guide.map((point, i) => (
             <div key={i}>
