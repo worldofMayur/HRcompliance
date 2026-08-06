@@ -103,10 +103,10 @@ export default function SignInForm() {
   return (
     <div className="flex flex-col flex-1">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-<div className="rounded-2xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(15,23,42,0.08)] p-6 md:p-8">
+<div className="rounded-2xl border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_10px_40px_rgba(15,23,42,0.08)] p-5 sm:p-6 md:p-8">
         <div>
           <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 text-[32px] font-semibold tracking-tight text-gray-900 dark:text-white">
+            <h1 className="mb-2 text-3xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-white">
               Sign In
             </h1>
             <p className="text-sm leading-6 text-slate-500 dark:text-gray-400">
@@ -115,7 +115,7 @@ export default function SignInForm() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
                 <Label>Email *</Label>
                 <Input
@@ -137,7 +137,7 @@ export default function SignInForm() {
                   outline-none
                   "
                   type="email"
-                  placeholder="info@gmail.com"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -171,27 +171,37 @@ export default function SignInForm() {
                   />
                   <span
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
+                    className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors duration-200 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setShowPassword(!showPassword);
+                      }
+                    }}
                   >
                     {showPassword ? <EyeIcon /> : <EyeCloseIcon />}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-2 sm:flex-nowrap sm:justify-between">
                 <Checkbox checked={isChecked} onChange={setIsChecked} />
-                <span className="text-sm text-slate-500">
+                <span className="text-sm leading-5 text-slate-500">
                   Keep me logged in
                 </span>
               </div>
 
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 break-words">
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              <Button className="w-full rounded-2xl bg-[#2563EB] hover:bg-[#1D4ED8] shadow-lg hover:shadow-xl hover:-translate-y-[1px] transition-all duration-200" size="sm" type="submit" disabled={loading}>
+              <Button
+              className="w-full min-h-[48px] rounded-2xl bg-[#2563EB] hover:bg-[#1D4ED8] shadow-lg hover:shadow-xl hover:-translate-y-[1px] transition-all duration-200" size="sm" type="submit" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
             </div>
