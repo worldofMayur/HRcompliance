@@ -1085,10 +1085,26 @@ finally {
       {/* ================= TABLE ================= */}
       <div className="mt-10">
         <ComponentCard title="Principal Employers">
-<div className="mb-5 flex justify-between items-center">
+  <div
+    className="
+      mb-5
+      flex
+      flex-col
+      gap-4
+      xl:flex-row
+      xl:items-center
+      xl:justify-between
+    "
+  >
   
   {/* LEFT SIDE (UNCHANGED) */}
-  <div className="flex gap-2">
+  <div
+    className="
+      flex
+      flex-wrap
+      gap-2
+    "
+  >
     <Button size="sm" onClick={handleExport}>Export to Excel</Button>
     <Button size="sm" variant="outline" disabled={!selectedRows.length} onClick={handleBulkDelete}>
       Delete Selected
@@ -1099,20 +1115,48 @@ finally {
   </div>
 
   {/* RIGHT SIDE (NEW - NON BREAKING) */}
-  <div className="flex gap-3 items-center">
+  <div
+    className="
+      flex
+      w-full
+      flex-col
+      gap-3
+      sm:flex-row
+      xl:w-auto
+    "
+  >
 
     {/* SEARCH */}
     <input
       type="text"
       placeholder="Search PE..."
-      className="h-9 px-3 border border-gray-300 rounded-lg text-sm w-52"
+      className="
+      h-10
+      w-full
+      rounded-lg
+      border
+      border-gray-300
+      px-3
+      text-sm
+      sm:flex-1
+      xl:w-60
+      "
       value={search}
       onChange={(e) => setSearch(e.target.value)}
     />
 
     {/* RULE FILTER */}
     <select
-      className="h-9 px-3 border border-gray-300 rounded-lg text-sm"
+      className="
+      h-10
+      w-full
+      rounded-lg
+      border
+      border-gray-300
+      px-3
+      text-sm
+      sm:w-44
+      "
       value={ruleFilter}
       onChange={(e) => setRuleFilter(e.target.value)}
     >
