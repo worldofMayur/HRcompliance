@@ -164,11 +164,38 @@ export default function ManageCCEmails() {
   }
 
   return (
-    <div className="space-y-6 w-full px-8 py-6">
+    <div
+      className="
+        w-full
+        space-y-6
+        px-4
+        py-4
+        sm:px-6
+        sm:py-5
+        lg:px-8
+        lg:py-6
+      "
+    >
       {/* HEADER */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div
+        className="
+          flex
+          flex-col
+          gap-4
+          lg:flex-row
+          lg:items-center
+          lg:justify-between
+        "
+      >
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1
+            className="
+              text-xl
+              font-semibold
+              text-gray-900
+              sm:text-2xl
+            "
+          >
             Manage CC Emails
           </h1>
 
@@ -180,7 +207,11 @@ export default function ManageCCEmails() {
         <Button
           variant={editMode ? "primary" : "outline"}
           onClick={() => setEditMode(!editMode)}
-          className="min-w-[110px]"
+          className="
+          w-full
+          sm:w-auto
+          sm:min-w-[110px]
+          "
         >
           {editMode ? "Cancel" : "Edit"}
         </Button>
@@ -189,7 +220,23 @@ export default function ManageCCEmails() {
       {/* MAIN CARD */}
       <ComponentCard title="CC Email Configuration">
         {/* TOP INFO */}
-        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 mb-6">
+        <div
+          className="
+            mb-6
+            flex
+            flex-col
+            gap-3
+            rounded-xl
+            border
+            border-gray-200
+            bg-gray-50
+            px-4
+            py-3
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+          "
+        >
           <div>
             <p className="text-sm font-medium text-gray-800">
               Notification Emails
@@ -212,7 +259,14 @@ export default function ManageCCEmails() {
         </div>
 
         {/* INPUTS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div
+          className="
+            grid
+            grid-cols-1
+            lg:grid-cols-2
+            gap-6
+          "
+        >
           {[0, 1].map((i) => (
             <div key={i}>
               <Label>Email {i + 1}</Label>
@@ -244,11 +298,26 @@ export default function ManageCCEmails() {
 
         {/* SAVE BUTTON */}
         {editMode && (
-          <div className="mt-6 flex justify-end border-t border-gray-100 pt-5">
+          <div
+            className="
+              mt-6
+              flex
+              flex-col
+              border-t
+              border-gray-100
+              pt-5
+              sm:flex-row
+              sm:justify-end
+            "
+          >
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="min-w-[140px]"
+              className="
+              w-full
+              sm:w-auto
+              sm:min-w-[140px]
+              "
             >
               {saving ? "Saving..." : "Save Changes"}
             </Button>
@@ -258,7 +327,17 @@ export default function ManageCCEmails() {
         {/* SAVED EMAILS */}
         {savedEmails.length > 0 && (
           <div className="mt-6 border-t border-gray-100 pt-5">
-            <div className="flex items-center justify-between mb-3">
+            <div
+                className="
+                  mb-3
+                  flex
+                  flex-col
+                  gap-2
+                  sm:flex-row
+                  sm:items-center
+                  sm:justify-between
+                "
+              >
               <p className="text-sm font-medium text-gray-700">
                 Active Recipients
               </p>
@@ -268,22 +347,34 @@ export default function ManageCCEmails() {
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div
+              className="
+                flex
+                flex-wrap
+                gap-3
+              "
+            >
               {savedEmails.map((email, i) => (
                 <div
                   key={i}
                   className="
-                    flex items-center gap-2
-                    px-3 py-1.5
-                    bg-gray-100
-                    hover:bg-gray-200
-                    transition-colors
-                    rounded-full
-                    text-sm
-                    text-gray-700
+                  flex
+                  max-w-full
+                  items-center
+                  gap-2
+                  rounded-full
+                  bg-gray-100
+                  px-3
+                  py-2
+                  text-sm
+                  text-gray-700
+                  transition-colors
+                  hover:bg-gray-200
                   "
                 >
-                  <span>{email}</span>
+                  <span className="break-all">
+                    {email}
+                  </span>
 
                   {editMode && (
                     <button
