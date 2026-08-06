@@ -417,17 +417,48 @@ const handleChange = (field, value) => {
       <ComponentCard title="Vendor Mapping Overview">
 
         {/* ✅ TOP BAR (RESTORED) */}
-        <div className="mb-4 flex items-center gap-4">
+        <div
+          className="
+            mb-4
+            flex
+            flex-col
+            gap-3
+            lg:flex-row
+            lg:items-center
+          "
+        >
           <input
             type="text"
             placeholder="Search vendors..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-64 px-4 py-2 border rounded-lg text-sm"
+            className="
+            w-full
+            lg:w-72
+            px-4
+            py-2
+            border
+            rounded-lg
+            text-sm
+            "
           />
 
-          <div className="ml-auto flex gap-2">
-            <button onClick={exportToExcel} className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg">
+          <div
+className="
+flex
+w-full
+flex-col
+gap-2
+sm:flex-row
+lg:ml-auto
+lg:w-auto
+"
+>
+            <button onClick={exportToExcel} className="
+              w-full
+              sm:w-auto
+              px-4
+              py-2 text-sm bg-green-600 text-white rounded-lg">
               Export Excel
             </button>
 
@@ -447,7 +478,11 @@ const handleChange = (field, value) => {
                 setDateFrom("");
                 setDateTo("");
               }}
-              className="px-4 py-2 text-sm bg-gray-100 rounded-lg"
+              className="
+              w-full
+              sm:w-auto
+              px-4
+              py-2 text-sm bg-gray-100 rounded-lg"
             >
               Reset
             </button>
@@ -455,8 +490,21 @@ const handleChange = (field, value) => {
         </div>
 
         {/* ✅ TABLE */}
-        <div className="overflow-x-auto border rounded-xl">
-          <table className="min-w-[1300px] w-full text-sm">
+        <div
+className="
+overflow-x-auto
+rounded-xl
+border
+shadow-sm
+"
+>
+          <table
+className="
+min-w-[1400px]
+w-full
+text-sm
+"
+>
 
       <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
@@ -609,7 +657,7 @@ className={`border-t hover:bg-gray-50 transition ${
   open={open}
   onCancel={handleCancel}
   footer={null}
-  width={750}
+  width={900}
   centered
   style={{ borderRadius: "16px" }}
   bodyStyle={{
@@ -675,7 +723,15 @@ className={`border-t hover:bg-gray-50 transition ${
 </div>
 
     {/* 🔹 AUDIT */}
-    <div className="grid grid-cols-3 gap-3">
+    <div
+className="
+grid
+grid-cols-1
+gap-3
+md:grid-cols-2
+xl:grid-cols-3
+"
+>
 
     <select
   value={editData.audit_rule || ""}
@@ -766,11 +822,18 @@ className={`border-t hover:bg-gray-50 transition ${
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div
+        className="
+        flex
+        flex-col
+        gap-2
+        sm:flex-row
+        "
+        >
         <select
           value={selectedDoc}
           onChange={(e) => setSelectedDoc(e.target.value)}
-          className="flex-1 h-10 border border-gray-200 rounded-lg px-3 text-sm 
+          className="w-full sm:flex-1 h-10 border border-gray-200 rounded-lg px-3 text-sm 
           focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
         >
           <option value="">Add Document</option>
@@ -800,7 +863,18 @@ className={`border-t hover:bg-gray-50 transition ${
               setSelectedDoc("");
             }
           }}
-          className="px-4 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition"
+          className="
+          w-full
+          sm:w-auto
+          px-4
+          bg-blue-600
+          text-white
+          rounded-lg
+          shadow-sm
+          hover:bg-blue-700
+          transition
+          "
+          
         >
           +
         </button>
@@ -808,17 +882,49 @@ className={`border-t hover:bg-gray-50 transition ${
     </div>
 
     {/* 🔹 FOOTER */}
-    <div className="flex justify-between items-center pt-3 border-t">
+    <div
+className="
+flex
+flex-col
+gap-4
+pt-3
+border-t
+lg:flex-row
+lg:items-center
+lg:justify-between
+"
+>
 
       <DatePicker
         selected={effectiveDate}
         dateFormat="dd/MM/yyyy"
         onChange={(date) => setEffectiveDate(date)}
-        className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
-        focus:ring-2 focus:ring-blue-500 outline-none"
+        className="
+        w-full
+        lg:w-64
+        h-10
+        border
+        border-gray-200
+        rounded-lg
+        px-3
+        text-sm
+        focus:ring-2
+        focus:ring-blue-500
+        outline-none
+        "
       />
 
-      <div className="flex gap-2">
+      <div
+className="
+flex
+w-full
+flex-col
+gap-2
+sm:flex-row
+sm:justify-end
+lg:w-auto
+"
+>
         <button
           onClick={handleCancel}
           className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
