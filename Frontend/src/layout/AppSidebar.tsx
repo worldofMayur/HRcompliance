@@ -13,12 +13,13 @@ import {
 import { useSidebar } from "../context/SidebarContext";
 
 const AppSidebar: React.FC = () => {
-  const {
-    isExpanded,
-    isMobileOpen,
-    isHovered,
-    setIsHovered,
-  } = useSidebar();
+const {
+  isExpanded,
+  isMobileOpen,
+  isHovered,
+  setIsHovered,
+  toggleMobileSidebar,
+} = useSidebar();
 
   const location = useLocation();
   const role = localStorage.getItem("role");
@@ -33,14 +34,18 @@ const AppSidebar: React.FC = () => {
     loadingBarRef.current?.complete();
   }, [location.pathname]);
 
-  const handleNavigation = (path: string) => {
-    // Already on this page → don't show loading
-    if (isActive(path)) {
-      return;
-    }
+const handleNavigation = (path: string) => {
+  if (isActive(path)) {
+    return;
+  }
 
-    loadingBarRef.current?.continuousStart(30);
-  };
+  loadingBarRef.current?.continuousStart(30);
+
+  // Close mobile sidebar after selecting a menu
+  if (window.innerWidth < 1024 && isMobileOpen) {
+    toggleMobileSidebar();
+  }
+};
 
   const menuClass = (path: string) =>
     `menu-item group relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-3 transition-all duration-200
@@ -65,10 +70,10 @@ const AppSidebar: React.FC = () => {
 
       <aside
         className={`
-          fixed top-0 left-0 z-50 mt-16 h-screen overflow-hidden
+          fixed top-0 left-0 z-50 mt-16 h-screen overflow-y-auto overflow-x-hidden
           border-r border-gray-200/60 bg-white/90 px-4
           shadow-[4px_0_24px_rgba(15,23,42,0.04)]
-          backdrop-blur-xl transition-all duration-300 ease-out
+          backdrop-blur-xl transform-gpu transition-transform duration-300 ease-out
           dark:border-gray-800 dark:bg-gray-900/95
           lg:mt-0
 
@@ -102,7 +107,7 @@ const AppSidebar: React.FC = () => {
                 width: isExpanded || isHovered || isMobileOpen ? "120px" : "42px",
                 marginBottom: "12px",
                 marginTop: "12px",
-                transition: "width 0.25s ease",
+                transition: "all 0.25s ease",
               }}
             />
 
