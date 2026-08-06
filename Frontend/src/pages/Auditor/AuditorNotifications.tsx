@@ -358,7 +358,17 @@ const fetchNotifications = async (
 
       {/* PAGE TOP BAR */}
 
-<div className="mb-4 flex items-center justify-between">
+<div
+  className="
+    mb-5
+    flex
+    flex-col
+    gap-4
+    lg:flex-row
+    lg:items-center
+    lg:justify-between
+  "
+>
 
   {/* LEFT */}
   <div>
@@ -373,7 +383,18 @@ const fetchNotifications = async (
   </div>
 
   {/* RIGHT */}
-  <div className="flex flex-col items-end">
+ <div
+  className="
+    flex
+    w-full
+    flex-row
+    items-center
+    justify-between
+    lg:w-auto
+    lg:flex-col
+    lg:items-end
+  "
+>
 
     {refreshing ? (
 
@@ -433,18 +454,22 @@ const fetchNotifications = async (
       rounded-2xl
       border border-blue-100
       bg-white
-      px-4 py-3
+      px-3 py-3
+      sm:px-4
       shadow-sm
     "
   >
 
-    <div
-      className="
-        flex items-center
-        justify-between
-        gap-4
-      "
-    >
+<div
+className="
+flex
+flex-col
+gap-4
+lg:flex-row
+lg:items-center
+lg:justify-between
+"
+>
 
       {/* LEFT */}
 
@@ -494,7 +519,17 @@ const fetchNotifications = async (
 
       {/* RIGHT */}
 
-      <div className="flex items-center gap-2">
+      <div
+className="
+flex
+w-full
+flex-col
+gap-2
+sm:flex-row
+sm:justify-end
+lg:w-auto
+"
+>
 
         <div
           className="
@@ -540,7 +575,16 @@ const fetchNotifications = async (
 
       <div className="mb-4 rounded-2xl border border-gray-200 bg-gradient-to-b from-white to-gray-50/50 px-4 py-3 shadow-sm">
 
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div
+          className="
+          flex
+          flex-col
+          gap-4
+          2xl:flex-row
+          2xl:items-center
+          2xl:justify-between
+          "
+          >
 
           {/* LEFT */}
 
@@ -548,7 +592,7 @@ const fetchNotifications = async (
 
             {/* SEARCH */}
 
-            <div className="relative w-full lg:w-80">
+            <div className="relative w-full xl:w-80">
 
               <input
                 type="text"
@@ -792,12 +836,15 @@ const fetchNotifications = async (
 {/* HEADER */}
 
 <div
-  className="
-    flex flex-wrap items-center
-    gap-3
-    border-b border-gray-100
-    pb-3
-  "
+className="
+flex
+flex-col
+gap-3
+border-b
+pb-3
+lg:flex-row
+lg:items-center
+"
 >
 
   {/* TITLE */}
@@ -885,7 +932,18 @@ n.data?.status === "CC_ISSUED"
   </div>
 
   {/* ACTIONS */}
-  <div className="ml-auto flex items-center gap-2">
+<div
+className="
+flex
+w-full
+flex-col
+gap-2
+sm:flex-row
+sm:justify-end
+lg:ml-auto
+lg:w-auto
+"
+>
 
     {!n.is_read && (
 
@@ -985,7 +1043,9 @@ n.data?.status === "CC_ISSUED"
                           "
                         >
 
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
+                          <div className="grid grid-cols-1
+                            sm:grid-cols-2
+                            xl:grid-cols-3 gap-y-2 gap-x-4">
 
                             <div>
                               <span className="font-semibold text-gray-700">
