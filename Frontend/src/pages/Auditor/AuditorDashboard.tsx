@@ -1323,22 +1323,67 @@ const canFreezeReport =
   /* ================= UI ================= */
 
   return (
-<div className="space-y-6 w-full px-8 max-w-[1600px] mx-auto pb-28">
+      <div
+        className="
+          mx-auto
+          w-full
+          max-w-[1600px]
+          space-y-6
+          px-4
+          sm:px-6
+          lg:px-8
+          pb-28
+        "
+      >
           <h1 className="text-2xl font-semibold">Auditor Panel</h1>
 
       {/* FILTER + BUTTON */}
-<div className="bg-white p-6 rounded-xl border flex flex-row gap-4 w-full max-w-[1600px] mx-auto">   
-<div className="flex flex-wrap items-start gap-6">
+<div
+  className="
+    mx-auto
+    flex
+    w-full
+    max-w-[1600px]
+    flex-col
+    gap-5
+    rounded-xl
+    border
+    bg-white
+    p-4
+    sm:p-6
+    xl:flex-row
+    xl:items-end
+    xl:justify-between
+  "
+>
+<div
+  className="
+    grid
+    w-full
+    grid-cols-1
+    gap-4
+    sm:grid-cols-2
+    xl:grid-cols-5
+  "
+>
 
   {/* PE */}
-  <div className="flex flex-col min-w-[180px]">
+  <div className="flex w-full flex-col">
     <select
       value={selectedPE}
       onChange={(e) => {
         setSelectedPE(e.target.value);
         loadVendors(e.target.value);
       }}
-      className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
+      className="
+w-full
+h-11
+rounded-lg
+border
+border-gray-200
+px-3
+text-sm
+"
     >
       <option value="">Select PE</option>
       {[...peList]
@@ -1364,7 +1409,7 @@ const canFreezeReport =
   </div>
 
   {/* Vendor */}
-  <div className="flex flex-col min-w-[180px]">
+  <div className="flex w-full flex-col">
     <select
       value={selectedVendor}
       onChange={(e) => {
@@ -1373,7 +1418,15 @@ const canFreezeReport =
 
         loadStates(selectedPE, vendorId);
       }}
-      className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
+      className="
+w-full
+h-11
+rounded-lg
+border
+border-gray-200
+px-3
+text-sm
+"
     >
       <option value="">Select Vendor</option>
       {[...vendorList]
@@ -1399,14 +1452,22 @@ const canFreezeReport =
   </div>
 
   {/* State */}
-  <div className="flex flex-col min-w-[180px]">
+  <div className="flex w-full flex-col">
     <select
       value={selectedState}
       onChange={(e) => {
         setSelectedState(e.target.value);
         loadBranches(selectedPE, selectedVendor, e.target.value);
       }}
-      className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
+      className="
+w-full
+h-11
+rounded-lg
+border
+border-gray-200
+px-3
+text-sm
+"
     >
       <option value="">Select State</option>
       {[...stateList]
@@ -1433,7 +1494,7 @@ const canFreezeReport =
 
   {/* Branch */}
  {/* Branch */}
-<div className="flex flex-col min-w-[180px]">
+<div className="flex w-full flex-col">
   <select
     value={selectedBranch}
     onChange={(e) => {
@@ -1450,7 +1511,15 @@ const canFreezeReport =
         loadFrozenPeriods(selectedVendor, branchId);
       }
     }}
-    className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
+    className="
+w-full
+h-11
+rounded-lg
+border
+border-gray-200
+px-3
+text-sm
+"
   >
     <option value="">Select Branch</option>
     {[...branches]
@@ -1476,11 +1545,19 @@ const canFreezeReport =
 </div>
 
   {/* Audit Period */}
-  <div className="flex flex-col min-w-[180px]">
+  <div className="flex w-full flex-col">
     <select
       value={auditPeriod}
       onChange={(e) => setAuditPeriod(e.target.value)}
-      className="h-11 rounded-lg border border-gray-200 px-3 text-sm"
+      className="
+w-full
+h-11
+rounded-lg
+border
+border-gray-200
+px-3
+text-sm
+"
     >
       <option value="">Select Compliance Period</option>
 
@@ -1501,11 +1578,24 @@ const canFreezeReport =
 </div>
 
         {/* BUTTON */}
-        <div className="flex justify-end">
+        <div
+          className="
+          flex
+          w-full
+          justify-stretch
+          xl:w-auto
+          xl:justify-end
+          "
+          >
           <Button
             type="primary"
             onClick={handleShowAuditor}
-            className="h-10 px-6"
+            className="
+              h-11
+              w-full
+              px-6
+              xl:w-auto
+              "
           >
             Open Auditor Form
           </Button>
@@ -1517,16 +1607,18 @@ const canFreezeReport =
 <Modal
   open={isModalOpen}
   footer={null}
-  width={1800}
+  width="95%"
   closable={false}
-  styles={{
-    body: {
-      height: "88vh",
-      overflow: "hidden",
-      padding: 0
-    }
-  }}
-  style={{ top: 20 }}
+styles={{
+  body: {
+    height: "88vh",
+    overflow: "hidden",
+    padding: 0,
+  },
+}}
+  style={{
+  top: window.innerWidth < 768 ? 8 : 20,
+}}
   title={
     <div className="flex justify-between items-center">
       <div className="flex flex-col">
@@ -1570,8 +1662,29 @@ const canFreezeReport =
   <div className="h-full flex flex-col bg-gray-50/40">
 
 {/* 1. METADATA BAR */}
-<div className="shrink-0 bg-white border-b px-5 py-3">
-  <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
+<div
+  className="
+    shrink-0
+    border-b
+    bg-white
+    px-3
+    py-3
+    sm:px-5
+  "
+>
+<div
+  className="
+    grid
+    grid-cols-2
+    gap-3
+    lg:flex
+    lg:flex-wrap
+    lg:items-center
+    lg:gap-x-8
+    lg:gap-y-2
+    text-sm
+  "
+>
     
     {/* PE */}
     <div>
@@ -1622,12 +1735,33 @@ const canFreezeReport =
     </span>
 
     {/* Buttons on the right */}
-    <div className="ml-auto flex items-center gap-3">
+  <div
+  className="
+    col-span-2
+    flex
+    w-full
+    flex-col
+    gap-2
+    pt-2
+    sm:flex-row
+    lg:ml-auto
+    lg:w-auto
+  "
+>
       <Button
         type="primary"
         icon={<DownloadOutlined />}
         onClick={downloadZip}
-        className="h-9 px-6 text-sm font-medium !bg-blue-600 hover:!bg-blue-700"
+        className="
+        w-full
+        sm:w-auto
+        h-10
+        px-6
+        text-sm
+        font-medium
+        !bg-blue-600
+        hover:!bg-blue-700
+        "
       >
         Download Audit Documents
       </Button>
@@ -1635,7 +1769,16 @@ const canFreezeReport =
       <Button
         type="primary"
         onClick={() => setComplianceModalOpen(true)}
-        className="h-9 px-6 text-sm font-medium !bg-blue-600 hover:!bg-blue-700"
+        className="
+        w-full
+        sm:w-auto
+        h-10
+        px-6
+        text-sm
+        font-medium
+        !bg-blue-600
+        hover:!bg-blue-700
+        "
       >
         View Compliance Summary
       </Button>
@@ -1717,7 +1860,17 @@ const canFreezeReport =
               </div>
             </div>
           ) : (
-            <div className="h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div
+              className="
+                h-full
+                overflow-hidden
+                rounded-xl
+                border
+                border-gray-200
+                bg-white
+                shadow-sm
+              "
+            >
               <Table
                 rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
                 columns={columns}
@@ -1727,7 +1880,10 @@ const canFreezeReport =
                 bordered
                 size="small"
                 className="audit-table-highlighted"
-                scroll={{ y: "calc(88vh - 340px)", x: "max-content" }}
+                scroll={{
+  x: 1700,
+  y: "calc(88vh - 340px)",
+}}
               />
             </div>
           )}
@@ -1737,8 +1893,21 @@ const canFreezeReport =
 
     {/* 3. BOTTOM ACTION BAR */}
 {/* ========== 3. BOTTOM ACTION BAR ========== */}
-<div className="shrink-0 flex justify-end items-center gap-3 px-5 py-3 border-t bg-white">
-
+<div
+  className="
+    shrink-0
+    flex
+    flex-col
+    gap-3
+    border-t
+    bg-white
+    px-4
+    py-3
+    sm:flex-row
+    sm:items-center
+    sm:justify-end
+  "
+>
   {/* Upload Supporting Document - ONLY for Exceptional Approval */}
   {groupedChecklist.some(
     (row: any) => row.status === "Exceptional Approval - Delayed Complied"
@@ -1776,7 +1945,17 @@ const canFreezeReport =
   {hasDocuments && (
     <Button
       type="primary"
-      className={`h-9 px-6 text-sm font-medium ${canFreezeReport ? "!bg-green-600 hover:!bg-green-700" : "!bg-blue-600"}`}
+      className={`
+      w-full
+      sm:w-auto
+      h-10
+      px-6
+      text-sm
+      font-medium
+      ${canFreezeReport
+        ? "!bg-green-600 hover:!bg-green-700"
+        : "!bg-blue-600"}
+      `}
       loading={loading}
       disabled={isAuditLocked && !manualEditMode}
       onClick={handleSubmit}
@@ -1814,10 +1993,19 @@ const canFreezeReport =
     setIsEditingCompliance(false);
   }}
   footer={null}
-  width={1480}
+  width={window.innerWidth < 768 ? "98%" : 1480}
   centered
 >
-  <div className="max-h-[68vh] overflow-y-auto pr-2 space-y-5">
+  <div
+  className="
+    max-h-[75vh]
+    overflow-y-auto
+    overflow-x-hidden
+    space-y-5
+    pr-1
+    sm:pr-2
+  "
+>
     {payrollData.length === 0 ? (
       <div className="py-16 text-center text-gray-400">
         No payroll data available for this period
@@ -1826,15 +2014,40 @@ const canFreezeReport =
       payrollData.map((row: any, index: number) => (
         <div
           key={index}
-          className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
+          className="
+          bg-white
+          border
+          border-gray-100
+          rounded-2xl
+          p-4
+          sm:p-5
+          shadow-sm
+          "
         >
           {/* Month Title */}
-          <h3 className="text-base font-semibold text-gray-900 mb-4 pb-2.5 border-b border-gray-100">
+          <h3 className="
+            mb-5
+            border-b
+            border-gray-100
+            pb-3
+            text-lg
+            font-semibold
+            text-gray-900
+            ">
             {row.month}
           </h3>
 
           {/* Clean 8-column grid */}
-          <div className="grid grid-cols-8 gap-4">
+          <div
+            className="
+              grid
+              grid-cols-1
+              gap-4
+              sm:grid-cols-2
+              lg:grid-cols-4
+              2xl:grid-cols-8
+            "
+          >
             {/* Male Employees */}
             <div>
               <Label>Male Employees</Label>
@@ -1848,7 +2061,7 @@ const canFreezeReport =
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 text-sm"
+                className="h-11 rounded-xl text-sm"
               />
             </div>
 
@@ -1865,7 +2078,7 @@ const canFreezeReport =
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 text-sm"
+                className="h-11 rounded-xl text-sm"
               />
             </div>
 
@@ -1882,7 +2095,7 @@ const canFreezeReport =
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 text-sm"
+                className="h-11 rounded-xl text-sm"
               />
             </div>
 
@@ -1899,7 +2112,7 @@ const canFreezeReport =
                     e.target.value === "" ? undefined : Number(e.target.value);
                   setPayrollData(updated);
                 }}
-                className="h-10 text-sm"
+                className="h-11 rounded-xl text-sm"
               />
             </div>
 
@@ -1922,7 +2135,18 @@ const canFreezeReport =
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+                className="
+w-full
+h-11
+rounded-xl
+border
+border-gray-300
+px-3
+text-sm
+focus:border-blue-500
+focus:ring-2
+focus:ring-blue-100
+"
               />
             </div>
 
@@ -1945,7 +2169,18 @@ const canFreezeReport =
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+                className="
+w-full
+h-11
+rounded-xl
+border
+border-gray-300
+px-3
+text-sm
+focus:border-blue-500
+focus:ring-2
+focus:ring-blue-100
+"
               />
             </div>
 
@@ -1968,7 +2203,18 @@ const canFreezeReport =
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+                className="
+w-full
+h-11
+rounded-xl
+border
+border-gray-300
+px-3
+text-sm
+focus:border-blue-500
+focus:ring-2
+focus:ring-blue-100
+"
               />
               <Checkbox
                 className="mt-2"
@@ -2006,7 +2252,18 @@ const canFreezeReport =
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"
-                className="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm"
+                className="
+w-full
+h-11
+rounded-xl
+border
+border-gray-300
+px-3
+text-sm
+focus:border-blue-500
+focus:ring-2
+focus:ring-blue-100
+"
               />
               <Checkbox
                 className="mt-2"
