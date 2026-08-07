@@ -36,7 +36,7 @@ export default function CompliancePieChart({ data }: Props) {
           dataKey="value"
           nameKey="name"
           cx="50%"
-          cy="35%"                 // ← moved up because of Legend
+          cy="42%"
           innerRadius={70}
           outerRadius={105}
           paddingAngle={4}
@@ -90,10 +90,10 @@ export default function CompliancePieChart({ data }: Props) {
           }}
         />
 
-        {/* Center text – aligned with cy="42%" */}
+        {/* Center text */}
         <text
           x="50%"
-          y="39%"
+          y="42%"
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize={32}
@@ -105,7 +105,7 @@ export default function CompliancePieChart({ data }: Props) {
 
         <text
           x="50%"
-          y="48%"
+          y="51%"
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize={13}
