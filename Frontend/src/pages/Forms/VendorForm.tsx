@@ -630,10 +630,26 @@ const fetchVendors = async () => {
       {/* TABLE */}
       <div className="mt-10">
         <ComponentCard title="Vendors">
-<div className="mb-5 flex justify-between items-center">
+    <div
+      className="
+        mb-5
+        flex
+        flex-col
+        gap-4
+        xl:flex-row
+        xl:items-center
+        xl:justify-between
+      "
+    >
 
   {/* LEFT SIDE (UNCHANGED) */}
-  <div className="flex gap-2">
+  <div
+    className="
+      flex
+      flex-wrap
+      gap-2
+    "
+  >
     <Button size="sm" onClick={handleExport}>Export to Excel</Button>
     <Button size="sm" variant="outline" disabled={!selectedRows.length} onClick={handleBulkDelete}>
       Delete Selected
@@ -648,17 +664,19 @@ const fetchVendors = async () => {
   type="text"
   placeholder="Search by vendor, email, contact..."
   className="
-    h-10
-    px-4
-    border
-    border-gray-300
-    rounded-xl
-    text-sm
-    w-72
-    focus:outline-none
-    focus:ring-2
-    focus:ring-indigo-500
-    transition
+      h-10
+      w-full
+      rounded-xl
+      border
+      border-gray-300
+      px-4
+      text-sm
+      transition
+      focus:outline-none
+      focus:ring-2
+      focus:ring-indigo-500
+      sm:w-80
+      xl:w-72
   "
   value={search}
   onChange={(e) => setSearch(e.target.value)}
@@ -667,7 +685,7 @@ const fetchVendors = async () => {
 </div>
 
           <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <Table className="w-full">
+            <Table className="min-w-[1500px] w-full">
               <TableHeader className="sticky top-0 z-10 bg-gray-50">
                 <TableRow className="bg-gray-50">
                   <TableCell isHeader className="w-12 px-6 py-4" />
@@ -746,7 +764,10 @@ const fetchVendors = async () => {
   </TableCell>
 
   <TableCell className="px-4 py-4 text-sm text-gray-700 w-[320px]">
-    <div className="line-clamp-2">
+    <div
+      className="line-clamp-2 break-words"
+      title={v.ho_address}
+    >
       {v.ho_address}
     </div>
   </TableCell>
@@ -763,7 +784,7 @@ const fetchVendors = async () => {
     {v.nature_of_services}
   </TableCell>
 
-  <TableCell className="px-4 py-4 text-sm align-top min-w-[180px]">
+  <TableCell className="px-4 py-4 text-sm align-top min-w-[200px]">
     {v.documents?.length ? (
       <a
         href="#"

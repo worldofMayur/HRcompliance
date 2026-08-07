@@ -11,7 +11,7 @@ const AppHeader: React.FC = () => {
 
   // SIDEBAR TOGGLE
   const handleToggle = () => {
-    if (window.innerWidth >= 991) {
+    if (window.innerWidth >= 1024) {
       toggleSidebar();
     } else {
       toggleMobileSidebar();
@@ -79,63 +79,12 @@ const AppHeader: React.FC = () => {
       >
         {/* LEFT SECTION */}
         <div className="flex items-center gap-3">
-          {/* MOBILE LOGO */}
-          <Link
-            to="/"
-            className="
-              flex
-              items-center
-              gap-2
-              transition-transform
-              duration-300
-              hover:scale-[1.02]
-              lg:hidden
-            "
-          >
-            <div
-              className="
-                flex
-                h-9
-                w-9
-                items-center
-                justify-center
-                rounded-2xl
-                bg-gradient-to-br
-                from-brand-500
-                to-blue-600
-                text-white
-                shadow-lg
-              "
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M12 2L4 5V11C4 16.25 7.4 21.05 12 22C16.6 21.05 20 16.25 20 11V5L12 2Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-gray-800 dark:text-white">
-                HR Compliance
-              </span>
-              <span className="text-[11px] text-gray-400">
-                Portal
-              </span>
-            </div>
-          </Link>
-
-          {/* DESKTOP SIDEBAR TOGGLE */}
+          {/* Sidebar Toggle – always visible */}
           <button
             onClick={handleToggle}
+            aria-label="Toggle Sidebar"
             className="
-              hidden
-              lg:flex
+              flex
               h-10
               w-10
               items-center
@@ -187,6 +136,56 @@ const AppHeader: React.FC = () => {
               />
             </svg>
           </button>
+
+          {/* Logo – always visible */}
+          <Link
+            to="/"
+            className="
+              flex
+              items-center
+              gap-2
+              transition-transform
+              duration-300
+              hover:scale-[1.02]
+            "
+          >
+            <div
+              className="
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-2xl
+                bg-gradient-to-br
+                from-brand-500
+                to-blue-600
+                text-white
+                shadow-lg
+              "
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M12 2L4 5V11C4 16.25 7.4 21.05 12 22C16.6 21.05 20 16.25 20 11V5L12 2Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+
+            <div className="hidden sm:flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-gray-800 dark:text-white">
+                Vendor Compliance
+              </span>
+              <span className="text-[11px] text-gray-400">
+                Audit Platform
+              </span>
+            </div>
+          </Link>
         </div>
 
         {/* RIGHT SECTION */}

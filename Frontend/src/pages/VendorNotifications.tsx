@@ -371,12 +371,32 @@ const getRelativeTime = (date: string) => {
       <ComponentCard>
 
     {/* PAGE HEADER */}
-<div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-
+<div
+  className="
+    mb-6
+    flex
+    flex-col
+    gap-4
+    border-b
+    border-gray-100
+    pb-4
+    lg:flex-row
+    lg:items-center
+    lg:justify-between
+  "
+>
   {/* LEFT */}
   <div>
 
-    <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+    <h1
+      className="
+        text-xl
+        font-bold
+        tracking-tight
+        text-gray-900
+        sm:text-2xl
+      "
+    >
       Notifications Center
     </h1>
 
@@ -386,8 +406,14 @@ const getRelativeTime = (date: string) => {
   </div>
 
 {/* RIGHT */}
-<div className="flex flex-col items-end">
-
+<div
+  className="
+    flex
+    flex-col
+    items-start
+    lg:items-end
+  "
+>
   {refreshing ? (
 
     <div
@@ -433,16 +459,20 @@ const getRelativeTime = (date: string) => {
 
 {/* HEADER TOOLBAR */}
 <div
-  className="
-    sticky top-0 z-20
-    mb-5
-    rounded-2xl
-    border border-gray-200
-    bg-white/90
-    p-4
-    backdrop-blur-sm
-    shadow-sm
-  "
+className="
+sticky
+top-0
+z-20
+mb-5
+rounded-2xl
+border
+border-gray-200
+bg-white/90
+p-4
+backdrop-blur-sm
+shadow-sm
+overflow-x-hidden
+"
 >
 
   <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -451,7 +481,13 @@ const getRelativeTime = (date: string) => {
     <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center">
 
       {/* SEARCH */}
-      <div className="relative w-full lg:w-[320px]">
+      <div
+        className="
+        relative
+        w-full
+        xl:w-[340px]
+        "
+        >
 
         <input
           type="text"
@@ -462,7 +498,9 @@ const getRelativeTime = (date: string) => {
             w-full rounded-xl
             border border-gray-200
             bg-gray-50/80
-            py-2.5 pl-10 pr-4
+            h-11
+            pl-10
+            pr-4 pl-10 pr-4
             text-sm text-gray-700
             transition-all duration-200
             outline-none
@@ -496,7 +534,13 @@ const getRelativeTime = (date: string) => {
       </div>
 
       {/* FILTER PILLS */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div
+        className="
+        flex
+        flex-wrap
+        gap-2
+        "
+        >
 
         {[
           { key: "all", label: "All" },
@@ -533,10 +577,27 @@ const getRelativeTime = (date: string) => {
     </div>
 
     {/* RIGHT SIDE */}
-    <div className="flex flex-wrap items-center gap-3">
+    <div
+      className="
+      flex
+      w-full
+      flex-col
+      gap-3
+      sm:flex-row
+      sm:flex-wrap
+      sm:items-center
+      xl:w-auto
+      "
+      >
 
       {/* STATS */}
-      <div className="flex items-center gap-2">
+      <div
+        className="
+        flex
+        flex-wrap
+        gap-2
+        "
+        >
 
         <div
           className="
@@ -582,18 +643,23 @@ const getRelativeTime = (date: string) => {
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
           className="
-            rounded-xl
-            border border-gray-200
-            bg-white
-            px-3 py-2
-            pr-8
-            text-xs font-medium
-            text-gray-700
-            outline-none
-            transition
-            focus:border-blue-300
-            focus:ring-2
-            focus:ring-blue-100
+          h-11
+          w-full
+          rounded-xl
+          border
+          border-gray-200
+          bg-white
+          px-3
+          pr-8
+          text-sm
+          font-medium
+          text-gray-700
+          outline-none
+          transition
+          focus:border-blue-300
+          focus:ring-2
+          focus:ring-blue-100
+          sm:w-auto
           "
         >
           <option value="latest">Latest</option>
@@ -607,14 +673,19 @@ const getRelativeTime = (date: string) => {
         <button
           onClick={markAllAsRead}
           className="
-            rounded-xl
-            bg-blue-600
-            px-4 py-2
-            text-xs font-semibold
-            text-white
-            transition-all duration-200
-            hover:bg-blue-700
-            hover:shadow-md
+          h-11
+          w-full
+          rounded-xl
+          bg-blue-600
+          px-5
+          text-sm
+          font-semibold
+          text-white
+          transition-all
+          duration-200
+          hover:bg-blue-700
+          hover:shadow-md
+          sm:w-auto
           "
         >
           Mark all read
@@ -734,8 +805,19 @@ const getRelativeTime = (date: string) => {
                     });
                   }
                 }}
-                className={`
-                  relative rounded-lg border border-l-4
+                  className={`
+                  relative
+                  rounded-xl
+                  border
+                  border-l-4
+                  p-4
+                  cursor-pointer
+                  transition-all
+                  duration-200
+                  hover:-translate-y-[1px]
+                  hover:border-blue-300
+                  hover:bg-blue-50/40
+                  hover:shadow-md border border-l-4
                   px-4 py-3
                   cursor-pointer
                   transition-all duration-200
@@ -749,7 +831,16 @@ const getRelativeTime = (date: string) => {
                   }
                 `}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div
+                  className="
+                  flex
+                  flex-col
+                  gap-4
+                  lg:flex-row
+                  lg:items-start
+                  lg:justify-between
+                  "
+                  >
 
                   {/* LEFT */}
                   <div className="flex-1 min-w-0">
@@ -761,7 +852,14 @@ const getRelativeTime = (date: string) => {
                         <div className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
                       )}
 
-                      <h3 className="text-sm font-semibold text-gray-800 truncate">
+                      <h3
+                        className="
+                        text-sm
+                        font-semibold
+                        text-gray-800
+                        break-words
+                        "
+                        >
                         {n.title}
                       </h3>
                     </div>
@@ -803,7 +901,7 @@ const getRelativeTime = (date: string) => {
                     {/* WORKFLOW STATUS */}
                     {d.workflow_status && (
                       <div className="mt-2">
-                        <span className="rounded-md bg-indigo-100 px-2 py-1 text-[10px] font-medium text-indigo-700">
+                        <span className="rounded-md bg-indigo-100 px-3 py-1.5 text-[10px] font-medium text-indigo-700">
                           {d.workflow_status}
                         </span>
                       </div>
@@ -811,7 +909,14 @@ const getRelativeTime = (date: string) => {
 
                     {/* ISSUE TAGS */}
                     {filteredEntries.length > 0 ? (
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div
+                        className="
+                        mt-2
+                        flex
+                        flex-wrap
+                        gap-3
+                        "
+                        >
 
                         {filteredEntries.slice(0, 2).map((e: any, i: number) => (
                           <div
@@ -855,7 +960,18 @@ const getRelativeTime = (date: string) => {
                   </div>
 
                   {/* RIGHT */}
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <div
+                    className="
+                    flex
+                    flex-row
+                    flex-wrap
+                    items-center
+                    gap-2
+                    lg:flex-col
+                    lg:items-end
+                    lg:flex-shrink-0
+                    "
+                    >
 
                     {d.status === "CC_ISSUED" &&
                       d.pdf_download_url && (
@@ -878,6 +994,12 @@ const getRelativeTime = (date: string) => {
                         }}
 
                         className="
+                          h-9
+                          rounded-md
+                          px-3
+                          text-xs
+                          whitespace-nowrap
+                          transition
                           text-[10px]
                           px-2 py-1
                           rounded-md
@@ -899,6 +1021,12 @@ const getRelativeTime = (date: string) => {
                           markAsRead(n.id);
                         }}
                         className="
+                          h-9
+                          rounded-md
+                          px-3
+                          text-xs
+                          whitespace-nowrap
+                          transition
                           text-[10px]
                           px-2 py-1
                           rounded-md
@@ -911,7 +1039,11 @@ const getRelativeTime = (date: string) => {
                       </button>
                     )}
 
-                    <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                    <span className="
+                      text-[11px]
+                      text-gray-400
+                      whitespace-nowrap
+                      ">
                       {getRelativeTime(n.created_at)}
                     </span>
                   </div>

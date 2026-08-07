@@ -651,10 +651,26 @@ const handleEditSelected = () => {
 
         <ComponentCard title="Auditors">
 
-<div className="mb-5 flex justify-between items-center">
+<div
+  className="
+    mb-5
+    flex
+    flex-col
+    gap-4
+    xl:flex-row
+    xl:items-center
+    xl:justify-between
+  "
+>
 
   {/* LEFT SIDE (UNCHANGED) */}
-  <div className="flex gap-2">
+<div
+  className="
+    flex
+    flex-wrap
+    gap-2
+  "
+>
 
     <Button size="sm" onClick={handleExport}>
       Export to Excel
@@ -684,7 +700,21 @@ const handleEditSelected = () => {
   <input
     type="text"
     placeholder="Search Auditor..."
-    className="h-9 px-3 border border-gray-300 rounded-lg text-sm w-52"
+    className="
+    h-10
+    w-full
+    rounded-lg
+    border
+    border-gray-300
+    px-4
+    text-sm
+    transition
+    focus:outline-none
+    focus:ring-2
+    focus:ring-brand-500
+    sm:w-72
+    xl:w-60
+    "
     value={search}
     onChange={(e) => setSearch(e.target.value)}
   />
@@ -693,7 +723,7 @@ const handleEditSelected = () => {
 
           <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
 
-            <Table>
+            <Table className="min-w-[1600px] w-full">
 
               <TableHeader>
 
@@ -749,10 +779,17 @@ const handleEditSelected = () => {
                     <TableCell className="px-6 py-5 text-center">{a.name}</TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.company}</TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.short_name}</TableCell>
-                    <TableCell className="px-6 py-5 text-center">{a.ho_address}</TableCell>
+                    <TableCell className="px-6 py-5 min-w-[260px]">
+                    <div
+                            className="line-clamp-2 break-words text-center"
+                            title={a.ho_address}
+                        >
+                            {a.ho_address}
+                        </div>
+                    </TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.mobile}</TableCell>
                     <TableCell className="px-6 py-5 text-center">{a.email}</TableCell>
-                    <TableCell className="px-6 py-5 text-center">
+                    <TableCell className="px-6 py-5 min-w-[220px] text-center">
 
                       {a.documents?.length ? (
 

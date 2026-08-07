@@ -538,7 +538,18 @@ const handleSave = async () => {
 };
 
   return (
-    <div className="space-y-6">
+    <div
+  className="
+    mx-auto
+    w-full
+    max-w-[1600px]
+    space-y-6
+    px-4
+    sm:px-6
+    lg:px-8
+    pb-10
+  "
+>
 
       {/* HEADER */}
       <div>
@@ -553,7 +564,15 @@ const handleSave = async () => {
 <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
   <h2 className="text-lg font-semibold mb-4">Vendor Information</h2>
 
-  <div className="grid md:grid-cols-3 gap-4">
+  <div
+  className="
+    grid
+    grid-cols-1
+    gap-4
+    sm:grid-cols-2
+    xl:grid-cols-3
+  "
+>
 
     {/* VENDOR SEARCH */}
     <div className="relative" ref={vendorDropdownRef}>
@@ -658,7 +677,18 @@ const handleSave = async () => {
 
   {/* Vendor Details */}
   {selectedVendorObj && (
-    <div className="grid md:grid-cols-6 gap-4 mt-5 text-sm">
+    <div
+  className="
+    mt-5
+    grid
+    grid-cols-1
+    gap-4
+    text-sm
+    sm:grid-cols-2
+    lg:grid-cols-3
+    2xl:grid-cols-6
+  "
+>
       <div><b>Name</b><br />{selectedVendorObj.name}</div>
       <div><b>Agreement Address</b><br />{selectedVendorObj.ho_address || "-"}</div>
       <div><b>Nature of Service</b><br />{selectedVendorObj.nature_of_services || "-"}</div>
@@ -670,7 +700,21 @@ const handleSave = async () => {
 
   {/* Branch Summary */}
   {selectedBranchObj && (
-    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+    <div
+  className="
+    mt-4
+    rounded-lg
+    bg-gray-50
+    p-3
+    text-sm
+    flex
+    flex-col
+    gap-2
+    sm:flex-row
+    sm:flex-wrap
+    sm:items-center
+  "
+>
       <span>
         <b>State:</b> {selectedState}
       </span>
@@ -703,7 +747,14 @@ const handleSave = async () => {
 <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
   <h2 className="text-lg font-semibold mb-4">Agreement Validity</h2>
 
-  <div className="grid md:grid-cols-2 gap-4">
+  <div
+  className="
+    grid
+    grid-cols-1
+    gap-4
+    lg:grid-cols-2
+  "
+>
 
     {/* START DATE */}
     <div className="flex flex-col">
@@ -798,7 +849,21 @@ const handleSave = async () => {
   </div>
 
   {(startDate || endDate) && (
-    <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+    <div
+  className="
+    mt-4
+    rounded-lg
+    bg-gray-50
+    p-3
+    text-sm
+    flex
+    flex-col
+    gap-2
+    sm:flex-row
+    sm:flex-wrap
+    sm:items-center
+  "
+>
       <span>
         <b>Selected Start Date:</b> {formatDate(startDate)}
       </span>
@@ -820,7 +885,14 @@ const handleSave = async () => {
     Audit Rules
   </h2>
 
-  <div className="grid md:grid-cols-2 gap-4">
+  <div
+  className="
+    grid
+    grid-cols-1
+    gap-4
+    lg:grid-cols-2
+  "
+>
 
     <input
       type="text"
@@ -846,7 +918,14 @@ const handleSave = async () => {
 
       {/* AUDITOR */}
       {/* AUDITOR + DOCUMENT */}
-<div className="grid md:grid-cols-2 gap-6">
+<div
+  className="
+    grid
+    grid-cols-1
+    gap-6
+    xl:grid-cols-2
+  "
+>
 
   {/* AUDITOR */}
   <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -975,10 +1054,28 @@ const handleSave = async () => {
 
 </div>
       {/* SAVE */}
-      <div className="flex justify-end">
+      <div
+  className="
+    flex
+    justify-stretch
+    sm:justify-end
+  "
+>
         <button
           onClick={handleSave}
-          className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition"
+          className="
+  w-full
+  sm:w-auto
+  rounded-lg
+  bg-brand-600
+  px-6
+  py-2.5
+  text-sm
+  font-medium
+  text-white
+  transition
+  hover:bg-brand-700
+"
         >
           Save Vendor Mapping
         </button>

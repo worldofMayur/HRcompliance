@@ -439,18 +439,35 @@ return hasExceptional ? (
 
   return (
 
-    <div className="space-y-5 p-1 md:p-4">
+    <div
+      className="
+        space-y-5
+        p-3
+        sm:p-4
+        lg:p-6
+      "
+    >
 
       {/* HEADER */}
 
-      <div className="mb-1">
+     <div
+        className="
+          mb-2
+          flex
+          flex-col
+          gap-2
+        "
+      >
 
-        <h1 className="
-          text-2xl
-          font-semibold
-          tracking-tight
-          text-gray-900
-        ">
+        <h1
+        className="
+        text-xl
+        font-semibold
+        tracking-tight
+        text-gray-900
+        sm:text-2xl
+        "
+        >
           Freeze Audit Reports
         </h1>
 
@@ -469,9 +486,11 @@ return hasExceptional ? (
 
 <div
   className="
-    grid grid-cols-1
-    gap-4
-    md:grid-cols-3
+  grid
+  grid-cols-1
+  gap-4
+  sm:grid-cols-2
+  xl:grid-cols-3
   "
 >
 
@@ -596,15 +615,18 @@ return hasExceptional ? (
       {/* SEARCH + FILTER */}
 
 <div
-  className="
-    mb-4 flex flex-col
-    gap-3 md:flex-row
-    md:items-center
-    md:justify-between
-  "
+className="
+mb-5
+flex
+flex-col
+gap-4
+xl:flex-row
+xl:items-center
+xl:justify-between
+"
 >
 
-<div className="relative">
+<div className="relative w-full xl:w-auto">
 
   <SearchOutlined
     className="
@@ -628,7 +650,9 @@ return hasExceptional ? (
     }
 
     className="
-      h-11 w-full md:w-[360px]
+      h-11
+      w-full
+      xl:w-[360px]
       rounded-2xl
       border border-gray-200
       bg-gray-50
@@ -648,7 +672,13 @@ return hasExceptional ? (
 
   {/* FILTERS */}
 
-  <div className="flex gap-2">
+ <div
+  className="
+  flex
+  flex-wrap
+  gap-2
+  "
+  >
 
     {[
       {
@@ -673,7 +703,8 @@ return hasExceptional ? (
 
         className={`
           rounded-xl
-          px-4 py-2
+          px-4
+          py-2.5
           text-sm
           font-medium
           transition
@@ -754,6 +785,7 @@ return hasExceptional ? (
             rowKey="id"
 
             columns={columns}
+            scroll={{ x: 1300 }}
 
             dataSource={filteredReports}
 
@@ -787,7 +819,8 @@ return hasExceptional ? (
         open={open}
         footer={null}
         onCancel={() => setOpen(false)}
-        width={1700}
+        width="95%"
+        style={{ maxWidth: 1700 }}
 
         centered
 
@@ -835,7 +868,10 @@ return hasExceptional ? (
   <div
     className="
       flex flex-col gap-5
-      px-7 py-5
+      px-4
+      py-4
+      sm:px-6
+      sm:py-5
       lg:flex-row
       lg:items-start
       lg:justify-between
@@ -848,7 +884,16 @@ return hasExceptional ? (
 
       {/* TITLE */}
 
-      <div className="flex items-center gap-3">
+      <div
+        className="
+        flex
+        w-full
+        flex-col
+        gap-3
+        sm:w-auto
+        sm:flex-row
+        "
+        >
 
         <div
           className="
@@ -866,7 +911,9 @@ return hasExceptional ? (
 
           <h2
             className="
-              text-[28px]
+              text-xl
+              sm:text-2xl
+              lg:text-[28px]
               font-semibold
               tracking-tight
               text-gray-900
@@ -919,7 +966,17 @@ return hasExceptional ? (
 
     {/* RIGHT */}
 
-    <div className="flex items-center gap-3">
+    <div
+      className="
+      flex
+      w-full
+      flex-col
+      gap-3
+      sm:w-auto
+      sm:flex-row
+      sm:items-center
+      "
+      >
 
       {/* DOWNLOAD */}
 
@@ -939,7 +996,11 @@ return hasExceptional ? (
           gap-2
           rounded-2xl
           bg-blue-600
-          px-5 py-2.5
+          w-full
+          justify-center
+          px-5
+          py-3
+          sm:w-auto
           text-sm
           font-medium
           text-white
@@ -963,7 +1024,9 @@ return hasExceptional ? (
           setOpen(false)
         }
         className="
-          flex h-11 w-11
+          flex h-11
+          w-full
+          sm:w-11
           items-center justify-center
           rounded-2xl
           border border-gray-200
@@ -983,7 +1046,10 @@ return hasExceptional ? (
             {/* MODAL BODY */}
             <div className="
               flex-1 overflow-y-auto
-              px-6 py-5
+              px-4
+              py-4
+              sm:px-6
+              sm:py-5
               space-y-5
             ">
 
@@ -1015,7 +1081,11 @@ return hasExceptional ? (
                 </h3>
 
                 <div className="
-                  grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6
+                  grid
+                  grid-cols-1
+                  sm:grid-cols-2
+                  lg:grid-cols-3
+                  2xl:grid-cols-6
                   divide-y md:divide-y-0 md:divide-x
                   divide-gray-100
                   gap-x-8 gap-y-4

@@ -8,7 +8,7 @@ import AppSidebar from "./AppSidebar";
 import Footer from "../components/footer/Footer";
 
 const LayoutContent: React.FC = () => {
-  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const { isExpanded, isHovered } = useSidebar();
 
   return (
     <div
@@ -48,7 +48,6 @@ const LayoutContent: React.FC = () => {
               ? "lg:ml-[290px]"
               : "lg:ml-[90px]"
           }
-          ${isMobileOpen ? "ml-0" : ""}
         `}
       >
         {/* HEADER */}
@@ -58,8 +57,12 @@ const LayoutContent: React.FC = () => {
         <main
           className="
             flex-1
-            p-4
-            md:p-6
+            px-4
+            py-4
+            sm:px-5
+            md:px-6
+            md:py-6
+            xl:px-8
           "
         >
           <div
@@ -67,7 +70,7 @@ const LayoutContent: React.FC = () => {
               mx-auto
               w-full
               max-w-screen-2xl
-              animate-[fadeIn_.25s_ease]
+              motion-safe:motion-safe:motion-safe:animate-[fadeIn_.25s_ease]
             "
           >
             <Outlet />

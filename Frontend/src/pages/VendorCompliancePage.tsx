@@ -924,9 +924,24 @@ if (effectiveReuploadMode) {
   const totalDocs = tableData.length;
 
   return (
-    <div className="space-y-6 w-full px-8">
+    <div
+      className="
+        w-full
+        space-y-6
+        px-4
+        sm:px-6
+        lg:px-8
+      "
+    >
       <div>
-        <h1 className="text-2xl font-semibold text-gray-800">
+        <h1
+          className="
+            text-xl
+            font-semibold
+            text-gray-800
+            sm:text-2xl
+          "
+        >
           Upload Compliance Documents
         </h1>
         <p className="text-sm text-gray-500">Upload compliance documents for the selected branch and period.</p>
@@ -936,13 +951,28 @@ if (effectiveReuploadMode) {
         rounded-2xl
         border border-gray-200
         bg-white
-        p-6
+        p-4
+        sm:p-5
+        lg:p-6
         shadow-sm
       ">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-5">
           <div className="flex flex-col">
             <label className="text-xs font-semibold text-gray-500 mb-1">Principal Employer</label>
-            <select value={selectedPE} onChange={(e) => setSelectedPE(e.target.value)} className="border rounded-xl px-3 py-2 text-sm">
+            <select value={selectedPE} onChange={(e) => setSelectedPE(e.target.value)} className="
+            h-11
+            w-full
+            rounded-xl
+            border
+            border-gray-300
+            bg-white
+            px-3
+            text-sm
+            transition
+            focus:border-blue-500
+            focus:ring-2
+            focus:ring-blue-100
+            ">
               <option value="">Select PE</option>
               {[...peList]
                 .sort((a, b) =>
@@ -965,7 +995,20 @@ if (effectiveReuploadMode) {
                 setDocuments([]);
               }} 
               disabled={!selectedPE} 
-              className="border rounded-xl px-3 py-2 text-sm"
+              className="
+              h-11
+              w-full
+              rounded-xl
+              border
+              border-gray-300
+              bg-white
+              px-3
+              text-sm
+              transition
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-100
+              "
             >
               <option value="">Select State</option>
              {[...states]
@@ -993,7 +1036,20 @@ if (effectiveReuploadMode) {
                 }
               }}
               disabled={!selectedState}
-              className="border rounded-xl px-3 py-2 text-sm"
+              className="
+              h-11
+              w-full
+              rounded-xl
+              border
+              border-gray-300
+              bg-white
+              px-3
+              text-sm
+              transition
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-100
+              "
             >
               <option value="">Select Branch</option>
              {[...branches]
@@ -1007,6 +1063,8 @@ if (effectiveReuploadMode) {
           <div className="flex flex-col">
             <label className="text-xs font-semibold text-gray-500 mb-1">Compliance Audit Period</label>
             <Select
+              size="large"
+              className="w-full"
               value={selectedPeriod || undefined}
               onChange={(value) => setSelectedPeriod(value)}
               disabled={!selectedBranch}
@@ -1018,29 +1076,61 @@ if (effectiveReuploadMode) {
         </div>
 
         {mappingStartDate && mappingEndDate && (
-          <div className="mt-4 text-sm bg-gray-50 p-3 rounded-lg">
+          <div
+            className="
+              mt-4
+              rounded-xl
+              border
+              border-blue-100
+              bg-blue-50
+              p-4
+              text-sm
+            "
+          >
             Start: {formatDate(mappingStartDate)} | End: {formatDate(mappingEndDate)}
           </div>
         )}
       </div>
 
       {selectedPeriod && (
-        <div ref={docRef} className="bg-white p-6 rounded-xl shadow-sm border">
+        <div
+          ref={docRef}
+          className="
+            rounded-2xl
+            border
+            bg-white
+            p-4
+            shadow-sm
+            sm:p-5
+            lg:p-6
+          "
+        >
       <div className="space-y-5 mb-5">
 
   {/* TOP BAR */}
-  <div className="
-    flex flex-col gap-4
-    lg:flex-row
-    lg:items-center
-    lg:justify-between
-  ">
+  <div
+  className="
+  flex
+  flex-col
+  gap-5
+  xl:flex-row
+  xl:items-start
+  xl:justify-between
+  "
+  >
 
     {/* LEFT */}
     <div className="space-y-3">
 
       {/* TITLE */}
-      <div className="flex items-center gap-2">
+      <div
+        className="
+        flex
+        flex-wrap
+        items-center
+        gap-2
+        "
+        >
         <h2 className="text-base font-semibold text-gray-900">
           Compliance Documents
         </h2>
@@ -1049,14 +1139,15 @@ if (effectiveReuploadMode) {
           frozenPeriods.includes(selectedPeriod) && (
 
             <span
-              className="
-                rounded-full
-                bg-green-100
-                px-2 py-1
-                text-[10px]
-                font-semibold
-                text-green-700
-              "
+            className="
+            rounded-full
+            bg-green-100
+            px-3
+            py-1.5
+            text-[11px]
+            font-semibold
+            text-green-700
+            "
             >
               FINALIZED
             </span>
@@ -1066,7 +1157,7 @@ if (effectiveReuploadMode) {
         <span className="
           rounded-full
           bg-blue-50
-          px-2.5 py-1
+          px-3 py-1.5
           text-xs
           font-medium
           text-blue-700
@@ -1076,13 +1167,20 @@ if (effectiveReuploadMode) {
       </div>
 
       {/* STATS */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div
+        className="
+        flex
+        flex-wrap
+        gap-2
+        "
+        >
 
         <div className="
           rounded-full
           border border-gray-200
           bg-gray-50
-          px-3 py-1
+          px-3
+          py-2
         ">
           <span className="text-xs font-medium text-gray-700">
             Total: {totalDocs}
@@ -1093,7 +1191,8 @@ if (effectiveReuploadMode) {
           rounded-full
           border border-emerald-100
           bg-emerald-50
-          px-3 py-1
+          px-3
+          py-2
         ">
           <span className="text-xs font-medium text-emerald-700">
             Uploaded: {uploadedCount}
@@ -1104,7 +1203,8 @@ if (effectiveReuploadMode) {
           rounded-full
           border border-amber-100
           bg-amber-50
-          px-3 py-1
+          px-3
+          py-2
         ">
           <span className="text-xs font-medium text-amber-700">
             Remaining: {
@@ -1127,11 +1227,13 @@ if (effectiveReuploadMode) {
       disabled={frozenPeriods.includes(selectedPeriod)}
       onClick={addAdditionalDocument}
       className="
-        h-9
-        rounded-xl
-        px-4
-        text-sm
-        font-medium
+      h-11
+      w-full
+      rounded-xl
+      text-sm
+      font-medium
+      sm:w-auto
+      sm:px-5
       "
     >
       + Add Document
@@ -1143,8 +1245,8 @@ if (effectiveReuploadMode) {
           <div className="
             grid
             grid-cols-1
-            md:grid-cols-2
-            xl:grid-cols-3
+            sm:grid-cols-2
+            2xl:grid-cols-4
             gap-4
           ">
             {documentsLoading && (
@@ -1176,10 +1278,10 @@ if (effectiveReuploadMode) {
               <div key={record.key} className={`
                   border
                   rounded-2xl
-                  p-3.5
+                  p-4
                   shadow-sm
                   transition
-                  min-h-[132px]
+                  min-h-[170px]
                   flex
                   flex-col
                   gap-3
@@ -1194,8 +1296,17 @@ if (effectiveReuploadMode) {
                       : "bg-white hover:shadow-md"
                   }
                 `} >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="font-semibold text-gray-800 truncate">{record.document_name}</span>
+                <div
+                  className="
+                  flex
+                  flex-col
+                  gap-2
+                  sm:flex-row
+                  sm:items-start
+                  sm:justify-between
+                  "
+                  >
+                  <span className="font-semibold text-gray-800 break-all">{record.document_name}</span>
                   <span
                     className={`
                       text-[10px]
@@ -1236,9 +1347,10 @@ if (effectiveReuploadMode) {
                 </div>
 
                 <div className="
-                  flex items-center
+                  flex
+                  items-start
                   justify-between
-                  gap-3
+                  gap-2
                 ">
                 <Upload
                     disabled={
@@ -1280,18 +1392,22 @@ if (effectiveReuploadMode) {
                   <Button
                     size="small"
                     disabled={
-                        (record.isUploaded && !record.canReupload) ||
-
-                        frozenPeriods.includes(selectedPeriod) ||
-
-                        (
-                            effectiveReuploadMode &&
-                            !record.isAdditional &&
-                            !record.canReupload
-                        )
+                      (record.isUploaded && !record.canReupload) ||
+                      frozenPeriods.includes(selectedPeriod) ||
+                      (
+                        effectiveReuploadMode &&
+                        !record.isAdditional &&
+                        !record.canReupload
+                      )
                     }
                     className={`
-                      rounded-lg border-none
+                      w-full
+                      sm:w-auto
+                      h-9
+                      rounded-lg
+                      border-none
+                      transition-all
+                      duration-200
 
                       ${
                         effectiveReuploadMode
@@ -1309,13 +1425,18 @@ if (effectiveReuploadMode) {
                   </Upload>
 
                   {record.isAdditional && (
-                    <Button danger size="small" onClick={() => removeRow(record.key)}>
-                      Remove
-                    </Button>
+                  <Button
+                    danger
+                    size="small"
+                    className="w-full sm:w-auto h-9"
+                    onClick={() => removeRow(record.key)}
+                  >
+                    Remove
+                  </Button>
                   )}
                 </div>
 
-                <div className="text-xs truncate">
+                <div className="text-xs break-all">
 
                 {effectiveReuploadMode &&
                   record.canReupload &&
@@ -1355,7 +1476,7 @@ if (effectiveReuploadMode) {
                         text-[11px]
                         font-medium
                         text-emerald-700
-                        truncate
+                        break-all
                         flex-1
                       "
                     >
@@ -1387,7 +1508,7 @@ if (effectiveReuploadMode) {
                         </p>
 
                         {record.uploadedFileName && (
-                          <p className="mt-1 text-[10px] text-green-600 truncate">
+                          <p className="mt-1 text-[10px] text-green-600 break-all">
                             {record.uploadedFileName}
                           </p>
                         )}
@@ -1413,16 +1534,38 @@ if (effectiveReuploadMode) {
             <label className="block text-sm font-semibold text-gray-800 mb-2">Vendor Remarks</label>
             <TextArea
               rows={3}
-              className="rounded-xl"
+              className="
+              w-full
+              min-h-[140px]
+              rounded-xl
+              border
+              border-gray-300
+              bg-white
+              px-4
+              py-3
+              text-sm
+              resize-y
+              transition
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-100
+              outline-none
+              "
               value={generalRemark}
               onChange={(e) => setGeneralRemark(e.target.value)}
             />
 
-            <div className="
-  mt-5
-  flex items-center
-  justify-between
-">
+    <div
+      className="
+        mt-5
+        flex
+        flex-col
+        gap-4
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+      "
+    >
 
   {/* LEFT MESSAGE */}
   <div>
@@ -1430,15 +1573,18 @@ if (effectiveReuploadMode) {
     {frozenPeriods.includes(selectedPeriod) ? (
 
     <div
-      className="
-        inline-flex
-        items-center
-        gap-2
-        rounded-lg
-        border border-green-200
-        bg-green-50
-        px-3 py-2
-      "
+    className="
+    flex
+    w-full
+    items-center
+    gap-2
+    rounded-xl
+    border
+    border-green-200
+    bg-green-50
+    px-4
+    py-3
+    "
     >
 
       <div className="h-2 w-2 rounded-full bg-green-500"></div>
@@ -1453,7 +1599,7 @@ if (effectiveReuploadMode) {
 
     ) : (
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs leading-5 text-gray-500">
         Ensure all required documents are uploaded before submission.
       </p>
 
@@ -1481,9 +1627,11 @@ if (effectiveReuploadMode) {
     }
     onClick={handleSubmit}
     className="
-      h-9
-      rounded-lg
-      px-4
+      h-11
+      w-full
+      sm:w-auto
+      rounded-xl
+      px-6
       text-sm
       font-medium
       shadow-sm
@@ -1504,7 +1652,8 @@ if (effectiveReuploadMode) {
 <Modal
   title="Employee Payroll Details"
   open={summaryOpen}
-  width={1480}
+  width="95%"
+  style={{ maxWidth: 1480 }}
   centered
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
@@ -1530,19 +1679,54 @@ if (effectiveReuploadMode) {
     style: { height: 35, fontWeight: 500 }
   }}
 >
-  <div className="max-h-[68vh] overflow-y-auto pr-2 space-y-5">
+    <div
+      className="
+        max-h-[70vh]
+        overflow-y-auto
+        overflow-x-hidden
+        pr-1
+        sm:pr-2
+        space-y-5
+      "
+    >
     {payrollData.map((row, index) => (
       <div
         key={row.month}
-        className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
+        className="
+        bg-white
+        border
+        border-gray-100
+        rounded-2xl
+        p-4
+        sm:p-5
+        shadow-sm
+        "
       >
         {/* Month Title */}
-        <h3 className="text-base font-semibold text-gray-900 mb-4 pb-2.5 border-b border-gray-100">
+        <h3 
+        className="
+        text-lg
+        font-semibold
+        text-gray-900
+        mb-5
+        pb-3
+        border-b
+        border-gray-100
+        ">
           {row.month}
         </h3>
 
         {/* Clean grid */}
-        <div className="grid grid-cols-8 gap-4">
+        <div
+          className="
+          grid
+          grid-cols-1
+          sm:grid-cols-2
+          lg:grid-cols-4
+          2xl:grid-cols-8
+          gap-4
+          "
+          >
           {/* Male Employees */}
           <div>
             <Label>Male Employees</Label>
@@ -1555,7 +1739,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-11 text-sm rounded-xl"
             />
           </div>
 
@@ -1571,7 +1755,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-11 text-sm rounded-xl"
             />
           </div>
 
@@ -1587,7 +1771,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-11 text-sm rounded-xl"
             />
           </div>
 
@@ -1603,7 +1787,7 @@ if (effectiveReuploadMode) {
                   e.target.value === "" ? undefined : Number(e.target.value);
                 setPayrollData(temp);
               }}
-              className="h-9 text-sm"
+              className="h-11 text-sm rounded-xl"
             />
           </div>
 
@@ -1632,7 +1816,18 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="
+              w-full
+              h-11
+              rounded-xl
+              border
+              border-gray-300
+              px-3
+              text-sm
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-100
+              "
               style={{ height: "40px" }}
             />
           </div>
@@ -1664,7 +1859,18 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="
+              w-full
+              h-11
+              rounded-xl
+              border
+              border-gray-300
+              px-3
+              text-sm
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-100
+              "
               style={{ height: "40px" }}
             />
           </div>
@@ -1695,7 +1901,18 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="
+              w-full
+              h-11
+              rounded-xl
+              border
+              border-gray-300
+              px-3
+              text-sm
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-100
+              "
               style={{ height: "40px" }}
             />
             <Checkbox
@@ -1742,7 +1959,18 @@ if (effectiveReuploadMode) {
               }}
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
-              className="w-full h-10 !h-10 border border-gray-300 rounded-lg px-3 text-sm"
+              className="
+              w-full
+              h-11
+              rounded-xl
+              border
+              border-gray-300
+              px-3
+              text-sm
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-100
+              "
               style={{ height: "40px" }}
             />
             <Checkbox
