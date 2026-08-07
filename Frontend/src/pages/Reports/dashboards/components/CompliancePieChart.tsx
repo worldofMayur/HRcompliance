@@ -5,6 +5,7 @@ import {
   Cell,
   Tooltip,
   Legend,
+  Label,
 } from "recharts";
 
 interface Props {
@@ -26,18 +27,18 @@ export default function CompliancePieChart({ data }: Props) {
     { name: "Document Not Submitted", value: data.documentNotSubmitted ?? 0 },
   ];
 
-  const total = chartData.reduce((sum, item) => sum + item.value, 0) || 1;
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <ResponsiveContainer width="100%" height={340}>
+    <ResponsiveContainer width="100%" height={380}>
       <PieChart margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
         <Pie
           data={chartData}
           dataKey="value"
           nameKey="name"
           cx="50%"
-          cy="48%"
-          innerRadius={70}
+          cy="46%"
+          innerRadius={72}
           outerRadius={105}
           paddingAngle={4}
           cornerRadius={8}
@@ -56,11 +57,49 @@ export default function CompliancePieChart({ data }: Props) {
               strokeWidth={2}
             />
           ))}
+
+          {/* PERFECTLY CENTERED TOTAL */}
+          <Label
+            position="center"
+            content={({ viewBox }) => {
+              if (!viewBox) return null;
+
+              const { cx, cy } = viewBox as any;
+
+              return (
+                <g>
+                  <text
+                    x={cx}
+                    y={cy - 6}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#111827"
+                    fontSize={30}
+                    fontWeight={700}
+                  >
+                    {total}
+                  </text>
+
+                  <text
+                    x={cx}
+                    y={cy + 20}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#6B7280"
+                    fontSize={14}
+                    fontWeight={500}
+                  >
+                    Total
+                  </text>
+                </g>
+              );
+            }}
+          />
         </Pie>
 
         <Tooltip
           formatter={(value: number, name: string) => [
-            `${value} (${((value / total) * 100).toFixed(1)}%)`,
+            `${value} (${((value / (total || 1)) * 100).toFixed(1)}%)`,
             name,
           ]}
           contentStyle={{
@@ -78,7 +117,10 @@ export default function CompliancePieChart({ data }: Props) {
           wrapperStyle={{ paddingTop: 8 }}
           formatter={(value, entry: any) => {
             const count = entry.payload.value;
-            const percent = ((count / total) * 100).toFixed(1);
+            const percent = total
+              ? ((count / total) * 100).toFixed(1)
+              : "0.0";
+
             return (
               <span style={{ color: "#374151", fontSize: 13 }}>
                 {value}{" "}
@@ -89,31 +131,6 @@ export default function CompliancePieChart({ data }: Props) {
             );
           }}
         />
-
-        {/* Perfectly centered text */}
-        <text
-          x="50%"
-          y="46%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={32}
-          fontWeight={700}
-          fill="#111827"
-        >
-          {total}
-        </text>
-
-        <text
-          x="50%"
-          y="54%"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={13}
-          fontWeight={500}
-          fill="#6b7280"
-        >
-          Total
-        </text>
       </PieChart>
     </ResponsiveContainer>
   );
