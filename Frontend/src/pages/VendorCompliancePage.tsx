@@ -1480,7 +1480,7 @@ if (effectiveReuploadMode) {
               }}
             >
               <span className="text-xs text-gray-600">
-                Not Applicable
+                Select if Not Applicable For Audit Period
               </span>
             </Checkbox>
         )}
