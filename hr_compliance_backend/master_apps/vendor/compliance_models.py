@@ -194,8 +194,14 @@ class VendorComplianceSubmission(models.Model):
     main_file = models.FileField(
         storage=OverwriteStorage(),
         upload_to=compliance_upload_path,
-        max_length=500
-        )
+        max_length=500,
+        null=True,
+        blank=True
+    )
+
+    is_not_applicable = models.BooleanField(
+        default=False
+    )
 
     original_filename = models.CharField(
         max_length=255,
