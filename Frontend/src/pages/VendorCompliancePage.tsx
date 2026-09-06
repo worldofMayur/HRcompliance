@@ -1242,290 +1242,321 @@ if (effectiveReuploadMode) {
   </div>
 </div>
 
-          <div className="
-            grid
-            grid-cols-1
-            sm:grid-cols-2
-            2xl:grid-cols-4
-            gap-4
-          ">
-            {documentsLoading && (
-              <div className="col-span-full flex flex-col items-center justify-center py-12">
+         <div
+  className="
+    grid
+    grid-cols-7
+    gap-2
+    w-full
+  "
+>
+  {documentsLoading && (
+    <div className="col-span-7 flex flex-col items-center justify-center py-12">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
 
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
+      <p className="mt-4 text-sm text-gray-500">
+        Loading compliance documents...
+      </p>
+    </div>
+  )}
 
-                <p className="mt-4 text-sm text-gray-500">
-                  Loading compliance documents...
-                </p>
-              </div>
-            )}
+  {!documentsLoading && tableData.length === 0 && (
+    <div className="col-span-7 text-center py-10 text-gray-400">
+      <div className="py-14 text-center">
+        <p className="text-sm font-medium text-gray-500">
+          No compliance documents available
+        </p>
 
-            {!documentsLoading && tableData.length === 0 && (
-              <div className="col-span-full text-center py-10 text-gray-400">
-                <div className="py-14 text-center">
-                  <p className="text-sm font-medium text-gray-500">
-                    No compliance documents available
-                  </p>
+        <p className="mt-1 text-xs text-gray-400">
+          Try selecting another audit period
+        </p>
+      </div>
+    </div>
+  )}
 
-                  <p className="mt-1 text-xs text-gray-400">
-                    Try selecting another audit period
-                  </p>
-                </div>
-              </div>
-            )}
+  {tableData.map((record) => (
+    <div
+      key={record.key}
+      className={`
+        min-w-0
+        border
+        rounded-xl
+        p-3
+        shadow-sm
+        transition
+        min-h-[135px]
+        flex
+        flex-col
+        gap-2
 
-            {tableData.map((record) => (
-              <div key={record.key} className={`
-                  border
-                  rounded-2xl
-                  p-4
-                  shadow-sm
-                  transition
-                  min-h-[170px]
-                  flex
-                  flex-col
-                  gap-3
+        ${
+          effectiveReuploadMode
+            ? (
+                record.canReupload
+                  ? "bg-white hover:shadow-md"
+                  : "bg-gray-50 opacity-70 border-gray-200"
+              )
+            : "bg-white hover:shadow-md"
+        }
+      `}
+    >
 
-                  ${
-                    effectiveReuploadMode
-                      ? (
-                          record.canReupload
-                            ? "bg-white hover:shadow-md"
-                            : "bg-gray-50 opacity-70 border-gray-200"
-                        )
-                      : "bg-white hover:shadow-md"
-                  }
-                `} >
-                <div
-                  className="
-                  flex
-                  flex-col
-                  gap-2
-                  sm:flex-row
-                  sm:items-start
-                  sm:justify-between
-                  "
-                  >
-                  <span className="font-semibold text-gray-800 break-all">{record.document_name}</span>
-                  <span
-                    className={`
-                      text-[10px]
-                      font-medium
-                      px-2
-                      py-0.5
-                      rounded-full
-                      whitespace-nowrap
-                      border
+      {/* HEADER */}
+      <div
+        className="
+          flex
+          items-start
+          gap-1
+          min-w-0
+        "
+      >
 
-                      ${
-                        effectiveReuploadMode
-                          ? (
-                              record.canReupload
-                                ? "bg-red-50 text-red-600 border border-red-200"
-                                : "bg-green-50 text-green-600 border border-green-200"
-                            )
-                          : "bg-blue-50 text-blue-600 border border-blue-200"
-                      }
-                    `}
-                  >
-                  {record.fileList.length > 0 ? (
-                      "Uploaded"
-                  ) : record.isUploaded ? (
-                      "Already Submitted"
-                  ) : effectiveReuploadMode ? (
+        <span
+          className="
+            min-w-0
+            flex-1
+            font-semibold
+            text-gray-800
+            text-xs
+            leading-4
+            break-words
+          "
+        >
+          {record.document_name}
+        </span>
 
-                    record.canReupload ? (
-                      "Reupload Required"
-                    ) : (
-                      "Already Complied"
+        <span
+          className={`
+            shrink-0
+            text-[9px]
+            font-medium
+            px-1.5
+            py-0.5
+            rounded-full
+            whitespace-nowrap
+            border
+
+            ${
+              effectiveReuploadMode
+                ? (
+                    record.canReupload
+                      ? "bg-red-50 text-red-600 border-red-200"
+                      : "bg-green-50 text-green-600 border-green-200"
+                  )
+                : "bg-blue-50 text-blue-600 border-blue-200"
+            }
+          `}
+        >
+          {record.fileList.length > 0
+            ? "Uploaded"
+            : record.isUploaded
+            ? "Already Submitted"
+            : effectiveReuploadMode
+            ? (
+                record.canReupload
+                  ? "Reupload Required"
+                  : "Already Complied"
+              )
+            : "Pending Upload"
+          }
+        </span>
+
+      </div>
+
+      {/* ACTION */}
+      <div className="flex flex-col gap-2">
+
+        <Upload
+          disabled={
+            (record.isUploaded && !record.canReupload) ||
+            frozenPeriods.includes(selectedPeriod) ||
+            (
+              effectiveReuploadMode &&
+              !record.isAdditional &&
+              !record.canReupload
+            )
+          }
+          beforeUpload={(file) => {
+            const alreadyExists =
+              tableData.some(
+                (row) =>
+                  row.fileList[0]?.name === file.name
+              );
+
+            if (alreadyExists) {
+              message.warning(
+                "Same file already selected."
+              );
+
+              return Upload.LIST_IGNORE;
+            }
+
+            return false;
+          }}
+          fileList={record.fileList}
+          maxCount={1}
+          showUploadList={false}
+          onChange={({ fileList }) =>
+            updateRow(record.key, { fileList })
+          }
+        >
+
+          <Button
+            size="small"
+            disabled={
+              (record.isUploaded && !record.canReupload) ||
+              frozenPeriods.includes(selectedPeriod) ||
+              (
+                effectiveReuploadMode &&
+                !record.isAdditional &&
+                !record.canReupload
+              )
+            }
+            className={`
+              w-full
+              h-8
+              rounded-lg
+              px-2
+              text-xs
+              border-none
+              transition-all
+              duration-200
+
+              ${
+                effectiveReuploadMode
+                  ? (
+                      record.canReupload
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
                     )
+                  : "bg-blue-500 text-white hover:bg-blue-600"
+              }
+            `}
+          >
+            Upload
+          </Button>
 
-                  ) : (
-                    "Pending Upload"
-                  )}
-                  </span>
-                </div>
+        </Upload>
 
-                <div className="
-                  flex
-                  items-start
-                  justify-between
-                  gap-2
-                ">
-                <Upload
-                    disabled={
-                        (record.isUploaded && !record.canReupload) ||
+        {record.isAdditional && (
+          <Button
+            danger
+            size="small"
+            className="w-full h-8 text-xs"
+            onClick={() => removeRow(record.key)}
+          >
+            Remove
+          </Button>
+        )}
 
-                        frozenPeriods.includes(selectedPeriod) ||
+      </div>
 
-                        (
-                            effectiveReuploadMode &&
-                            !record.isAdditional &&
-                            !record.canReupload
-                        )
-                    }
-                    beforeUpload={(file) => {
-                      const alreadyExists =
-                        tableData.some(
-                          (row) =>
-                            row.fileList[0]?.name === file.name
-                        );
+      {/* REMARK / FILE */}
+      <div className="text-[10px] break-words min-w-0">
 
-                      if (alreadyExists) {
+        {effectiveReuploadMode &&
+          record.canReupload &&
+          record.reupload_remark && (
 
-                        message.warning(
-                          "Same file already selected."
-                        );
+            <div className="
+              mt-1
+              text-[10px]
+              text-red-600
+              bg-red-50
+              border border-red-200
+              rounded-lg
+              px-2
+              py-1
+              leading-3
+            ">
+              <span className="font-semibold">
+                Auditor Remark:
+              </span>{" "}
+              {record.reupload_remark}
+            </div>
+        )}
 
-                        return Upload.LIST_IGNORE;
-                      }
+        {record.fileList.length > 0 ? (
+          <div
+            className="
+              mt-1
+              flex
+              items-center
+              justify-between
+              gap-1
+              rounded-lg
+              border border-emerald-100
+              bg-emerald-50/40
+              px-2
+              py-1.5
+            "
+          >
+            <p
+              className="
+                text-[10px]
+                font-medium
+                text-emerald-700
+                break-all
+                min-w-0
+                flex-1
+              "
+            >
+              {record.fileList[0].name}
+            </p>
 
-                      return false;
-                    }}
-                    fileList={record.fileList}
-                    maxCount={1}
-                    showUploadList={false}
-                    onChange={({ fileList }) =>
-                      updateRow(record.key, { fileList })
-                    }
-                  >
-                  <Button
-                    size="small"
-                    disabled={
-                      (record.isUploaded && !record.canReupload) ||
-                      frozenPeriods.includes(selectedPeriod) ||
-                      (
-                        effectiveReuploadMode &&
-                        !record.isAdditional &&
-                        !record.canReupload
-                      )
-                    }
-                    className={`
-                      w-full
-                      sm:w-auto
-                      h-9
-                      rounded-lg
-                      border-none
-                      transition-all
-                      duration-200
-
-                      ${
-                        effectiveReuploadMode
-                          ? (
-                              record.canReupload
-                                ? "bg-blue-500 text-white hover:bg-blue-600"
-                                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            )
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                      }
-                    `}
-                  >
-                    Upload
-                  </Button>
-                  </Upload>
-
-                  {record.isAdditional && (
-                  <Button
-                    danger
-                    size="small"
-                    className="w-full sm:w-auto h-9"
-                    onClick={() => removeRow(record.key)}
-                  >
-                    Remove
-                  </Button>
-                  )}
-                </div>
-
-                <div className="text-xs break-all">
-
-                {effectiveReuploadMode &&
-                  record.canReupload &&
-                  record.reupload_remark && (
-
-                    <div className="
-                      mt-2
-                      text-[11px]
-                      text-red-600
-                      bg-red-50
-                      border border-red-200
-                      rounded-lg
-                      px-2 py-1
-                      leading-relaxed
-                    ">
-                      <span className="font-semibold">
-                        Auditor Remark:
-                      </span>{" "}
-                      {record.reupload_remark}
-                    </div>
-                  )}
-
-                  {record.fileList.length > 0 ? (
-                  <div
-                    className="
-                      mt-2
-                      flex items-center
-                      justify-between
-                      rounded-lg
-                      border border-emerald-100
-                      bg-emerald-50/40
-                      px-2.5 py-2
-                    "
-                  >
-                    <p
-                      className="
-                        text-[11px]
-                        font-medium
-                        text-emerald-700
-                        break-all
-                        flex-1
-                      "
-                    >
-                      {record.fileList[0].name}
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateRow(record.key, {
-                          fileList: [],
-                        })
-                      }
-                      className="
-                        ml-2
-                        text-red-500
-                        font-bold
-                        hover:text-red-700
-                      "
-                    >
-                      ✕
-                    </button>
-                  </div>
-                    ) : record.isUploaded ? (
-
-                      <div className="mt-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                        <p className="text-[11px] font-medium text-green-700">
-                          ✓ Already Submitted
-                        </p>
-
-                        {record.uploadedFileName && (
-                          <p className="mt-1 text-[10px] text-green-600 break-all">
-                            {record.uploadedFileName}
-                          </p>
-                        )}
-                      </div>
-
-                    ) : (
-
-                      <p className="text-xs text-gray-400">
-                        Upload PDF, JPG or PNG
-                      </p>
-
-                    )}
-                </div>
-              </div>
-            ))}
+            <button
+              type="button"
+              onClick={() =>
+                updateRow(record.key, {
+                  fileList: [],
+                })
+              }
+              className="
+                shrink-0
+                text-red-500
+                font-bold
+                hover:text-red-700
+              "
+            >
+              ✕
+            </button>
           </div>
 
+        ) : record.isUploaded ? (
+
+          <div className="
+            mt-1
+            rounded-lg
+            border
+            border-green-200
+            bg-green-50
+            px-2
+            py-1.5
+          ">
+            <p className="text-[10px] font-medium text-green-700">
+              ✓ Already Submitted
+            </p>
+
+            {record.uploadedFileName && (
+              <p className="mt-1 text-[9px] text-green-600 break-all">
+                {record.uploadedFileName}
+              </p>
+            )}
+          </div>
+
+        ) : (
+
+          <p className="text-[10px] text-gray-400">
+            Upload PDF, JPG or PNG
+          </p>
+
+        )}
+
+      </div>
+
+    </div>
+  ))}
+</div>
           <div className="
             mt-7
             border-t border-gray-100
