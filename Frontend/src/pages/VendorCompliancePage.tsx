@@ -22,6 +22,14 @@ const API_BASE = import.meta.env.VITE_API_URL;
 const { TextArea } = Input;
 const { Option } = Select;
 
+const NA_DOCUMENTS = [
+  "State_LWF Remittance Receipt with list of employees",
+  "State_PT RC Remittance Receipt with list of employees",
+];
+
+const isNaAllowed = (documentName: string) =>
+  NA_DOCUMENTS.includes(documentName);
+
 interface PE {
   id: number;
   short_name: string;
@@ -68,6 +76,7 @@ interface DocumentRow {
   submission_id?: number;
   isUploaded?: boolean;
   uploadedFileName?: string;
+  isNotApplicable?: boolean;
 }
 
 export default function VendorCompliancePage() {
@@ -449,6 +458,8 @@ const rows: DocumentRow[] = filteredDocs.map(
     uploadedFileName:
         doc.uploaded_file_name || "",
 
+    isNotApplicable: false,
+
     // ✅ ONLY failed documents reuploadable
     canReupload:
       reuploadMode
@@ -689,7 +700,8 @@ const submitCompliance = async () => {
   const missingDocs = tableData.filter(
     (row) =>
       !row.isAdditional &&
-      row.fileList.length === 0
+      row.fileList.length === 0 &&
+      !row.isNotApplicable
   );
 
   if (missingDocs.length > 0) {
@@ -726,6 +738,19 @@ if (!effectiveReuploadMode) {
     formData.append(
       "cc_emails",
       JSON.stringify(ccEmails || [])
+    );
+
+    const documentStatuses = tableData
+      .filter((row) => !row.isAdditional)
+      .map((row) => ({
+        document_id: row.document_id,
+        document_name: row.document_name,
+        is_not_applicable: !!row.isNotApplicable,
+      }));
+
+    formData.append(
+      "document_statuses",
+      JSON.stringify(documentStatuses)
     );
 
     // ================= REUPLOAD MODE =================
@@ -1368,6 +1393,7 @@ if (effectiveReuploadMode) {
 
         <Upload
           disabled={
+            record.isNotApplicable ||
             (record.isUploaded && !record.canReupload) ||
             frozenPeriods.includes(selectedPeriod) ||
             (
@@ -1404,6 +1430,7 @@ if (effectiveReuploadMode) {
           <Button
             size="small"
             disabled={
+              record.isNotApplicable ||
               (record.isUploaded && !record.canReupload) ||
               frozenPeriods.includes(selectedPeriod) ||
               (
@@ -1437,6 +1464,26 @@ if (effectiveReuploadMode) {
           </Button>
 
         </Upload>
+
+        {!record.isAdditional &&
+          isNaAllowed(record.document_name) &&
+          !effectiveReuploadMode && (
+            <Checkbox
+              checked={!!record.isNotApplicable}
+              onChange={(e) => {
+                updateRow(record.key, {
+                  isNotApplicable: e.target.checked,
+                  fileList: e.target.checked
+                    ? []
+                    : record.fileList,
+                });
+              }}
+            >
+              <span className="text-xs text-gray-600">
+                Not Applicable
+              </span>
+            </Checkbox>
+        )}
 
         {record.isAdditional && (
           <Button

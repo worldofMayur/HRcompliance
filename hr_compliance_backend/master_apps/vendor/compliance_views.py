@@ -29,6 +29,11 @@ from master_apps.auditor.models import AuditSession
 from master_apps.vendor.models import SystemNotification
 from master_apps.vendor.mapping_models import VendorBranchMapping
 
+NA_DOCUMENT_NAMES = {
+    "State_LWF Remittance Receipt with list of employees",
+    "State_PT RC Remittance Receipt with list of employees",
+}
+
 
 class VendorSubmitComplianceAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -127,6 +132,149 @@ class VendorSubmitComplianceAPIView(APIView):
 
         remark_saved = False
 
+
+        # ===============================
+        # 🚫 PROCESS NOT APPLICABLE DOCUMENTS
+        # ===============================
+        document_statuses = request.data.get("document_statuses", "[]")
+
+        try:
+            document_statuses = json.loads(document_statuses)
+        except Exception:
+            document_statuses = []
+
+        for doc_status in document_statuses:
+
+            if not doc_status.get("is_not_applicable"):
+                continue
+
+            document_id = doc_status.get("document_id")
+
+            if not document_id:
+                continue
+
+            try:
+                document_id = int(document_id)
+            except (TypeError, ValueError):
+                continue
+
+            # Get actual document from database
+            try:
+                document = DocumentMaster.objects.get(id=document_id)
+            except DocumentMaster.DoesNotExist:
+                return Response(
+                    {"error": "Invalid document selected."},
+                    status=400
+                )
+
+            # N/A allowed ONLY for the two specified documents
+            if document.name not in NA_DOCUMENT_NAMES:
+                return Response(
+                    {
+                        "error": (
+                            f"Not Applicable is not allowed for "
+                            f"'{document.name}'."
+                        )
+                    },
+                    status=400
+                )
+
+            # Check mapping
+            mapping_qs = VendorBranchMapping.objects.filter(
+                vendor=vendor,
+                principal_employer_id=pe_id,
+                branch_id=branch_id,
+                documents__id=document_id
+            )
+
+            mapping = None
+
+            for m in mapping_qs:
+
+                apply_pending_updates(m)
+
+                new_status = m.update_status()
+
+                if m.status != new_status:
+                    m.status = new_status
+                    m.save()
+
+                if (
+                    m.status == "Active"
+                    and (
+                        not m.end_date
+                        or m.end_date >= now().date()
+                    )
+                ):
+                    mapping = m
+                    break
+
+            if not mapping:
+                return Response(
+                    {"error": "Contract expired or invalid mapping"},
+                    status=400
+                )
+
+            # Prevent duplicate submission
+            existing_submission = (
+                VendorComplianceSubmission.objects.filter(
+                    vendor=vendor,
+                    principal_employer_id=pe_id,
+                    branch_id=branch_id,
+                    document_id=document_id,
+                    audit_period__iexact=selected_period
+                )
+                .exclude(
+                    workflow_status=WorkflowStatus.REUPLOAD_REQUESTED
+                )
+                .first()
+            )
+
+            if existing_submission:
+
+                if existing_submission.is_frozen:
+                    return Response(
+                        {
+                            "error": (
+                                "This audit period is already finalized "
+                                "and frozen."
+                            )
+                        },
+                        status=400
+                    )
+
+                return Response(
+                    {
+                        "error": (
+                            f"{existing_submission.document.name} "
+                            f"already submitted for this period."
+                        )
+                    },
+                    status=400
+                )
+
+            # Save N/A submission
+            VendorComplianceSubmission.objects.create(
+                vendor=vendor,
+                principal_employer_id=pe_id,
+                branch_id=branch_id,
+                document_id=document_id,
+                state=mapping.branch.state,
+                audit_period=selected_period,
+                main_file=None,
+                is_not_applicable=True,
+                workflow_status=workflow_status,
+                original_filename="",
+                general_remark=general_remark if not remark_saved else None,
+                cc_emails=cc_emails if not remark_saved else None,
+            )
+
+            remark_saved = True
+
+
+        # ===============================
+        # EXISTING FILE UPLOAD LOGIC
+        # ===============================
         for index in range(document_count):
 
             file = request.FILES.get(f"document_{index}_file")
