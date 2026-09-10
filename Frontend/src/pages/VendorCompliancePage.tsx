@@ -645,36 +645,53 @@ const getPeriodOptions = () => {
 };
 
 const handleSubmit = () => {
-// Reupload -> submit directly
-if (effectiveReuploadMode) {
-  submitCompliance();
-  return;
-}
+  // Reupload -> submit directly
+  if (effectiveReuploadMode) {
+    submitCompliance();
+    return;
+  }
 
-// Build payroll rows
-const rows = getPayrollMonths().map((month) => ({
-  month,
+  // Check which allowed documents were marked Not Applicable
+  const ptRcNotApplicable = tableData.some(
+    (row) =>
+      !row.isAdditional &&
+      row.document_name ===
+        "State_PT RC Remittance Receipt with list of employees" &&
+      row.isNotApplicable
+  );
 
-  male_employees: undefined,
-  female_employees: undefined,
+  const lwfNotApplicable = tableData.some(
+    (row) =>
+      !row.isAdditional &&
+      row.document_name ===
+        "State_LWF Remittance Receipt with list of employees" &&
+      row.isNotApplicable
+  );
 
-  gross_wages: undefined,
-  net_wages: undefined,
+  // Build payroll rows
+  const rows = getPayrollMonths().map((month) => ({
+    month,
 
-  pf_remittance_date: "",
-  esic_remittance_date: "",
+    male_employees: undefined,
+    female_employees: undefined,
 
-  rc_remittance_date: "",
-  pt_rc_not_applicable: false,
+    gross_wages: undefined,
+    net_wages: undefined,
 
-  lwf_remittance_date: "",
-  lwf_not_applicable: false,
-}));
+    pf_remittance_date: "",
+    esic_remittance_date: "",
 
-setPayrollData(rows);
+    rc_remittance_date: "",
+    pt_rc_not_applicable: ptRcNotApplicable,
 
-setSummaryOpen(true);
+    lwf_remittance_date: "",
+    lwf_not_applicable: lwfNotApplicable,
+  }));
+
+  setPayrollData(rows);
+  setSummaryOpen(true);
 };
+
 
 const submitCompliance = async () => {
 
@@ -1473,9 +1490,7 @@ if (effectiveReuploadMode) {
               onChange={(e) => {
                 updateRow(record.key, {
                   isNotApplicable: e.target.checked,
-                  fileList: e.target.checked
-                    ? []
-                    : record.fileList,
+                  fileList: [],
                 });
               }}
             >
@@ -1523,81 +1538,75 @@ if (effectiveReuploadMode) {
             </div>
         )}
 
-        {record.fileList.length > 0 ? (
-          <div
-            className="
-              mt-1
-              flex
-              items-center
-              justify-between
-              gap-1
-              rounded-lg
-              border border-emerald-100
-              bg-emerald-50/40
-              px-2
-              py-1.5
-            "
-          >
-            <p
-              className="
-                text-[10px]
-                font-medium
-                text-emerald-700
-                break-all
-                min-w-0
-                flex-1
-              "
-            >
-              {record.fileList[0].name}
-            </p>
+{record.fileList.length > 0 ? (
+  <div
+    className="
+      mt-1
+      flex
+      items-center
+      justify-between
+      gap-1
+      rounded-lg
+      border border-emerald-100
+      bg-emerald-50/40
+      px-2
+      py-1.5
+    "
+  >
+    <p
+      className="
+        text-[10px]
+        font-medium
+        text-emerald-700
+        break-all
+        min-w-0
+        flex-1
+      "
+    >
+      {record.fileList[0].name}
+    </p>
 
-            <button
-              type="button"
-              onClick={() =>
-                updateRow(record.key, {
-                  fileList: [],
-                })
-              }
-              className="
-                shrink-0
-                text-red-500
-                font-bold
-                hover:text-red-700
-              "
-            >
-              ✕
-            </button>
-          </div>
+    <button
+      type="button"
+      onClick={() =>
+        updateRow(record.key, {
+          fileList: [],
+        })
+      }
+      className="
+        shrink-0
+        text-red-500
+        font-bold
+        hover:text-red-700
+      "
+    >
+      ✕
+    </button>
+  </div>
 
-        ) : record.isUploaded ? (
+) : record.isUploaded ? (
 
-          <div className="
-            mt-1
-            rounded-lg
-            border
-            border-green-200
-            bg-green-50
-            px-2
-            py-1.5
-          ">
-            <p className="text-[10px] font-medium text-green-700">
-              ✓ Already Submitted
-            </p>
+  <div className="
+    mt-1
+    rounded-lg
+    border
+    border-green-200
+    bg-green-50
+    px-2
+    py-1.5
+  ">
+    <p className="text-[10px] font-medium text-green-700">
+      ✓ Already Submitted
+    </p>
 
-            {record.uploadedFileName && (
-              <p className="mt-1 text-[9px] text-green-600 break-all">
-                {record.uploadedFileName}
-              </p>
-            )}
-          </div>
+    {record.uploadedFileName && (
+      <p className="mt-1 text-[9px] text-green-600 break-all">
+        {record.uploadedFileName}
+      </p>
+    )}
+  </div>
 
-        ) : (
-
-          <p className="text-[10px] text-gray-400">
-            Upload PDF, JPG or PNG
-          </p>
-
-        )}
+) : null}
 
       </div>
 
@@ -1736,18 +1745,22 @@ if (effectiveReuploadMode) {
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
   onOk={() => {
-    if (
-      payrollData.some(
-        (row) =>
-          !row.male_employees ||
-          !row.female_employees ||
-          !row.gross_wages ||
-          !row.net_wages
-      )
-    ) {
-      message.error("Please fill all mandatory fields for every month.");
-      return;
-    }
+  if (
+    payrollData.some(
+      (row) =>
+        row.male_employees === undefined ||
+        row.male_employees === null ||
+        row.female_employees === undefined ||
+        row.female_employees === null ||
+        row.gross_wages === undefined ||
+        row.gross_wages === null ||
+        row.net_wages === undefined ||
+        row.net_wages === null
+    )
+  ) {
+    message.error("Please fill all mandatory fields for every month.");
+    return;
+  }
     setSummaryOpen(false);
     submitCompliance();
   }}

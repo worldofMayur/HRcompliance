@@ -16,6 +16,7 @@ from .compliance_models import (
 )
 
 from .models import Vendor
+from master_apps.documents.models import DocumentMaster
 from .mapping_models import VendorBranchMapping
 from .utils import apply_pending_updates
 from django.utils import timezone
