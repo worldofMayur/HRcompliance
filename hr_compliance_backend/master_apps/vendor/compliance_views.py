@@ -15,7 +15,7 @@ from .compliance_models import (
     VendorCompliancePayroll,
 )
 
-from .models import Vendor
+from .models import Vendor, DocumentMaster
 from .mapping_models import VendorBranchMapping
 from .utils import apply_pending_updates
 from django.utils import timezone

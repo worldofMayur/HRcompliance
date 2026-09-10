@@ -1473,9 +1473,7 @@ if (effectiveReuploadMode) {
               onChange={(e) => {
                 updateRow(record.key, {
                   isNotApplicable: e.target.checked,
-                  fileList: e.target.checked
-                    ? []
-                    : record.fileList,
+                  fileList: [],
                 });
               }}
             >
@@ -1523,81 +1521,75 @@ if (effectiveReuploadMode) {
             </div>
         )}
 
-        {record.fileList.length > 0 ? (
-          <div
-            className="
-              mt-1
-              flex
-              items-center
-              justify-between
-              gap-1
-              rounded-lg
-              border border-emerald-100
-              bg-emerald-50/40
-              px-2
-              py-1.5
-            "
-          >
-            <p
-              className="
-                text-[10px]
-                font-medium
-                text-emerald-700
-                break-all
-                min-w-0
-                flex-1
-              "
-            >
-              {record.fileList[0].name}
-            </p>
+{record.fileList.length > 0 ? (
+  <div
+    className="
+      mt-1
+      flex
+      items-center
+      justify-between
+      gap-1
+      rounded-lg
+      border border-emerald-100
+      bg-emerald-50/40
+      px-2
+      py-1.5
+    "
+  >
+    <p
+      className="
+        text-[10px]
+        font-medium
+        text-emerald-700
+        break-all
+        min-w-0
+        flex-1
+      "
+    >
+      {record.fileList[0].name}
+    </p>
 
-            <button
-              type="button"
-              onClick={() =>
-                updateRow(record.key, {
-                  fileList: [],
-                })
-              }
-              className="
-                shrink-0
-                text-red-500
-                font-bold
-                hover:text-red-700
-              "
-            >
-              ✕
-            </button>
-          </div>
+    <button
+      type="button"
+      onClick={() =>
+        updateRow(record.key, {
+          fileList: [],
+        })
+      }
+      className="
+        shrink-0
+        text-red-500
+        font-bold
+        hover:text-red-700
+      "
+    >
+      ✕
+    </button>
+  </div>
 
-        ) : record.isUploaded ? (
+) : record.isUploaded ? (
 
-          <div className="
-            mt-1
-            rounded-lg
-            border
-            border-green-200
-            bg-green-50
-            px-2
-            py-1.5
-          ">
-            <p className="text-[10px] font-medium text-green-700">
-              ✓ Already Submitted
-            </p>
+  <div className="
+    mt-1
+    rounded-lg
+    border
+    border-green-200
+    bg-green-50
+    px-2
+    py-1.5
+  ">
+    <p className="text-[10px] font-medium text-green-700">
+      ✓ Already Submitted
+    </p>
 
-            {record.uploadedFileName && (
-              <p className="mt-1 text-[9px] text-green-600 break-all">
-                {record.uploadedFileName}
-              </p>
-            )}
-          </div>
+    {record.uploadedFileName && (
+      <p className="mt-1 text-[9px] text-green-600 break-all">
+        {record.uploadedFileName}
+      </p>
+    )}
+  </div>
 
-        ) : (
-
-          <p className="text-[10px] text-gray-400">
-            Upload PDF, JPG or PNG
-          </p>
-
-        )}
+) : null}
 
       </div>
 
