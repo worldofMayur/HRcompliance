@@ -645,36 +645,53 @@ const getPeriodOptions = () => {
 };
 
 const handleSubmit = () => {
-// Reupload -> submit directly
-if (effectiveReuploadMode) {
-  submitCompliance();
-  return;
-}
+  // Reupload -> submit directly
+  if (effectiveReuploadMode) {
+    submitCompliance();
+    return;
+  }
 
-// Build payroll rows
-const rows = getPayrollMonths().map((month) => ({
-  month,
+  // Check which allowed documents were marked Not Applicable
+  const ptRcNotApplicable = tableData.some(
+    (row) =>
+      !row.isAdditional &&
+      row.document_name ===
+        "State_PT RC Remittance Receipt with list of employees" &&
+      row.isNotApplicable
+  );
 
-  male_employees: undefined,
-  female_employees: undefined,
+  const lwfNotApplicable = tableData.some(
+    (row) =>
+      !row.isAdditional &&
+      row.document_name ===
+        "State_LWF Remittance Receipt with list of employees" &&
+      row.isNotApplicable
+  );
 
-  gross_wages: undefined,
-  net_wages: undefined,
+  // Build payroll rows
+  const rows = getPayrollMonths().map((month) => ({
+    month,
 
-  pf_remittance_date: "",
-  esic_remittance_date: "",
+    male_employees: undefined,
+    female_employees: undefined,
 
-  rc_remittance_date: "",
-  pt_rc_not_applicable: false,
+    gross_wages: undefined,
+    net_wages: undefined,
 
-  lwf_remittance_date: "",
-  lwf_not_applicable: false,
-}));
+    pf_remittance_date: "",
+    esic_remittance_date: "",
 
-setPayrollData(rows);
+    rc_remittance_date: "",
+    pt_rc_not_applicable: ptRcNotApplicable,
 
-setSummaryOpen(true);
+    lwf_remittance_date: "",
+    lwf_not_applicable: lwfNotApplicable,
+  }));
+
+  setPayrollData(rows);
+  setSummaryOpen(true);
 };
+
 
 const submitCompliance = async () => {
 
