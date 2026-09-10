@@ -1745,18 +1745,22 @@ if (effectiveReuploadMode) {
   onCancel={() => setSummaryOpen(false)}
   cancelButtonProps={{ style: { display: "none" } }}
   onOk={() => {
-    if (
-      payrollData.some(
-        (row) =>
-          !row.male_employees ||
-          !row.female_employees ||
-          !row.gross_wages ||
-          !row.net_wages
-      )
-    ) {
-      message.error("Please fill all mandatory fields for every month.");
-      return;
-    }
+  if (
+    payrollData.some(
+      (row) =>
+        row.male_employees === undefined ||
+        row.male_employees === null ||
+        row.female_employees === undefined ||
+        row.female_employees === null ||
+        row.gross_wages === undefined ||
+        row.gross_wages === null ||
+        row.net_wages === undefined ||
+        row.net_wages === null
+    )
+  ) {
+    message.error("Please fill all mandatory fields for every month.");
+    return;
+  }
     setSummaryOpen(false);
     submitCompliance();
   }}
