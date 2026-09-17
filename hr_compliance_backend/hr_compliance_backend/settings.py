@@ -217,7 +217,7 @@ FRONTEND_URL = os.getenv(
 
 SIMPLE_JWT = {
     # ACCESS TOKEN
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=45),
 
     # REFRESH TOKEN
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
