@@ -22,7 +22,7 @@ export default function AuthLayout({
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-24 w-auto object-contain sm:h-28"
+                className="h-28 w-auto object-contain sm:h-32"
               />
 
               <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
@@ -53,12 +53,12 @@ export default function AuthLayout({
             <div className="mx-auto w-full max-w-2xl px-12 xl:px-16 2xl:px-20">
 
               {/* Logo + Branding */}
-              <div className="mb-12 flex items-center gap-5">
+              <div className="mb-12 flex items-center gap-6">
 
                 <img
                   src="/Kekul.png"
                   alt="KEKUL"
-                  className="h-24 xl:h-28 w-auto object-contain"
+                  className="h-28 xl:h-32 w-auto object-contain"
                 />
 
                 <div>
