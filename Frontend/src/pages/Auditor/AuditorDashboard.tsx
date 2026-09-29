@@ -45,6 +45,7 @@ export default function AuditorDashboard() {
   const [stateList, setStateList] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
+  const [auditSearch, setAuditSearch] = useState("");
   const [hasDocuments, setHasDocuments] =
   useState(true);
   const [notificationDocs, setNotificationDocs] = useState<string[]>([]);
@@ -1268,13 +1269,12 @@ const columns = [
 
 const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
-
-  const key =
-    `${item.form_number}_` +
-    `${item.audit_particulars}_` +
-    `${item.act_name}_` +
-    `${item.section_rule}_` +
-    `${item.document_name}`;
+    const key =
+      `${item.form_number}_` +
+      `${item.audit_particulars}_` +
+      `${item.act_name}_` +
+      `${item.section_rule}_` +
+      `${item.document_name}`;
 
     if (!acc[key]) {
       acc[key] = {
@@ -1290,9 +1290,35 @@ const groupedChecklist = Object.values(
     }
 
     return acc;
-
   }, {})
+).sort(
+  (a: any, b: any) =>
+    Number(a.sequence ?? 999999) -
+    Number(b.sequence ?? 999999) ||
+    Number(a.id) - Number(b.id)
 );
+
+const filteredGroupedChecklist = groupedChecklist.filter((row: any) => {
+  const search = auditSearch.trim().toLowerCase();
+
+  if (!search) return true;
+
+  const searchableText = [
+    row.act_name,
+    row.section_rule,
+    row.document_name,
+    row.form_number,
+    row.audit_particulars,
+    ...(Array.isArray(row.auditor_guide)
+      ? row.auditor_guide
+      : [row.auditor_guide]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return searchableText.includes(search);
+});
 
 const hasExceptionalApproval =
   groupedChecklist.some(
@@ -1859,21 +1885,31 @@ styles={{
               </div>
             </div>
           ) : (
-            <div
-              className="
-                h-full
-                overflow-hidden
-                rounded-xl
-                border
-                border-gray-200
-                bg-white
-                shadow-sm
-              "
-            >
-              <Table
+          <div
+            className="
+              h-full
+              overflow-hidden
+              rounded-xl
+              border
+              border-gray-200
+              bg-white
+              shadow-sm
+            "
+          >
+            <div className="border-b border-gray-200 bg-white p-2">
+              <Input
+                allowClear
+                value={auditSearch}
+                onChange={(e) => setAuditSearch(e.target.value)}
+                placeholder="Search document, Act, or audit checkpoint..."
+                className="w-full sm:w-80"
+              />
+            </div>
+
+            <Table
                 rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
                 columns={columns}
-                dataSource={groupedChecklist}
+                dataSource={filteredGroupedChecklist}
                 rowKey="id"
                 pagination={false}
                 bordered
