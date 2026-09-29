@@ -43,7 +43,7 @@ export default function AuthLayout({
         {/* ========================= */}
         {/* RIGHT SIDE */}
         {/* ========================= */}
-        <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#206aca]">
+        <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#002555]">
 
           {/* Soft blue glow */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.15),transparent_35%)]" />
