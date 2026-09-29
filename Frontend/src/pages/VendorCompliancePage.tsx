@@ -249,13 +249,15 @@ const parseDateForPicker = (dateStr: string) => {
   }, [selectedPE, selectedBranch]);
 
   // 🔥 Strong Reset when Branch is cleared
+  // 🔥 Strong Reset when Branch is cleared
+  // Guard against the mount race when coming from a notification prefill
   useEffect(() => {
-    if (!selectedBranch) {
+    if (!selectedBranch && !prefillData?.selected_period) {
       setSelectedPeriod("");
       setTableData([]);
       setDocuments([]);
     }
-  }, [selectedBranch]);
+  }, [selectedBranch, prefillData]);
 
  // Load & Auto-select Period when mapping data is ready
     useEffect(() => {
