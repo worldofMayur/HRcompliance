@@ -962,8 +962,28 @@ if (effectiveReuploadMode) {
   }
 };
 
-  const uploadedCount = tableData.filter(r => r.fileList.length > 0).length;
-  const totalDocs = tableData.length;
+  const uploadedCount = tableData.filter(
+    r => !r.isAdditional && (r.fileList.length > 0 || r.isUploaded)
+  ).length;
+
+  const totalDocs = tableData.filter(
+    r => !r.isAdditional
+  ).length;
+
+  const remainingCount = tableData.filter(
+    r =>
+      !r.isAdditional &&
+      !r.isUploaded &&
+      r.fileList.length === 0
+  ).length;
+
+  const isSubmissionLocked =
+  !effectiveReuploadMode &&
+  tableData.some(
+    r =>
+      !r.isAdditional &&
+      r.isUploaded
+  );
 
   return (
     <div
@@ -1249,13 +1269,7 @@ if (effectiveReuploadMode) {
           py-2
         ">
           <span className="text-xs font-medium text-amber-700">
-            Remaining: {
-              tableData.filter(
-                r =>
-                  !r.isAdditional &&
-                  r.fileList.length === 0
-              ).length
-            }
+            Remaining: {remainingCount}
           </span>
         </div>
 
@@ -1266,7 +1280,10 @@ if (effectiveReuploadMode) {
     <Button
       type="primary"
       ghost
-      disabled={frozenPeriods.includes(selectedPeriod)}
+      disabled={
+        frozenPeriods.includes(selectedPeriod) ||
+        isSubmissionLocked
+      }
       onClick={addAdditionalDocument}
       className="
       h-11
@@ -1413,6 +1430,7 @@ if (effectiveReuploadMode) {
             record.isNotApplicable ||
             (record.isUploaded && !record.canReupload) ||
             frozenPeriods.includes(selectedPeriod) ||
+            isSubmissionLocked ||
             (
               effectiveReuploadMode &&
               !record.isAdditional &&
@@ -1450,6 +1468,7 @@ if (effectiveReuploadMode) {
               record.isNotApplicable ||
               (record.isUploaded && !record.canReupload) ||
               frozenPeriods.includes(selectedPeriod) ||
+              isSubmissionLocked ||
               (
                 effectiveReuploadMode &&
                 !record.isAdditional &&
@@ -1487,6 +1506,7 @@ if (effectiveReuploadMode) {
           !effectiveReuploadMode && (
             <Checkbox
               checked={!!record.isNotApplicable}
+              disabled={isSubmissionLocked}
               onChange={(e) => {
                 updateRow(record.key, {
                   isNotApplicable: e.target.checked,
@@ -1639,6 +1659,7 @@ if (effectiveReuploadMode) {
               outline-none
               "
               value={generalRemark}
+              disabled={isSubmissionLocked}
               onChange={(e) => setGeneralRemark(e.target.value)}
             />
 
@@ -1701,6 +1722,8 @@ if (effectiveReuploadMode) {
     loading={loading}
     disabled={
       frozenPeriods.includes(selectedPeriod) ||
+      
+      isSubmissionLocked ||
 
       !selectedPE ||
 
