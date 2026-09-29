@@ -22,7 +22,7 @@ export default function AuthLayout({
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-16 w-auto object-contain sm:h-20"
+                className="h-20 w-auto object-contain sm:h-24"
               />
 
               <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
@@ -43,7 +43,7 @@ export default function AuthLayout({
         {/* ========================= */}
         {/* RIGHT SIDE */}
         {/* ========================= */}
-        <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#0B1120]">
+        <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#111827]">
 
           {/* Background */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%)]" />
@@ -58,7 +58,7 @@ export default function AuthLayout({
                 <img
                   src="/Kekul.png"
                   alt="KEKUL"
-                  className="h-16 xl:h-20 w-auto object-contain"
+                  className="h-20 xl:h-24 w-auto object-contain"
                 />
 
                 <div>
