@@ -20,9 +20,9 @@ export default function AuthLayout({
             <div className="mb-10 flex flex-col items-center text-center lg:hidden">
 
               <img
-                src="/Kekul.png"
+                src="/KekulBiz.png"
                 alt="KEKUL"
-                className="h-28 w-auto object-contain sm:h-32"
+                className="h-20 w-auto object-contain sm:h-24"
               />
 
               <h1 className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">
@@ -48,16 +48,16 @@ export default function AuthLayout({
           {/* Soft blue glow */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.15),transparent_35%)]" />
 
-          <div className="relative z-10 flex w-full items-center">
+          <div className="relative z-10 flex w-full items-center justify-center">
 
-            <div className="mx-auto w-full max-w-2xl px-12 xl:px-16 2xl:px-20">
+            <div className="w-full max-w-xl px-10 xl:px-14 2xl:px-16 text-center">
 
-              {/* Logo – now properly large */}
-              <div className="mb-10">
+              {/* Logo */}
+              <div className="mb-10 flex justify-center">
                 <img
                   src="/KekulBiz.png"
                   alt="KEKUL"
-                  className="h-24 xl:h-28 w-auto object-contain"
+                  className="h-20 xl:h-24 w-auto object-contain"
                 />
               </div>
 
@@ -70,7 +70,7 @@ export default function AuthLayout({
                 Vendor Compliance Management System
               </p>
 
-              {/* Heading */}
+              {/* Main Heading */}
               <h2 className="mt-12 text-4xl xl:text-5xl font-semibold leading-tight tracking-tight text-white">
                 Modern compliance
                 <span className="mt-2 block text-blue-400">
@@ -78,13 +78,13 @@ export default function AuthLayout({
                 </span>
               </h2>
 
-              <p className="mt-6 max-w-xl text-base leading-8 text-slate-400">
+              <p className="mt-6 text-base leading-8 text-slate-400 max-w-lg mx-auto">
                 Streamline audits, manage vendors, monitor compliance,
                 and maintain governance workflows from one secure platform.
               </p>
 
               {/* Features */}
-              <div className="mt-10 space-y-4">
+              <div className="mt-10 flex flex-col items-center gap-4">
                 <div className="flex items-center gap-3 text-slate-300">
                   <div className="h-2 w-2 rounded-full bg-emerald-400" />
                   <span className="text-sm">
