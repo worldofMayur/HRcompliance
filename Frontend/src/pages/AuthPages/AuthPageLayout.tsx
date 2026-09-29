@@ -22,7 +22,7 @@ export default function AuthLayout({
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-32 w-auto object-contain sm:h-36"
+                className="h-28 w-auto object-contain sm:h-32"
               />
 
               <h1 className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">
@@ -52,28 +52,26 @@ export default function AuthLayout({
 
             <div className="mx-auto w-full max-w-2xl px-12 xl:px-16 2xl:px-20">
 
-              {/* Logo + Branding – improved hierarchy */}
-              <div className="mb-14 flex items-center gap-7">
-
+              {/* Logo – now properly large */}
+              <div className="mb-10">
                 <img
                   src="/Kekul.png"
                   alt="KEKUL"
-                  className="h-32 xl:h-36 w-auto object-contain shrink-0"
+                  className="h-24 xl:h-28 w-auto object-contain"
                 />
-
-                <div className="min-w-0">
-                  <h1 className="text-3xl xl:text-4xl font-semibold tracking-tight text-white leading-tight">
-                    Vendor Compliance Audit
-                  </h1>
-
-                  <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">
-                    Vendor Compliance Management System
-                  </p>
-                </div>
               </div>
 
+              {/* Title */}
+              <h1 className="text-3xl xl:text-4xl font-semibold tracking-tight text-white leading-tight">
+                Vendor Compliance Audit
+              </h1>
+
+              <p className="mt-3 text-xs uppercase tracking-[0.22em] text-slate-400">
+                Vendor Compliance Management System
+              </p>
+
               {/* Heading */}
-              <h2 className="text-4xl xl:text-5xl font-semibold leading-tight tracking-tight text-white">
+              <h2 className="mt-12 text-4xl xl:text-5xl font-semibold leading-tight tracking-tight text-white">
                 Modern compliance
                 <span className="mt-2 block text-blue-400">
                   built for enterprises.
