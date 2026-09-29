@@ -597,13 +597,22 @@ const getPeriodOptions = () => {
     }
   }
 
-  return Array.from(
-    new Set(periods)
-  ).filter(
-    (p) =>
-      !frozenPeriods.includes(p) ||
-      p === prefillData?.selected_period
-  );
+const availablePeriods = Array.from(
+  new Set(periods)
+).filter(
+  (p) => !frozenPeriods.includes(p)
+);
+
+// If user came from a re-upload notification,
+// keep the notification period available even if it is frozen.
+if (
+  prefillData?.selected_period &&
+  !availablePeriods.includes(prefillData.selected_period)
+) {
+  availablePeriods.push(prefillData.selected_period);
+}
+
+return availablePeriods;
   };
   const updateRow = (key: string, updated: Partial<DocumentRow>) => {
     setTableData(prev => prev.map(row => row.key === key ? { ...row, ...updated } : row));
