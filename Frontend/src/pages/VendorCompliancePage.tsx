@@ -257,28 +257,45 @@ const parseDateForPicker = (dateStr: string) => {
     }
   }, [selectedBranch]);
 
-  // 🔥 Load & Auto-select Period when mapping data is ready
-  useEffect(() => {
-    if (selectedBranch && mappingStartDate && mappingEndDate && frequencyBase) {
-      const periods = getPeriodOptions();
+ // Load & Auto-select Period when mapping data is ready
+    useEffect(() => {
+      if (
+        selectedBranch &&
+        mappingStartDate &&
+        mappingEndDate &&
+        frequencyBase
+      ) {
+        // If opened from a notification, keep the notification period
+        if (prefillData?.selected_period) {
+          console.log(
+            "📅 Keeping notification audit period:",
+            prefillData.selected_period
+          );
+          return;
+        }
 
-      if (periods.length > 0) {
+        const periods = getPeriodOptions();
 
-      setSelectedPeriod((prev) => {
+        if (periods.length > 0) {
+          const latestPeriod = periods[periods.length - 1];
 
-        // Keep notification period
-        if (prev) return prev;
+          console.log(
+            "📅 Auto selected audit period:",
+            latestPeriod
+          );
 
-        // Show "Select Period" instead of auto-selecting latest
-        return "";
-      });
-
-      } else {
-
-        setSelectedPeriod("");
+          setSelectedPeriod(latestPeriod);
+        } else {
+          setSelectedPeriod("");
+        }
       }
-    }
-  }, [selectedBranch, mappingStartDate, mappingEndDate, frequencyBase]);
+    }, [
+      selectedBranch,
+      mappingStartDate,
+      mappingEndDate,
+      frequencyBase,
+      prefillData,
+    ]);
 
   // Load Documents when all required fields are selected
   useEffect(() => {
@@ -1722,7 +1739,7 @@ if (effectiveReuploadMode) {
     loading={loading}
     disabled={
       frozenPeriods.includes(selectedPeriod) ||
-      
+
       isSubmissionLocked ||
 
       !selectedPE ||
