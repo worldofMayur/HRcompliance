@@ -45,14 +45,14 @@ export default function AuthLayout({
         {/* ========================= */}
         <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#1e293b]">
 
-          {/* Background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%)]" />
+          {/* Soft blue glow to match theme */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.15),transparent_35%)]" />
 
           <div className="relative z-10 flex w-full items-center">
 
             <div className="mx-auto w-full max-w-2xl px-12 xl:px-16 2xl:px-20">
 
-              {/* Logo */}
+              {/* Logo + Branding */}
               <div className="mb-12 flex items-center gap-5">
 
                 <img
