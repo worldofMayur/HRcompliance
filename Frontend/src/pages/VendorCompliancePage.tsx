@@ -598,11 +598,13 @@ const getPeriodOptions = () => {
   }
 
   return Array.from(
-  new Set(periods)
-).filter(
-  (p) => !frozenPeriods.includes(p)
-);
-};
+    new Set(periods)
+  ).filter(
+    (p) =>
+      !frozenPeriods.includes(p) ||
+      p === prefillData?.selected_period
+  );
+  };
   const updateRow = (key: string, updated: Partial<DocumentRow>) => {
     setTableData(prev => prev.map(row => row.key === key ? { ...row, ...updated } : row));
   };
