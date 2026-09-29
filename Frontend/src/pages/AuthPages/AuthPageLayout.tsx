@@ -22,10 +22,10 @@ export default function AuthLayout({
               <img
                 src="/Kekul.png"
                 alt="KEKUL"
-                className="h-28 w-auto object-contain sm:h-32"
+                className="h-32 w-auto object-contain sm:h-36"
               />
 
-              <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
+              <h1 className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">
                 Vendor Compliance Audit
               </h1>
 
@@ -45,24 +45,24 @@ export default function AuthLayout({
         {/* ========================= */}
         <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#1e293b]">
 
-          {/* Soft blue glow to match theme */}
+          {/* Soft blue glow */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.15),transparent_35%)]" />
 
           <div className="relative z-10 flex w-full items-center">
 
             <div className="mx-auto w-full max-w-2xl px-12 xl:px-16 2xl:px-20">
 
-              {/* Logo + Branding */}
-              <div className="mb-12 flex items-center gap-6">
+              {/* Logo + Branding – improved hierarchy */}
+              <div className="mb-14 flex items-center gap-7">
 
                 <img
                   src="/Kekul.png"
                   alt="KEKUL"
-                  className="h-28 xl:h-32 w-auto object-contain"
+                  className="h-32 xl:h-36 w-auto object-contain shrink-0"
                 />
 
-                <div>
-                  <h1 className="text-3xl xl:text-4xl font-semibold tracking-tight text-white">
+                <div className="min-w-0">
+                  <h1 className="text-3xl xl:text-4xl font-semibold tracking-tight text-white leading-tight">
                     Vendor Compliance Audit
                   </h1>
 
