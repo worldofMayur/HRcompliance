@@ -55,7 +55,7 @@ export default function AuthLayout({
               {/* Logo – now properly large */}
               <div className="mb-10">
                 <img
-                  src="/Kekulll.png"
+                  src="/Kekull.png"
                   alt="KEKUL"
                   className="h-24 xl:h-28 w-auto object-contain"
                 />
