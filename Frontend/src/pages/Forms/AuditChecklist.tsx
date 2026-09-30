@@ -481,11 +481,20 @@ const startEdit = (row) => {
       row.form_number || "",
   });
 
+  const rawGuidelines = Array.isArray(row.auditor_guide)
+    ? row.auditor_guide
+    : [row.auditor_guide];
+
+  const uniqueGuidelines = Array.from(
+    new Set(
+      rawGuidelines
+        .map((point) => String(point || "").trim())
+        .filter(Boolean)
+    )
+  );
+
   setCheckpoints(
-    (Array.isArray(row.auditor_guide)
-      ? row.auditor_guide
-      : [row.auditor_guide]
-    ).map((point, index) => ({
+    uniqueGuidelines.map((point, index) => ({
       id: index + 1,
       text: point,
     }))
@@ -609,28 +618,48 @@ if (a.act !== b.act) {
 
 const groupedChecklists = useMemo(() => {
 
+  const sourceChecklists =
+    statusFilter === "inactive"
+      ? filteredChecklists
+      : filteredChecklists.filter(
+          (item) => item.is_active
+        );
+
   const groups = {};
 
-  filteredChecklists.forEach((item) => {
+  sourceChecklists.forEach((item) => {
 
-    const key = `${item.state_id}-${item.act_id}-${item.section}-${item.document_id}-${item.audit_particulars}`;
+    const key =
+      `${item.state_id}-` +
+      `${item.act_id}-` +
+      `${item.section}-` +
+      `${item.document_id}-` +
+      `${item.audit_particulars}`;
 
     if (!groups[key]) {
       groups[key] = {
         ...item,
-        auditor_guide: [item.auditor_guide],
+        auditor_guide: [],
       };
-    } else {
-      groups[key].auditor_guide.push(
-        item.auditor_guide
-      );
     }
 
+    if (item.auditor_guide) {
+      const guideline = String(
+        item.auditor_guide
+      ).trim();
+
+      if (
+        guideline &&
+        !groups[key].auditor_guide.includes(guideline)
+      ) {
+        groups[key].auditor_guide.push(guideline);
+      }
+    }
   });
 
   return Object.values(groups);
 
-}, [filteredChecklists]);
+}, [filteredChecklists, statusFilter]);
 
   /* =========================
      EXPORT EXCEL

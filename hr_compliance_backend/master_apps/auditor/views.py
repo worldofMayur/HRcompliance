@@ -1283,32 +1283,80 @@ class SaveAuditAPIView(APIView):
         # =========================
         for entry in entries:
 
-            checklist = AuditChecklist.objects.select_related(
-                "document"
-            ).get(
-                id=entry.get("checklist_id")
+            checklist = (
+                AuditChecklist.objects
+                .select_related(
+                    "state",
+                    "act",
+                    "section",
+                    "document"
+                )
+                .get(
+                    id=entry.get("checklist_id")
+                )
             )
 
-            submission = VendorComplianceSubmission.objects.filter(
-                vendor_id=vendor.id,
-                branch_id=branch_id,
-                audit_period=audit_period,
-                document=checklist.document,
-            ).first()
-
-            AuditEntry.objects.update_or_create(
-                checklist_id=entry.get("checklist_id"),
-                branch_id=branch_id,
-                audit_period=audit_period,
-                defaults={
-                    "submission": submission,
-                    "auditor": request.user.auditor_profile,
-                    "status": entry.get("status"),
-                    "observation": entry.get("observation"),
-                    "recommendation": entry.get("recommendation"),
-                    "submitted_by": request.user,
-                },
+            submission = (
+                VendorComplianceSubmission.objects
+                .filter(
+                    vendor_id=vendor.id,
+                    branch_id=branch_id,
+                    audit_period=audit_period,
+                    document=checklist.document,
+                )
+                .first()
             )
+
+            # ------------------------------------------
+            # GET ALL ACTIVE CHECKPOINT ROWS BELONGING
+            # TO THIS AUDIT CHECKLIST GROUP
+            # ------------------------------------------
+            checklist_group = (
+                AuditChecklist.objects
+                .filter(
+                    state=checklist.state,
+                    act=checklist.act,
+                    section=checklist.section,
+                    document=checklist.document,
+                    audit_particulars=checklist.audit_particulars,
+                    is_active=True,
+                )
+                .order_by(
+                    "sequence",
+                    "id"
+                )
+            )
+
+            # ------------------------------------------
+            # PROTECT AGAINST ACCIDENTAL DUPLICATE
+            # CHECKPOINT ROWS
+            # ------------------------------------------
+            seen_guidelines = set()
+
+            for checklist_item in checklist_group:
+
+                guideline_key = (
+                    checklist_item.auditor_guide or ""
+                ).strip()
+
+                if guideline_key in seen_guidelines:
+                    continue
+
+                seen_guidelines.add(guideline_key)
+
+                AuditEntry.objects.update_or_create(
+                    checklist_id=checklist_item.id,
+                    branch_id=branch_id,
+                    audit_period=audit_period,
+                    defaults={
+                        "submission": submission,
+                        "auditor": request.user.auditor_profile,
+                        "status": entry.get("status"),
+                        "observation": entry.get("observation"),
+                        "recommendation": entry.get("recommendation"),
+                        "submitted_by": request.user,
+                    },
+                )
 
                         # ======================================
             # 📎 SAVE EXCEPTIONAL APPROVAL FILE
