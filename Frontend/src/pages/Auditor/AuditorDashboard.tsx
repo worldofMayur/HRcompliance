@@ -94,6 +94,12 @@ const [isEditingCompliance, setIsEditingCompliance] = useState(false);
     &&
     !manualEditMode;
 
+    useEffect(() => {
+  if (isAuditLocked) {
+    setIsEditingCompliance(false);
+  }
+}, [isAuditLocked]);
+
   /* ================= LOAD ================= */
 
 
@@ -844,6 +850,15 @@ const handleShowAuditor = async () => {
     };
 
     const handleSaveComplianceSummary = async () => {
+
+      if (isAuditLocked) {
+        message.warning(
+          "Compliance Summary is locked because this audit is frozen."
+        );
+        setIsEditingCompliance(false);
+        return;
+      }
+
       try {
         await axios.put(
           `${API_BASE}/api/auditor/update-compliance-summary/`,
@@ -860,10 +875,14 @@ const handleShowAuditor = async () => {
 
         setIsEditingCompliance(false);
 
-      } catch (err) {
-        console.error(err);
-        message.error("Failed to update Compliance Summary");
-      }
+    } catch (err: any) {
+      console.error(err);
+
+      message.error(
+        err?.response?.data?.error ||
+        "Failed to update Compliance Summary"
+      );
+    }
     };
   /* ================= SUBMIT ================= */
 
@@ -2033,13 +2052,14 @@ className="
         Compliance Summary - {auditPeriod || "Selected Period"}
       </span>
 
-      <Button
-        size="small"
-        type={isEditingCompliance ? "default" : "primary"}
-        onClick={() => setIsEditingCompliance(!isEditingCompliance)}
-      >
-        {isEditingCompliance ? "Cancel Edit" : "Edit"}
-      </Button>
+    <Button
+      size="small"
+      type={isEditingCompliance ? "default" : "primary"}
+      disabled={isAuditLocked}
+      onClick={() => setIsEditingCompliance(!isEditingCompliance)}
+    >
+      {isEditingCompliance ? "Cancel Edit" : "Edit"}
+    </Button>
     </div>
   }
   open={complianceModalOpen}

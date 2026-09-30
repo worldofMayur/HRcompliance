@@ -2182,6 +2182,17 @@ class UpdateComplianceSummaryAPIView(APIView):
         # Get one submission to relate the payroll records
         submission = submissions.first()
 
+        if submission.is_frozen:
+            return Response(
+                {
+                    "error": (
+                        "Compliance Summary is locked because this audit "
+                        "is frozen and cannot be modified."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Remove old payroll rows
         VendorCompliancePayroll.objects.filter(
             submission=submission
