@@ -481,24 +481,32 @@ const startEdit = (row) => {
       row.form_number || "",
   });
 
-  const rawGuidelines = Array.isArray(row.auditor_guide)
-    ? row.auditor_guide
-    : [row.auditor_guide];
+const rawGuidelines = Array.isArray(row.auditor_guide)
+  ? row.auditor_guide
+  : typeof row.auditor_guide === "string"
+  ? row.auditor_guide.split("\n")
+  : [row.auditor_guide];
 
-  const uniqueGuidelines = Array.from(
-    new Set(
-      rawGuidelines
-        .map((point) => String(point || "").trim())
-        .filter(Boolean)
-    )
-  );
+const seen = new Set();
+const uniqueGuidelines = [];
 
-  setCheckpoints(
-    uniqueGuidelines.map((point, index) => ({
-      id: index + 1,
-      text: point,
-    }))
-  );
+rawGuidelines.forEach((point) => {
+  const text = String(point || "").trim();
+  if (!text) return;
+
+  const key = text.toLowerCase();
+  if (seen.has(key)) return;
+
+  seen.add(key);
+  uniqueGuidelines.push(text);
+});
+
+setCheckpoints(
+  uniqueGuidelines.map((point, index) => ({
+    id: Date.now() + index,
+    text: point,
+  }))
+);
 
   window.scrollTo({
     top: 0,
@@ -643,18 +651,25 @@ const groupedChecklists = useMemo(() => {
       };
     }
 
-    if (item.auditor_guide) {
-      const guideline = String(
-        item.auditor_guide
-      ).trim();
+if (item.auditor_guide) {
+  const points = Array.isArray(item.auditor_guide)
+    ? item.auditor_guide
+    : [item.auditor_guide];
 
-      if (
-        guideline &&
-        !groups[key].auditor_guide.includes(guideline)
-      ) {
-        groups[key].auditor_guide.push(guideline);
-      }
+  points.forEach((point) => {
+    const guideline = String(point || "").trim();
+    if (!guideline) return;
+
+    // Case-insensitive uniqueness
+    const alreadyExists = groups[key].auditor_guide.some(
+      (g) => g.toLowerCase() === guideline.toLowerCase()
+    );
+
+    if (!alreadyExists) {
+      groups[key].auditor_guide.push(guideline);
     }
+  });
+}
   });
 
   return Object.values(groups);
