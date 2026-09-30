@@ -2783,15 +2783,77 @@ class AuditChecklistAPIView(APIView):
         )
 
         # ✅ ONLY VALID DOCS FOR PERIOD
-        checklist_qs = AuditChecklist.objects.filter(
-            state__name__iexact=state,
-            is_active=True,
-            document_id__in=doc_ids
-        ).select_related(
-            "act",
-            "section",
-            "document"
-        )
+        # ==========================================
+        # CHECK WHETHER THIS AUDIT IS FROZEN
+        # ==========================================
+
+        audit_session = AuditSession.objects.filter(
+            auditor=auditor,
+            branch_id=branch_id,
+            audit_period=audit_period
+        ).first()
+
+        is_frozen_audit = (
+            audit_session is not None
+            and audit_session.status == "FROZEN"
+        ) or submissions.filter(is_frozen=True).exists()
+
+
+        # ==========================================
+        # FROZEN AUDIT
+        # LOAD THE ORIGINAL CHECKLIST ROWS USED BY
+        # THAT AUDIT
+        # ==========================================
+
+        if is_frozen_audit:
+
+            frozen_checklist_ids = (
+                AuditEntry.objects.filter(
+                    branch_id=branch_id,
+                    audit_period=audit_period
+                )
+                .values_list("checklist_id", flat=True)
+                .distinct()
+            )
+
+            checklist_qs = (
+                AuditChecklist.objects.filter(
+                    id__in=frozen_checklist_ids
+                )
+                .select_related(
+                    "act",
+                    "section",
+                    "document"
+                )
+                .order_by(
+                    "sequence",
+                    "id"
+                )
+            )
+
+        else:
+
+            # ==========================================
+            # NORMAL / NON-FROZEN AUDIT
+            # LOAD CURRENT ACTIVE CHECKLIST
+            # ==========================================
+
+            checklist_qs = (
+                AuditChecklist.objects.filter(
+                    state__name__iexact=state,
+                    is_active=True,
+                    document_id__in=doc_ids
+                )
+                .select_related(
+                    "act",
+                    "section",
+                    "document"
+                )
+                .order_by(
+                    "sequence",
+                    "id"
+                )
+            )
 
         # ✅ SAFE ACCESS
         auditor = getattr(request.user, "auditor_profile", None)
