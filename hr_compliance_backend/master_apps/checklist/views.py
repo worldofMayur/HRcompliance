@@ -14,6 +14,7 @@ from .serializers import (
     AuditChecklistListSerializer,
 )
 from django.db import transaction
+from master_apps.auditor.models import AuditEntry
 
 
 # =========================
@@ -280,60 +281,85 @@ class AuditChecklistDeleteAPIView(APIView):
 
 
 class AuditChecklistGuidelineUpdateAPIView(APIView):
-
     def put(self, request, pk):
-
         try:
-
-            guidelines = request.data.get("guidelines", [])
-
             first_row = AuditChecklist.objects.get(pk=pk)
-
-            group = AuditChecklist.objects.filter(
-                state=first_row.state,
-                act=first_row.act,
-                section=first_row.section,
-                document=first_row.document,
-                audit_particulars=first_row.audit_particulars
+        except AuditChecklist.DoesNotExist:
+            return Response(
+                {"error": "Checklist not found"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
+        guidelines = request.data.get("guidelines", [])
+
+        if not isinstance(guidelines, list) or not guidelines:
+            return Response(
+                {"error": "At least one guideline is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # --------------------------------------------------
+        # GET THE COMPLETE CHECKLIST GROUP
+        # --------------------------------------------------
+        group = AuditChecklist.objects.filter(
+            state=first_row.state,
+            act=first_row.act,
+            section=first_row.section,
+            document=first_row.document,
+            audit_particulars=first_row.audit_particulars,
+        )
+
+        # --------------------------------------------------
+        # CHECK WHETHER THIS CHECKLIST IS USED BY
+        # A FROZEN AUDIT
+        # --------------------------------------------------
+        frozen_exists = AuditEntry.objects.filter(
+            checklist_id__in=group.values_list("id", flat=True),
+            submission__is_frozen=True,
+        ).exists()
+
+        # --------------------------------------------------
+        # IMPORTANT:
+        # NEVER DELETE CHECKLIST ROWS USED BY A FROZEN AUDIT
+        # --------------------------------------------------
+        if frozen_exists:
+            group.update(is_active=False)
+        else:
             group.delete()
 
-            rows = []
+        # --------------------------------------------------
+        # CREATE NEW CHECKLIST VERSION
+        # --------------------------------------------------
+        rows = []
 
-            for index, point in enumerate(guidelines):
-
-                rows.append(
-                    AuditChecklist(
-                        state=first_row.state,
-                        act=first_row.act,
-                        compliance_nature=first_row.compliance_nature,
-                        section=first_row.section,
-                        document=first_row.document,
-                        audit_particulars=request.data.get(
-                            "audit_particulars",
-                            first_row.audit_particulars
-                        ),
-                        form_number=request.data.get(
-                            "form_number",
-                            first_row.form_number
-                        ),
-                        auditor_guide=point,
-                        sequence=index + 1
-                    )
+        for index, point in enumerate(guidelines):
+            rows.append(
+                AuditChecklist(
+                    state=first_row.state,
+                    act=first_row.act,
+                    compliance_nature=first_row.compliance_nature,
+                    section=first_row.section,
+                    rule=getattr(first_row, "rule", None),
+                    document=first_row.document,
+                    audit_particulars=request.data.get(
+                        "audit_particulars",
+                        first_row.audit_particulars
+                    ),
+                    form_number=request.data.get(
+                        "form_number",
+                        first_row.form_number
+                    ),
+                    auditor_guide=point,
+                    sequence=index + 1,
+                    is_active=True,
                 )
-
-            AuditChecklist.objects.bulk_create(rows)
-
-            return Response({
-                "message": "Updated"
-            })
-
-        except Exception as e:
-
-            return Response(
-                {
-                    "error": str(e)
-                },
-                status=500
             )
+
+        AuditChecklist.objects.bulk_create(rows)
+
+        return Response(
+            {
+                "message": "Checklist updated successfully"
+            },
+            status=status.HTTP_200_OK,
+        )

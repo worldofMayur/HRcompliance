@@ -481,15 +481,32 @@ const startEdit = (row) => {
       row.form_number || "",
   });
 
-  setCheckpoints(
-    (Array.isArray(row.auditor_guide)
-      ? row.auditor_guide
-      : [row.auditor_guide]
-    ).map((point, index) => ({
-      id: index + 1,
-      text: point,
-    }))
-  );
+const rawGuidelines = Array.isArray(row.auditor_guide)
+  ? row.auditor_guide
+  : typeof row.auditor_guide === "string"
+  ? row.auditor_guide.split("\n")
+  : [row.auditor_guide];
+
+const seen = new Set();
+const uniqueGuidelines = [];
+
+rawGuidelines.forEach((point) => {
+  const text = String(point || "").trim();
+  if (!text) return;
+
+  const key = text.toLowerCase();
+  if (seen.has(key)) return;
+
+  seen.add(key);
+  uniqueGuidelines.push(text);
+});
+
+setCheckpoints(
+  uniqueGuidelines.map((point, index) => ({
+    id: Date.now() + index,
+    text: point,
+  }))
+);
 
   window.scrollTo({
     top: 0,
@@ -609,28 +626,55 @@ if (a.act !== b.act) {
 
 const groupedChecklists = useMemo(() => {
 
+  const sourceChecklists =
+    statusFilter === "inactive"
+      ? filteredChecklists
+      : filteredChecklists.filter(
+          (item) => item.is_active
+        );
+
   const groups = {};
 
-  filteredChecklists.forEach((item) => {
+  sourceChecklists.forEach((item) => {
 
-    const key = `${item.state_id}-${item.act_id}-${item.section}-${item.document_id}-${item.audit_particulars}`;
+    const key =
+      `${item.state_id}-` +
+      `${item.act_id}-` +
+      `${item.section}-` +
+      `${item.document_id}-` +
+      `${item.audit_particulars}`;
 
     if (!groups[key]) {
       groups[key] = {
         ...item,
-        auditor_guide: [item.auditor_guide],
+        auditor_guide: [],
       };
-    } else {
-      groups[key].auditor_guide.push(
-        item.auditor_guide
-      );
     }
 
+if (item.auditor_guide) {
+  const points = Array.isArray(item.auditor_guide)
+    ? item.auditor_guide
+    : [item.auditor_guide];
+
+  points.forEach((point) => {
+    const guideline = String(point || "").trim();
+    if (!guideline) return;
+
+    // Case-insensitive uniqueness
+    const alreadyExists = groups[key].auditor_guide.some(
+      (g) => g.toLowerCase() === guideline.toLowerCase()
+    );
+
+    if (!alreadyExists) {
+      groups[key].auditor_guide.push(guideline);
+    }
+  });
+}
   });
 
   return Object.values(groups);
 
-}, [filteredChecklists]);
+}, [filteredChecklists, statusFilter]);
 
   /* =========================
      EXPORT EXCEL

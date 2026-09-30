@@ -100,7 +100,7 @@ const handleNavigation = (path: string) => {
             className="group/logo flex flex-col items-center gap-0 rounded-2xl px-2 py-1 transition-all duration-300"
           >
             <img
-              src="/Kekul-Logo.png"
+              src="/KekulBiz.png"
               alt="KEKUL"
               className="block"
               style={{

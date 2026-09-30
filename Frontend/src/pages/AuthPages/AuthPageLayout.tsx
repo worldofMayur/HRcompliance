@@ -20,12 +20,12 @@ export default function AuthLayout({
             <div className="mb-10 flex flex-col items-center text-center lg:hidden">
 
               <img
-                src="/Kekul.png"
+                src="/KekulBiz.png"
                 alt="KEKUL"
-                className="h-16 w-auto object-contain sm:h-20"
+                className="h-20 w-auto object-contain sm:h-24"
               />
 
-              <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
+              <h1 className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">
                 Vendor Compliance Audit
               </h1>
 
@@ -43,97 +43,72 @@ export default function AuthLayout({
         {/* ========================= */}
         {/* RIGHT SIDE */}
         {/* ========================= */}
-        <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#0B1120]">
+        <div className="relative hidden lg:flex lg:w-1/2 overflow-hidden bg-[#071e3b]">
 
-          {/* Background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%)]" />
+          {/* Soft blue glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.15),transparent_35%)]" />
 
-          <div className="relative z-10 flex w-full items-center">
+          <div className="relative z-10 flex w-full items-center justify-center">
 
-            <div className="mx-auto w-full max-w-2xl px-12 xl:px-16 2xl:px-20">
+            <div className="w-full max-w-xl px-10 xl:px-14 2xl:px-16 text-center">
 
               {/* Logo */}
-              <div className="mb-12 flex items-center gap-5">
-
+              <div className="mb-10 flex justify-center">
                 <img
-                  src="/Kekul.png"
+                  src="/KekulBiz.png"
                   alt="KEKUL"
-                  className="h-16 xl:h-20 w-auto object-contain"
+                  className="h-20 xl:h-24 w-auto object-contain"
                 />
-
-                <div>
-
-                  <h1 className="text-3xl xl:text-4xl font-semibold tracking-tight text-white">
-                    Vendor Compliance Audit
-                  </h1>
-
-                  <p className="mt-2 text-xs uppercase tracking-[0.22em] text-slate-400">
-                    Vendor Compliance Management System
-                  </p>
-
-                </div>
-
               </div>
 
-              {/* Heading */}
+              {/* Title */}
+              <h1 className="text-3xl xl:text-4xl font-semibold tracking-tight text-white leading-tight">
+                Vendor Compliance Audit
+              </h1>
 
-              <h2 className="text-4xl xl:text-5xl font-semibold leading-tight tracking-tight text-white">
+              <p className="mt-3 text-xs uppercase tracking-[0.22em] text-slate-400">
+                Vendor Compliance Management System
+              </p>
 
+              {/* Main Heading */}
+              <h2 className="mt-12 text-4xl xl:text-5xl font-semibold leading-tight tracking-tight text-white">
                 Modern compliance
-
                 <span className="mt-2 block text-blue-400">
                   built for enterprises.
                 </span>
-
               </h2>
 
-              <p className="mt-6 max-w-xl text-base leading-8 text-slate-400">
-
+              <p className="mt-6 text-base leading-8 text-slate-400 max-w-lg mx-auto">
                 Streamline audits, manage vendors, monitor compliance,
                 and maintain governance workflows from one secure platform.
-
               </p>
 
               {/* Features */}
-
-              <div className="mt-10 space-y-4">
-
+              <div className="mt-10 flex flex-col items-center gap-4">
                 <div className="flex items-center gap-3 text-slate-300">
-
                   <div className="h-2 w-2 rounded-full bg-emerald-400" />
-
                   <span className="text-sm">
                     Centralized compliance tracking
                   </span>
-
                 </div>
 
                 <div className="flex items-center gap-3 text-slate-300">
-
                   <div className="h-2 w-2 rounded-full bg-blue-400" />
-
                   <span className="text-sm">
                     Audit workflow automation
                   </span>
-
                 </div>
 
                 <div className="flex items-center gap-3 text-slate-300">
-
                   <div className="h-2 w-2 rounded-full bg-violet-400" />
-
                   <span className="text-sm">
                     Enterprise-grade security
                   </span>
-
                 </div>
-
               </div>
 
             </div>
-
           </div>
-
         </div>
 
       </div>

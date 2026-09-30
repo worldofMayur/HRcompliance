@@ -1283,32 +1283,80 @@ class SaveAuditAPIView(APIView):
         # =========================
         for entry in entries:
 
-            checklist = AuditChecklist.objects.select_related(
-                "document"
-            ).get(
-                id=entry.get("checklist_id")
+            checklist = (
+                AuditChecklist.objects
+                .select_related(
+                    "state",
+                    "act",
+                    "section",
+                    "document"
+                )
+                .get(
+                    id=entry.get("checklist_id")
+                )
             )
 
-            submission = VendorComplianceSubmission.objects.filter(
-                vendor_id=vendor.id,
-                branch_id=branch_id,
-                audit_period=audit_period,
-                document=checklist.document,
-            ).first()
-
-            AuditEntry.objects.update_or_create(
-                checklist_id=entry.get("checklist_id"),
-                branch_id=branch_id,
-                audit_period=audit_period,
-                defaults={
-                    "submission": submission,
-                    "auditor": request.user.auditor_profile,
-                    "status": entry.get("status"),
-                    "observation": entry.get("observation"),
-                    "recommendation": entry.get("recommendation"),
-                    "submitted_by": request.user,
-                },
+            submission = (
+                VendorComplianceSubmission.objects
+                .filter(
+                    vendor_id=vendor.id,
+                    branch_id=branch_id,
+                    audit_period=audit_period,
+                    document=checklist.document,
+                )
+                .first()
             )
+
+            # ------------------------------------------
+            # GET ALL ACTIVE CHECKPOINT ROWS BELONGING
+            # TO THIS AUDIT CHECKLIST GROUP
+            # ------------------------------------------
+            checklist_group = (
+                AuditChecklist.objects
+                .filter(
+                    state=checklist.state,
+                    act=checklist.act,
+                    section=checklist.section,
+                    document=checklist.document,
+                    audit_particulars=checklist.audit_particulars,
+                    is_active=True,
+                )
+                .order_by(
+                    "sequence",
+                    "id"
+                )
+            )
+
+            # ------------------------------------------
+            # PROTECT AGAINST ACCIDENTAL DUPLICATE
+            # CHECKPOINT ROWS
+            # ------------------------------------------
+            seen_guidelines = set()
+
+            for checklist_item in checklist_group:
+
+                guideline_key = (
+                    checklist_item.auditor_guide or ""
+                ).strip()
+
+                if guideline_key in seen_guidelines:
+                    continue
+
+                seen_guidelines.add(guideline_key)
+
+                AuditEntry.objects.update_or_create(
+                    checklist_id=checklist_item.id,
+                    branch_id=branch_id,
+                    audit_period=audit_period,
+                    defaults={
+                        "submission": submission,
+                        "auditor": request.user.auditor_profile,
+                        "status": entry.get("status"),
+                        "observation": entry.get("observation"),
+                        "recommendation": entry.get("recommendation"),
+                        "submitted_by": request.user,
+                    },
+                )
 
                         # ======================================
             # 📎 SAVE EXCEPTIONAL APPROVAL FILE
@@ -2182,6 +2230,17 @@ class UpdateComplianceSummaryAPIView(APIView):
         # Get one submission to relate the payroll records
         submission = submissions.first()
 
+        if submission.is_frozen:
+            return Response(
+                {
+                    "error": (
+                        "Compliance Summary is locked because this audit "
+                        "is frozen and cannot be modified."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Remove old payroll rows
         VendorCompliancePayroll.objects.filter(
             submission=submission
@@ -2772,15 +2831,77 @@ class AuditChecklistAPIView(APIView):
         )
 
         # ✅ ONLY VALID DOCS FOR PERIOD
-        checklist_qs = AuditChecklist.objects.filter(
-            state__name__iexact=state,
-            is_active=True,
-            document_id__in=doc_ids
-        ).select_related(
-            "act",
-            "section",
-            "document"
-        )
+        # ==========================================
+        # CHECK WHETHER THIS AUDIT IS FROZEN
+        # ==========================================
+
+        audit_session = AuditSession.objects.filter(
+            auditor=auditor,
+            branch_id=branch_id,
+            audit_period=audit_period
+        ).first()
+
+        is_frozen_audit = (
+            audit_session is not None
+            and audit_session.status == "FROZEN"
+        ) or submissions.filter(is_frozen=True).exists()
+
+
+        # ==========================================
+        # FROZEN AUDIT
+        # LOAD THE ORIGINAL CHECKLIST ROWS USED BY
+        # THAT AUDIT
+        # ==========================================
+
+        if is_frozen_audit:
+
+            frozen_checklist_ids = (
+                AuditEntry.objects.filter(
+                    branch_id=branch_id,
+                    audit_period=audit_period
+                )
+                .values_list("checklist_id", flat=True)
+                .distinct()
+            )
+
+            checklist_qs = (
+                AuditChecklist.objects.filter(
+                    id__in=frozen_checklist_ids
+                )
+                .select_related(
+                    "act",
+                    "section",
+                    "document"
+                )
+                .order_by(
+                    "sequence",
+                    "id"
+                )
+            )
+
+        else:
+
+            # ==========================================
+            # NORMAL / NON-FROZEN AUDIT
+            # LOAD CURRENT ACTIVE CHECKLIST
+            # ==========================================
+
+            checklist_qs = (
+                AuditChecklist.objects.filter(
+                    state__name__iexact=state,
+                    is_active=True,
+                    document_id__in=doc_ids
+                )
+                .select_related(
+                    "act",
+                    "section",
+                    "document"
+                )
+                .order_by(
+                    "sequence",
+                    "id"
+                )
+            )
 
         # ✅ SAFE ACCESS
         auditor = getattr(request.user, "auditor_profile", None)

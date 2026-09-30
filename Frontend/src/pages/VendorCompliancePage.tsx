@@ -249,36 +249,55 @@ const parseDateForPicker = (dateStr: string) => {
   }, [selectedPE, selectedBranch]);
 
   // 🔥 Strong Reset when Branch is cleared
+  // 🔥 Strong Reset when Branch is cleared
+  // Guard against the mount race when coming from a notification prefill
   useEffect(() => {
-    if (!selectedBranch) {
+    if (!selectedBranch && !prefillData?.selected_period) {
       setSelectedPeriod("");
       setTableData([]);
       setDocuments([]);
     }
-  }, [selectedBranch]);
+  }, [selectedBranch, prefillData]);
 
-  // 🔥 Load & Auto-select Period when mapping data is ready
-  useEffect(() => {
-    if (selectedBranch && mappingStartDate && mappingEndDate && frequencyBase) {
-      const periods = getPeriodOptions();
+ // Load & Auto-select Period when mapping data is ready
+    useEffect(() => {
+      if (
+        selectedBranch &&
+        mappingStartDate &&
+        mappingEndDate &&
+        frequencyBase
+      ) {
+        // If opened from a notification, keep the notification period
+        if (prefillData?.selected_period) {
+          console.log(
+            "📅 Keeping notification audit period:",
+            prefillData.selected_period
+          );
+          return;
+        }
 
-      if (periods.length > 0) {
+        const periods = getPeriodOptions();
 
-      setSelectedPeriod((prev) => {
+        if (periods.length > 0) {
+          const latestPeriod = periods[periods.length - 1];
 
-        // Keep notification period
-        if (prev) return prev;
+          console.log(
+            "📅 Auto selected audit period:",
+            latestPeriod
+          );
 
-        // Show "Select Period" instead of auto-selecting latest
-        return "";
-      });
-
-      } else {
-
-        setSelectedPeriod("");
+          setSelectedPeriod(latestPeriod);
+        } else {
+          setSelectedPeriod("");
+        }
       }
-    }
-  }, [selectedBranch, mappingStartDate, mappingEndDate, frequencyBase]);
+    }, [
+      selectedBranch,
+      mappingStartDate,
+      mappingEndDate,
+      frequencyBase,
+      prefillData,
+    ]);
 
   // Load Documents when all required fields are selected
   useEffect(() => {
@@ -580,12 +599,23 @@ const getPeriodOptions = () => {
     }
   }
 
-  return Array.from(
+const availablePeriods = Array.from(
   new Set(periods)
 ).filter(
   (p) => !frozenPeriods.includes(p)
 );
-};
+
+// If user came from a re-upload notification,
+// keep the notification period available even if it is frozen.
+if (
+  prefillData?.selected_period &&
+  !availablePeriods.includes(prefillData.selected_period)
+) {
+  availablePeriods.push(prefillData.selected_period);
+}
+
+return availablePeriods;
+  };
   const updateRow = (key: string, updated: Partial<DocumentRow>) => {
     setTableData(prev => prev.map(row => row.key === key ? { ...row, ...updated } : row));
   };
@@ -962,8 +992,28 @@ if (effectiveReuploadMode) {
   }
 };
 
-  const uploadedCount = tableData.filter(r => r.fileList.length > 0).length;
-  const totalDocs = tableData.length;
+  const uploadedCount = tableData.filter(
+    r => !r.isAdditional && (r.fileList.length > 0 || r.isUploaded)
+  ).length;
+
+  const totalDocs = tableData.filter(
+    r => !r.isAdditional
+  ).length;
+
+  const remainingCount = tableData.filter(
+    r =>
+      !r.isAdditional &&
+      !r.isUploaded &&
+      r.fileList.length === 0
+  ).length;
+
+  const isSubmissionLocked =
+  !effectiveReuploadMode &&
+  tableData.some(
+    r =>
+      !r.isAdditional &&
+      r.isUploaded
+  );
 
   return (
     <div
@@ -1249,13 +1299,7 @@ if (effectiveReuploadMode) {
           py-2
         ">
           <span className="text-xs font-medium text-amber-700">
-            Remaining: {
-              tableData.filter(
-                r =>
-                  !r.isAdditional &&
-                  r.fileList.length === 0
-              ).length
-            }
+            Remaining: {remainingCount}
           </span>
         </div>
 
@@ -1266,7 +1310,10 @@ if (effectiveReuploadMode) {
     <Button
       type="primary"
       ghost
-      disabled={frozenPeriods.includes(selectedPeriod)}
+      disabled={
+        frozenPeriods.includes(selectedPeriod) ||
+        isSubmissionLocked
+      }
       onClick={addAdditionalDocument}
       className="
       h-11
@@ -1413,6 +1460,7 @@ if (effectiveReuploadMode) {
             record.isNotApplicable ||
             (record.isUploaded && !record.canReupload) ||
             frozenPeriods.includes(selectedPeriod) ||
+            isSubmissionLocked ||
             (
               effectiveReuploadMode &&
               !record.isAdditional &&
@@ -1450,6 +1498,7 @@ if (effectiveReuploadMode) {
               record.isNotApplicable ||
               (record.isUploaded && !record.canReupload) ||
               frozenPeriods.includes(selectedPeriod) ||
+              isSubmissionLocked ||
               (
                 effectiveReuploadMode &&
                 !record.isAdditional &&
@@ -1487,6 +1536,7 @@ if (effectiveReuploadMode) {
           !effectiveReuploadMode && (
             <Checkbox
               checked={!!record.isNotApplicable}
+              disabled={isSubmissionLocked}
               onChange={(e) => {
                 updateRow(record.key, {
                   isNotApplicable: e.target.checked,
@@ -1639,6 +1689,7 @@ if (effectiveReuploadMode) {
               outline-none
               "
               value={generalRemark}
+              disabled={isSubmissionLocked}
               onChange={(e) => setGeneralRemark(e.target.value)}
             />
 
@@ -1701,6 +1752,8 @@ if (effectiveReuploadMode) {
     loading={loading}
     disabled={
       frozenPeriods.includes(selectedPeriod) ||
+
+      isSubmissionLocked ||
 
       !selectedPE ||
 

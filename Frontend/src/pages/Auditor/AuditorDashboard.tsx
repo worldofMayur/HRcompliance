@@ -45,6 +45,7 @@ export default function AuditorDashboard() {
   const [stateList, setStateList] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
+  const [auditSearch, setAuditSearch] = useState("");
   const [hasDocuments, setHasDocuments] =
   useState(true);
   const [notificationDocs, setNotificationDocs] = useState<string[]>([]);
@@ -92,6 +93,12 @@ const [isEditingCompliance, setIsEditingCompliance] = useState(false);
     )
     &&
     !manualEditMode;
+
+    useEffect(() => {
+  if (isAuditLocked) {
+    setIsEditingCompliance(false);
+  }
+}, [isAuditLocked]);
 
   /* ================= LOAD ================= */
 
@@ -843,28 +850,40 @@ const handleShowAuditor = async () => {
     };
 
     const handleSaveComplianceSummary = async () => {
-  try {
-    await axios.put(
-      `${API_BASE}/api/auditor/update-compliance-summary/`,
-      {
-        branch_id: selectedBranch,
-        vendor_id: selectedVendor,
-        audit_period: auditPeriod,
-        payroll_data: payrollData,
-      },
-      authHeader
-    );
 
-    message.success("Compliance Summary updated successfully");
+      if (isAuditLocked) {
+        message.warning(
+          "Compliance Summary is locked because this audit is frozen."
+        );
+        setIsEditingCompliance(false);
+        return;
+      }
 
-    setIsEditingCompliance(false);
+      try {
+        await axios.put(
+          `${API_BASE}/api/auditor/update-compliance-summary/`,
+          {
+            branch_id: selectedBranch,
+            vendor_id: selectedVendor,
+            audit_period: auditPeriod,
+            payroll_data: payrollData,
+          },
+          authHeader
+        );
 
-    await loadChecklist();
-  } catch (err) {
-    console.error(err);
-    message.error("Failed to update Compliance Summary");
-  }
-};
+        message.success("Compliance Summary updated successfully");
+
+        setIsEditingCompliance(false);
+
+    } catch (err: any) {
+      console.error(err);
+
+      message.error(
+        err?.response?.data?.error ||
+        "Failed to update Compliance Summary"
+      );
+    }
+    };
   /* ================= SUBMIT ================= */
 
 const handleSubmit = async () => {
@@ -1269,13 +1288,12 @@ const columns = [
 
 const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
-
-  const key =
-    `${item.form_number}_` +
-    `${item.audit_particulars}_` +
-    `${item.act_name}_` +
-    `${item.section_rule}_` +
-    `${item.document_name}`;
+    const key =
+      `${item.form_number}_` +
+      `${item.audit_particulars}_` +
+      `${item.act_name}_` +
+      `${item.section_rule}_` +
+      `${item.document_name}`;
 
     if (!acc[key]) {
       acc[key] = {
@@ -1291,9 +1309,35 @@ const groupedChecklist = Object.values(
     }
 
     return acc;
-
   }, {})
+).sort(
+  (a: any, b: any) =>
+    Number(a.sequence ?? 999999) -
+    Number(b.sequence ?? 999999) ||
+    Number(a.id) - Number(b.id)
 );
+
+const filteredGroupedChecklist = groupedChecklist.filter((row: any) => {
+  const search = auditSearch.trim().toLowerCase();
+
+  if (!search) return true;
+
+  const searchableText = [
+    row.act_name,
+    row.section_rule,
+    row.document_name,
+    row.form_number,
+    row.audit_particulars,
+    ...(Array.isArray(row.auditor_guide)
+      ? row.auditor_guide
+      : [row.auditor_guide]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return searchableText.includes(search);
+});
 
 const hasExceptionalApproval =
   groupedChecklist.some(
@@ -1607,18 +1651,21 @@ text-sm
 <Modal
   open={isModalOpen}
   footer={null}
-  width="95%"
+  width="calc(100vw - 24px)"
   closable={false}
-styles={{
-  body: {
-    height: "88vh",
-    overflow: "hidden",
-    padding: 0,
-  },
-}}
+  styles={{
+    body: {
+      height: "calc(100vh - 96px)",
+      maxHeight: "calc(100vh - 96px)",
+      overflow: "hidden",
+      padding: 0,
+    },
+  }}
   style={{
-  top: window.innerWidth < 768 ? 8 : 20,
-}}
+    top: 12,
+    maxWidth: "none",
+    paddingBottom: 0,
+  }}
   title={
     <div className="flex justify-between items-center">
       <div className="flex flex-col">
@@ -1659,7 +1706,7 @@ styles={{
 >
 
   {/* WRAPPER */}
-  <div className="h-full flex flex-col bg-gray-50/40">
+  <div className="h-full min-h-0 flex flex-col bg-gray-50/40">
 
 {/* 1. METADATA BAR */}
 <div
@@ -1675,13 +1722,12 @@ styles={{
 <div
   className="
     grid
-    grid-cols-2
+    grid-cols-1
     gap-3
-    lg:flex
-    lg:flex-wrap
-    lg:items-center
-    lg:gap-x-8
-    lg:gap-y-2
+    sm:grid-cols-2
+    md:grid-cols-3
+    2xl:grid-cols-8
+    items-start
     text-sm
   "
 >
@@ -1723,7 +1769,24 @@ styles={{
     </div>
 
     {/* Mapping Active - right after Period */}
-    <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
+    <span
+  className="
+    inline-flex
+    w-fit
+    max-w-full
+    flex-wrap
+    items-center
+    px-3
+    py-1
+    rounded-full
+    bg-green-50
+    border
+    border-green-200
+    text-green-700
+    text-xs
+    font-medium
+  "
+>
       Mapping Active:{" "}
       {mappingStartDate
         ? new Date(mappingStartDate).toLocaleDateString("en-IN")
@@ -1735,17 +1798,17 @@ styles={{
     </span>
 
     {/* Buttons on the right */}
-  <div
+<div
   className="
-    col-span-2
+    col-span-full
+    2xl:col-span-2
     flex
     w-full
     flex-col
     gap-2
-    pt-2
+    pt-1
     sm:flex-row
-    lg:ml-auto
-    lg:w-auto
+    2xl:justify-end
   "
 >
       <Button
@@ -1789,8 +1852,8 @@ styles={{
 
 
     {/* 2. FULL WIDTH TABLE AREA */}
-    <div className="flex-1 flex overflow-hidden">
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+<div className="flex-1 min-h-0 flex overflow-hidden">
+  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
         {/* Locked banner, Remarks, Stats, Table - as in previous response */}
         {isAuditLocked && (
           <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
@@ -1851,7 +1914,7 @@ styles={{
 
         {/* Stats bar will be added here */}
 
-        <div className="flex-1 overflow-hidden px-4 pt-2 pb-3">
+        <div className="flex-1 min-h-0 overflow-hidden px-2 sm:px-4 pt-2 pb-3">
           {!hasDocuments ? (
             <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
               <div className="text-center">
@@ -1860,30 +1923,41 @@ styles={{
               </div>
             </div>
           ) : (
-            <div
-              className="
-                h-full
-                overflow-hidden
-                rounded-xl
-                border
-                border-gray-200
-                bg-white
-                shadow-sm
-              "
-            >
-              <Table
+          <div
+className="
+  h-full
+  min-h-0
+  overflow-hidden
+  rounded-xl
+  border
+  border-gray-200
+  bg-white
+  shadow-sm
+"
+          >
+            <div className="border-b border-gray-200 bg-white p-2">
+              <Input
+                allowClear
+                value={auditSearch}
+                onChange={(e) => setAuditSearch(e.target.value)}
+                placeholder="Search document, Act, or audit checkpoint..."
+                className="w-full sm:w-80"
+              />
+            </div>
+
+            <Table
                 rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
                 columns={columns}
-                dataSource={groupedChecklist}
+                dataSource={filteredGroupedChecklist}
                 rowKey="id"
                 pagination={false}
                 bordered
                 size="small"
                 className="audit-table-highlighted"
                 scroll={{
-  x: 1700,
-  y: "calc(88vh - 340px)",
-}}
+                  x: "max-content",
+                  y: "calc(100vh - 430px)",
+                }}
               />
             </div>
           )}
@@ -1978,13 +2052,14 @@ styles={{
         Compliance Summary - {auditPeriod || "Selected Period"}
       </span>
 
-      <Button
-        size="small"
-        type={isEditingCompliance ? "default" : "primary"}
-        onClick={() => setIsEditingCompliance(!isEditingCompliance)}
-      >
-        {isEditingCompliance ? "Cancel Edit" : "Edit"}
-      </Button>
+    <Button
+      size="small"
+      type={isEditingCompliance ? "default" : "primary"}
+      disabled={isAuditLocked}
+      onClick={() => setIsEditingCompliance(!isEditingCompliance)}
+    >
+      {isEditingCompliance ? "Cancel Edit" : "Edit"}
+    </Button>
     </div>
   }
   open={complianceModalOpen}
