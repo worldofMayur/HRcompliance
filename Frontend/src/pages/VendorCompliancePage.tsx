@@ -405,45 +405,64 @@ const parseDateForPicker = (dateStr: string) => {
       data
     );
 
-    const failedDocIds = failedEntries.map(
-      (e: any) => e.document_id
-    );
+const notificationPeriod =
+  prefillData?.selected_period || "";
 
-    const hasReuploadDocs =
-      reuploadMode ||
-      failedEntries.length > 0 ||
-      data.some(
-        (doc: any) =>
-          doc.workflow_status ===
-          "REUPLOAD_REQUESTED"
-      );
+const isNotificationPeriod =
+  !!notificationPeriod &&
+  selectedPeriod?.trim() ===
+    notificationPeriod?.trim();
 
-    setEffectiveReuploadMode(
-      hasReuploadDocs
-    );
+const useNotificationFailedDocs =
+  isNotificationPeriod &&
+  failedEntries.length > 0;
+
+const currentPeriodHasReuploadDocs =
+  data.some(
+    (doc: any) =>
+      doc.workflow_status ===
+      "REUPLOAD_REQUESTED"
+  );
+
+const hasReuploadDocs =
+  useNotificationFailedDocs ||
+  currentPeriodHasReuploadDocs;
+
+setEffectiveReuploadMode(
+  hasReuploadDocs
+);
 
 console.log(
-  "📄 Failed Document IDs:",
-  failedDocIds
+  "📅 Current Period:",
+  selectedPeriod
+);
+
+console.log(
+  "📅 Notification Period:",
+  notificationPeriod
+);
+
+console.log(
+  "🔴 Using Notification Failed Docs:",
+  useNotificationFailedDocs
 );
 
 const filteredDocs =
-  failedEntries.length > 0
+  useNotificationFailedDocs
     ? data.filter((doc: any) =>
         failedEntries.some(
           (f: any) =>
-            Number(f.document_id) === Number(doc.id)
+            Number(f.document_id) ===
+            Number(doc.id)
         )
       )
-    : (
-        hasReuploadDocs
-          ? data.filter(
-              (doc: any) =>
-                doc.workflow_status ===
-                "REUPLOAD_REQUESTED"
-            )
-          : data
-      );
+    : currentPeriodHasReuploadDocs
+      ? data.filter(
+          (doc: any) =>
+            doc.workflow_status ===
+            "REUPLOAD_REQUESTED"
+        )
+      : data;
 
 const rows: DocumentRow[] = filteredDocs.map(
   (doc: DocumentType) => ({
@@ -481,10 +500,11 @@ const rows: DocumentRow[] = filteredDocs.map(
 
     // ✅ ONLY failed documents reuploadable
     canReupload:
-      reuploadMode
+      useNotificationFailedDocs
         ? failedEntries.some(
             (e: any) =>
-              Number(e.document_id) === Number(doc.id)
+              Number(e.document_id) ===
+              Number(doc.id)
           )
         : (
             doc.workflow_status ===
