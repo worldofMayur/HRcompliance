@@ -53,6 +53,13 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
     audit_particulars = serializers.CharField()
     form_number = serializers.CharField(required=False, allow_blank=True)
 
+    # CHECK GROUP
+    check_group = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        default="First Check"
+    )
+
     # ✅ ACCEPT BOTH STRING & LIST
     auditor_guide = serializers.JSONField()
 
@@ -131,6 +138,11 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
         # 🚀 CREATE MULTIPLE ROWS
         objects = []
 
+        check_group = (
+            validated_data.get("check_group")
+            or "First Check"
+        ).strip()
+
         for index, point in enumerate(checklist_points):
             objects.append(
                 AuditChecklist(
@@ -141,6 +153,7 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
                     document=document,
                     audit_particulars=validated_data["audit_particulars"],
                     form_number=validated_data.get("form_number", ""),
+                    check_group=check_group,
                     auditor_guide=point,
                     sequence=index + 1,
                 )
@@ -167,6 +180,7 @@ class AuditChecklistListSerializer(serializers.ModelSerializer):
 
     audit_particulars = serializers.CharField()
     form_number = serializers.CharField()
+    check_group = serializers.CharField()
 
     class Meta:
         model = AuditChecklist
@@ -180,6 +194,7 @@ class AuditChecklistListSerializer(serializers.ModelSerializer):
             "audit_particulars",
             "section",
             "form_number",
+            "check_group",
             "document",
             "document_id",
             "auditor_guide",
