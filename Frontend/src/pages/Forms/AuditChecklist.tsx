@@ -1092,36 +1092,6 @@ const data = filteredChecklists.map(c => ({
     />
   </div>
 
-  {/* KEEP YOUR EXISTING CHECKLIST LIST BELOW */}
-  
-  {/* TEXTAREA */}
-  <textarea
-    rows={3}
-    value={checkpointInput}
-    onChange={(e) => setCheckpointInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault(); // 🚫 stop newline
-        handleAddCheckpoint(); // ✅ add point
-      }
-    }}
-    placeholder="Enter checklist point..."
-    className="
-      w-full
-      min-h-[120px]
-      resize-y
-      rounded-lg
-      border
-      border-gray-200
-      px-4
-      py-3
-      text-sm
-      focus:ring-2
-      focus:ring-blue-100
-      outline-none
-      "
-  />
-
   {/* CHECKLIST LIST */}
   {checkpoints.length > 0 && (
     <ul className="list-disc pl-5 mt-3 space-y-2">
