@@ -77,6 +77,12 @@ class AuditChecklist(models.Model):
     act = models.ForeignKey(Act, on_delete=models.PROTECT)
     sequence = models.PositiveIntegerField(default=0)
 
+    # CHECK GROUP
+    check_group = models.CharField(
+        max_length=100,
+        default="First Check"
+    )
+
     # REQUIRED
     compliance_nature = models.ForeignKey(ComplianceNature, on_delete=models.PROTECT)
 
