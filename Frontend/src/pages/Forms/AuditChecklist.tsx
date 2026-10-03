@@ -1030,14 +1030,11 @@ const data = filteredChecklists.map(c => ({
 
     </div>
 
-{/* AUDITOR GUIDE */}
 <div className="space-y-4">
 
   {/* CHECK GROUP */}
   <div className="space-y-2">
-    <Label className="text-sm font-medium text-gray-700">
-      Check Group
-    </Label>
+    <Label>Check Group</Label>
 
     <select
       value={checkGroup}
@@ -1047,14 +1044,11 @@ const data = filteredChecklists.map(c => ({
         h-11
         rounded-lg
         border
-        border-gray-300
+        border-gray-200
         bg-white
-        px-3
+        px-4
         text-sm
-        text-gray-900
-        shadow-sm
         outline-none
-        focus:border-blue-500
         focus:ring-2
         focus:ring-blue-100
       "
@@ -1065,11 +1059,9 @@ const data = filteredChecklists.map(c => ({
     </select>
   </div>
 
-  {/* GUIDELINES */}
+  {/* GUIDELINES FOR AUDITOR */}
   <div className="space-y-2">
-    <Label className="text-sm font-medium text-gray-700">
-      Guidelines for Auditor
-    </Label>
+    <Label>Guidelines for Auditor</Label>
 
     <textarea
       rows={3}
@@ -1084,35 +1076,24 @@ const data = filteredChecklists.map(c => ({
       placeholder="Enter checklist point..."
       className="
         w-full
-        min-h-[110px]
+        min-h-[120px]
         resize-y
         rounded-lg
         border
-        border-gray-300
+        border-gray-200
         bg-white
-        px-3
-        py-2.5
+        px-4
+        py-3
         text-sm
-        text-gray-900
-        placeholder:text-gray-400
-        shadow-sm
         outline-none
-        focus:border-blue-500
         focus:ring-2
         focus:ring-blue-100
       "
     />
   </div>
 
-  {/* CHECKLIST LIST */}
-  {checkpoints.length > 0 && (
-    <ul className="list-disc pl-5 mt-3 space-y-2">
-      {/* keep your existing checkpoints.map(...) here */}
-    </ul>
-  )}
-
-</div>
-
+  {/* KEEP YOUR EXISTING CHECKLIST LIST BELOW */}
+  
   {/* TEXTAREA */}
   <textarea
     rows={3}
