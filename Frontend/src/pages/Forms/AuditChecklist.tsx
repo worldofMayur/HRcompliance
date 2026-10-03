@@ -1057,6 +1057,7 @@ const data = filteredChecklists.map(c => ({
     >
       <option value="First Check">First Check</option>
       <option value="Second Check">Second Check</option>
+      <option value="Third Check">Third Check</option>
     </select>
   </div>
 
