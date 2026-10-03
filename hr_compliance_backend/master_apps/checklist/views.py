@@ -186,6 +186,10 @@ class AuditChecklistGroupUpdateAPIView(APIView):
             section=first_row.section,
             document=first_row.document,
             audit_particulars=first_row.audit_particulars,
+            check_group=(
+                getattr(first_row, "check_group", None)
+                or "First Check"
+            ),
         )
 
         group_rows.update(
@@ -263,27 +267,55 @@ class ActCreateAPIView(APIView):
 # DELETE CHECKLIST
 # =========================
 class AuditChecklistDeleteAPIView(APIView):
+
     def delete(self, request, pk):
+
         try:
             obj = AuditChecklist.objects.get(pk=pk)
-            obj.delete()
-
-            return Response(
-                {"message": "Deleted"},
-                status=status.HTTP_200_OK
-            )
 
         except AuditChecklist.DoesNotExist:
+
             return Response(
                 {"error": "Not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # --------------------------------------------------
+        # NEVER DELETE A CHECKLIST USED BY A FROZEN AUDIT
+        # --------------------------------------------------
+
+        frozen_exists = AuditEntry.objects.filter(
+            checklist_id=obj.id,
+            submission__is_frozen=True,
+        ).exists()
+
+        if frozen_exists:
+
+            return Response(
+                {
+                    "error": (
+                        "This checklist cannot be deleted because "
+                        "it is used by a frozen audit."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        obj.delete()
+
+        return Response(
+            {"message": "Deleted"},
+            status=status.HTTP_200_OK
+        )
+
 
 class AuditChecklistGuidelineUpdateAPIView(APIView):
+
     def put(self, request, pk):
+
         try:
             first_row = AuditChecklist.objects.get(pk=pk)
+
         except AuditChecklist.DoesNotExist:
             return Response(
                 {"error": "Checklist not found"},
@@ -299,58 +331,173 @@ class AuditChecklistGuidelineUpdateAPIView(APIView):
             )
 
         # --------------------------------------------------
-        # GET THE COMPLETE CHECKLIST GROUP
+        # THIS EDIT OPERATION BELONGS TO ONE CHECK GROUP
         # --------------------------------------------------
+
+        current_check_group = (
+            getattr(first_row, "check_group", None)
+            or "First Check"
+        ).strip()
+
+        # --------------------------------------------------
+        # NORMALIZE GUIDELINES
+        #
+        # Supports:
+        # Old format:
+        # ["Guideline 1", "Guideline 2"]
+        #
+        # New format:
+        # [
+        #   {
+        #       "text": "Guideline 1",
+        #       "check_group": "First Check"
+        #   }
+        # ]
+        # --------------------------------------------------
+
+        normalized_guidelines = []
+
+        for point in guidelines:
+
+            if isinstance(point, dict):
+
+                text = str(
+                    point.get("text", "")
+                ).strip()
+
+                point_group = str(
+                    point.get("check_group")
+                    or current_check_group
+                ).strip()
+
+                if not text:
+                    continue
+
+                # Editing one group must never create
+                # another group accidentally.
+                if point_group.lower() != current_check_group.lower():
+                    point_group = current_check_group
+
+                normalized_guidelines.append({
+                    "text": text,
+                    "check_group": point_group,
+                })
+
+            else:
+
+                text = str(point).strip()
+
+                if not text:
+                    continue
+
+                normalized_guidelines.append({
+                    "text": text,
+                    "check_group": current_check_group,
+                })
+
+        if not normalized_guidelines:
+            return Response(
+                {"error": "Checklist points cannot be empty"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # --------------------------------------------------
+        # REMOVE DUPLICATES WITHIN THIS CHECK GROUP
+        # --------------------------------------------------
+
+        unique_guidelines = []
+        seen = set()
+
+        for item in normalized_guidelines:
+
+            text = item["text"]
+
+            key = text.lower()
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            unique_guidelines.append(item)
+
+        normalized_guidelines = unique_guidelines
+
+        # --------------------------------------------------
+        # GET ONLY THE CURRENT CHECK GROUP
+        # --------------------------------------------------
+
         group = AuditChecklist.objects.filter(
             state=first_row.state,
             act=first_row.act,
             section=first_row.section,
             document=first_row.document,
             audit_particulars=first_row.audit_particulars,
+            check_group=current_check_group,
         )
 
         # --------------------------------------------------
-        # CHECK WHETHER THIS CHECKLIST IS USED BY
+        # CHECK WHETHER THIS CHECK GROUP IS USED BY
         # A FROZEN AUDIT
         # --------------------------------------------------
+
         frozen_exists = AuditEntry.objects.filter(
-            checklist_id__in=group.values_list("id", flat=True),
+            checklist_id__in=group.values_list(
+                "id",
+                flat=True
+            ),
             submission__is_frozen=True,
         ).exists()
 
         # --------------------------------------------------
-        # IMPORTANT:
-        # NEVER DELETE CHECKLIST ROWS USED BY A FROZEN AUDIT
+        # NEVER DELETE CHECKLIST ROWS USED BY
+        # A FROZEN AUDIT
         # --------------------------------------------------
+
         if frozen_exists:
             group.update(is_active=False)
+
         else:
             group.delete()
 
         # --------------------------------------------------
-        # CREATE NEW CHECKLIST VERSION
+        # CREATE NEW VERSION OF THIS CHECK GROUP
         # --------------------------------------------------
+
         rows = []
 
-        for index, point in enumerate(guidelines):
+        for index, item in enumerate(
+            normalized_guidelines
+        ):
+
             rows.append(
                 AuditChecklist(
                     state=first_row.state,
                     act=first_row.act,
                     compliance_nature=first_row.compliance_nature,
                     section=first_row.section,
-                    rule=getattr(first_row, "rule", None),
+                    rule=getattr(
+                        first_row,
+                        "rule",
+                        None
+                    ),
                     document=first_row.document,
+
                     audit_particulars=request.data.get(
                         "audit_particulars",
                         first_row.audit_particulars
                     ),
+
                     form_number=request.data.get(
                         "form_number",
                         first_row.form_number
                     ),
-                    auditor_guide=point,
+
+                    check_group=item["check_group"],
+
+                    auditor_guide=item["text"],
+
                     sequence=index + 1,
+
                     is_active=True,
                 )
             )
@@ -359,7 +506,8 @@ class AuditChecklistGuidelineUpdateAPIView(APIView):
 
         return Response(
             {
-                "message": "Checklist updated successfully"
+                "message":
+                    "Checklist updated successfully"
             },
             status=status.HTTP_200_OK,
         )

@@ -1143,6 +1143,31 @@ const columns = [
 },
 
 {
+  title: "Check Group",
+  width: 130,
+  align: "left" as const,
+  render: (_: any, record: any) => (
+    <div
+      className="
+        inline-flex
+        items-center
+        rounded-full
+        border
+        border-blue-200
+        bg-blue-50
+        px-3
+        py-1
+        text-xs
+        font-semibold
+        text-blue-700
+      "
+    >
+      {record.check_group || "First Check"}
+    </div>
+  ),
+},
+
+{
   title: "Audit Particulars",
   width: 190,          // decreased
   align: "left" as const,
@@ -1288,34 +1313,61 @@ const columns = [
 
 const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
+
+    // ✅ KEEP FIRST CHECK / SECOND CHECK SEPARATE
+    const checkGroup =
+      item.check_group || "First Check";
+
     const key =
       `${item.form_number}_` +
       `${item.audit_particulars}_` +
       `${item.act_name}_` +
       `${item.section_rule}_` +
-      `${item.document_name}`;
+      `${item.document_name}_` +
+      `${checkGroup}`;
 
     if (!acc[key]) {
       acc[key] = {
         ...item,
+        check_group: checkGroup,
         auditor_guide: [],
       };
     }
 
     if (Array.isArray(item.auditor_guide)) {
-      acc[key].auditor_guide.push(...item.auditor_guide);
-    } else {
-      acc[key].auditor_guide.push(item.auditor_guide);
+
+      acc[key].auditor_guide.push(
+        ...item.auditor_guide
+      );
+
+    } else if (item.auditor_guide) {
+
+      acc[key].auditor_guide.push(
+        item.auditor_guide
+      );
+
     }
 
     return acc;
+
   }, {})
-).sort(
-  (a: any, b: any) =>
+).sort((a: any, b: any) => {
+  const groupOrder: Record<string, number> = {
+    "First Check": 1,
+    "Second Check": 2,
+  };
+
+  const aGroup = a.check_group || "First Check";
+  const bGroup = b.check_group || "First Check";
+
+  return (
+    (groupOrder[aGroup] ?? 999) -
+      (groupOrder[bGroup] ?? 999) ||
     Number(a.sequence ?? 999999) -
-    Number(b.sequence ?? 999999) ||
+      Number(b.sequence ?? 999999) ||
     Number(a.id) - Number(b.id)
-);
+  );
+});
 
 const filteredGroupedChecklist = groupedChecklist.filter((row: any) => {
   const search = auditSearch.trim().toLowerCase();
