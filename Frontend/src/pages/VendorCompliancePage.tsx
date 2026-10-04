@@ -1057,6 +1057,45 @@ if (effectiveReuploadMode) {
           Upload Compliance Documents
         </h1>
         <p className="text-sm text-gray-500">Upload compliance documents for the selected branch and period.</p>
+
+          <div>
+
+    {frozenPeriods.includes(selectedPeriod) ? (
+
+    <div
+    className="
+    flex
+    w-full
+    items-center
+    gap-2
+    rounded-xl
+    border
+    border-green-200
+    bg-green-50
+    px-4
+    py-3
+    "
+    >
+
+      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+
+      <p className="text-xs font-medium text-green-700">
+
+        This compliance audit has been finalized and frozen.
+
+      </p>
+
+    </div>
+
+    ) : (
+
+      <p className="text-xs leading-5 text-gray-500">
+        Ensure all required documents are uploaded before submission.
+      </p>
+
+    )}
+
+  </div>
       </div>
 
       <div className="
@@ -1726,44 +1765,7 @@ if (effectiveReuploadMode) {
     >
 
   {/* LEFT MESSAGE */}
-  <div>
 
-    {frozenPeriods.includes(selectedPeriod) ? (
-
-    <div
-    className="
-    flex
-    w-full
-    items-center
-    gap-2
-    rounded-xl
-    border
-    border-green-200
-    bg-green-50
-    px-4
-    py-3
-    "
-    >
-
-      <div className="h-2 w-2 rounded-full bg-green-500"></div>
-
-      <p className="text-xs font-medium text-green-700">
-
-        This compliance audit has been finalized and frozen.
-
-      </p>
-
-    </div>
-
-    ) : (
-
-      <p className="text-xs leading-5 text-gray-500">
-        Ensure all required documents are uploaded before submission.
-      </p>
-
-    )}
-
-  </div>
 
   {/* SUBMIT BUTTON */}
   <Button
