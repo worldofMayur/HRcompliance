@@ -1319,6 +1319,10 @@ class SaveAuditAPIView(APIView):
                     section=checklist.section,
                     document=checklist.document,
                     audit_particulars=checklist.audit_particulars,
+                    check_group=(
+                        getattr(checklist, "check_group", None)
+                        or "First Check"
+                    ),
                     is_active=True,
                 )
                 .order_by(
@@ -2931,6 +2935,12 @@ class AuditChecklistAPIView(APIView):
                 "audit_particulars": item.audit_particulars or "",
                 "section_rule": item.section.section_number if item.section else "",
                 "form_number": item.form_number or "",
+
+                # ✅ CHECK GROUP
+                "check_group": (
+                    getattr(item, "check_group", None)
+                    or "First Check"
+                ),
 
                 # ✅ SAFE DOCUMENT NAME
                 "document_name": (

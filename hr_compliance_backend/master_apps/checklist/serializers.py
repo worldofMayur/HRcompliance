@@ -53,6 +53,13 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
     audit_particulars = serializers.CharField()
     form_number = serializers.CharField(required=False, allow_blank=True)
 
+    # CHECK GROUP
+    check_group = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        default="First Check"
+    )
+
     # ✅ ACCEPT BOTH STRING & LIST
     auditor_guide = serializers.JSONField()
 
@@ -101,6 +108,11 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
             defaults={"title": validated_data["section"].strip()}
         )
 
+        default_check_group = (
+            validated_data.get("check_group")
+            or "First Check"
+        ).strip()
+
         # 🔥 HANDLE BOTH CASES
         guide_input = validated_data["auditor_guide"]
 
@@ -108,20 +120,81 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
             checklist_points = [guide_input.strip()]
 
         elif isinstance(guide_input, list):
-            checklist_points = [
-                str(p).strip()
-                for p in guide_input
-                if str(p).strip()
-            ]
+            checklist_points = []
+
+            for p in guide_input:
+
+                if isinstance(p, dict):
+
+                    text = str(
+                        p.get("text", "")
+                    ).strip()
+
+                    if text:
+                        checklist_points.append({
+                            "text": text,
+                            "check_group": str(
+                                p.get("check_group")
+                                or validated_data.get(
+                                    "check_group",
+                                    "First Check"
+                                )
+                            ).strip()
+                        })
+
+                else:
+
+                    text = str(p).strip()
+
+                    if text:
+                        checklist_points.append(text)
 
         else:
             raise serializers.ValidationError(
                 "Invalid auditor_guide format"
             )
 
-        checklist_points = list(
-            dict.fromkeys(checklist_points)
-        )
+        # ==========================================
+        # REMOVE DUPLICATES SAFELY
+        # SAME TEXT CAN EXIST IN DIFFERENT CHECK GROUPS
+        # ==========================================
+
+        unique_points = []
+        seen_points = set()
+
+        for point in checklist_points:
+
+            if isinstance(point, dict):
+
+                text = str(
+                    point.get("text", "")
+                ).strip()
+
+                group = str(
+                    point.get("check_group")
+                    or "First Check"
+                ).strip()
+
+            else:
+
+                text = str(point).strip()
+                group = default_check_group
+
+            key = (
+                text.lower(),
+                group.lower()
+            )
+
+            if not text:
+                continue
+
+            if key in seen_points:
+                continue
+
+            seen_points.add(key)
+            unique_points.append(point)
+
+        checklist_points = unique_points
 
         if not checklist_points:
             raise serializers.ValidationError(
@@ -131,7 +204,53 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
         # 🚀 CREATE MULTIPLE ROWS
         objects = []
 
+        # ==========================================
+        # BUILD CHECKPOINTS WITH THEIR CHECK GROUP
+        # ==========================================
+
+        objects = []
+
         for index, point in enumerate(checklist_points):
+
+            # ------------------------------------------
+            # NEW FORMAT:
+            # {
+            #     "text": "Guideline text",
+            #     "check_group": "First Check"
+            # }
+            # ------------------------------------------
+            if isinstance(point, dict):
+
+                guideline_text = str(
+                    point.get("text", "")
+                ).strip()
+
+                point_check_group = str(
+                    point.get("check_group")
+                    or default_check_group
+                ).strip()
+
+            # ------------------------------------------
+            # OLD FORMAT:
+            # "Guideline text"
+            #
+            # Existing checklist creation continues
+            # to work exactly as before.
+            # ------------------------------------------
+            else:
+
+                guideline_text = str(point).strip()
+
+                point_check_group = (
+                    default_check_group
+                )
+
+            if not guideline_text:
+                continue
+
+            if not point_check_group:
+                point_check_group = "First Check"
+
             objects.append(
                 AuditChecklist(
                     state=state,
@@ -139,9 +258,15 @@ class AuditChecklistCreateSerializer(serializers.Serializer):
                     compliance_nature=compliance,
                     section=section,
                     document=document,
-                    audit_particulars=validated_data["audit_particulars"],
-                    form_number=validated_data.get("form_number", ""),
-                    auditor_guide=point,
+                    audit_particulars=validated_data[
+                        "audit_particulars"
+                    ],
+                    form_number=validated_data.get(
+                        "form_number",
+                        ""
+                    ),
+                    check_group=point_check_group,
+                    auditor_guide=guideline_text,
                     sequence=index + 1,
                 )
             )
@@ -167,6 +292,7 @@ class AuditChecklistListSerializer(serializers.ModelSerializer):
 
     audit_particulars = serializers.CharField()
     form_number = serializers.CharField()
+    check_group = serializers.CharField()
 
     class Meta:
         model = AuditChecklist
@@ -180,6 +306,7 @@ class AuditChecklistListSerializer(serializers.ModelSerializer):
             "audit_particulars",
             "section",
             "form_number",
+            "check_group",
             "document",
             "document_id",
             "auditor_guide",

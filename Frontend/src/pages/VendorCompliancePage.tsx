@@ -405,45 +405,64 @@ const parseDateForPicker = (dateStr: string) => {
       data
     );
 
-    const failedDocIds = failedEntries.map(
-      (e: any) => e.document_id
-    );
+const notificationPeriod =
+  prefillData?.selected_period || "";
 
-    const hasReuploadDocs =
-      reuploadMode ||
-      failedEntries.length > 0 ||
-      data.some(
-        (doc: any) =>
-          doc.workflow_status ===
-          "REUPLOAD_REQUESTED"
-      );
+const isNotificationPeriod =
+  !!notificationPeriod &&
+  selectedPeriod?.trim() ===
+    notificationPeriod?.trim();
 
-    setEffectiveReuploadMode(
-      hasReuploadDocs
-    );
+const useNotificationFailedDocs =
+  isNotificationPeriod &&
+  failedEntries.length > 0;
+
+const currentPeriodHasReuploadDocs =
+  data.some(
+    (doc: any) =>
+      doc.workflow_status ===
+      "REUPLOAD_REQUESTED"
+  );
+
+const hasReuploadDocs =
+  useNotificationFailedDocs ||
+  currentPeriodHasReuploadDocs;
+
+setEffectiveReuploadMode(
+  hasReuploadDocs
+);
 
 console.log(
-  "📄 Failed Document IDs:",
-  failedDocIds
+  "📅 Current Period:",
+  selectedPeriod
+);
+
+console.log(
+  "📅 Notification Period:",
+  notificationPeriod
+);
+
+console.log(
+  "🔴 Using Notification Failed Docs:",
+  useNotificationFailedDocs
 );
 
 const filteredDocs =
-  failedEntries.length > 0
+  useNotificationFailedDocs
     ? data.filter((doc: any) =>
         failedEntries.some(
           (f: any) =>
-            Number(f.document_id) === Number(doc.id)
+            Number(f.document_id) ===
+            Number(doc.id)
         )
       )
-    : (
-        hasReuploadDocs
-          ? data.filter(
-              (doc: any) =>
-                doc.workflow_status ===
-                "REUPLOAD_REQUESTED"
-            )
-          : data
-      );
+    : currentPeriodHasReuploadDocs
+      ? data.filter(
+          (doc: any) =>
+            doc.workflow_status ===
+            "REUPLOAD_REQUESTED"
+        )
+      : data;
 
 const rows: DocumentRow[] = filteredDocs.map(
   (doc: DocumentType) => ({
@@ -481,10 +500,11 @@ const rows: DocumentRow[] = filteredDocs.map(
 
     // ✅ ONLY failed documents reuploadable
     canReupload:
-      reuploadMode
+      useNotificationFailedDocs
         ? failedEntries.some(
             (e: any) =>
-              Number(e.document_id) === Number(doc.id)
+              Number(e.document_id) ===
+              Number(doc.id)
           )
         : (
             doc.workflow_status ===
@@ -1037,6 +1057,45 @@ if (effectiveReuploadMode) {
           Upload Compliance Documents
         </h1>
         <p className="text-sm text-gray-500">Upload compliance documents for the selected branch and period.</p>
+
+          <div>
+
+    {frozenPeriods.includes(selectedPeriod) ? (
+
+    <div
+    className="
+    flex
+    w-full
+    items-center
+    gap-2
+    rounded-xl
+    border
+    border-green-200
+    bg-green-50
+    px-4
+    py-3
+    "
+    >
+
+      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+
+      <p className="text-xs font-medium text-green-700">
+
+        This compliance audit has been finalized and frozen.
+
+      </p>
+
+    </div>
+
+    ) : (
+
+      <p className="text-xs leading-5 text-gray-500">
+        Ensure all required documents are uploaded before submission.
+      </p>
+
+    )}
+
+  </div>
       </div>
 
       <div className="
@@ -1706,44 +1765,7 @@ if (effectiveReuploadMode) {
     >
 
   {/* LEFT MESSAGE */}
-  <div>
 
-    {frozenPeriods.includes(selectedPeriod) ? (
-
-    <div
-    className="
-    flex
-    w-full
-    items-center
-    gap-2
-    rounded-xl
-    border
-    border-green-200
-    bg-green-50
-    px-4
-    py-3
-    "
-    >
-
-      <div className="h-2 w-2 rounded-full bg-green-500"></div>
-
-      <p className="text-xs font-medium text-green-700">
-
-        This compliance audit has been finalized and frozen.
-
-      </p>
-
-    </div>
-
-    ) : (
-
-      <p className="text-xs leading-5 text-gray-500">
-        Ensure all required documents are uploaded before submission.
-      </p>
-
-    )}
-
-  </div>
 
   {/* SUBMIT BUTTON */}
   <Button

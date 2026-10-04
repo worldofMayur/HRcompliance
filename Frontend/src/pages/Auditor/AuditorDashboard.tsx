@@ -1288,34 +1288,61 @@ const columns = [
 
 const groupedChecklist = Object.values(
   checklist.reduce((acc: any, item: any) => {
+
+    // ✅ KEEP FIRST CHECK / SECOND CHECK SEPARATE
+    const checkGroup =
+      item.check_group || "First Check";
+
     const key =
       `${item.form_number}_` +
       `${item.audit_particulars}_` +
       `${item.act_name}_` +
       `${item.section_rule}_` +
-      `${item.document_name}`;
+      `${item.document_name}_` +
+      `${checkGroup}`;
 
     if (!acc[key]) {
       acc[key] = {
         ...item,
+        check_group: checkGroup,
         auditor_guide: [],
       };
     }
 
     if (Array.isArray(item.auditor_guide)) {
-      acc[key].auditor_guide.push(...item.auditor_guide);
-    } else {
-      acc[key].auditor_guide.push(item.auditor_guide);
+
+      acc[key].auditor_guide.push(
+        ...item.auditor_guide
+      );
+
+    } else if (item.auditor_guide) {
+
+      acc[key].auditor_guide.push(
+        item.auditor_guide
+      );
+
     }
 
     return acc;
+
   }, {})
-).sort(
-  (a: any, b: any) =>
+).sort((a: any, b: any) => {
+  const groupOrder: Record<string, number> = {
+    "First Check": 1,
+    "Second Check": 2,
+  };
+
+  const aGroup = a.check_group || "First Check";
+  const bGroup = b.check_group || "First Check";
+
+  return (
+    (groupOrder[aGroup] ?? 999) -
+      (groupOrder[bGroup] ?? 999) ||
     Number(a.sequence ?? 999999) -
-    Number(b.sequence ?? 999999) ||
+      Number(b.sequence ?? 999999) ||
     Number(a.id) - Number(b.id)
-);
+  );
+});
 
 const filteredGroupedChecklist = groupedChecklist.filter((row: any) => {
   const search = auditSearch.trim().toLowerCase();
@@ -1852,8 +1879,8 @@ text-sm
 
 
     {/* 2. FULL WIDTH TABLE AREA */}
-<div className="flex-1 min-h-0 flex overflow-hidden">
-  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
+<div className="flex-1 min-h-0 flex overflow-auto">
+  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-auto">
         {/* Locked banner, Remarks, Stats, Table - as in previous response */}
         {isAuditLocked && (
           <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
@@ -1914,8 +1941,8 @@ text-sm
 
         {/* Stats bar will be added here */}
 
-        <div className="flex-1 min-h-0 overflow-hidden px-2 sm:px-4 pt-2 pb-3">
-          {!hasDocuments ? (
+<div className="flex-1 min-h-0 overflow-auto px-2 sm:px-4 pt-2 pb-3">
+            {!hasDocuments ? (
             <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
               <div className="text-center">
                 <div className="text-lg font-semibold text-gray-700">No documents uploaded for this audit period</div>
@@ -1956,7 +1983,7 @@ className="
                 className="audit-table-highlighted"
                 scroll={{
                   x: "max-content",
-                  y: "calc(100vh - 430px)",
+                  y: "calc(100vh - 500px)",
                 }}
               />
             </div>

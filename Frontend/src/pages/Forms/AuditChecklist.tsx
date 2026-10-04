@@ -53,8 +53,11 @@ const actRef = useRef(null);
   ========================= */
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-const [checkpoints, setCheckpoints] = useState([]);
-const [checkpointInput, setCheckpointInput] = useState("");
+  const [checkpoints, setCheckpoints] = useState([]);
+  const [checkpointInput, setCheckpointInput] = useState("");
+
+  // ✅ Current checkpoint group
+  const [checkGroup, setCheckGroup] = useState("First Check");
   /* =========================
      FORM STATE
   ========================= */
@@ -161,15 +164,18 @@ const handleCreateAct = async () => {
 };
 
 const handleAddCheckpoint = () => {
+
   if (!checkpointInput.trim()) return;
 
   const newItem = {
     id: Date.now(),
     text: checkpointInput.trim(),
+    check_group: checkGroup,
   };
 
   setCheckpoints((prev) => [...prev, newItem]);
   setCheckpointInput("");
+
 };
 
 const handleDeleteCheckpoint = (id) => {
@@ -376,7 +382,10 @@ const handleSubmit = async (e) => {
             formData.form_number || "",
 
           guidelines:
-            checkpoints.map((c) => c.text),
+            checkpoints.map((c) => ({
+              text: c.text,
+              check_group: c.check_group || "First Check",
+            })),
         }
       );
 
@@ -420,7 +429,10 @@ const handleSubmit = async (e) => {
         formData.form_number || "",
 
       auditor_guide:
-        checkpoints.map((c) => c.text),
+        checkpoints.map((c) => ({
+          text: c.text,
+          check_group: c.check_group || "First Check",
+        })),
     };
 
     await api.post(
@@ -442,6 +454,7 @@ const handleSubmit = async (e) => {
 
     setCheckpoints([]);
     setCheckpointInput("");
+    setCheckGroup("First Check");
 
     fetchList();
 
@@ -501,10 +514,16 @@ rawGuidelines.forEach((point) => {
   uniqueGuidelines.push(text);
 });
 
+const selectedCheckGroup =
+  row.check_group || "First Check";
+
+setCheckGroup(selectedCheckGroup);
+
 setCheckpoints(
   uniqueGuidelines.map((point, index) => ({
     id: Date.now() + index,
     text: point,
+    check_group: selectedCheckGroup,
   }))
 );
 
@@ -637,39 +656,51 @@ const groupedChecklists = useMemo(() => {
 
   sourceChecklists.forEach((item) => {
 
+    // ✅ KEEP EACH CHECK GROUP SEPARATE
+    const checkGroup =
+      item.check_group || "First Check";
+
     const key =
       `${item.state_id}-` +
       `${item.act_id}-` +
       `${item.section}-` +
       `${item.document_id}-` +
-      `${item.audit_particulars}`;
+      `${item.audit_particulars}-` +
+      `${checkGroup}`;
 
     if (!groups[key]) {
       groups[key] = {
         ...item,
+        check_group: checkGroup,
         auditor_guide: [],
       };
     }
 
-if (item.auditor_guide) {
-  const points = Array.isArray(item.auditor_guide)
-    ? item.auditor_guide
-    : [item.auditor_guide];
+    if (item.auditor_guide) {
 
-  points.forEach((point) => {
-    const guideline = String(point || "").trim();
-    if (!guideline) return;
+      const points = Array.isArray(item.auditor_guide)
+        ? item.auditor_guide
+        : [item.auditor_guide];
 
-    // Case-insensitive uniqueness
-    const alreadyExists = groups[key].auditor_guide.some(
-      (g) => g.toLowerCase() === guideline.toLowerCase()
-    );
+      points.forEach((point) => {
 
-    if (!alreadyExists) {
-      groups[key].auditor_guide.push(guideline);
+        const guideline = String(point || "").trim();
+
+        if (!guideline) return;
+
+        const alreadyExists =
+          groups[key].auditor_guide.some(
+            (g) =>
+              g.toLowerCase() ===
+              guideline.toLowerCase()
+          );
+
+        if (!alreadyExists) {
+          groups[key].auditor_guide.push(guideline);
+        }
+
+      });
     }
-  });
-}
   });
 
   return Object.values(groups);
@@ -999,37 +1030,67 @@ const data = filteredChecklists.map(c => ({
 
     </div>
 
-    {/* AUDITOR GUIDE */}
-<div className="space-y-2">
-  <Label>Guidelines for Auditor</Label>
+<div className="space-y-4">
 
-  {/* TEXTAREA */}
-  <textarea
-    rows={3}
-    value={checkpointInput}
-    onChange={(e) => setCheckpointInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault(); // 🚫 stop newline
-        handleAddCheckpoint(); // ✅ add point
-      }
-    }}
-    placeholder="Enter checklist point..."
-    className="
-      w-full
-      min-h-[120px]
-      resize-y
-      rounded-lg
-      border
-      border-gray-200
-      px-4
-      py-3
-      text-sm
-      focus:ring-2
-      focus:ring-blue-100
-      outline-none
+  {/* CHECK GROUP */}
+  <div className="space-y-2">
+    <Label>Check Group</Label>
+
+    <select
+      value={checkGroup}
+      onChange={(e) => setCheckGroup(e.target.value)}
+      className="
+        w-full
+        h-11
+        rounded-lg
+        border
+        border-gray-200
+        bg-white
+        px-4
+        text-sm
+        outline-none
+        focus:ring-2
+        focus:ring-blue-100
       "
-  />
+    >
+      <option value="First Check">First Check</option>
+      <option value="Second Check">Second Check</option>
+      <option value="Third Check">Third Check</option>
+    </select>
+  </div>
+
+  {/* GUIDELINES FOR AUDITOR */}
+  <div className="space-y-2">
+    <Label>Guidelines for Auditor</Label>
+
+    <textarea
+      rows={3}
+      value={checkpointInput}
+      onChange={(e) => setCheckpointInput(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleAddCheckpoint();
+        }
+      }}
+      placeholder="Enter checklist point..."
+      className="
+        w-full
+        min-h-[120px]
+        resize-y
+        rounded-lg
+        border
+        border-gray-200
+        bg-white
+        px-4
+        py-3
+        text-sm
+        outline-none
+        focus:ring-2
+        focus:ring-blue-100
+      "
+    />
+  </div>
 
   {/* CHECKLIST LIST */}
   {checkpoints.length > 0 && (
@@ -1040,7 +1101,15 @@ const data = filteredChecklists.map(c => ({
           className="flex items-start justify-between gap-3 text-sm text-gray-700"
         >
           {/* TEXT */}
-          <span className="leading-relaxed">{item.text}</span>
+          <div className="flex-1">
+            <div className="leading-relaxed">
+              {item.text}
+            </div>
+
+            <div className="mt-1 text-xs font-medium text-blue-600">
+              {item.check_group || "First Check"}
+            </div>
+          </div>
 
           {/* CLEAN REMOVE BUTTON */}
           <button
@@ -1109,8 +1178,9 @@ const data = filteredChecklists.map(c => ({
             form_number: "",
           });
 
-          setCheckpoints([]);        // ✅ clear added points
-          setCheckpointInput("");    // ✅ clear textarea
+          setCheckpoints([]);
+          setCheckpointInput("");
+          setCheckGroup("First Check");   // ✅ clear textarea
         }}
       >
         Reset
