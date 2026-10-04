@@ -1053,9 +1053,11 @@ const data = filteredChecklists.map(c => ({
         focus:ring-blue-100
       "
     >
-      <option value="First Check">First Check</option>
-      <option value="Second Check">Second Check</option>
-      <option value="Third Check">Third Check</option>
+    <option value="First Check">First Check</option>
+    <option value="Second Check">Second Check</option>
+    <option value="Third Check">Third Check</option>
+    <option value="Fourth Check">Fourth Check</option>
+    <option value="Fifth Check">Fifth Check</option>
     </select>
   </div>
 
