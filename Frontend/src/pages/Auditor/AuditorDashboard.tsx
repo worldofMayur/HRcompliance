@@ -2014,7 +2014,7 @@ className="
     (row: any) => row.status === "Exceptional Approval - Delayed Complied"
   ) && (
     <Upload
-      disabled={isAuditLocked && !manualEditMode}
+      disabled={isAuditLocked}
       multiple={false}
       beforeUpload={(file) => {
         const exceptionalRows = groupedChecklist.filter(
