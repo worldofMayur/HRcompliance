@@ -175,10 +175,18 @@ class VendorBranchMappingSerializer(serializers.ModelSerializer):
         if effective_date and effective_date > today:
 
             if document_ids is not None:
-                safe_documents = [d.id for d in document_ids] if hasattr(document_ids[0], 'id') else document_ids
+
+                safe_documents = [
+                    d.id if hasattr(d, "id") else int(d)
+                    for d in document_ids
+                ]
+
             elif documents_input is not None:
-                safe_documents = documents_input
+
+                safe_documents = list(documents_input)
+
             else:
+
                 safe_documents = previous_documents
 
             safe_new_data = {
