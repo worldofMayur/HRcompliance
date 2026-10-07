@@ -2826,13 +2826,20 @@ class AuditChecklistAPIView(APIView):
         }
 
         # ✅ PERIOD-BASED DOCUMENT FILTERING
-
-        # ✅ PERIOD-BASED DOCUMENT FILTERING
         doc_ids = getattr(
             valid_mapping,
             "_documents_cache",
             []
         )
+
+        # ✅ ONLY SHOW DOCUMENTS THAT ARE:
+        # 1. EFFECTIVE FOR THIS AUDIT PERIOD
+        # 2. ACTUALLY SUBMITTED BY THE VENDOR FOR THIS PERIOD
+        submitted_effective_doc_ids = [
+            doc_id
+            for doc_id in doc_ids
+            if doc_id in submission_map
+        ]
 
         # ✅ ONLY VALID DOCS FOR PERIOD
         # ==========================================
@@ -2894,7 +2901,7 @@ class AuditChecklistAPIView(APIView):
                 AuditChecklist.objects.filter(
                     state__name__iexact=state,
                     is_active=True,
-                    document_id__in=doc_ids
+                    document_id__in=submitted_effective_doc_ids
                 )
                 .select_related(
                     "act",
