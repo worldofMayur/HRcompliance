@@ -65,10 +65,7 @@ class VendorSubmitComplianceAPIView(APIView):
                 .replace("–", "-")
                 .strip()
             )
-        workflow_status = request.data.get(
-            "workflow_status",
-            WorkflowStatus.SUBMITTED
-        )
+        workflow_status = WorkflowStatus.SUBMITTED
         general_remark = request.data.get("general_remark")
         payroll_data = request.data.get("payroll_data")
 
@@ -225,9 +222,6 @@ class VendorSubmitComplianceAPIView(APIView):
                     document_id=document_id,
                     audit_period__iexact=selected_period
                 )
-                .exclude(
-                    workflow_status=WorkflowStatus.REUPLOAD_REQUESTED
-                )
                 .first()
             )
 
@@ -346,9 +340,6 @@ class VendorSubmitComplianceAPIView(APIView):
                         branch_id=branch_id,
                         document_id=document_id,
                         audit_period__iexact=selected_period
-                    )
-                    .exclude(
-                        workflow_status=WorkflowStatus.REUPLOAD_REQUESTED
                     )
                     .first()
                 )
@@ -792,22 +783,25 @@ def reupload_compliance(request):
                 # ===============================
 
                 if (
-
                     submission.is_frozen
-
                     or
-
                     submission.is_cc_issued
                 ):
-
                     return Response({
-
                         "error": (
                             "This audit has already been finalized "
                             "and CC issued. "
                             "Reupload not allowed."
                         )
+                    }, status=400)
 
+
+                if submission.workflow_status != WorkflowStatus.REUPLOAD_REQUESTED:
+                    return Response({
+                        "error": (
+                            "Reupload is allowed only after the Auditor "
+                            "requests a reupload."
+                        )
                     }, status=400)
 
                 # ===============================
