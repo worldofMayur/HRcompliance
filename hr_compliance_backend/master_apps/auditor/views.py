@@ -1128,6 +1128,26 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                         f"(Submission {sub.id}): {e}"
                     )
 
+        # =====================================
+        # RETURN ZIP FILE
+        # =====================================
+
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type="application/zip"
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="{zip_filename}"'
+        )
+
+        return response
+
+
+# ================= SAVE AUDIT (UPDATED ONLY) =================
+
 # ================= SAVE AUDIT (UPDATED ONLY) =================
 
 class SaveAuditAPIView(APIView):
