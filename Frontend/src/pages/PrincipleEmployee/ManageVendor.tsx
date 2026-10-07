@@ -694,13 +694,39 @@ className={`border-t hover:bg-gray-50 transition ${
     Agreement Start Date (DD/MM/YYYY)
   </label>
 
-  <DatePicker
-    selected={startDate}
-    disabled
-    dateFormat="dd/MM/yyyy"
-    placeholderText="dd/mm/yy"
-    className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm bg-gray-100"
-  />
+<DatePicker
+  selected={startDate}
+  value={startInput}
+  onChange={(date) => {
+    if (date) {
+      const formatted = date.toLocaleDateString("en-GB");
+
+      setStartInput(formatted);
+      setDateRange([date, endDate]);
+      setStartError("");
+
+      handleChange("start_date", formatForAPI(date));
+    }
+  }}
+  onChangeRaw={(e) => {
+    const value = e.target.value;
+
+    setStartInput(value);
+
+    const parsed = parseDate(value);
+
+    if (parsed) {
+      setDateRange([parsed, endDate]);
+      setStartError("");
+      handleChange("start_date", formatForAPI(parsed));
+    } else {
+      setStartError("Invalid date format (dd/mm/yyyy)");
+    }
+  }}
+  dateFormat="dd/MM/yyyy"
+  placeholderText="dd/mm/yyyy"
+  className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm"
+/>
 </div>
 
 <div>
@@ -733,28 +759,28 @@ xl:grid-cols-3
 "
 >
 
-    <select
+<select
   value={editData.audit_rule || ""}
   onChange={(e) => handleChange("audit_rule", e.target.value)}
-    className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
-        focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
+  className="h-10 border border-gray-200 rounded-lg px-3 text-sm
+      focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
 >
   <option value="">Rule</option>
-  {getUniqueValues("rule").map((val) => (
-    <option key={val}>{val}</option>
-  ))}
+  <option value="STATE">State</option>
+  <option value="CENTRAL">Central</option>
 </select>
 
 <select
   value={editData.audit_frequency || ""}
   onChange={(e) => handleChange("audit_frequency", e.target.value)}
-    className="h-10 border border-gray-200 rounded-lg px-3 text-sm 
-        focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
+  className="h-10 border border-gray-200 rounded-lg px-3 text-sm
+      focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-300"
 >
   <option value="">Frequency</option>
-  {getUniqueValues("frequency").map((val) => (
-    <option key={val}>{val}</option>
-  ))}
+  <option value="MONTHLY">Monthly</option>
+  <option value="QUARTERLY">Quarterly</option>
+  <option value="HALF_YEARLY">Half Yearly</option>
+  <option value="ANNUALLY">Annually</option>
 </select>
 
     <select
