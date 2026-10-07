@@ -65,10 +65,7 @@ class VendorSubmitComplianceAPIView(APIView):
                 .replace("–", "-")
                 .strip()
             )
-        workflow_status = request.data.get(
-            "workflow_status",
-            WorkflowStatus.SUBMITTED
-        )
+        workflow_status = WorkflowStatus.SUBMITTED
         general_remark = request.data.get("general_remark")
         payroll_data = request.data.get("payroll_data")
 

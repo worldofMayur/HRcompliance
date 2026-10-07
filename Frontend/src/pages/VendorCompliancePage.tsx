@@ -500,15 +500,7 @@ const rows: DocumentRow[] = filteredDocs.map(
 
     // ✅ ONLY failed documents reuploadable
     canReupload:
-      doc.workflow_status === "REUPLOAD_REQUESTED" ||
-      (
-        useNotificationFailedDocs &&
-        failedEntries.some(
-          (e: any) =>
-            Number(e.document_id) ===
-            Number(doc.id)
-        )
-      ),
+  doc.workflow_status === "REUPLOAD_REQUESTED",
   })
 );
 
