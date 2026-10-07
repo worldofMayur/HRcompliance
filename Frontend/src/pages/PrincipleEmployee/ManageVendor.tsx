@@ -734,18 +734,46 @@ className={`border-t hover:bg-gray-50 transition ${
     Agreement End Date (DD/MM/YYYY)
   </label>
 
-  <DatePicker
-    selected={endDate}
-    dateFormat="dd/MM/yy"
-    placeholderText="dd/mm/yy"
-    onChange={(date) => {
-      if (date) {
-        setDateRange([startDate, date]);
-        handleChange("end_date", formatForAPI(date));
-      }
-    }}
-    className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm"
-  />
+<DatePicker
+  selected={endDate}
+  value={endInput}
+  onChange={(date) => {
+    if (date) {
+      const formatted = date.toLocaleDateString("en-GB");
+
+      setEndInput(formatted);
+      setDateRange([startDate, date]);
+      setEndError("");
+
+      handleChange("end_date", formatForAPI(date));
+    }
+  }}
+  onChangeRaw={(e) => {
+    const value = e.target.value;
+
+    setEndInput(value);
+
+    const parsed = parseDate(value);
+
+    if (parsed) {
+      setDateRange([startDate, parsed]);
+      setEndError("");
+
+      handleChange("end_date", formatForAPI(parsed));
+    } else {
+      setEndError("Invalid date format (dd/mm/yyyy)");
+    }
+  }}
+  dateFormat="dd/MM/yyyy"
+  placeholderText="dd/mm/yyyy"
+  className="w-full h-10 border border-gray-200 rounded-lg px-3 text-sm"
+/>
+
+{endError && (
+  <p className="text-red-500 text-xs mt-1">
+    {endError}
+  </p>
+)}
 </div>
 
     {/* 🔹 AUDIT */}
