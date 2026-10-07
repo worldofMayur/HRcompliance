@@ -2428,14 +2428,21 @@ focus:ring-blue-100
         "
       >
         {/* Tab Content */}
-        <div className="flex flex-col leading-tight min-w-0 flex-1">
-          <span className="text-sm font-semibold text-gray-800 truncate">
-            {popup.auditPeriod}
-          </span>
-          <span className="text-xs text-gray-500 truncate mt-0.5">
-            {(popup.branchName || popup.branch || "Audit").split(",")[0]}
-          </span>
-        </div>
+      <div className="flex flex-col leading-tight min-w-0 flex-1">
+        <span className="text-sm font-semibold text-gray-800 truncate">
+          {peList.find(p => p.id == popup.pe)?.short_name || "-"}
+          {" - "}
+          {vendorList.find(v => v.id == popup.vendor)?.name || "-"}
+        </span>
+
+        <span className="text-xs text-gray-500 truncate mt-0.5">
+          {popup.state || "-"}
+          {" - "}
+          {popup.branchName || popup.branch || "-"}
+          {" - "}
+          {popup.auditPeriod}
+        </span>
+      </div>
 
         {/* Close Button */}
         <button
