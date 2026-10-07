@@ -596,20 +596,10 @@ class VendorMappedDocumentsAPIView(APIView):
                     submission.reupload_remark
                     if submission else "",
 
-                "workflow_status":
-                (
-                    WorkflowStatus.REUPLOAD_REQUESTED
-                    if (
-                        submission
-                        and submission.is_reuploaded
-                        and submission.workflow_status
-                        == WorkflowStatus.REUPLOADED
-                    )
-                    else (
-                        submission.workflow_status
-                        if submission
-                        else ""
-                    )
+                "workflow_status": (
+                    submission.workflow_status
+                    if submission
+                    else ""
                 ),
             })
 
