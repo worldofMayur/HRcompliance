@@ -316,7 +316,7 @@ const handleSave = async () => {
     console.log("🚀 FINAL PAYLOAD:", payload);
 
     const res = await fetch(
-      `${API_BASE}/vendor/vendor-mapping/${editingRowId}/`,
+      `${API_BASE}/api/vendor/vendor-mapping/${editingRowId}/`,
       {
         method: "PATCH",
         headers: {
