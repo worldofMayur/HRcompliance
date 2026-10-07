@@ -875,39 +875,31 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                     # ORIGINAL MAIN DOCUMENT
                     # =====================================
 
-                    if sub.main_file:
+                    if (
+                        sub.main_file
+                        and os.path.exists(sub.main_file.path)
+                    ):
 
-                        try:
-
-                            if sub.main_file.name not in added_files:
-
-                                print(
-                                    "📦 ZIP MAIN:",
-                                    sub.main_file.name
-                                )
-
-                                with sub.main_file.open("rb") as source_file:
-
-                                    zip_file.writestr(
-                                        os.path.join(
-                                            root_folder,
-                                            "Main Documents",
-                                            os.path.basename(
-                                                sub.main_file.name
-                                            )
-                                        ),
-                                        source_file.read()
-                                    )
-
-                                added_files.add(
-                                    sub.main_file.name
-                                )
-
-                        except Exception as e:
+                        if sub.main_file.name not in added_files:
 
                             print(
-                                f"❌ MAIN FILE ZIP ERROR "
-                                f"(Submission {sub.id}): {e}"
+                                "📦 ZIP MAIN:",
+                                sub.main_file.name
+                            )
+
+                            zip_file.write(
+                                sub.main_file.path,
+                                arcname=os.path.join(
+                                    root_folder,
+                                    "Main Documents",
+                                    os.path.basename(
+                                        sub.main_file.name
+                                    )
+                                )
+                            )
+
+                            added_files.add(
+                                sub.main_file.name
                             )
 
                     # =====================================
@@ -918,39 +910,31 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                         is_reupload=True
                     ):
 
-                        if version.file:
+                        if (
+                            version.file
+                            and os.path.exists(version.file.path)
+                        ):
 
-                            try:
-
-                                if version.file.name not in added_files:
-
-                                    print(
-                                        "📦 ZIP REUPLOAD:",
-                                        version.file.name
-                                    )
-
-                                    with version.file.open("rb") as source_file:
-
-                                        zip_file.writestr(
-                                            os.path.join(
-                                                root_folder,
-                                                "Reuploaded Documents",
-                                                os.path.basename(
-                                                    version.file.name
-                                                )
-                                            ),
-                                            source_file.read()
-                                        )
-
-                                    added_files.add(
-                                        version.file.name
-                                    )
-
-                            except Exception as e:
+                            if version.file.name not in added_files:
 
                                 print(
-                                    f"❌ REUPLOAD ZIP ERROR "
-                                    f"(Submission {sub.id}): {e}"
+                                    "📦 ZIP REUPLOAD:",
+                                    version.file.name
+                                )
+
+                                zip_file.write(
+                                    version.file.path,
+                                    arcname=os.path.join(
+                                        root_folder,
+                                        "Reuploaded Documents",
+                                        os.path.basename(
+                                            version.file.name
+                                        )
+                                    )
+                                )
+
+                                added_files.add(
+                                    version.file.name
                                 )
 
                     # =====================================
@@ -959,39 +943,31 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
                     for supp in sub.supporting_files.all():
 
-                        if supp.file:
+                        if (
+                            supp.file
+                            and os.path.exists(supp.file.path)
+                        ):
 
-                            try:
-
-                                if supp.file.name not in added_files:
-
-                                    print(
-                                        "📦 ZIP ADDITIONAL FILE:",
-                                        supp.file.name
-                                    )
-
-                                    with supp.file.open("rb") as source_file:
-
-                                        zip_file.writestr(
-                                            os.path.join(
-                                                root_folder,
-                                                "Additional Documents",
-                                                os.path.basename(
-                                                    supp.file.name
-                                                )
-                                            ),
-                                            source_file.read()
-                                        )
-
-                                    added_files.add(
-                                        supp.file.name
-                                    )
-
-                            except Exception as e:
+                            if supp.file.name not in added_files:
 
                                 print(
-                                    f"❌ SUPPORTING FILE ZIP ERROR "
-                                    f"(Submission {sub.id}): {e}"
+                                    "📦 ZIP ADDITIONAL FILE:",
+                                    supp.file.name
+                                )
+
+                                zip_file.write(
+                                    supp.file.path,
+                                    arcname=os.path.join(
+                                        root_folder,
+                                        "Additional Documents",
+                                        os.path.basename(
+                                            supp.file.name
+                                        )
+                                    )
+                                )
+
+                                added_files.add(
+                                    supp.file.name
                                 )
 
                     # =====================================
@@ -1000,125 +976,114 @@ class DownloadAuditDocumentsZipAPIView(APIView):
 
                     for exc in sub.exceptional_documents.all():
 
-                        if exc.file:
+                        if (
+                            exc.file
+                            and os.path.exists(exc.file.path)
+                        ):
 
-                            try:
-
-                                if exc.file.name not in added_files:
-
-                                    print(
-                                        "📦 ZIP EXCEPTIONAL:",
-                                        exc.file.name
-                                    )
-
-                                    with exc.file.open("rb") as source_file:
-
-                                        zip_file.writestr(
-                                            os.path.join(
-                                                root_folder,
-                                                "Exceptional Approval Documents",
-                                                os.path.basename(
-                                                    exc.file.name
-                                                )
-                                            ),
-                                            source_file.read()
-                                        )
-
-                                    added_files.add(
-                                        exc.file.name
-                                    )
-
-                            except Exception as e:
+                            if exc.file.name not in added_files:
 
                                 print(
-                                    f"❌ EXCEPTIONAL FILE ZIP ERROR "
-                                    f"(Submission {sub.id}): {e}"
+                                    "📦 ZIP EXCEPTIONAL:",
+                                    exc.file.name
+                                )
+
+                                zip_file.write(
+                                    exc.file.path,
+                                    arcname=os.path.join(
+                                        root_folder,
+                                        "Exceptional Approval Documents",
+                                        os.path.basename(
+                                            exc.file.name
+                                        )
+                                    )
+                                )
+
+                                added_files.add(
+                                    exc.file.name
                                 )
 
                     # =====================================
                     # COMPLIANCE CLEARANCE CERTIFICATE
                     # =====================================
 
-                    if getattr(
-                        sub,
-                        "clearance_certificate",
-                        None
+                    if (
+                        getattr(
+                            sub,
+                            "clearance_certificate",
+                            None
+                        )
+                        and os.path.exists(
+                            sub.clearance_certificate.path
+                        )
                     ):
 
-                        try:
+                        # ONLY KEEP FILE NAME
+                        cc_basename = os.path.basename(
+                            sub.clearance_certificate.name
+                        )
 
-                            cc_basename = os.path.basename(
+                        # PREVENT DUPLICATE CC PDFs
+                        if cc_basename not in added_cc_files:
+
+                            print(
+                                "📦 ZIP FINAL CC:",
                                 sub.clearance_certificate.name
                             )
 
-                            if cc_basename not in added_cc_files:
+                            zip_file.write(
 
-                                print(
-                                    "📦 ZIP FINAL CC:",
-                                    sub.clearance_certificate.name
+                                sub.clearance_certificate.path,
+
+                                arcname=os.path.join(
+                                    root_folder,
+                                    "CC Certificate",
+                                    cc_basename
                                 )
-
-                                with sub.clearance_certificate.open("rb") as source_file:
-
-                                    zip_file.writestr(
-                                        os.path.join(
-                                            root_folder,
-                                            "CC Certificate",
-                                            cc_basename
-                                        ),
-                                        source_file.read()
-                                    )
-
-                                added_cc_files.add(cc_basename)
-
-                        except Exception as e:
-
-                            print(
-                                f"❌ CC ZIP ERROR "
-                                f"(Submission {sub.id}): {e}"
                             )
+
+                            added_cc_files.add(
+                                cc_basename
+                            )
+
 
                     # =====================================
                     # FINAL AUDIT REPORT PDF
                     # =====================================
 
-                    if getattr(
-                        sub,
-                        "audit_report_pdf",
-                        None
+                    if (
+                        getattr(
+                            sub,
+                            "audit_report_pdf",
+                            None
+                        )
+                        and os.path.exists(
+                            sub.audit_report_pdf.path
+                        )
                     ):
 
-                        try:
+                        report_basename = os.path.basename(
+                            sub.audit_report_pdf.name
+                        )
 
-                            report_basename = os.path.basename(
+                        if report_basename not in added_cc_files:
+
+                            print(
+                                "📦 ZIP AUDIT REPORT:",
                                 sub.audit_report_pdf.name
                             )
 
-                            if report_basename not in added_cc_files:
-
-                                print(
-                                    "📦 ZIP AUDIT REPORT:",
-                                    sub.audit_report_pdf.name
+                            zip_file.write(
+                                sub.audit_report_pdf.path,
+                                arcname=os.path.join(
+                                    root_folder,
+                                    "Audit Report",
+                                    report_basename
                                 )
+                            )
 
-                                with sub.audit_report_pdf.open("rb") as source_file:
-
-                                    zip_file.writestr(
-                                        os.path.join(
-                                            root_folder,
-                                            "Audit Report",
-                                            report_basename
-                                        ),
-                                        source_file.read()
-                                    )
-
-                                added_cc_files.add(report_basename)
-
-                        except Exception as e:
-
-                            print(
-                                f"❌ AUDIT REPORT ZIP ERROR "
-                                f"(Submission {sub.id}): {e}"
+                            added_cc_files.add(
+                                report_basename
                             )
 
                 except Exception as e:
@@ -1128,25 +1093,20 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                         f"(Submission {sub.id}): {e}"
                     )
 
-        # =====================================
-        # RETURN ZIP FILE
-        # =====================================
-
         buffer.seek(0)
 
         response = HttpResponse(
-            buffer.getvalue(),
+            buffer,
             content_type="application/zip"
         )
 
-        response["Content-Disposition"] = (
+        response[
+            "Content-Disposition"
+        ] = (
             f'attachment; filename="{zip_filename}"'
         )
 
         return response
-
-
-# ================= SAVE AUDIT (UPDATED ONLY) =================
 
 # ================= SAVE AUDIT (UPDATED ONLY) =================
 
