@@ -1120,6 +1120,14 @@ class DownloadAuditDocumentsZipAPIView(APIView):
                                 f"❌ AUDIT REPORT ZIP ERROR "
                                 f"(Submission {sub.id}): {e}"
                             )
+
+                except Exception as e:
+
+                    print(
+                        f"❌ ZIP ERROR "
+                        f"(Submission {sub.id}): {e}"
+                    )
+
 # ================= SAVE AUDIT (UPDATED ONLY) =================
 
 class SaveAuditAPIView(APIView):
