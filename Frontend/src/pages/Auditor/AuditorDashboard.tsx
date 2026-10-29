@@ -1682,10 +1682,13 @@ text-sm
   closable={false}
   styles={{
     body: {
-      height: "calc(100vh - 96px)",
-      maxHeight: "calc(100vh - 96px)",
+      height: "calc(100dvh - 96px)",
+      maxHeight: "calc(100dvh - 96px)",
       overflow: "hidden",
       padding: 0,
+      display: "flex",
+      flexDirection: "column",
+      minHeight: 0,
     },
   }}
   style={{
@@ -1879,8 +1882,8 @@ text-sm
 
 
     {/* 2. FULL WIDTH TABLE AREA */}
-<div className="flex-1 min-h-0 flex overflow-auto">
-  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-auto">
+<div className="flex-1 min-h-0 flex overflow-hidden">
+  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
         {/* Locked banner, Remarks, Stats, Table - as in previous response */}
         {isAuditLocked && (
           <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
@@ -1941,7 +1944,7 @@ text-sm
 
         {/* Stats bar will be added here */}
 
-<div className="flex-1 min-h-0 overflow-auto px-2 sm:px-4 pt-2 pb-3">
+<div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto px-2 sm:px-4 pt-2 pb-3">
             {!hasDocuments ? (
             <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
               <div className="text-center">
@@ -1983,7 +1986,6 @@ className="
                 className="audit-table-highlighted"
                 scroll={{
                   x: "max-content",
-                  y: "calc(100vh - 500px)",
                 }}
               />
             </div>
