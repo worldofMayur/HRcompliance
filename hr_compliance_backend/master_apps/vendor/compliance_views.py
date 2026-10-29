@@ -406,10 +406,20 @@ class VendorSubmitComplianceAPIView(APIView):
                         gross_wages=payroll.get("gross_wages"),
                         net_wages=payroll.get("net_wages"),
 
+
                         pf_remittance_date=payroll.get("pf_remittance_date") or None,
-                        esic_remittance_date=payroll.get("esic_remittance_date") or None,
+                        esic_remittance_date=(
+                            None
+                            if payroll.get("esic_not_applicable", False)
+                            else payroll.get("esic_remittance_date") or None
+                        ),
+                        esic_not_applicable=payroll.get("esic_not_applicable", False),
+                        esic_not_applicable_reason=(
+                            (payroll.get("esic_not_applicable_reason") or "").strip() or None
+                        ) if payroll.get("esic_not_applicable", False) else None,
 
                         rc_remittance_date=payroll.get("rc_remittance_date") or None,
+
                         pt_rc_not_applicable=payroll.get("pt_rc_not_applicable", False),
 
                         lwf_remittance_date=payroll.get("lwf_remittance_date") or None,

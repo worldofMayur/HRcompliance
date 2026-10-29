@@ -123,6 +123,8 @@ export default function VendorCompliancePage() {
     net_wages: undefined as number | undefined,
     pf_remittance_date: "",
     esic_remittance_date: "",
+    esic_not_applicable: false,
+    esic_not_applicable_reason: "",
     rc_remittance_date: "",
     lwf_remittance_date: "",
   });
@@ -721,7 +723,8 @@ const handleSubmit = () => {
 
     pf_remittance_date: "",
     esic_remittance_date: "",
-
+    esic_not_applicable: false,
+    esic_not_applicable_reason: "",
     rc_remittance_date: "",
     pt_rc_not_applicable: ptRcNotApplicable,
 
@@ -1989,10 +1992,13 @@ if (effectiveReuploadMode) {
             />
           </div>
 
-          {/* ESIC Remittance Date */}
+          
+          {/* ESIC Remittance Date + Not Applicable */}
           <div className="flex flex-col">
             <Label>ESIC Remittance Date</Label>
+
             <DatePicker
+              disabled={!!row.esic_not_applicable}
               selected={
                 row.esic_remittance_date
                   ? parseApiDate(row.esic_remittance_date)
@@ -2017,19 +2023,55 @@ if (effectiveReuploadMode) {
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
               className="
-              w-full
-              h-11
-              rounded-xl
-              border
-              border-gray-300
-              px-3
-              text-sm
-              focus:border-blue-500
-              focus:ring-2
-              focus:ring-blue-100
+                w-full
+                h-11
+                rounded-xl
+                border
+                border-gray-300
+                px-3
+                text-sm
+                focus:border-blue-500
+                focus:ring-2
+                focus:ring-blue-100
               "
               style={{ height: "40px" }}
             />
+
+            <Checkbox
+              className="mt-2"
+              checked={!!row.esic_not_applicable}
+              onChange={(e) => {
+                const temp = [...payrollData];
+                temp[index].esic_not_applicable = e.target.checked;
+
+                if (e.target.checked) {
+                  temp[index].esic_remittance_date = "";
+                } else {
+                  temp[index].esic_not_applicable_reason = "";
+                }
+
+                setPayrollData(temp);
+              }}
+            >
+              <span className="text-xs text-gray-600">
+                Not Applicable
+              </span>
+            </Checkbox>
+
+            {row.esic_not_applicable && (
+              <Input
+                className="mt-2"
+                placeholder="Enter explanation or alternative value"
+                value={row.esic_not_applicable_reason || ""}
+                onChange={(e) => {
+                  const temp = [...payrollData];
+                  temp[index].esic_not_applicable_reason = e.target.value;
+                  setPayrollData(temp);
+                }}
+                maxLength={1000}
+                aria-label="ESIC Not Applicable explanation"
+              />
+            )}
           </div>
 
           {/* PT RC Remittance Date + Not Applicable */}

@@ -2256,39 +2256,66 @@ focus:ring-blue-100
               />
             </div>
 
-            {/* ESIC Remittance Date */}
-            <div className="flex flex-col">
-              <Label>ESIC Remittance Date</Label>
-              <DatePicker
-                disabled={!isEditingCompliance}
-                selected={
-                  row.esic_remittance_date
-                    ? new Date(row.esic_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const updated = [...payrollData];
-                  updated[index].esic_remittance_date = date
-                    ? date.toISOString().split("T")[0]
-                    : "";
-                  setPayrollData(updated);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="
-w-full
-h-11
-rounded-xl
-border
-border-gray-300
-px-3
-text-sm
-focus:border-blue-500
-focus:ring-2
-focus:ring-blue-100
-"
-              />
-            </div>
+
+{/* ESIC Remittance Date + Not Applicable */}
+<div className="flex flex-col">
+  <Label>ESIC Remittance Date</Label>
+
+  <DatePicker
+    disabled={!isEditingCompliance || !!row.esic_not_applicable}
+    selected={
+      row.esic_remittance_date
+        ? new Date(row.esic_remittance_date)
+        : null
+    }
+    onChange={(date: Date | null) => {
+      const updated = [...payrollData];
+      updated[index].esic_remittance_date = date
+        ? date.toISOString().split("T")[0]
+        : "";
+      setPayrollData(updated);
+    }}
+    dateFormat="dd/MM/yyyy"
+    placeholderText="dd/mm/yyyy"
+    className="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm"
+  />
+
+  <Checkbox
+    className="mt-2"
+    checked={!!row.esic_not_applicable}
+    disabled={!isEditingCompliance}
+    onChange={(e) => {
+      const updated = [...payrollData];
+      updated[index].esic_not_applicable = e.target.checked;
+
+      if (e.target.checked) {
+        updated[index].esic_remittance_date = "";
+      } else {
+        updated[index].esic_not_applicable_reason = "";
+      }
+
+      setPayrollData(updated);
+    }}
+  >
+    Not Applicable
+  </Checkbox>
+
+  {row.esic_not_applicable && (
+    <Input
+      className="mt-2"
+      placeholder="Enter explanation or alternative value"
+      value={row.esic_not_applicable_reason || ""}
+      disabled={!isEditingCompliance}
+      maxLength={1000}
+      onChange={(e) => {
+        const updated = [...payrollData];
+        updated[index].esic_not_applicable_reason = e.target.value;
+        setPayrollData(updated);
+      }}
+    />
+  )}
+</div>
+
 
             {/* PT RC Remittance Date */}
             <div className="flex flex-col">
