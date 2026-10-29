@@ -77,6 +77,8 @@ interface DocumentRow {
   isUploaded?: boolean;
   uploadedFileName?: string;
   isNotApplicable?: boolean;
+  observation?: string;
+  recommendation?: string;
 }
 
 export default function VendorCompliancePage() {
@@ -489,6 +491,18 @@ const rows: DocumentRow[] = filteredDocs.map(
         ? doc.reupload_remark || ""
         : "",
 
+    observation:
+      failedEntries.find(
+        (entry: any) =>
+          Number(entry.document_id) === Number(doc.id)
+      )?.observation || "",
+
+    recommendation:
+      failedEntries.find(
+        (entry: any) =>
+          Number(entry.document_id) === Number(doc.id)
+      )?.recommendation || "",
+
     is_reuploaded:
       doc.is_reuploaded || false,
 
@@ -751,11 +765,10 @@ const submitCompliance = async () => {
     return;
   }
 
-  if (!generalRemark.trim()) {
+  if (!effectiveReuploadMode && !generalRemark.trim()) {
     message.error("Please enter general remark.");
     return;
   }
-
   // ================= REQUIRED DOCUMENT VALIDATION =================
 
   const missingDocs = tableData.filter(
@@ -1641,6 +1654,34 @@ if (effectiveReuploadMode) {
             </div>
         )}
 
+        {effectiveReuploadMode &&
+  record.canReupload &&
+  (record.observation || record.recommendation) && (
+    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+      {record.observation && (
+        <div className="mb-2">
+          <p className="font-semibold text-amber-900">
+            Auditor Observation
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-gray-700">
+            {record.observation}
+          </p>
+        </div>
+      )}
+
+      {record.recommendation && (
+        <div>
+          <p className="font-semibold text-amber-900">
+            Auditor Recommendation
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-gray-700">
+            {record.recommendation}
+          </p>
+        </div>
+      )}
+    </div>
+  )}
+
 {record.fileList.length > 0 ? (
   <div
     className="
@@ -1779,7 +1820,7 @@ if (effectiveReuploadMode) {
 
       !selectedPeriod ||
 
-      !generalRemark.trim()
+      (!effectiveReuploadMode && !generalRemark.trim())
     }
     onClick={handleSubmit}
     className="
