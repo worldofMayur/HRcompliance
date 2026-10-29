@@ -1120,27 +1120,29 @@ if (exceptionalFiles) {
   /* ================= TABLE ================= */
 
 const columns = [
+
 {
   title: "Audit Requirement",
-  width: 145,          // decreased
+  width: 145,
   align: "left" as const,
   render: (_: any, record: any) => (
-    <div className="space-y-1">
-      <div className="text-xs text-gray-600">
+    <div className="space-y-1 min-w-0 text-left">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Act: {record.act_name}
       </div>
-      <div className="text-xs text-gray-600">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Section: {record.section_rule}
       </div>
-      <div className="text-xs text-gray-600">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Document: {record.document_name}
       </div>
-      <div className="text-xs text-gray-600">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Form: {record.form_number || "-"}
       </div>
     </div>
   ),
 },
+
 
 {
   title: "Audit Particulars",
@@ -1202,7 +1204,7 @@ const columns = [
         onChange={(e) =>
           updateField(record.id, "status", e.target.value)
         }
-        className="border rounded-lg px-3 py-2 w-full"
+        className="w-full min-w-0 rounded-md border border-gray-300 px-2 py-1 text-sm"
       >
         <option value="">Select</option>
         <option value="Complied">Complied</option>
@@ -1682,10 +1684,13 @@ text-sm
   closable={false}
   styles={{
     body: {
-      height: "calc(100vh - 96px)",
-      maxHeight: "calc(100vh - 96px)",
+      height: "calc(100dvh - 96px)",
+      maxHeight: "calc(100dvh - 96px)",
       overflow: "hidden",
       padding: 0,
+      display: "flex",
+      flexDirection: "column",
+      minHeight: 0,
     },
   }}
   style={{
@@ -1879,8 +1884,8 @@ text-sm
 
 
     {/* 2. FULL WIDTH TABLE AREA */}
-<div className="flex-1 min-h-0 flex overflow-auto">
-  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-auto">
+<div className="flex-1 min-h-0 flex overflow-hidden">
+  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
         {/* Locked banner, Remarks, Stats, Table - as in previous response */}
         {isAuditLocked && (
           <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
@@ -1941,7 +1946,7 @@ text-sm
 
         {/* Stats bar will be added here */}
 
-<div className="flex-1 min-h-0 overflow-auto px-2 sm:px-4 pt-2 pb-3">
+<div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto px-2 sm:px-4 pt-2 pb-3">
             {!hasDocuments ? (
             <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
               <div className="text-center">
@@ -1983,7 +1988,6 @@ className="
                 className="audit-table-highlighted"
                 scroll={{
                   x: "max-content",
-                  y: "calc(100vh - 500px)",
                 }}
               />
             </div>
@@ -2252,39 +2256,66 @@ focus:ring-blue-100
               />
             </div>
 
-            {/* ESIC Remittance Date */}
-            <div className="flex flex-col">
-              <Label>ESIC Remittance Date</Label>
-              <DatePicker
-                disabled={!isEditingCompliance}
-                selected={
-                  row.esic_remittance_date
-                    ? new Date(row.esic_remittance_date)
-                    : null
-                }
-                onChange={(date: Date | null) => {
-                  const updated = [...payrollData];
-                  updated[index].esic_remittance_date = date
-                    ? date.toISOString().split("T")[0]
-                    : "";
-                  setPayrollData(updated);
-                }}
-                dateFormat="dd/MM/yyyy"
-                placeholderText="dd/mm/yyyy"
-                className="
-w-full
-h-11
-rounded-xl
-border
-border-gray-300
-px-3
-text-sm
-focus:border-blue-500
-focus:ring-2
-focus:ring-blue-100
-"
-              />
-            </div>
+
+{/* ESIC Remittance Date + Not Applicable */}
+<div className="flex flex-col">
+  <Label>ESIC Remittance Date</Label>
+
+  <DatePicker
+    disabled={!isEditingCompliance || !!row.esic_not_applicable}
+    selected={
+      row.esic_remittance_date
+        ? new Date(row.esic_remittance_date)
+        : null
+    }
+    onChange={(date: Date | null) => {
+      const updated = [...payrollData];
+      updated[index].esic_remittance_date = date
+        ? date.toISOString().split("T")[0]
+        : "";
+      setPayrollData(updated);
+    }}
+    dateFormat="dd/MM/yyyy"
+    placeholderText="dd/mm/yyyy"
+    className="w-full h-11 rounded-xl border border-gray-300 px-3 text-sm"
+  />
+
+  <Checkbox
+    className="mt-2"
+    checked={!!row.esic_not_applicable}
+    disabled={!isEditingCompliance}
+    onChange={(e) => {
+      const updated = [...payrollData];
+      updated[index].esic_not_applicable = e.target.checked;
+
+      if (e.target.checked) {
+        updated[index].esic_remittance_date = "";
+      } else {
+        updated[index].esic_not_applicable_reason = "";
+      }
+
+      setPayrollData(updated);
+    }}
+  >
+    Not Applicable
+  </Checkbox>
+
+  {row.esic_not_applicable && (
+    <Input
+      className="mt-2"
+      placeholder="Enter explanation or alternative value"
+      value={row.esic_not_applicable_reason || ""}
+      disabled={!isEditingCompliance}
+      maxLength={1000}
+      onChange={(e) => {
+        const updated = [...payrollData];
+        updated[index].esic_not_applicable_reason = e.target.value;
+        setPayrollData(updated);
+      }}
+    />
+  )}
+</div>
+
 
             {/* PT RC Remittance Date */}
             <div className="flex flex-col">

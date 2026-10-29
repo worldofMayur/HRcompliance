@@ -77,6 +77,8 @@ interface DocumentRow {
   isUploaded?: boolean;
   uploadedFileName?: string;
   isNotApplicable?: boolean;
+  observation?: string;
+  recommendation?: string;
 }
 
 export default function VendorCompliancePage() {
@@ -123,6 +125,8 @@ export default function VendorCompliancePage() {
     net_wages: undefined as number | undefined,
     pf_remittance_date: "",
     esic_remittance_date: "",
+    esic_not_applicable: false,
+    esic_not_applicable_reason: "",
     rc_remittance_date: "",
     lwf_remittance_date: "",
   });
@@ -487,6 +491,18 @@ const rows: DocumentRow[] = filteredDocs.map(
         ? doc.reupload_remark || ""
         : "",
 
+    observation:
+      failedEntries.find(
+        (entry: any) =>
+          Number(entry.document_id) === Number(doc.id)
+      )?.observation || "",
+
+    recommendation:
+      failedEntries.find(
+        (entry: any) =>
+          Number(entry.document_id) === Number(doc.id)
+      )?.recommendation || "",
+
     is_reuploaded:
       doc.is_reuploaded || false,
 
@@ -721,7 +737,8 @@ const handleSubmit = () => {
 
     pf_remittance_date: "",
     esic_remittance_date: "",
-
+    esic_not_applicable: false,
+    esic_not_applicable_reason: "",
     rc_remittance_date: "",
     pt_rc_not_applicable: ptRcNotApplicable,
 
@@ -748,11 +765,10 @@ const submitCompliance = async () => {
     return;
   }
 
-  if (!generalRemark.trim()) {
+  if (!effectiveReuploadMode && !generalRemark.trim()) {
     message.error("Please enter general remark.");
     return;
   }
-
   // ================= REQUIRED DOCUMENT VALIDATION =================
 
   const missingDocs = tableData.filter(
@@ -1638,6 +1654,34 @@ if (effectiveReuploadMode) {
             </div>
         )}
 
+        {effectiveReuploadMode &&
+  record.canReupload &&
+  (record.observation || record.recommendation) && (
+    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+      {record.observation && (
+        <div className="mb-2">
+          <p className="font-semibold text-amber-900">
+            Auditor Observation
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-gray-700">
+            {record.observation}
+          </p>
+        </div>
+      )}
+
+      {record.recommendation && (
+        <div>
+          <p className="font-semibold text-amber-900">
+            Auditor Recommendation
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-gray-700">
+            {record.recommendation}
+          </p>
+        </div>
+      )}
+    </div>
+  )}
+
 {record.fileList.length > 0 ? (
   <div
     className="
@@ -1776,7 +1820,7 @@ if (effectiveReuploadMode) {
 
       !selectedPeriod ||
 
-      !generalRemark.trim()
+      (!effectiveReuploadMode && !generalRemark.trim())
     }
     onClick={handleSubmit}
     className="
@@ -1989,10 +2033,13 @@ if (effectiveReuploadMode) {
             />
           </div>
 
-          {/* ESIC Remittance Date */}
+          
+          {/* ESIC Remittance Date + Not Applicable */}
           <div className="flex flex-col">
             <Label>ESIC Remittance Date</Label>
+
             <DatePicker
+              disabled={!!row.esic_not_applicable}
               selected={
                 row.esic_remittance_date
                   ? parseApiDate(row.esic_remittance_date)
@@ -2017,19 +2064,55 @@ if (effectiveReuploadMode) {
               dateFormat="dd/MM/yyyy"
               placeholderText="dd/mm/yyyy"
               className="
-              w-full
-              h-11
-              rounded-xl
-              border
-              border-gray-300
-              px-3
-              text-sm
-              focus:border-blue-500
-              focus:ring-2
-              focus:ring-blue-100
+                w-full
+                h-11
+                rounded-xl
+                border
+                border-gray-300
+                px-3
+                text-sm
+                focus:border-blue-500
+                focus:ring-2
+                focus:ring-blue-100
               "
               style={{ height: "40px" }}
             />
+
+            <Checkbox
+              className="mt-2"
+              checked={!!row.esic_not_applicable}
+              onChange={(e) => {
+                const temp = [...payrollData];
+                temp[index].esic_not_applicable = e.target.checked;
+
+                if (e.target.checked) {
+                  temp[index].esic_remittance_date = "";
+                } else {
+                  temp[index].esic_not_applicable_reason = "";
+                }
+
+                setPayrollData(temp);
+              }}
+            >
+              <span className="text-xs text-gray-600">
+                Not Applicable
+              </span>
+            </Checkbox>
+
+            {row.esic_not_applicable && (
+              <Input
+                className="mt-2"
+                placeholder="Enter explanation or alternative value"
+                value={row.esic_not_applicable_reason || ""}
+                onChange={(e) => {
+                  const temp = [...payrollData];
+                  temp[index].esic_not_applicable_reason = e.target.value;
+                  setPayrollData(temp);
+                }}
+                maxLength={1000}
+                aria-label="ESIC Not Applicable explanation"
+              />
+            )}
           </div>
 
           {/* PT RC Remittance Date + Not Applicable */}
