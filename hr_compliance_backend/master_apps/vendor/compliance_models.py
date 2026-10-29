@@ -568,6 +568,15 @@ class VendorCompliancePayroll(models.Model):
         blank=True
     )
 
+    esic_not_applicable = models.BooleanField(
+        default=False
+    )
+
+    esic_not_applicable_reason = models.TextField(
+        null=True,
+        blank=True
+    )
+
     rc_remittance_date = models.DateField(
         null=True,
         blank=True

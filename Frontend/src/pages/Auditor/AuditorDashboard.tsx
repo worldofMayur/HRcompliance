@@ -1120,27 +1120,29 @@ if (exceptionalFiles) {
   /* ================= TABLE ================= */
 
 const columns = [
+
 {
   title: "Audit Requirement",
-  width: 145,          // decreased
+  width: 145,
   align: "left" as const,
   render: (_: any, record: any) => (
-    <div className="space-y-1">
-      <div className="text-xs text-gray-600">
+    <div className="space-y-1 min-w-0 text-left">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Act: {record.act_name}
       </div>
-      <div className="text-xs text-gray-600">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Section: {record.section_rule}
       </div>
-      <div className="text-xs text-gray-600">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Document: {record.document_name}
       </div>
-      <div className="text-xs text-gray-600">
+      <div className="text-xs text-gray-600 break-words whitespace-normal leading-5">
         Form: {record.form_number || "-"}
       </div>
     </div>
   ),
 },
+
 
 {
   title: "Audit Particulars",
@@ -1202,7 +1204,7 @@ const columns = [
         onChange={(e) =>
           updateField(record.id, "status", e.target.value)
         }
-        className="border rounded-lg px-3 py-2 w-full"
+        className="w-full min-w-0 rounded-md border border-gray-300 px-2 py-1 text-sm"
       >
         <option value="">Select</option>
         <option value="Complied">Complied</option>
