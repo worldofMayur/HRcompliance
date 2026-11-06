@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const clearAuthData = () => {
   localStorage.removeItem("access_token");
@@ -9,6 +9,7 @@ export const clearAuthData = () => {
   localStorage.removeItem("email");
   localStorage.removeItem("role");
   localStorage.removeItem("principal_employer_id");
+  localStorage.removeItem("principal_employer_name");
 };
 
 export const getAccessToken = () => {
@@ -25,7 +26,6 @@ export const isAuthenticated = () => {
 
 export const logoutUser = () => {
   clearAuthData();
-  localStorage.removeItem("principal_employer_name");
 
   window.dispatchEvent(new Event("auth-changed"));
 };
@@ -35,7 +35,6 @@ export const refreshAccessToken = async () => {
     const refresh = getRefreshToken();
 
     if (!refresh) {
-      logoutUser();
       return null;
     }
 
@@ -46,15 +45,37 @@ export const refreshAccessToken = async () => {
       }
     );
 
-    const newAccess = response.data.access;
+    const newAccess = response.data?.access;
+    const newRefresh = response.data?.refresh;
 
-    localStorage.setItem("access_token", newAccess);
+    if (!newAccess) {
+      return null;
+    }
+
+    // Save new access token
+    localStorage.setItem(
+      "access_token",
+      newAccess
+    );
+
+    // IMPORTANT:
+    // Because ROTATE_REFRESH_TOKENS=True,
+    // save the new refresh token when Django sends one.
+    if (newRefresh) {
+      localStorage.setItem(
+        "refresh_token",
+        newRefresh
+      );
+    }
 
     return newAccess;
-  } catch (error) {
-    console.error("Refresh token failed:", error);
 
-    logoutUser();
+  } catch (error) {
+
+    console.error(
+      "Refresh token failed:",
+      error
+    );
 
     return null;
   }
