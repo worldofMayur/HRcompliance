@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import api from "../../src/utils/api";
 import {
   Upload,
   Input,
@@ -312,9 +312,8 @@ const parseDateForPicker = (dateStr: string) => {
   }, [selectedPE, selectedBranch, selectedPeriod]);
   const loadMappedPE = async () => {
     try {
-      const res = await axios.get(
-        `${API_BASE}/api/vendor/mapped-pe/`,
-        authHeader
+      const res = await api.get(
+        `${API_BASE}/api/vendor/mapped-pe/`
       );
       setPeList(res.data);
     } catch (err) { console.error(err); }
@@ -322,23 +321,26 @@ const parseDateForPicker = (dateStr: string) => {
 
   const loadStates = async (peId: string) => {
     try {
-      const res = await axios.get(`${API_BASE}/api/vendor/mapped-states/?pe_id=${peId}`, authHeader);
+      const res = await api.get(
+        `${API_BASE}/api/vendor/mapped-states/?pe_id=${peId}`
+      );
       setStates(res.data);
     } catch (err) { console.error(err); }
   };
 
   const loadBranches = async (peId: string, state: string) => {
     try {
-      const res = await axios.get(`${API_BASE}/api/vendor/mapped-branches/?pe_id=${peId}&state=${state}`, authHeader);
+      const res = await api.get(
+        `${API_BASE}/api/vendor/mapped-branches/?pe_id=${peId}&state=${state}`
+      );
       setBranches(res.data);
     } catch (err) { console.error(err); }
   };
 
   const loadMappingMeta = async (peId: string, branchId: string) => {
     try {
-      const res = await axios.get(
-        `${API_BASE}/api/vendor/mapping-meta/?pe_id=${peId}&branch_id=${branchId}`,
-        authHeader
+      const res = await api.get(
+        `${API_BASE}/api/vendor/mapping-meta/?pe_id=${peId}&branch_id=${branchId}`
       );
       const data = res.data;
       setMappingStartDate(data.start_date ? new Date(data.start_date) : null);
@@ -355,9 +357,8 @@ const parseDateForPicker = (dateStr: string) => {
 
   try {
 
-    const res = await axios.get(
-      `${API_BASE}/api/vendor/frozen-periods/?branch_id=${branchId}`,
-      authHeader
+    const res = await api.get(
+      `${API_BASE}/api/vendor/frozen-periods/?branch_id=${branchId}`
     );
 
     setFrozenPeriods(res.data || []);
@@ -376,11 +377,10 @@ const parseDateForPicker = (dateStr: string) => {
   try {
     setDocumentsLoading(true);
 
-    const res = await axios.get(
+    const res = await api.get(
       `${API_BASE}/api/vendor/mapped-documents/?pe_id=${peId}&branch_id=${branchId}&period=${encodeURIComponent(
         selectedPeriod
-      )}`,
-      authHeader
+      )}`
     );
 
     const data = res.data || [];
@@ -950,12 +950,11 @@ formData.append(
 
     // ================= API CALL =================
 
-    const response = await axios.post(
+    const response = await api.post(
       endpoint,
       formData,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       }
