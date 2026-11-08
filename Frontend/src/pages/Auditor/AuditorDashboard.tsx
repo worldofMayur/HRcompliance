@@ -1956,16 +1956,18 @@ text-sm
             </div>
           ) : (
           <div
-className="
-  h-full
-  min-h-0
-  overflow-hidden
-  rounded-xl
-  border
-  border-gray-200
-  bg-white
-  shadow-sm
-"
+            className="
+              h-full
+              min-h-0
+              flex
+              flex-col
+              overflow-hidden
+              rounded-xl
+              border
+              border-gray-200
+              bg-white
+              shadow-sm
+            "
           >
             <div className="border-b border-gray-200 bg-white p-2">
               <Input
@@ -1977,7 +1979,8 @@ className="
               />
             </div>
 
-            <Table
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <Table
                 rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
                 columns={columns}
                 dataSource={filteredGroupedChecklist}
@@ -1988,8 +1991,10 @@ className="
                 className="audit-table-highlighted"
                 scroll={{
                   x: "max-content",
+                  y: "calc(100dvh - 540px)",
                 }}
               />
+            </div>
             </div>
           )}
         </div>
