@@ -1396,16 +1396,19 @@ if (effectiveReuploadMode) {
   </div>
 </div>
 
-         <div
-  className="
-    grid
-    grid-cols-7
-    gap-2
-    w-full
-  "
->
+  <div
+    className="
+      grid
+      grid-cols-1
+      sm:grid-cols-2
+      xl:grid-cols-3
+      2xl:grid-cols-4
+      gap-4
+      w-full
+    "
+  >
   {documentsLoading && (
-    <div className="col-span-7 flex flex-col items-center justify-center py-12">
+    <div className="col-span-full flex flex-col items-center justify-center py-12">
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
 
       <p className="mt-4 text-sm text-gray-500">
@@ -1415,7 +1418,7 @@ if (effectiveReuploadMode) {
   )}
 
   {!documentsLoading && tableData.length === 0 && (
-    <div className="col-span-7 text-center py-10 text-gray-400">
+    <div className="col-span-full text-center py-10 text-gray-400">
       <div className="py-14 text-center">
         <p className="text-sm font-medium text-gray-500">
           No compliance documents available
@@ -1628,58 +1631,48 @@ if (effectiveReuploadMode) {
 
       </div>
 
-      {/* REMARK / FILE */}
-      <div className="text-[10px] break-words min-w-0">
 
-        {effectiveReuploadMode &&
-          record.canReupload &&
-          record.reupload_remark && (
+{/* AUDITOR FEEDBACK / FILE */}
+<div className="min-w-0 break-words">
 
-            <div className="
-              mt-1
-              text-[10px]
-              text-red-600
-              bg-red-50
-              border border-red-200
-              rounded-lg
-              px-2
-              py-1
-              leading-3
-            ">
-              <span className="font-semibold">
-                Auditor Remark:
-              </span>{" "}
-              {record.reupload_remark}
-            </div>
+  {effectiveReuploadMode &&
+    record.canReupload &&
+    (record.observation || record.recommendation) && (
+
+      <div className="mt-2 min-w-0 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+          Auditor Feedback
+        </p>
+
+        {record.observation && (
+          <div className="min-w-0 rounded-lg border-l-[3px] border-amber-500 bg-white px-3 py-2">
+            <p className="text-xs font-semibold text-amber-700">
+              Observation
+            </p>
+
+            <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-700">
+              {record.observation}
+            </p>
+          </div>
         )}
 
-        {effectiveReuploadMode &&
-  record.canReupload &&
-  (record.observation || record.recommendation) && (
-    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-      {record.observation && (
-        <div className="mb-2">
-          <p className="font-semibold text-amber-900">
-            Auditor Observation
-          </p>
-          <p className="mt-1 whitespace-pre-wrap text-gray-700">
-            {record.observation}
-          </p>
-        </div>
-      )}
+        {record.recommendation && (
+          <div className="min-w-0 rounded-lg border-l-[3px] border-blue-500 bg-white px-3 py-2">
+            <p className="text-xs font-semibold text-blue-700">
+              Recommended Action
+            </p>
 
-      {record.recommendation && (
-        <div>
-          <p className="font-semibold text-amber-900">
-            Auditor Recommendation
-          </p>
-          <p className="mt-1 whitespace-pre-wrap text-gray-700">
-            {record.recommendation}
-          </p>
-        </div>
-      )}
-    </div>
-  )}
+            <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-700">
+              {record.recommendation}
+            </p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  {/* Existing uploaded-file display continues below */}
 
 {record.fileList.length > 0 ? (
   <div
