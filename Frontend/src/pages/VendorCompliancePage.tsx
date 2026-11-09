@@ -1416,17 +1416,15 @@ const isSubmissionLocked =
   </div>
 </div>
 
-  <div
-    className="
-      grid
-      grid-cols-1
-      sm:grid-cols-2
-      xl:grid-cols-3
-      2xl:grid-cols-4
-      gap-4
-      w-full
-    "
-  >
+
+<div
+  className="grid w-full gap-4"
+  style={{
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+  }}
+>
+
   {documentsLoading && (
     <div className="col-span-full flex flex-col items-center justify-center py-12">
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
@@ -1479,42 +1477,36 @@ const isSubmissionLocked =
     >
 
       {/* HEADER */}
-      <div
-        className="
-          flex
-          items-start
-          gap-1
-          min-w-0
-        "
-      >
+      <div className="flex min-w-0 flex-col items-start gap-2">
+
 
         <span
-          className="
-            min-w-0
-            flex-1
-            font-semibold
-            text-gray-800
-            text-xs
-            leading-4
-            break-words
-          "
+          className="block w-full min-w-0 whitespace-normal break-words text-sm font-semibold leading-5 text-gray-800"
+          style={{ overflowWrap: "anywhere" }}
+          title={record.document_name}
         >
           {record.document_name}
         </span>
 
+
+
         <span
           className={`
-            shrink-0
-            text-[9px]
+            inline-block
+            max-w-full
+            self-start
+            text-[10px]
             font-medium
-            px-1.5
-            py-0.5
+            px-2
+            py-1
             rounded-full
-            whitespace-nowrap
+            whitespace-normal
+            break-words
             border
 
             ${
               effectiveReuploadMode
+
                 ? (
                     record.canReupload
                       ? "bg-red-50 text-red-600 border-red-200"
