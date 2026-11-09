@@ -419,7 +419,13 @@ const isNotificationPeriod =
 
 const useNotificationFailedDocs =
   isNotificationPeriod &&
-  failedEntries.length > 0;
+  failedEntries.length > 0 &&
+  data.some((doc: DocumentType) =>
+    doc.workflow_status === "REUPLOAD_REQUESTED" &&
+    failedEntries.some((entry: any) =>
+      Number(entry.document_id) === Number(doc.id)
+    )
+  );
 
 const currentPeriodHasReuploadDocs =
   data.some(
@@ -428,9 +434,7 @@ const currentPeriodHasReuploadDocs =
       "REUPLOAD_REQUESTED"
   );
 
-const hasReuploadDocs =
-  useNotificationFailedDocs ||
-  currentPeriodHasReuploadDocs;
+const hasReuploadDocs = currentPeriodHasReuploadDocs;
 
 setEffectiveReuploadMode(
   hasReuploadDocs
@@ -454,6 +458,7 @@ console.log(
 const filteredDocs =
   useNotificationFailedDocs
     ? data.filter((doc: any) =>
+        doc.workflow_status === "REUPLOAD_REQUESTED" &&
         failedEntries.some(
           (f: any) =>
             Number(f.document_id) ===
@@ -702,6 +707,7 @@ return availablePeriods;
 };
 
 const handleSubmit = () => {
+  if (isNotificationReviewOnly) return;
   // Reupload -> submit directly
   if (effectiveReuploadMode) {
     submitCompliance();
@@ -752,6 +758,7 @@ const handleSubmit = () => {
 
 
 const submitCompliance = async () => {
+  if (isNotificationReviewOnly) return;
 
   // ================= VALIDATIONS =================
 
@@ -1033,12 +1040,25 @@ if (effectiveReuploadMode) {
       r.fileList.length === 0
   ).length;
 
-  const isSubmissionLocked =
-  !effectiveReuploadMode &&
-  tableData.some(
-    r =>
-      !r.isAdditional &&
-      r.isUploaded
+// Historical notification: review submitted documents only.
+const isNotificationReviewOnly =
+  Boolean(prefillData?.selected_period) &&
+  selectedPeriod?.trim() ===
+    String(prefillData.selected_period).trim() &&
+  !tableData.some(
+    (row) =>
+      row.workflow_status === "REUPLOAD_REQUESTED"
+  );
+
+const isSubmissionLocked =
+  isNotificationReviewOnly ||
+  (
+    !effectiveReuploadMode &&
+    tableData.some(
+      (r) =>
+        !r.isAdditional &&
+        r.isUploaded
+    )
   );
 
   return (
@@ -1775,6 +1795,7 @@ if (effectiveReuploadMode) {
               outline-none
               "
               value={generalRemark}
+              readOnly={isSubmissionLocked}
               disabled={isSubmissionLocked}
               onChange={(e) => setGeneralRemark(e.target.value)}
             />
@@ -1827,9 +1848,11 @@ if (effectiveReuploadMode) {
     "
   >
   {
-    effectiveReuploadMode
-      ? "Reupload Compliance Documents"
-      : "Proceed"
+    isNotificationReviewOnly
+      ? "Already Submitted — View Only"
+      : effectiveReuploadMode
+        ? "Reupload Compliance Documents"
+        : "Proceed"
   }
   </Button>
 
