@@ -1,531 +1,662 @@
+
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Final Compliance Audit Report</title>
 
-<meta charset="utf-8">
+  <style>
+    /* A4 landscape PDF layout */
+    @page {
+      size: A4 landscape;
+      margin: 8mm 9mm 9mm 9mm;
+    }
 
-<style>
+    * {
+      box-sizing: border-box;
+    }
 
-@page{
-    size:A4 landscape;
-    margin:8px;
-}
+    html, body {
+      margin: 0;
+      padding: 0;
+      color: #26354c;
+      background: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9px;
+      line-height: 1.35;
+    }
 
-body{
-    margin:0;
-    padding:0;
-    background:#eef2f7;
-    font-family:Arial,sans-serif;
-    color:#1f2937;
-}
+    .report {
+      width: 100%;
+    }
 
-.wrapper{
-    width:100%;
-}
+    /* ================= HEADER ================= */
 
-.top-card{
-    background:white;
-    border-radius:18px;
-    overflow:hidden;
-    border:1px solid #dbe4f0;
-    margin-bottom:18px;
-}
+    .report-header {
+      width: 100%;
+      border-collapse: collapse;
+      background: #163361;
+      color: #fff;
+      border-top: 4px solid #3976db;
+    }
 
-.header{
-    background:linear-gradient(
-        135deg,
-        #1e3a8a,
-        #2563eb
-    );
-    padding:14px 18px;
-    color:white;
-}
+    .report-header td {
+      padding: 12px 15px 11px;
+      vertical-align: middle;
+    }
 
-.title{
-    font-size:30px;
-    font-weight:bold;
-    margin-bottom:8px;
-}
+    .report-header .report-heading {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.35px;
+      line-height: 1.12;
+      margin: 0;
+    }
 
-.subtitle{
-    font-size:13px;
-    opacity:0.9;
-}
+    .report-header .report-desc {
+      margin-top: 5px;
+      color: #d6e4fa;
+      font-size: 9px;
+    }
 
-.badge-wrap{
-    padding:18px 30px 0 30px;
-}
+    .report-header .header-right {
+      text-align: right;
+      width: 27%;
+      white-space: nowrap;
+    }
 
-.badge{
-    display:inline-block;
-    background:#dcfce7;
-    color:#166534;
-    padding:8px 18px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:bold;
-}
+    .final-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border: 1px solid #93c5b0;
+      border-radius: 5px;
+      background: #e4f6ed;
+      color: #146b47;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
 
-.summary-section{
-    padding:12px 18px 16px 18px;
-}
+    /* ================= SECTION HEADINGS ================= */
 
-.summary-title{
-    font-size:20px;
-    font-weight:bold;
-    color:#1d4ed8;
-    margin-bottom:18px;
-}
+    .section-heading {
+      margin: 11px 0 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #18375e;
+      line-height: 1.2;
+    }
 
-.summary-grid{
-    width:100%;
-    border-collapse:separate;
-    border-spacing:14px;
-}
+    .section-heading .section-kicker {
+      display: inline-block;
+      margin-left: 7px;
+      color: #768499;
+      font-size: 8px;
+      font-weight: 400;
+    }
 
-.summary-item{
-    background:#f8fbff;
-    border:1px solid #dbeafe;
-    border-radius:14px;
-    padding:8px;
-    vertical-align:top;
-}
+    /* ================= AUDIT SUMMARY ================= */
 
-.label{
-    font-size:11px;
-    color:#6b7280;
-    text-transform:uppercase;
-    margin-bottom:8px;
-}
+    .summary-grid {
+      width: 100%;
+      table-layout: fixed;
+      border-spacing: 0;
+      border-collapse: collapse;
+      border: 1px solid #dce5f1;
+    }
 
-.value{
-    font-size:15px;
-    font-weight:600;
-    color:#111827;
-    line-height:1.6;
-}
+    .summary-grid td {
+      width: 33.33%;
+      padding: 7px 10px;
+      border: 1px solid #e3eaf3;
+      vertical-align: top;
+      background: #fafcff;
+    }
 
-.table-card{
-    background:white;
-    border-radius:18px;
-    overflow:hidden;
-    border:1px solid #dbe4f0;
-}
+    .summary-grid .summary-label {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 7.5px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #748198;
+    }
 
-.table-header{
-    padding:24px 30px;
-    border-bottom:1px solid #e5e7eb;
-}
+    .summary-grid .summary-value {
+      display: block;
+      font-size: 10px;
+      line-height: 1.25;
+      color: #24354b;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+      word-wrap: break-word;
+    }
 
-.table-title{
-    font-size:22px;
-    font-weight:bold;
-    color:#111827;
-    margin-bottom:6px;
-}
+    .summary-grid .accent-value {
+      color: #1b60be;
+    }
 
-.table-subtitle{
-    font-size:12px;
-    color:#6b7280;
-}
+    .entries-heading {
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
 
-.audit-table{
-    width:100%;
-    border-collapse:collapse;
-    table-layout:fixed;
-}
+    /* ================= COMPLIANCE TABLE ================= */
 
-.audit-table th{
-    background:#0f172a;
-    color:white;
-    padding:6px;
-    font-size:8px;
-    text-align:left;
-    border:1px solid #1e293b;
-    line-height:1.5;
-}
+    .audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      table-layout: fixed;
+      border: 1px solid #cbd7e8;
+    }
 
-.audit-table td{
-    padding:6px;
-    font-size:8px;
-    line-height:1.3;
-    border:1px solid #e5e7eb;
-    vertical-align:top;
-    background:white;
-    word-wrap:break-word;
-}
+    .audit-table thead {
+      display: table-header-group;
+    }
 
-.audit-table tr:nth-child(even) td{
-    background:#f9fbff;
-}
+    .audit-table th {
+      padding: 8px 7px;
+      color: #fff;
+      background: #183962;
+      border-right: 1px solid #315075;
+      text-align: left;
+      vertical-align: middle;
+      font-size: 8px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
 
-.guideline{
-    margin-bottom:6px;
-}
+    .audit-table th:last-child {
+      border-right: 0;
+    }
 
-.status{
-    display:inline-block;
-    padding:4px 8px;
-    font-size:8px;
-    border-radius:999px;
-    font-weight:bold;
-    line-height:1.5;
-}
+    .audit-table td {
+      vertical-align: top;
+      padding: 7px;
+      font-size: 8px;
+      line-height: 1.38;
+      border-right: 1px solid #e4eaf2;
+      border-bottom: 1px solid #e4eaf2;
+      color: #27384d;
+      overflow-wrap: anywhere;
+      word-wrap: break-word;
+      white-space: normal;
+    }
 
-.green{
-    background:#dcfce7;
-    color:#166534;
-}
+    .audit-table td:last-child {
+      border-right: 0;
+    }
 
-.red{
-    background:#fee2e2;
-    color:#991b1b;
-}
+    .audit-table tbody tr:nth-child(2n) td {
+      background: #f6f9fd;
+    }
 
-.yellow{
-    background:#fef3c7;
-    color:#92400e;
-}
+    .audit-table tbody tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
 
-.note{
-    margin-top:18px;
-    background:#fff7ed;
-    border:1px solid #fed7aa;
-    padding:16px 18px;
-    border-radius:14px;
-    color:#9a3412;
-    font-size:11px;
-    line-height:1.8;
-}
+    /* ================= TABLE CONTENT ================= */
 
-.footer{
-    margin-top:8px;
-    padding:10px;
-    background:white;
-    border:1px solid #dbe4f0;
-    border-radius:16px;
-    text-align:center;
-    color:#6b7280;
-    font-size:10px;
-    line-height:1.8;
-}
+    .ref-title {
+      font-weight: 700;
+      color: #1e3b61;
+      font-size: 8.3px;
+    }
 
-.small{
-    width:7%;
-}
+    .ref-meta {
+      margin-top: 3px;
+      color: #617086;
+      font-size: 7.7px;
+    }
 
-.medium{
-    width:10%;
-}
+    .ref-key {
+      font-weight: 700;
+      color: #52637a;
+    }
 
-.large{
-    width:16%;
-}
+    .primary-text {
+      font-weight: 600;
+      color: #24354b;
+    }
 
-.xlarge{
-    width:20%;
-}
+    .guideline {
+      margin: 0 0 3px;
+    }
 
-tr{
-    page-break-inside:avoid;
-}
+    .guideline:last-child {
+      margin-bottom: 0;
+    }
 
-</style>
+    .muted {
+      color: #8793a5;
+    }
 
+    /* ================= COMPLIANCE STATUSES ================= */
+
+    .status {
+      display: inline-block;
+      max-width: 100%;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      font-size: 7.5px;
+      font-weight: 700;
+      line-height: 1.25;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .status-success {
+      color: #16623f;
+      background: #e7f5ec;
+      border-color: #bce4cb;
+    }
+
+    .status-danger {
+      color: #9a2630;
+      background: #fff0ef;
+      border-color: #f3cbc9;
+    }
+
+    .status-warning {
+      color: #865b13;
+      background: #fff6e5;
+      border-color: #f2ddb4;
+    }
+
+    .status-neutral {
+      color: #475569;
+      background: #eef2f7;
+      border-color: #dce4ed;
+    }
+
+    /* ================= EXCEPTION NOTE ================= */
+
+    .exception-note {
+      margin-top: 8px;
+      padding: 7px 10px;
+      background: #fffaee;
+      border-left: 3px solid #e0a72c;
+      color: #805c1d;
+      font-size: 8px;
+      line-height: 1.4;
+      page-break-inside: avoid;
+    }
+
+    /* ================= FOOTER ================= */
+
+    .report-footer {
+      margin-top: 9px;
+      border-top: 1px solid #dae3ee;
+      padding: 7px 2px 0;
+      color: #758298;
+      font-size: 8px;
+      page-break-inside: avoid;
+    }
+
+    .footer-grid {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .footer-grid td {
+      width: 50%;
+      padding: 0;
+    }
+
+    .footer-grid .footer-right {
+      text-align: right;
+    }
+
+    /* ================= DENSE MODE ================= */
+
+    .dense .report-header td {
+      padding-top: 9px;
+      padding-bottom: 9px;
+    }
+
+    .dense .report-header .report-heading {
+      font-size: 17px;
+    }
+
+    .dense .section-heading {
+      margin-top: 8px;
+      margin-bottom: 5px;
+    }
+
+    .dense .summary-grid td {
+      padding: 5px 8px;
+    }
+
+    .dense .summary-grid .summary-value {
+      font-size: 9px;
+    }
+
+    .dense .audit-table th {
+      padding: 6px 5px;
+      font-size: 7.5px;
+    }
+
+    .dense .audit-table td {
+      padding: 5px;
+      font-size: 7.5px;
+      line-height: 1.28;
+    }
+
+    .dense .ref-title {
+      font-size: 7.7px;
+    }
+
+    .dense .ref-meta {
+      font-size: 7.2px;
+    }
+
+    .dense .status {
+      font-size: 7px;
+      padding: 3px 5px;
+    }
+
+    /* ================= PRINT SETTINGS ================= */
+
+    @media print {
+      html, body {
+        background: #fff;
+      }
+
+      .report {
+        margin: 0;
+      }
+
+      .audit-table tbody tr {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="wrapper">
+<div class="report {% if entries|length > 8 %}dense{% endif %}">
 
-    <!-- TOP CARD -->
+  <!-- ================= HEADER ================= -->
 
-    <div class="top-card">
-
-        <div class="header">
-
-            <div class="title">
-                Final Compliance Audit Report
-            </div>
-
-            <div class="subtitle">
-                Finalized compliance audit review and observations
-            </div>
-
+  <table class="report-header" role="presentation">
+    <tr>
+      <td>
+        <div class="report-heading">
+          Final Compliance Audit Report
         </div>
 
-        <div class="badge-wrap">
-
-            <div class="badge">
-                ✓ FROZEN & FINALIZED
-            </div>
-
+        <div class="report-desc">
+          Consolidated audit findings, documentary review
+          and corrective recommendations
         </div>
+      </td>
+
+      <td class="header-right">
+        <span class="final-badge">
+          FROZEN &amp; FINALIZED
+        </span>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ================= AUDIT OVERVIEW ================= -->
+
+  <div class="section-heading">
+    Audit Overview
+  </div>
+
+  <table class="summary-grid" role="presentation">
+
+    <tr>
+      <td>
+        <span class="summary-label">
+          Principal Employer
+        </span>
+        <span class="summary-value">
+          {{ pe_name }}
+        </span>
+      </td>
+
+      <td>
+        <span class="summary-label">
+          Vendor
+        </span>
+        <span class="summary-value">
+          {{ vendor_name }}
+        </span>
+      </td>
+
+      <td>
+        <span class="summary-label">
+          Branch
+        </span>
+        <span class="summary-value">
+          {{ branch_name }}
+        </span>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <span class="summary-label">
+          State
+        </span>
+        <span class="summary-value">
+          {{ state }}
+        </span>
+      </td>
+
+      <td>
+        <span class="summary-label">
+          Audit Period
+        </span>
+        <span class="summary-value accent-value">
+          {{ audit_period }}
+        </span>
+      </td>
+
+      <td>
+        <span class="summary-label">
+          Generated On
+        </span>
+        <span class="summary-value">
+          {{ generated_at }}
+        </span>
+      </td>
+    </tr>
+
+  </table>
+
+  <!-- ================= COMPLIANCE ENTRIES ================= -->
+
+  <div class="section-heading entries-heading">
+    Compliance Assessment
+
+    <span class="section-kicker">
+      Audit particulars, findings and recommended actions
+    </span>
+  </div>
+
+  <table class="audit-table">
+
+    <colgroup>
+      <col style="width:19%">
+      <col style="width:17%">
+      <col style="width:13%">
+      <col style="width:14%">
+      <col style="width:12%">
+      <col style="width:12.5%">
+      <col style="width:12.5%">
+    </colgroup>
+
+    <thead>
+      <tr>
+        <th>Statutory Reference</th>
+        <th>Audit Particulars</th>
+        <th>Required Document</th>
+        <th>Auditor Guidelines</th>
+        <th>Compliance Status</th>
+        <th>Auditor Observation</th>
+        <th>Recommended Action</th>
+      </tr>
+    </thead>
 
-        <div class="summary-section">
+    <tbody>
 
-            <div class="summary-title">
-                Audit Summary
-            </div>
+      {% for entry in entries %}
 
-            <table class="summary-grid">
+      <tr>
 
-                <tr>
+        <!-- STATUTORY REFERENCE -->
+        <td>
+          <div class="ref-title">
+            {{ entry.act_name|default:"-" }}
+          </div>
 
-                    <td class="summary-item">
+          <div class="ref-meta">
+            <span class="ref-key">State:</span>
+            {{ entry.state|default:"-" }}
+          </div>
 
-                        <div class="label">
-                            Principal Employer
-                        </div>
+          <div class="ref-meta">
+            <span class="ref-key">Section:</span>
+            {{ entry.section|default:"-" }}
+          </div>
 
-                        <div class="value">
-                            {{ pe_name }}
-                        </div>
+          <div class="ref-meta">
+            <span class="ref-key">Form:</span>
+            {{ entry.form_number|default:"-" }}
+          </div>
+        </td>
 
-                    </td>
+        <!-- AUDIT PARTICULARS -->
+        <td class="primary-text">
+          {{ entry.audit_particular|default:"-" }}
+        </td>
 
-                    <td class="summary-item">
+        <!-- DOCUMENT -->
+        <td>
+          {{ entry.document_name|default:"-" }}
+        </td>
 
-                        <div class="label">
-                            Vendor
-                        </div>
+        <!-- AUDITOR GUIDELINES -->
+        <td>
+          {% if entry.guidelines %}
 
-                        <div class="value">
-                            {{ vendor_name }}
-                        </div>
+            {% for item in entry.guidelines %}
+              <div class="guideline">
+                &#8226; {{ item }}
+              </div>
+            {% endfor %}
 
-                    </td>
+          {% else %}
 
-                    <td class="summary-item">
+            <span class="muted">-</span>
 
-                        <div class="label">
-                            State
-                        </div>
+          {% endif %}
+        </td>
 
-                        <div class="value">
-                            {{ state }}
-                        </div>
+        <!-- COMPLIANCE STATUS -->
+        <td>
 
-                    </td>
+          {% if "Exceptional Approval" in entry.status %}
 
-                    <td class="summary-item">
+            <span class="status status-warning">
+              {{ entry.status }}
+            </span>
 
-                        <div class="label">
-                            Branch
-                        </div>
+          {% elif entry.status == "Not Complied" or entry.status == "Incorrect Document Submitted" %}
 
-                        <div class="value">
-                            {{ branch_name }}
-                        </div>
+            <span class="status status-danger">
+              {{ entry.status }}
+            </span>
 
-                    </td>
+          {% elif entry.status == "Delayed Complied" %}
 
-                    <td class="summary-item">
+            <span class="status status-warning">
+              {{ entry.status }}
+            </span>
 
-                        <div class="label">
-                            Audit Period
-                        </div>
+          {% elif entry.status == "Complied" or "Not Applicable" in entry.status %}
 
-                        <div class="value" style="color:#2563eb;">
-                            {{ audit_period }}
-                        </div>
+            <span class="status status-success">
+              {{ entry.status }}
+            </span>
 
-                    </td>
+          {% else %}
 
-                    <td class="summary-item">
+            <span class="status status-neutral">
+              {{ entry.status|default:"-" }}
+            </span>
 
-                        <div class="label">
-                            Generated On
-                        </div>
+          {% endif %}
 
-                        <div class="value">
-                            {{ generated_at }}
-                        </div>
+        </td>
 
-                    </td>
+        <!-- AUDITOR OBSERVATION -->
+        <td>
+          {{ entry.observation|default:"-" }}
+        </td>
 
-                </tr>
+        <!-- RECOMMENDED ACTION -->
+        <td>
+          {{ entry.recommendation|default:"-" }}
+        </td>
 
-            </table>
+      </tr>
 
-        </div>
+      {% endfor %}
 
-    </div>
+      {% if not entries %}
+      <tr>
+        <td colspan="7"
+            style="text-align:center; padding:16px; color:#7b8798;">
+          No compliance entries available for this audit period.
+        </td>
+      </tr>
+      {% endif %}
 
-    <!-- TABLE -->
+    </tbody>
 
-    <div class="table-card">
+  </table>
 
-        <div class="table-header">
+  <!-- ================= EXCEPTIONAL APPROVAL ================= -->
 
-            <div class="table-title">
-                Compliance Entries
-            </div>
+  {% if has_exceptional_approval %}
 
-            <div class="table-subtitle">
-                Final auditor observations and recommendations
-            </div>
+  <div class="exception-note">
+    <strong>Exceptional Approval:</strong>
+    This audit includes exceptional approval observations
+    reviewed and approved during the audit process.
+  </div>
 
-        </div>
+  {% endif %}
 
-        <table class="audit-table">
+  <!-- ================= FOOTER ================= -->
 
-            <thead>
+  <div class="report-footer">
 
-                <tr>
+    <table class="footer-grid" role="presentation">
+      <tr>
+        <td>
+          This is a system-generated compliance audit report.
+        </td>
 
-                    <th class="small">State</th>
+        <td class="footer-right">
+          Generated on {{ generated_at }}
+        </td>
+      </tr>
+    </table>
 
-                    <th class="medium">Act Name</th>
-
-                    <th class="large">Audit Particular</th>
-
-                    <th class="small">Section</th>
-
-                    <th class="small">Form</th>
-
-                    <th class="medium">Document</th>
-
-                    <th class="xlarge">Guidelines</th>
-
-                    <th class="medium">Status</th>
-
-                    <th class="medium">Observation</th>
-
-                    <th class="medium">Recommendation</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {% for entry in entries %}
-
-                <tr>
-
-                    <td>
-                        {{ entry.state|default:"-" }}
-                    </td>
-
-                    <td>
-                        {{ entry.act_name|default:"-" }}
-                    </td>
-
-                    <td>
-                        {{ entry.audit_particular|default:"-" }}
-                    </td>
-
-                    <td>
-                        {{ entry.section|default:"-" }}
-                    </td>
-
-                    <td>
-                        {{ entry.form_number|default:"-" }}
-                    </td>
-
-                    <td>
-                        {{ entry.document_name|default:"-" }}
-                    </td>
-
-                    <td>
-
-                        {% if entry.guidelines %}
-
-                            {% for item in entry.guidelines %}
-
-                                <div class="guideline">
-                                    • {{ item }}
-                                </div>
-
-                            {% endfor %}
-
-                        {% else %}
-
-                            -
-
-                        {% endif %}
-
-                    </td>
-
-                    <td>
-
-                        {% if "Exceptional Approval" in entry.status %}
-
-                            <span class="status yellow">
-                                {{ entry.status }}
-                            </span>
-
-                        {% elif "Complied" in entry.status %}
-
-                            <span class="status green">
-                                {{ entry.status }}
-                            </span>
-
-                        {% elif "Not Applicable" in entry.status %}
-
-                            <span class="status green">
-                                {{ entry.status }}
-                            </span>
-
-                        {% elif "Not Complied" in entry.status %}
-
-                            <span class="status red">
-                                {{ entry.status }}
-                            </span>
-
-                        {% else %}
-
-                            <span class="status yellow">
-                                {{ entry.status }}
-                            </span>
-
-                        {% endif %}
-
-                    </td>
-
-                    <td>
-                        {{ entry.observation|default:"-" }}
-                    </td>
-
-                    <td>
-                        {{ entry.recommendation|default:"-" }}
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    {% if has_exceptional_approval %}
-
-    <div class="note">
-
-        This audit contains Exceptional Approval observations which were reviewed and approved during the audit process.
-
-    </div>
-
-    {% endif %}
-
-    <div class="footer">
-
-        This is a system generated audit report.
-
-        <br><br>
-
-        Generated on:
-        {{ generated_at }}
-
-    </div>
+  </div>
 
 </div>
 
 </body>
-
 </html>

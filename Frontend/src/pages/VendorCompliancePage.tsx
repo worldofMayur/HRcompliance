@@ -419,7 +419,13 @@ const isNotificationPeriod =
 
 const useNotificationFailedDocs =
   isNotificationPeriod &&
-  failedEntries.length > 0;
+  failedEntries.length > 0 &&
+  data.some((doc: DocumentType) =>
+    doc.workflow_status === "REUPLOAD_REQUESTED" &&
+    failedEntries.some((entry: any) =>
+      Number(entry.document_id) === Number(doc.id)
+    )
+  );
 
 const currentPeriodHasReuploadDocs =
   data.some(
@@ -428,9 +434,7 @@ const currentPeriodHasReuploadDocs =
       "REUPLOAD_REQUESTED"
   );
 
-const hasReuploadDocs =
-  useNotificationFailedDocs ||
-  currentPeriodHasReuploadDocs;
+const hasReuploadDocs = currentPeriodHasReuploadDocs;
 
 setEffectiveReuploadMode(
   hasReuploadDocs
@@ -454,6 +458,7 @@ console.log(
 const filteredDocs =
   useNotificationFailedDocs
     ? data.filter((doc: any) =>
+        doc.workflow_status === "REUPLOAD_REQUESTED" &&
         failedEntries.some(
           (f: any) =>
             Number(f.document_id) ===
@@ -702,6 +707,7 @@ return availablePeriods;
 };
 
 const handleSubmit = () => {
+  if (isNotificationReviewOnly) return;
   // Reupload -> submit directly
   if (effectiveReuploadMode) {
     submitCompliance();
@@ -752,6 +758,7 @@ const handleSubmit = () => {
 
 
 const submitCompliance = async () => {
+  if (isNotificationReviewOnly) return;
 
   // ================= VALIDATIONS =================
 
@@ -1033,12 +1040,25 @@ if (effectiveReuploadMode) {
       r.fileList.length === 0
   ).length;
 
-  const isSubmissionLocked =
-  !effectiveReuploadMode &&
-  tableData.some(
-    r =>
-      !r.isAdditional &&
-      r.isUploaded
+// Historical notification: review submitted documents only.
+const isNotificationReviewOnly =
+  Boolean(prefillData?.selected_period) &&
+  selectedPeriod?.trim() ===
+    String(prefillData.selected_period).trim() &&
+  !tableData.some(
+    (row) =>
+      row.workflow_status === "REUPLOAD_REQUESTED"
+  );
+
+const isSubmissionLocked =
+  isNotificationReviewOnly ||
+  (
+    !effectiveReuploadMode &&
+    tableData.some(
+      (r) =>
+        !r.isAdditional &&
+        r.isUploaded
+    )
   );
 
   return (
@@ -1396,17 +1416,15 @@ if (effectiveReuploadMode) {
   </div>
 </div>
 
-  <div
-    className="
-      grid
-      grid-cols-1
-      sm:grid-cols-2
-      xl:grid-cols-3
-      2xl:grid-cols-4
-      gap-4
-      w-full
-    "
-  >
+
+<div
+  className="grid w-full gap-4"
+  style={{
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+  }}
+>
+
   {documentsLoading && (
     <div className="col-span-full flex flex-col items-center justify-center py-12">
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
@@ -1459,42 +1477,36 @@ if (effectiveReuploadMode) {
     >
 
       {/* HEADER */}
-      <div
-        className="
-          flex
-          items-start
-          gap-1
-          min-w-0
-        "
-      >
+      <div className="flex min-w-0 flex-col items-start gap-2">
+
 
         <span
-          className="
-            min-w-0
-            flex-1
-            font-semibold
-            text-gray-800
-            text-xs
-            leading-4
-            break-words
-          "
+          className="block w-full min-w-0 whitespace-normal break-words text-sm font-semibold leading-5 text-gray-800"
+          style={{ overflowWrap: "anywhere" }}
+          title={record.document_name}
         >
           {record.document_name}
         </span>
 
+
+
         <span
           className={`
-            shrink-0
-            text-[9px]
+            inline-block
+            max-w-full
+            self-start
+            text-[10px]
             font-medium
-            px-1.5
-            py-0.5
+            px-2
+            py-1
             rounded-full
-            whitespace-nowrap
+            whitespace-normal
+            break-words
             border
 
             ${
               effectiveReuploadMode
+
                 ? (
                     record.canReupload
                       ? "bg-red-50 text-red-600 border-red-200"
@@ -1775,6 +1787,7 @@ if (effectiveReuploadMode) {
               outline-none
               "
               value={generalRemark}
+              readOnly={isSubmissionLocked}
               disabled={isSubmissionLocked}
               onChange={(e) => setGeneralRemark(e.target.value)}
             />
@@ -1827,9 +1840,11 @@ if (effectiveReuploadMode) {
     "
   >
   {
-    effectiveReuploadMode
-      ? "Reupload Compliance Documents"
-      : "Proceed"
+    isNotificationReviewOnly
+      ? "Already Submitted — View Only"
+      : effectiveReuploadMode
+        ? "Reupload Compliance Documents"
+        : "Proceed"
   }
   </Button>
 
