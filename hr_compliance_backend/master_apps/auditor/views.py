@@ -2792,15 +2792,16 @@ class AuditChecklistAPIView(APIView):
 
         summary = submissions.first()
 
-        payroll_data = []
 
-        if summary:
+        # ======================================
+        # FETCH PAYROLL FOR ALL SUBMISSIONS
+        # ======================================
 
-            payroll_data = list(
-
-                VendorCompliancePayroll.objects.filter(
-                    submission=summary
-                ).values(
+        payroll_rows = (
+            VendorCompliancePayroll.objects
+            .filter(submission__in=submissions)
+            .order_by("-id")
+            .values(
                 "month",
                 "male_employees",
                 "female_employees",
@@ -2811,9 +2812,27 @@ class AuditChecklistAPIView(APIView):
                 "esic_not_applicable",
                 "esic_not_applicable_reason",
                 "rc_remittance_date",
+                "pt_rc_not_applicable",
                 "lwf_remittance_date",
+                "lwf_not_applicable",
             )
-            )
+        )
+
+        # Avoid duplicate payroll months
+        seen_months = set()
+        payroll_data = []
+
+        for payroll_row in payroll_rows:
+            month = payroll_row["month"]
+
+            if month in seen_months:
+                continue
+
+            seen_months.add(month)
+            payroll_data.append(payroll_row)
+
+        payroll_data.reverse()
+
 
         # ======================================
         # NO DOCUMENTS UPLOADED
