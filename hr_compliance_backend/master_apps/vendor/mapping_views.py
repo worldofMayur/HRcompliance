@@ -21,6 +21,7 @@ import calendar
 import datetime
 from .compliance_models import VendorComplianceSubmission
 from .constants import WorkflowStatus
+from master_apps.auditor.models import AuditEntry
 
 
 def parse_period(period):
@@ -564,6 +565,32 @@ class VendorMappedDocumentsAPIView(APIView):
                 else ""
             )
 
+            # -------------------------------------------------
+            # NEW: Attach auditor observation & recommendation
+            # (so normal reupload flow also shows them)
+            # -------------------------------------------------
+            observation = ""
+            recommendation = ""
+
+            if (
+                submission
+                and submission.workflow_status == WorkflowStatus.REUPLOAD_REQUESTED
+            ):
+                audit_entry = (
+                    AuditEntry.objects
+                    .filter(
+                        branch_id=branch_id,
+                        audit_period__iexact=period,
+                        checklist__document_id=doc.id,
+                    )
+                    .order_by("-id")
+                    .first()
+                )
+
+                if audit_entry:
+                    observation = audit_entry.observation or ""
+                    recommendation = audit_entry.recommendation or ""
+
             print(
                 "DOC DEBUG",
                 {
@@ -574,6 +601,8 @@ class VendorMappedDocumentsAPIView(APIView):
                     "workflow_status": submission.workflow_status if submission else None,
                     "is_reuploaded": submission.is_reuploaded if submission else None,
                     "reupload_remark": submission.reupload_remark if submission else None,
+                    "observation": observation,
+                    "recommendation": recommendation,
                 }
             )
 
@@ -584,7 +613,6 @@ class VendorMappedDocumentsAPIView(APIView):
 
                 "submission_id": submission.id if submission else None,
 
-                # ADD THESE
                 "already_uploaded": already_uploaded,
                 "uploaded_file_name": uploaded_file_name,
 
@@ -601,6 +629,10 @@ class VendorMappedDocumentsAPIView(APIView):
                     if submission
                     else ""
                 ),
+
+                # NEW fields
+                "observation": observation,
+                "recommendation": recommendation,
             })
 
         return Response(data)
