@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import {
@@ -46,6 +46,8 @@ export default function AuditorDashboard() {
   const [branches, setBranches] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
   const [auditSearch, setAuditSearch] = useState("");
+  const auditTableViewportRef = useRef<HTMLDivElement | null>(null);
+  const [auditTableScrollHeight, setAuditTableScrollHeight] = useState(300);
   const [hasDocuments, setHasDocuments] =
   useState(true);
   const [notificationDocs, setNotificationDocs] = useState<string[]>([]);
@@ -67,6 +69,21 @@ export default function AuditorDashboard() {
 
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Fit the checklist scroll area to the remaining modal height on any screen.
+  useEffect(() => {
+    if (!isModalOpen || !auditTableViewportRef.current) return;
+
+    const viewport = auditTableViewportRef.current;
+    const observer = new ResizeObserver(() => {
+      // Keep room for Ant Design's column headings.
+      setAuditTableScrollHeight(Math.max(100, viewport.clientHeight - 48));
+    });
+
+    observer.observe(viewport);
+    setAuditTableScrollHeight(Math.max(100, viewport.clientHeight - 48));
+    return () => observer.disconnect();
+  }, [isModalOpen]);
 
   const [showAuditorGuidelines, setShowAuditorGuidelines] =
     useState(true);
@@ -1740,30 +1757,12 @@ text-sm
   {/* WRAPPER */}
   <div className="h-full min-h-0 flex flex-col bg-gray-50/40">
 
-{/* 1. METADATA BAR */}
-<div
-  className="
-    shrink-0
-    border-b
-    bg-white
-    px-3
-    py-3
-    sm:px-5
-  "
->
-<div
-  className="
-    grid
-    grid-cols-1
-    gap-3
-    sm:grid-cols-2
-    md:grid-cols-3
-    2xl:grid-cols-8
-    items-start
-    text-sm
-  "
->
-    
+{/* 1. COMPACT AUDIT OVERVIEW + VENDOR HISTORY */}
+<div className="shrink-0 border-b border-slate-200 bg-white px-3 py-3 sm:px-5">
+  <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-10 xl:gap-4">
+    {/* LEFT: AUDIT METADATA (70%) */}
+    <section className="min-w-0 xl:col-span-7">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm sm:grid-cols-3 lg:grid-cols-5">
     {/* PE */}
     <div>
       <span className="text-gray-400 text-xs">PE</span>
@@ -1829,84 +1828,37 @@ text-sm
         : "-"}
     </span>
 
-    {/* Buttons on the right */}
-<div
-  className="
-    col-span-full
-    2xl:col-span-2
-    flex
-    w-full
-    flex-col
-    gap-2
-    pt-1
-    sm:flex-row
-    2xl:justify-end
-  "
->
-      <Button
-        type="primary"
-        icon={<DownloadOutlined />}
-        onClick={downloadZip}
-        className="
-        w-full
-        sm:w-auto
-        h-10
-        px-6
-        text-sm
-        font-medium
-        !bg-blue-600
-        hover:!bg-blue-700
-        "
-      >
-        Download Audit Documents
-      </Button>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <Button type="primary" icon={<DownloadOutlined />} onClick={downloadZip}
+            className="h-9 !bg-blue-600 hover:!bg-blue-700">
+            Download Audit Documents
+          </Button>
+          <Button type="primary" onClick={() => setComplianceModalOpen(true)}
+            className="h-9 !bg-blue-600 hover:!bg-blue-700">
+            View Compliance Summary
+          </Button>
+        </div>
+      </div>
+    </section>
 
-      <Button
-        type="primary"
-        onClick={() => setComplianceModalOpen(true)}
-        className="
-        w-full
-        sm:w-auto
-        h-10
-        px-6
-        text-sm
-        font-medium
-        !bg-blue-600
-        hover:!bg-blue-700
-        "
-      >
-        View Compliance Summary
-      </Button>
-    </div>
-
-  </div>
-</div>
-
-
-    {/* 2. FULL WIDTH TABLE AREA */}
-<div className="flex-1 min-h-0 flex overflow-hidden">
-  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
-        {/* Locked banner, Remarks, Stats, Table - as in previous response */}
-        {isAuditLocked && (
-          <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
-            This audit report has been frozen, finalized, and locked from further modifications.
-          </div>
-        )}
-
+    {/* RIGHT: VENDOR REMARKS (30%) */}
+    <aside className="min-w-0 xl:col-span-3">
 {remarksData.length > 0 && (
-  <div className="mx-4 mt-2 mb-1">
+  <div className="min-w-0">
     <Card
       size="small"
-      className="!shadow-none border-gray-200"
+      className="h-full !shadow-none border-blue-100 bg-blue-50/30"
       styles={{
-        body: { padding: "10px 16px 6px" },
-        header: { padding: "8px 16px", minHeight: 36 },
+        body: { padding: "8px 12px", maxHeight: 108, overflowY: "auto" },
+        header: { padding: "8px 12px", minHeight: 36 },
       }}
       title={
         <div className="flex items-center gap-2">
           <span className="text-sm">📝</span>
           <span className="font-semibold text-sm">Vendor Submission History</span>
-          <span className="text-xs text-gray-400 font-normal">
+          <span className="hidden text-xs text-gray-400 font-normal 2xl:inline">
             · Review vendor upload remarks before auditing
           </span>
         </div>
@@ -1917,7 +1869,7 @@ text-sm
         items={remarksData.map((item: any) => ({
           color: item.is_reuploaded ? "orange" : "green",
           children: (
-            <div className="flex justify-between items-start gap-6 -mt-0.5 pb-1">
+            <div className="flex flex-col gap-1 -mt-0.5 pb-1">
               <Typography.Text
                 style={{
                   margin: 0,
@@ -1932,7 +1884,7 @@ text-sm
 
               <Typography.Text
                 type="secondary"
-                className="text-xs whitespace-nowrap shrink-0 pt-0.5"
+                className="text-[11px] whitespace-nowrap shrink-0"
               >
                 {dayjs(item.created_at).format("DD MMM YYYY • hh:mm A")}
               </Typography.Text>
@@ -1944,9 +1896,23 @@ text-sm
   </div>
 )}
 
+    </aside>
+  </div>
+</div>
+
+    {/* 2. FULL WIDTH TABLE AREA */}
+<div className="flex-1 min-h-0 flex overflow-hidden">
+  <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
+        {/* Locked banner, Remarks, Stats, Table - as in previous response */}
+        {isAuditLocked && (
+          <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
+            This audit report has been frozen, finalized, and locked from further modifications.
+          </div>
+        )}
+
         {/* Stats bar will be added here */}
 
-<div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto px-2 sm:px-4 pt-2 pb-3">
+<div className="flex-1 min-h-0 overflow-hidden px-2 py-2 sm:px-4">
             {!hasDocuments ? (
             <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
               <div className="text-center">
@@ -1963,13 +1929,13 @@ text-sm
               flex-col
               overflow-hidden
               rounded-xl
-              border
-              border-gray-200
+              border-2
+              border-blue-200
               bg-white
               shadow-sm
             "
           >
-            <div className="border-b border-gray-200 bg-white p-2">
+            <div className="border-b border-blue-100 bg-blue-50/60 p-2">
               <Input
                 allowClear
                 value={auditSearch}
@@ -1979,9 +1945,9 @@ text-sm
               />
             </div>
 
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div ref={auditTableViewportRef} className="flex-1 min-h-0 overflow-hidden">
               <Table
-                rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
+                rowClassName={(_, index) => `${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-blue-50/60 transition-colors`}
                 columns={columns}
                 dataSource={filteredGroupedChecklist}
                 rowKey="id"
@@ -1991,7 +1957,7 @@ text-sm
                 className="audit-table-highlighted"
                 scroll={{
                   x: "max-content",
-                  y: "calc(100dvh - 540px)",
+                  y: auditTableScrollHeight,
                 }}
               />
             </div>
