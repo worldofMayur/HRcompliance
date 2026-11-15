@@ -23,6 +23,8 @@ from master_apps.vendor.utils import (
     apply_mapping_for_period,
     audit_period_to_date,
 )
+from django.contrib.staticfiles import finders
+from urllib.parse import urlparse
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import AuditorDocument
 from django.template.loader import render_to_string
@@ -112,16 +114,34 @@ from reportlab.lib.styles import ParagraphStyle
 
 from io import BytesIO
 
+
+def resolve_cc_pdf_asset(uri, rel):
+    image_path = urlparse(uri).path
+
+    if image_path.endswith("/images/KekulBiz.png"):
+        logo_path = finders.find("images/KekulBiz.png")
+
+        if not logo_path:
+            raise FileNotFoundError(
+                "KekulBiz.png not found in Django static files"
+            )
+
+        return logo_path
+
+    return uri
+
+
 def generate_cc_pdf_from_html(html_content):
 
     pdf_buffer = BytesIO()
 
+
     pisa_status = pisa.CreatePDF(
-
         src=html_content,
-
-        dest=pdf_buffer
+        dest=pdf_buffer,
+        link_callback=resolve_cc_pdf_asset
     )
+
 
     if pisa_status.err:
 
@@ -1674,9 +1694,31 @@ class SaveAuditAPIView(APIView):
                 .first()
             )
 
-            payroll_data = VendorCompliancePayroll.objects.filter(
-                submission=submission
-            ).order_by("id")
+
+            payroll_submissions = VendorComplianceSubmission.objects.filter(
+                vendor_id=vendor.id,
+                branch_id=branch_id,
+                audit_period__iexact=audit_period,
+            )
+
+            payroll_rows = (
+                VendorCompliancePayroll.objects
+                .filter(submission__in=payroll_submissions)
+                .order_by("-id")
+            )
+
+            seen_months = set()
+            payroll_data = []
+
+            for row in payroll_rows:
+                if row.month in seen_months:
+                    continue
+
+                seen_months.add(row.month)
+                payroll_data.append(row)
+
+            payroll_data.reverse()
+
 
             email_html = render_to_string(
                 "auditor/compliance_clearance_email.html",
@@ -2231,57 +2273,55 @@ class UpdateComplianceSummaryAPIView(APIView):
 
         payroll_data = request.data.get("payroll_data", [])
 
-        # Get one submission to relate the payroll records
-        submission = submissions.first()
-
-        if submission.is_frozen:
+       
+        # Block edits if any submission is frozen
+        if submissions.filter(is_frozen=True).exists():
             return Response(
-                {
-                    "error": (
-                        "Compliance Summary is locked because this audit "
-                        "is frozen and cannot be modified."
-                    )
-                },
+                {"error": "Compliance Summary is frozen and cannot be modified."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Remove old payroll rows
-        VendorCompliancePayroll.objects.filter(
-            submission=submission
-        ).delete()
+        # Use one submission for the final payroll
+        submission = submissions.order_by("id").first()
 
-        # Create new payroll rows
-        for payroll in payroll_data:
+        # Replace old payroll rows within one transaction
+        with transaction.atomic():
+            VendorCompliancePayroll.objects.filter(
+                submission__in=submissions
+            ).delete()
 
-            VendorCompliancePayroll.objects.create(
-                submission=submission,
-                month=payroll.get("month"),
+            for payroll in payroll_data:
+                esic_na = payroll.get("esic_not_applicable", False)
+                pt_rc_na = payroll.get("pt_rc_not_applicable", False)
+                lwf_na = payroll.get("lwf_not_applicable", False)
 
-                male_employees=payroll.get("male_employees"),
-                female_employees=payroll.get("female_employees"),
-
-                gross_wages=payroll.get("gross_wages"),
-                net_wages=payroll.get("net_wages"),
-
-
-                pf_remittance_date=payroll.get("pf_remittance_date") or None,
-                esic_remittance_date=(
-                    None
-                    if payroll.get("esic_not_applicable", False)
-                    else payroll.get("esic_remittance_date") or None
-                ),
-                esic_not_applicable=payroll.get("esic_not_applicable", False),
-                esic_not_applicable_reason=(
-                    (payroll.get("esic_not_applicable_reason") or "").strip() or None
-                ) if payroll.get("esic_not_applicable", False) else None,
-
-
-                rc_remittance_date=payroll.get("rc_remittance_date") or None,
-                pt_rc_not_applicable=payroll.get("pt_rc_not_applicable", False),
-
-                lwf_remittance_date=payroll.get("lwf_remittance_date") or None,
-                lwf_not_applicable=payroll.get("lwf_not_applicable", False),
-            )
+                VendorCompliancePayroll.objects.create(
+                    submission=submission,
+                    month=payroll.get("month"),
+                    male_employees=payroll.get("male_employees"),
+                    female_employees=payroll.get("female_employees"),
+                    gross_wages=payroll.get("gross_wages"),
+                    net_wages=payroll.get("net_wages"),
+                    pf_remittance_date=payroll.get("pf_remittance_date") or None,
+                    esic_remittance_date=(
+                        None if esic_na
+                        else payroll.get("esic_remittance_date") or None
+                    ),
+                    esic_not_applicable=esic_na,
+                    esic_not_applicable_reason=(
+                        (payroll.get("esic_not_applicable_reason") or "").strip() or None
+                    ) if esic_na else None,
+                    rc_remittance_date=(
+                        None if pt_rc_na
+                        else payroll.get("rc_remittance_date") or None
+                    ),
+                    pt_rc_not_applicable=pt_rc_na,
+                    lwf_remittance_date=(
+                        None if lwf_na
+                        else payroll.get("lwf_remittance_date") or None
+                    ),
+                    lwf_not_applicable=lwf_na,
+                )
 
         return Response(
             {"message": "Compliance Summary updated successfully"},
@@ -3524,14 +3564,21 @@ class FreezeAuditReportsAPIView(APIView):
                 .first()
             )
 
+
             payroll_data = []
 
             if submission:
-                payroll_data = list(
-                    VendorCompliancePayroll.objects.filter(
-                        submission=submission
-                    )
-                    .order_by("id")
+                payroll_submissions = VendorComplianceSubmission.objects.filter(
+                    vendor_id=submission.vendor_id,
+                    branch_id=submission.branch_id,
+                    audit_period__iexact=audit_period,
+                    is_frozen=True,
+                )
+
+                payroll_rows = (
+                    VendorCompliancePayroll.objects
+                    .filter(submission__in=payroll_submissions)
+                    .order_by("-id")
                     .values(
                         "month",
                         "male_employees",
@@ -3540,12 +3587,26 @@ class FreezeAuditReportsAPIView(APIView):
                         "net_wages",
                         "pf_remittance_date",
                         "esic_remittance_date",
+                        "esic_not_applicable",
+                        "esic_not_applicable_reason",
                         "rc_remittance_date",
-                        "lwf_remittance_date",
                         "pt_rc_not_applicable",
+                        "lwf_remittance_date",
                         "lwf_not_applicable",
                     )
                 )
+
+                seen_months = set()
+
+                for row in payroll_rows:
+                    if row["month"] in seen_months:
+                        continue
+
+                    seen_months.add(row["month"])
+                    payroll_data.append(row)
+
+                payroll_data.reverse()
+
 
             summary = payroll_data[0] if payroll_data else {}
 
@@ -3607,7 +3668,19 @@ class FreezeAuditReportsAPIView(APIView):
                         "gross_wages": summary.get("gross_wages"),
                         "net_wages": summary.get("net_wages"),
                         "pf_remittance_date": summary.get("pf_remittance_date"),
-                        "esic_remittance_date": summary.get("esic_remittance_date"),
+                        
+                        "esic_remittance_date": (
+                            "Not Applicable"
+                            if summary.get("esic_not_applicable")
+                            else summary.get("esic_remittance_date")
+                        ),
+                        "esic_not_applicable": summary.get(
+                            "esic_not_applicable", False
+                        ),
+                        "esic_not_applicable_reason": summary.get(
+                            "esic_not_applicable_reason"
+                        ),
+
 
                         "rc_remittance_date": (
                             "Not Applicable"

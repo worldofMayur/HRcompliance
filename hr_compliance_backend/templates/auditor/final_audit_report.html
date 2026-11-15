@@ -473,6 +473,79 @@
 
   </table>
 
+
+<!-- ================= PAYROLL SUMMARY ================= -->
+
+<div class="section-heading">
+    Payroll Summary
+</div>
+
+<table class="audit-table">
+    <thead>
+        <tr>
+            <th>Month</th>
+            <th>Male</th>
+            <th>Female</th>
+            <th>Gross Wages</th>
+            <th>Net Wages</th>
+            <th>PF</th>
+            <th>ESIC</th>
+            <th>RC</th>
+            <th>LWF</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for row in payroll_data %}
+        <tr>
+            <td>{{ row.month }}</td>
+            <td>{{ row.male_employees }}</td>
+            <td>{{ row.female_employees }}</td>
+            <td>{{ row.gross_wages }}</td>
+            <td>{{ row.net_wages }}</td>
+
+            <td>{{ row.pf_remittance_date|default:"-" }}</td>
+
+            <td>
+                {% if row.esic_not_applicable %}
+                    <strong>Not Applicable</strong>
+                    {% if row.esic_not_applicable_reason %}
+                        <div style="font-size:8px; color:#92400e;">
+                            Remark: {{ row.esic_not_applicable_reason }}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {{ row.esic_remittance_date|default:"-" }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if row.pt_rc_not_applicable %}
+                    Not Applicable
+                {% else %}
+                    {{ row.rc_remittance_date|default:"-" }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if row.lwf_not_applicable %}
+                    Not Applicable
+                {% else %}
+                    {{ row.lwf_remittance_date|default:"-" }}
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9" style="text-align:center;">
+                No payroll information available.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
   <!-- ================= COMPLIANCE ENTRIES ================= -->
 
   <div class="section-heading entries-heading">

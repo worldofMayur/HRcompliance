@@ -389,9 +389,39 @@ body{
                 <td>{{ row.gross_wages }}</td>
                 <td>{{ row.net_wages }}</td>
                 <td>{{ row.pf_remittance_date|default:"-" }}</td>
-                <td>{{ row.esic_remittance_date|default:"-" }}</td>
-                <td>{{ row.rc_remittance_date|default:"-" }}</td>
-                <td>{{ row.lwf_remittance_date|default:"-" }}</td>
+                
+                <td>
+                    {% if row.esic_not_applicable %}
+                        <strong>Not Applicable</strong>
+
+                        {% if row.esic_not_applicable_reason %}
+                            <div style="font-size:9px; color:#92400e; margin-top:4px; word-wrap:break-word;">
+                                <strong>Remark:</strong>
+                                {{ row.esic_not_applicable_reason }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        {{ row.esic_remittance_date|default:"-" }}
+                    {% endif %}
+                </td>
+
+        
+                <td>
+                    {% if row.pt_rc_not_applicable %}
+                        Not Applicable
+                    {% else %}
+                        {{ row.rc_remittance_date|default:"-" }}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if row.lwf_not_applicable %}
+                        Not Applicable
+                    {% else %}
+                        {{ row.lwf_remittance_date|default:"-" }}
+                    {% endif %}
+                </td>
+
             </tr>
 
         {% empty %}

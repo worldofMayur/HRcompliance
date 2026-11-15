@@ -202,6 +202,33 @@ export default function FreezeAuditReports() {
     );
   };
 
+
+const getUniqueEntries = (entries: any[] = []) => {
+  const seen = new Set<string>();
+
+  return entries.filter((entry) => {
+    const key = JSON.stringify([
+      entry.state ?? "",
+      entry.act_name ?? "",
+      entry.section ?? "",
+      entry.form_number ?? "",
+      entry.document_name ?? "",
+      entry.audit_particular ?? "",
+      entry.status ?? "",
+      entry.observation ?? "",
+      entry.recommendation ?? "",
+    ]);
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
+
   const filteredReports =
   reports.filter((r) => {
 
@@ -847,12 +874,18 @@ xl:justify-between
 
         {selectedReport && (
 
-        <div className="
-          flex flex-col
-          overflow-hidden
-          rounded-3xl
-          min-h-[85vh]
-        ">
+
+        <div
+          className="
+            flex flex-col
+            h-[90dvh]
+            max-h-[90dvh]
+            min-h-0
+            overflow-hidden
+            rounded-3xl
+          "
+        >
+
 
 {/* MODAL HEADER */}
 
@@ -1044,14 +1077,23 @@ xl:justify-between
             {/* MODAL BODY */}
 
             {/* MODAL BODY */}
-            <div className="
-              flex-1 overflow-y-auto
-              px-4
-              py-4
-              sm:px-6
-              sm:py-5
-              space-y-5
-            ">
+
+            <div
+              className="
+                min-h-0
+                flex-1
+                overflow-y-auto
+                overflow-x-hidden
+                overscroll-contain
+                px-4
+                py-4
+                sm:px-6
+                sm:py-5
+                space-y-5
+                custom-scrollbar
+              "
+            >
+
 
               {/* AUDIT SUMMARY */}
 
@@ -1201,10 +1243,25 @@ xl:justify-between
         title: "PF Date",
         dataIndex: "pf_remittance_date",
       },
+
       {
-        title: "ESIC Date",
-        dataIndex: "esic_remittance_date",
+        title: "ESIC Date / Remark",
+        render: (_: any, record: any) =>
+          record.esic_not_applicable ? (
+            <div className="space-y-1">
+              <span className="font-medium text-amber-700">
+                Not Applicable
+              </span>
+
+              {record.esic_not_applicable_reason && (
+                <p className="max-w-[260px] whitespace-pre-wrap break-words text-xs text-gray-600">
+                  {record.esic_not_applicable_reason}
+                </p>
+              )}
+            </div>
+          ) : record.esic_remittance_date || "-",
       },
+
       {
         title: "RC Date",
         render: (_: any, record: any) =>
@@ -1246,7 +1303,7 @@ xl:justify-between
       className="compliance-table"
       tableLayout="fixed"
       scroll={{ x: 1600, y: 360 }}
-      dataSource={selectedReport.entries || []}
+      dataSource={getUniqueEntries(selectedReport.entries || [])}
       locale={{
         emptyText: (
           <Empty description="No frozen compliance observations available" />

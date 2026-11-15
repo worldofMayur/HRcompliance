@@ -49,10 +49,14 @@ interface DocumentType {
   id: number;
   name: string;
 
+
   audit_period?: string;
   workflow_status?: string;
   reupload_remark?: string;
+  observation?: string;
+  recommendation?: string;
   is_reuploaded?: boolean;
+
 
   // NEW
   already_uploaded?: boolean;
@@ -496,17 +500,21 @@ const rows: DocumentRow[] = filteredDocs.map(
         ? doc.reupload_remark || ""
         : "",
 
+
     observation:
+      doc.observation ||
       failedEntries.find(
         (entry: any) =>
           Number(entry.document_id) === Number(doc.id)
       )?.observation || "",
 
     recommendation:
+      doc.recommendation ||
       failedEntries.find(
         (entry: any) =>
           Number(entry.document_id) === Number(doc.id)
       )?.recommendation || "",
+
 
     is_reuploaded:
       doc.is_reuploaded || false,
