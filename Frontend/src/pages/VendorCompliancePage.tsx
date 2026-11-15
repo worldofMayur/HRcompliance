@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import api from "../../src/utils/api";
+import { ensureValidSession } from "../../src/utils/auth";
 import {
   Upload,
   Input,
@@ -802,9 +803,20 @@ const submitCompliance = async () => {
     return;
   }
 
-  try {
 
+
+  try {
     setLoading(true);
+
+    const validToken = await ensureValidSession();
+
+    if (!validToken) {
+      return;
+    }
+
+
+    // ================= FORM DATA =================
+
 
     // ================= FORM DATA =================
 
@@ -974,6 +986,10 @@ formData.append(
         },
       }
     );
+
+
+  setSummaryOpen(false);
+
 
     console.log(
       "✅ Compliance submit response:",
@@ -1886,14 +1902,17 @@ const isSubmissionLocked =
     message.error("Please fill all mandatory fields for every month.");
     return;
   }
-    setSummaryOpen(false);
-    submitCompliance();
+   void submitCompliance();
   }}
   okText="Submit Compliance Documents"
-  okButtonProps={{ 
-    size: "large",
-    style: { height: 35, fontWeight: 500 }
-  }}
+
+okButtonProps={{
+  size: "large",
+  loading: loading,
+  disabled: loading,
+  style: { height: 35, fontWeight: 500 },
+}}
+
 >
     <div
       className="
