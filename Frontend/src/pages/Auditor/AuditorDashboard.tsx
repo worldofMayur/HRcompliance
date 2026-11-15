@@ -1757,145 +1757,105 @@ text-sm
   {/* WRAPPER */}
   <div className="h-full min-h-0 flex flex-col bg-gray-50/40">
 
-{/* 1. COMPACT AUDIT OVERVIEW + VENDOR HISTORY */}
-<div className="shrink-0 border-b border-slate-200 bg-white px-3 py-3 sm:px-5">
-  <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-10 xl:gap-4">
-    {/* LEFT: AUDIT METADATA (70%) */}
-    <section className="min-w-0 xl:col-span-7">
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm sm:grid-cols-3 lg:grid-cols-5">
-    {/* PE */}
-    <div>
-      <span className="text-gray-400 text-xs">PE</span>
-      <div className="font-semibold text-gray-800">
-        {peList.find(p => p.id == selectedPE)?.short_name || "-"}
-      </div>
-    </div>
-
-    {/* Vendor */}
-    <div>
-      <span className="text-gray-400 text-xs">Vendor</span>
-      <div className="font-semibold text-gray-800">
-        {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
-      </div>
-    </div>
-
-    {/* State */}
-    <div>
-      <span className="text-gray-400 text-xs">State</span>
-      <div className="font-semibold text-gray-800">{selectedState || "-"}</div>
-    </div>
-
-    {/* Branch */}
-    <div>
-      <span className="text-gray-400 text-xs">Branch</span>
-      <div className="font-semibold text-gray-800">
-        {branches.find(b => b.id == selectedBranch)?.name || "-"}
-      </div>
-    </div>
-
-    {/* Period */}
-    <div>
-      <span className="text-gray-400 text-xs">Period</span>
-      <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
-    </div>
-
-    {/* Mapping Active - right after Period */}
-    <span
-  className="
-    inline-flex
-    w-fit
-    max-w-full
-    flex-wrap
-    items-center
-    px-3
-    py-1
-    rounded-full
-    bg-green-50
-    border
-    border-green-200
-    text-green-700
-    text-xs
-    font-medium
-  "
+{/* 1. COMPACT OVERVIEW — STRICT 20% OF MODAL CONTENT HEIGHT */}
+<div
+  className="shrink-0 min-h-0 overflow-x-auto overflow-y-hidden border-b border-slate-200 bg-white"
+  style={{ height: "20%", maxHeight: "20%" }}
 >
-      Mapping Active:{" "}
-      {mappingStartDate
-        ? new Date(mappingStartDate).toLocaleDateString("en-IN")
-        : "-"}{" "}
-      →{" "}
-      {mappingEndDate
-        ? new Date(mappingEndDate).toLocaleDateString("en-IN")
-        : "-"}
-    </span>
-
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-          <Button type="primary" icon={<DownloadOutlined />} onClick={downloadZip}
-            className="h-9 !bg-blue-600 hover:!bg-blue-700">
-            Download Audit Documents
-          </Button>
-          <Button type="primary" onClick={() => setComplianceModalOpen(true)}
-            className="h-9 !bg-blue-600 hover:!bg-blue-700">
-            View Compliance Summary
-          </Button>
+  {/* The minimum width makes this strip horizontally scrollable on smaller laptops. */}
+  <div className="grid h-full min-w-[1040px] grid-cols-10 gap-3 px-3 py-2 sm:px-4">
+    {/* LEFT 70%: ALL AUDIT DETAILS + BUTTONS */}
+    <section className="col-span-7 flex min-h-0 min-w-0 flex-col justify-between gap-1 overflow-y-auto pr-2">
+      <div className="grid grid-cols-5 gap-x-3 text-[11px] leading-tight">
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">PE</div>
+          <div className="truncate font-semibold text-slate-800" title={peList.find(p => p.id == selectedPE)?.short_name || ""}>
+            {peList.find(p => p.id == selectedPE)?.short_name || "-"}
+          </div>
         </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">Vendor</div>
+          <div className="truncate font-semibold text-slate-800" title={vendorList.find(v => v.id == selectedVendor)?.name || ""}>
+            {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">State</div>
+          <div className="truncate font-semibold text-slate-800" title={selectedState}>
+            {selectedState || "-"}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">Branch</div>
+          <div className="truncate font-semibold text-slate-800" title={branches.find(b => b.id == selectedBranch)?.name || ""}>
+            {branches.find(b => b.id == selectedBranch)?.name || "-"}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">Period</div>
+          <div className="truncate font-semibold text-blue-600">{auditPeriod || "-"}</div>
+        </div>
+      </div>
+
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="inline-flex max-w-full items-center rounded-full border border-green-200 bg-green-50 px-2 py-1 text-[10px] font-medium text-green-700">
+          Mapping: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"}
+          {" → "}
+          {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
+        </span>
+        {isAuditLocked && (
+          <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+            Frozen &amp; locked
+          </span>
+        )}
+        <Button
+          size="small"
+          type="primary"
+          icon={<DownloadOutlined />}
+          onClick={downloadZip}
+          loading={downloading}
+          className="!bg-blue-600 hover:!bg-blue-700"
+        >
+          Download Audit Documents
+        </Button>
+        <Button
+          size="small"
+          type="primary"
+          onClick={() => setComplianceModalOpen(true)}
+          className="!bg-blue-600 hover:!bg-blue-700"
+        >
+          View Compliance Summary
+        </Button>
       </div>
     </section>
 
-    {/* RIGHT: VENDOR REMARKS (30%) */}
-    <aside className="min-w-0 xl:col-span-3">
-{remarksData.length > 0 && (
-  <div className="min-w-0">
-    <Card
-      size="small"
-      className="h-full !shadow-none border-blue-100 bg-blue-50/30"
-      styles={{
-        body: { padding: "8px 12px", maxHeight: 108, overflowY: "auto" },
-        header: { padding: "8px 12px", minHeight: 36 },
-      }}
-      title={
-        <div className="flex items-center gap-2">
-          <span className="text-sm">📝</span>
-          <span className="font-semibold text-sm">Vendor Submission History</span>
-          <span className="hidden text-xs text-gray-400 font-normal 2xl:inline">
-            · Review vendor upload remarks before auditing
-          </span>
-        </div>
-      }
-    >
-      <Timeline
-        className="!mt-0 !mb-0 compact-timeline"
-        items={remarksData.map((item: any) => ({
-          color: item.is_reuploaded ? "orange" : "green",
-          children: (
-            <div className="flex flex-col gap-1 -mt-0.5 pb-1">
-              <Typography.Text
-                style={{
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                  color: "#374151",
-                  fontSize: 13,
-                  lineHeight: 1.45,
-                }}
-              >
-                {item.remark || "Uploaded"}
-              </Typography.Text>
-
-              <Typography.Text
-                type="secondary"
-                className="text-[11px] whitespace-nowrap shrink-0"
-              >
-                {dayjs(item.created_at).format("DD MMM YYYY • hh:mm A")}
-              </Typography.Text>
-            </div>
-          ),
-        }))}
-      />
-    </Card>
-  </div>
-)}
-
+    {/* RIGHT 30%: INDEPENDENT SCROLLING VENDOR HISTORY */}
+    <aside className="col-span-3 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-blue-100 bg-blue-50/30">
+      <div className="border-b border-blue-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
+        Vendor Submission History
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1 text-[11px]">
+        {remarksData.length ? (
+          <Timeline
+            className="!mb-0 !mt-1 compact-timeline"
+            items={remarksData.map((item: any) => ({
+              color: item.is_reuploaded ? "orange" : "green",
+              children: (
+                <div className="mb-1 min-w-0">
+                  <div className="break-words text-[11px] text-slate-700">
+                    {item.remark || "Uploaded"}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    {dayjs(item.created_at).format("DD MMM YYYY • hh:mm A")}
+                  </div>
+                </div>
+              ),
+            }))}
+          />
+        ) : (
+          <span className="text-slate-400">No submission remarks</span>
+        )}
+      </div>
     </aside>
   </div>
 </div>
@@ -1903,15 +1863,6 @@ text-sm
     {/* 2. FULL WIDTH TABLE AREA */}
 <div className="flex-1 min-h-0 flex overflow-hidden">
   <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
-        {/* Locked banner, Remarks, Stats, Table - as in previous response */}
-        {isAuditLocked && (
-          <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
-            This audit report has been frozen, finalized, and locked from further modifications.
-          </div>
-        )}
-
-        {/* Stats bar will be added here */}
-
 <div className="flex-1 min-h-0 overflow-hidden px-2 py-2 sm:px-4">
             {!hasDocuments ? (
             <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
