@@ -5,7 +5,6 @@ import {
   DownloadOutlined,
   FileTextOutlined,
 CloseOutlined,
-CheckCircleOutlined,
 SafetyCertificateOutlined,
 SearchOutlined,
 FileDoneOutlined,
@@ -466,14 +465,7 @@ return hasExceptional ? (
 
   return (
 
-    <div
-      className="
-        space-y-5
-        p-3
-        sm:p-4
-        lg:p-6
-      "
-    >
+    <div className="mx-auto w-full min-w-0 max-w-[1800px] space-y-5 px-3 py-4 sm:px-5 sm:py-6 lg:px-7">
 
       {/* HEADER */}
 
@@ -513,11 +505,7 @@ return hasExceptional ? (
 
 <div
   className="
-  grid
-  grid-cols-1
-  gap-4
-  sm:grid-cols-2
-  xl:grid-cols-3
+  grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4
   "
 >
 
@@ -528,7 +516,7 @@ return hasExceptional ? (
     rounded-3xl
     border border-gray-100
     bg-gradient-to-br from-white to-gray-50
-    p-5
+    p-4 sm:p-5
     shadow-sm
     transition-all duration-300
     hover:-translate-y-[2px]
@@ -653,7 +641,7 @@ xl:justify-between
 "
 >
 
-<div className="relative w-full xl:w-auto">
+<div className="relative min-w-0 w-full xl:max-w-[420px]">
 
   <SearchOutlined
     className="
@@ -679,7 +667,7 @@ xl:justify-between
     className="
       h-11
       w-full
-      xl:w-[360px]
+      xl:w-full
       rounded-2xl
       border border-gray-200
       bg-gray-50
@@ -812,19 +800,22 @@ xl:justify-between
             rowKey="id"
 
             columns={columns}
-            scroll={{ x: 1300 }}
+            scroll={{ x: 1060 }}
 
             dataSource={filteredReports}
 
             bordered={false}
 
             size="middle"
-
             className="freeze-audit-table"
+            style={{ width: "100%" }}
 
             pagination={{
               pageSize: 5,
               showSizeChanger: false,
+              size: "small",
+              responsive: true,
+              showLessItems: true,
             }}
 
             locale={{
@@ -846,11 +837,9 @@ xl:justify-between
         open={open}
         footer={null}
         onCancel={() => setOpen(false)}
-        width="95%"
-        style={{ maxWidth: 1700 }}
-
-        centered
-
+        width="calc(100vw - 24px)"
+        style={{ maxWidth: 1640, top: 12, paddingBottom: 0 }}
+        rootClassName="freeze-report-modal"
         destroyOnClose
 
         closable={false}
@@ -858,8 +847,8 @@ xl:justify-between
         styles={{
           body: {
             padding: 0,
-            maxHeight: "92vh",
-
+            height: "calc(100dvh - 24px)",
+            maxHeight: "calc(100dvh - 24px)",
             overflow: "hidden",
 
             background:
@@ -867,7 +856,7 @@ xl:justify-between
 
             backdropFilter: "blur(8px)",
 
-            borderRadius: "24px",
+            borderRadius: "16px",
           },
         }}
       >
@@ -878,11 +867,11 @@ xl:justify-between
         <div
           className="
             flex flex-col
-            h-[90dvh]
-            max-h-[90dvh]
+            h-full
+            max-h-full
             min-h-0
             overflow-hidden
-            rounded-3xl
+            rounded-xl
           "
         >
 
@@ -891,7 +880,7 @@ xl:justify-between
 
 <div
   className="
-    sticky top-0 z-20
+    z-20 shrink-0
     border-b border-gray-100
     bg-white/95
     backdrop-blur
@@ -900,14 +889,10 @@ xl:justify-between
 
   <div
     className="
-      flex flex-col gap-5
-      px-4
-      py-4
-      sm:px-6
-      sm:py-5
-      lg:flex-row
-      lg:items-start
-      lg:justify-between
+      flex flex-col gap-3
+      px-3 py-3
+      sm:px-5 sm:py-4
+      lg:flex-row lg:items-center lg:justify-between
     "
   >
 
@@ -944,9 +929,9 @@ xl:justify-between
 
           <h2
             className="
-              text-xl
-              sm:text-2xl
-              lg:text-[28px]
+              text-lg
+              sm:text-xl
+              lg:text-2xl
               font-semibold
               tracking-tight
               text-gray-900
@@ -972,7 +957,7 @@ xl:justify-between
 
       <div
         className="
-          mt-4 inline-flex items-center
+          mt-2 inline-flex items-center
           gap-2
           rounded-2xl
           border border-purple-100
@@ -1002,12 +987,11 @@ xl:justify-between
     <div
       className="
       flex
-      w-full
-      flex-col
-      gap-3
-      sm:w-auto
-      sm:flex-row
-      sm:items-center
+      w-full min-w-0
+      flex-row flex-wrap
+      items-center
+      gap-2
+      lg:w-auto lg:justify-end
       "
       >
 
@@ -1029,11 +1013,11 @@ xl:justify-between
           gap-2
           rounded-2xl
           bg-blue-600
-          w-full
+          flex-1 sm:flex-none
           justify-center
-          px-5
-          py-3
-          sm:w-auto
+          px-3 py-2
+          sm:px-4
+          min-h-10
           text-sm
           font-medium
           text-white
@@ -1057,9 +1041,8 @@ xl:justify-between
           setOpen(false)
         }
         className="
-          flex h-11
-          w-full
-          sm:w-11
+          flex h-10
+          w-10 shrink-0
           items-center justify-center
           rounded-2xl
           border border-gray-200
@@ -1085,11 +1068,9 @@ xl:justify-between
                 overflow-y-auto
                 overflow-x-hidden
                 overscroll-contain
-                px-4
-                py-4
-                sm:px-6
-                sm:py-5
-                space-y-5
+                px-3 py-3
+                sm:px-5 sm:py-4
+                space-y-4
                 custom-scrollbar
               "
             >
@@ -1101,7 +1082,7 @@ xl:justify-between
                 rounded-3xl
                 border border-gray-200
                 bg-gradient-to-br from-white to-gray-50/70
-                p-5
+                p-3 sm:p-5
               ">
 
                 <h3 className="
@@ -1124,13 +1105,10 @@ xl:justify-between
 
                 <div className="
                   grid
-                  grid-cols-1
-                  sm:grid-cols-2
-                  lg:grid-cols-3
-                  2xl:grid-cols-6
-                  divide-y md:divide-y-0 md:divide-x
-                  divide-gray-100
-                  gap-x-8 gap-y-4
+                  grid-cols-2
+                  sm:grid-cols-3
+                  xl:grid-cols-6
+                  gap-x-3 gap-y-3 sm:gap-x-5
                   text-sm leading-relaxed
                 ">
 
@@ -1204,7 +1182,7 @@ xl:justify-between
 
 <div className="overflow-hidden rounded-3xl border border-blue-200 bg-white">
 
-  <div className="border-b border-blue-100 bg-blue-50 px-5 py-4">
+    <div className="border-b border-blue-100 bg-blue-50 px-3 py-3 sm:px-5 sm:py-4">
     <h3 className="flex items-center gap-2 text-base font-semibold text-blue-900">
       <SafetyCertificateOutlined />
       Payroll Summary
@@ -1216,7 +1194,7 @@ xl:justify-between
     pagination={false}
     size="small"
     dataSource={selectedReport.payroll_data || []}
-    scroll={{ x: 1200 }}
+     scroll={{ x: 1050 }}
 
     columns={[
       {
@@ -1285,7 +1263,7 @@ xl:justify-between
 {/* COMPLIANCE ENTRIES */}
 <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white">
   {/* HEADER */}
-  <div className="border-b border-gray-100 px-5 py-4">
+   <div className="border-b border-gray-100 px-3 py-3 sm:px-5 sm:py-4">
     <h3 className="text-sm font-semibold text-gray-900">
       Compliance Entries
     </h3>
@@ -1295,14 +1273,14 @@ xl:justify-between
   </div>
 
   {/* TABLE with reliable vertical scroll */}
-  <div style={{ height: 420 }}>
+   <div className="min-w-0 w-full">
     <Table
       rowKey={(_, index) => index?.toString() || "row"}
       size="middle"
       pagination={false}
       className="compliance-table"
       tableLayout="fixed"
-      scroll={{ x: 1600, y: 360 }}
+       scroll={{ x: 1560, y: "clamp(220px, 48dvh, 520px)" }}
       dataSource={getUniqueEntries(selectedReport.entries || [])}
       locale={{
         emptyText: (
@@ -1437,13 +1415,13 @@ xl:justify-between
   ===================================== */
 
   .compliance-table .ant-table-body {
-    overflow-x: scroll !important;
+    overflow-x: auto !important;
     overflow-y: auto !important;
-    scrollbar-gutter: stable both-edges;
+    scrollbar-gutter: stable;
   }
 
   .compliance-table .ant-table-content {
-    overflow-x: scroll !important;
+    overflow-x: auto !important;
   }
 
   .compliance-table .ant-table-body::-webkit-scrollbar {
@@ -1554,6 +1532,36 @@ xl:justify-between
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+
+  /* Keep Ant Design modal usable on laptops and small screens. */
+  .freeze-report-modal .ant-modal-content {
+    padding: 0 !important;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  .freeze-report-modal .ant-modal-body {
+    min-width: 0;
+  }
+
+  .freeze-report-modal .ant-table-wrapper,
+  .freeze-report-modal .ant-table-container {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .freeze-report-modal .ant-table-cell {
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 640px) {
+    .freeze-report-modal .ant-modal-content {
+      border-radius: 12px;
+    }
+    .freeze-report-modal .compliance-table .ant-table-cell {
+      padding: 9px 8px !important;
+    }
   }
 
 `}</style>
