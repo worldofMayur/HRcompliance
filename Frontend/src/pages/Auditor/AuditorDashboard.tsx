@@ -1716,34 +1716,37 @@ text-sm
     paddingBottom: 0,
   }}
   title={
-    <div className="flex min-w-0 items-center justify-between gap-3">
-      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
-        <span className="text-sm font-bold text-slate-900 sm:text-base">
+    <div className="flex justify-between items-center">
+      <div className="flex flex-col">
+        <span className="font-semibold">
           {notificationDocs.length > 0 ? "Compliance Reupload Review" : "Final Audit Review"}
         </span>
-
-        {(auditSessionStatus === "FROZEN" || isFrozen) ? (
-          <span className="inline-flex items-center gap-1.5 rounded-md border-2 border-emerald-400 bg-emerald-100 px-3 py-1 text-[11px] font-extrabold tracking-wide text-emerald-900 shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-emerald-600" />
-            FROZEN &amp; LOCKED
-          </span>
-        ) : auditSessionStatus ? (
-          <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">
-            {auditSessionStatus}
-          </span>
-        ) : null}
-
         {notificationDocs.length > 0 && (
-          <span className="text-xs font-medium text-orange-600">
+          <span className="text-xs text-orange-500 mt-1">
             Reviewing {notificationDocs.length} reuploaded document(s)
           </span>
         )}
       </div>
 
+      {auditSessionStatus && (
+        <div style={{ marginBottom: 12 }}>
+          <span style={{
+            padding: "6px 12px",
+            borderRadius: 6,
+            fontSize: 12,
+            fontWeight: 600,
+            background: auditSessionStatus === "FROZEN" ? "#fee2e2" : auditSessionStatus === "SUBMITTED" ? "#dbeafe" : "#fef3c7",
+            color: auditSessionStatus === "FROZEN" ? "#b91c1c" : auditSessionStatus === "SUBMITTED" ? "#1d4ed8" : "#92400e",
+          }}>
+            {notificationDocs.length > 0 ? "REUPLOAD REVIEW" : auditSessionStatus}
+          </span>
+        </div>
+      )}
+
       <Button
         size="small"
         onClick={handleMinimize}
-        className="!shrink-0 !font-bold"
+        className="text-lg font-bold px-2"
       >
         −
       </Button>
@@ -1754,59 +1757,52 @@ text-sm
   {/* WRAPPER */}
   <div className="h-full min-h-0 flex flex-col bg-gray-50/40">
 
-{/* 1. COMPACT AUDIT OVERVIEW — 45% / 35% / 20% */}
+{/* 1. COMPACT AUDIT OVERVIEW — 30% / 30% / 40% */}
 <div
   className="shrink-0 min-h-0 overflow-x-auto overflow-y-hidden border-b border-slate-200 bg-white"
   style={{ height: "20%", maxHeight: "20%" }}
 >
-  {/* On smaller viewports, scroll sideways without squeezing the audit details. */}
-  <div className="grid h-full min-w-[1120px] grid-cols-20 gap-2 px-3 py-2 sm:px-4">
+  {/* Keep the three sections on one line; smaller screens scroll horizontally. */}
+  <div className="grid h-full min-w-[1050px] grid-cols-10 gap-2 px-3 py-2 sm:px-4">
 
-    {/* SECTION 1 — 45%: AUDIT INFORMATION + MAPPING */}
-    <section className="col-span-9 flex min-h-0 min-w-0 flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-1.5">
-      <div className="mb-1 text-[11px] font-bold text-slate-800">Audit Details</div>
-      <div className="grid grid-cols-5 gap-x-3 gap-y-1 text-[11px] leading-tight">
+    {/* SECTION 1 — 30%: AUDIT INFORMATION */}
+    <section className="col-span-3 min-h-0 min-w-0 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
+      <div className="mb-1 text-[11px] font-semibold text-slate-700">Audit Details</div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] leading-tight">
         <div className="min-w-0">
-          <div className="text-[10px] text-slate-500">PE</div>
+          <div className="text-[10px] text-slate-400">PE</div>
           <div className="truncate font-semibold text-slate-800" title={peList.find(p => p.id == selectedPE)?.short_name || ""}>
             {peList.find(p => p.id == selectedPE)?.short_name || "-"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] text-slate-500">Vendor</div>
+          <div className="text-[10px] text-slate-400">Vendor</div>
           <div className="truncate font-semibold text-slate-800" title={vendorList.find(v => v.id == selectedVendor)?.name || ""}>
             {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] text-slate-500">State</div>
+          <div className="text-[10px] text-slate-400">State</div>
           <div className="truncate font-semibold text-slate-800" title={selectedState}>
             {selectedState || "-"}
           </div>
         </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">Period</div>
+          <div className="truncate font-semibold text-blue-600">{auditPeriod || "-"}</div>
+        </div>
         <div className="col-span-2 min-w-0">
-          <div className="text-[10px] text-slate-500">Branch</div>
+          <div className="text-[10px] text-slate-400">Branch</div>
           <div className="truncate font-semibold text-slate-800" title={branches.find(b => b.id == selectedBranch)?.name || ""}>
             {branches.find(b => b.id == selectedBranch)?.name || "-"}
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-[10px] text-slate-500">Period</div>
-          <div className="truncate font-semibold text-blue-700">{auditPeriod || "-"}</div>
-        </div>
-        <div className="col-span-4 min-w-0">
-          <div className="truncate text-[10px] font-semibold text-emerald-700" title={`Mapping: ${mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"} → ${mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}`}>
-            Mapping: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"}
-            {" → "}
-            {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
           </div>
         </div>
       </div>
     </section>
 
-    {/* SECTION 2 — 35%: SCROLLABLE VENDOR HISTORY */}
-    <aside className="col-span-7 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-blue-100 bg-blue-50/30">
-      <div className="shrink-0 border-b border-blue-100 px-3 py-1 text-[11px] font-bold text-slate-800">
+    {/* SECTION 2 — 30%: VENDOR REMARKS */}
+    <aside className="col-span-3 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-blue-100 bg-blue-50/30">
+      <div className="shrink-0 border-b border-blue-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700">
         Vendor Submission History
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-1 text-[11px]">
@@ -1833,28 +1829,42 @@ text-sm
       </div>
     </aside>
 
-    {/* SECTION 3 — 20%: VERTICAL ACTIONS AT THE FAR RIGHT */}
-    <section className="col-span-4 flex min-h-0 min-w-0 flex-col justify-center gap-1.5 overflow-y-auto rounded-lg border border-slate-200 bg-white px-2 py-1.5">
-      <Button
-        size="small"
-        type="primary"
-        icon={<DownloadOutlined />}
-        onClick={downloadZip}
-        loading={downloading}
-        block
-        className="!h-8 !bg-blue-600 !px-1 !text-[11px] hover:!bg-blue-700"
-      >
-        Download Audit Documents
-      </Button>
-      <Button
-        size="small"
-        type="primary"
-        onClick={() => setComplianceModalOpen(true)}
-        block
-        className="!h-8 !bg-blue-600 !px-1 !text-[11px] hover:!bg-blue-700"
-      >
-        View Compliance Summary
-      </Button>
+    {/* SECTION 3 — 40%: STATUS + ACTIONS AT FAR RIGHT */}
+    <section className="col-span-4 flex min-h-0 min-w-0 items-end gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white px-3 py-2">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 self-stretch">
+        <span className="w-fit max-w-full rounded-full border border-green-200 bg-green-50 px-2 py-1 text-[10px] leading-tight font-medium text-green-700">
+          Mapping: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"}
+          {" → "}
+          {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
+        </span>
+        {isAuditLocked && (
+          <span className="w-fit rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+            Frozen &amp; locked
+          </span>
+        )}
+      </div>
+      <div className="flex w-[205px] shrink-0 flex-col justify-center gap-1.5 self-stretch">
+        <Button
+          size="small"
+          type="primary"
+          icon={<DownloadOutlined />}
+          onClick={downloadZip}
+          loading={downloading}
+          block
+          className="!h-8 !bg-blue-600 hover:!bg-blue-700"
+        >
+          Download Audit Documents
+        </Button>
+        <Button
+          size="small"
+          type="primary"
+          onClick={() => setComplianceModalOpen(true)}
+          block
+          className="!h-8 !bg-blue-600 hover:!bg-blue-700"
+        >
+          View Compliance Summary
+        </Button>
+      </div>
     </section>
   </div>
 </div>
