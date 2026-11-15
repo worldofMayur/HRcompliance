@@ -1757,16 +1757,18 @@ text-sm
   {/* WRAPPER */}
   <div className="h-full min-h-0 flex flex-col bg-gray-50/40">
 
-{/* 1. COMPACT OVERVIEW — STRICT 20% OF MODAL CONTENT HEIGHT */}
+{/* 1. COMPACT AUDIT OVERVIEW — 30% / 30% / 40% */}
 <div
   className="shrink-0 min-h-0 overflow-x-auto overflow-y-hidden border-b border-slate-200 bg-white"
   style={{ height: "20%", maxHeight: "20%" }}
 >
-  {/* The minimum width makes this strip horizontally scrollable on smaller laptops. */}
-  <div className="grid h-full min-w-[1040px] grid-cols-10 gap-3 px-3 py-2 sm:px-4">
-    {/* LEFT 70%: ALL AUDIT DETAILS + BUTTONS */}
-    <section className="col-span-7 flex min-h-0 min-w-0 flex-col justify-between gap-1 overflow-y-auto pr-2">
-      <div className="grid grid-cols-5 gap-x-3 text-[11px] leading-tight">
+  {/* Keep the three sections on one line; smaller screens scroll horizontally. */}
+  <div className="grid h-full min-w-[1050px] grid-cols-10 gap-2 px-3 py-2 sm:px-4">
+
+    {/* SECTION 1 — 30%: AUDIT INFORMATION */}
+    <section className="col-span-3 min-h-0 min-w-0 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
+      <div className="mb-1 text-[11px] font-semibold text-slate-700">Audit Details</div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] leading-tight">
         <div className="min-w-0">
           <div className="text-[10px] text-slate-400">PE</div>
           <div className="truncate font-semibold text-slate-800" title={peList.find(p => p.id == selectedPE)?.short_name || ""}>
@@ -1786,55 +1788,24 @@ text-sm
           </div>
         </div>
         <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">Period</div>
+          <div className="truncate font-semibold text-blue-600">{auditPeriod || "-"}</div>
+        </div>
+        <div className="col-span-2 min-w-0">
           <div className="text-[10px] text-slate-400">Branch</div>
           <div className="truncate font-semibold text-slate-800" title={branches.find(b => b.id == selectedBranch)?.name || ""}>
             {branches.find(b => b.id == selectedBranch)?.name || "-"}
           </div>
         </div>
-        <div className="min-w-0">
-          <div className="text-[10px] text-slate-400">Period</div>
-          <div className="truncate font-semibold text-blue-600">{auditPeriod || "-"}</div>
-        </div>
-      </div>
-
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="inline-flex max-w-full items-center rounded-full border border-green-200 bg-green-50 px-2 py-1 text-[10px] font-medium text-green-700">
-          Mapping: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"}
-          {" → "}
-          {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
-        </span>
-        {isAuditLocked && (
-          <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
-            Frozen &amp; locked
-          </span>
-        )}
-        <Button
-          size="small"
-          type="primary"
-          icon={<DownloadOutlined />}
-          onClick={downloadZip}
-          loading={downloading}
-          className="!bg-blue-600 hover:!bg-blue-700"
-        >
-          Download Audit Documents
-        </Button>
-        <Button
-          size="small"
-          type="primary"
-          onClick={() => setComplianceModalOpen(true)}
-          className="!bg-blue-600 hover:!bg-blue-700"
-        >
-          View Compliance Summary
-        </Button>
       </div>
     </section>
 
-    {/* RIGHT 30%: INDEPENDENT SCROLLING VENDOR HISTORY */}
+    {/* SECTION 2 — 30%: VENDOR REMARKS */}
     <aside className="col-span-3 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-blue-100 bg-blue-50/30">
-      <div className="border-b border-blue-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
+      <div className="shrink-0 border-b border-blue-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700">
         Vendor Submission History
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1 text-[11px]">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-1 text-[11px]">
         {remarksData.length ? (
           <Timeline
             className="!mb-0 !mt-1 compact-timeline"
@@ -1857,6 +1828,44 @@ text-sm
         )}
       </div>
     </aside>
+
+    {/* SECTION 3 — 40%: STATUS + ACTIONS AT FAR RIGHT */}
+    <section className="col-span-4 flex min-h-0 min-w-0 items-end gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white px-3 py-2">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 self-stretch">
+        <span className="w-fit max-w-full rounded-full border border-green-200 bg-green-50 px-2 py-1 text-[10px] leading-tight font-medium text-green-700">
+          Mapping: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"}
+          {" → "}
+          {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
+        </span>
+        {isAuditLocked && (
+          <span className="w-fit rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+            Frozen &amp; locked
+          </span>
+        )}
+      </div>
+      <div className="flex w-[205px] shrink-0 flex-col justify-center gap-1.5 self-stretch">
+        <Button
+          size="small"
+          type="primary"
+          icon={<DownloadOutlined />}
+          onClick={downloadZip}
+          loading={downloading}
+          block
+          className="!h-8 !bg-blue-600 hover:!bg-blue-700"
+        >
+          Download Audit Documents
+        </Button>
+        <Button
+          size="small"
+          type="primary"
+          onClick={() => setComplianceModalOpen(true)}
+          block
+          className="!h-8 !bg-blue-600 hover:!bg-blue-700"
+        >
+          View Compliance Summary
+        </Button>
+      </div>
+    </section>
   </div>
 </div>
 
