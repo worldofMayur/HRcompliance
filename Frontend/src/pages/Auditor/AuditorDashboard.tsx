@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import {
@@ -46,6 +46,8 @@ export default function AuditorDashboard() {
   const [branches, setBranches] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
   const [auditSearch, setAuditSearch] = useState("");
+  const auditTableViewportRef = useRef<HTMLDivElement | null>(null);
+  const [auditTableScrollHeight, setAuditTableScrollHeight] = useState(300);
   const [hasDocuments, setHasDocuments] =
   useState(true);
   const [notificationDocs, setNotificationDocs] = useState<string[]>([]);
@@ -67,6 +69,21 @@ export default function AuditorDashboard() {
 
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Fit the checklist scroll area to the remaining modal height on any screen.
+  useEffect(() => {
+    if (!isModalOpen || !auditTableViewportRef.current) return;
+
+    const viewport = auditTableViewportRef.current;
+    const observer = new ResizeObserver(() => {
+      // Keep room for Ant Design's column headings.
+      setAuditTableScrollHeight(Math.max(100, viewport.clientHeight - 48));
+    });
+
+    observer.observe(viewport);
+    setAuditTableScrollHeight(Math.max(100, viewport.clientHeight - 48));
+    return () => observer.disconnect();
+  }, [isModalOpen]);
 
   const [showAuditorGuidelines, setShowAuditorGuidelines] =
     useState(true);
@@ -1740,213 +1757,122 @@ text-sm
   {/* WRAPPER */}
   <div className="h-full min-h-0 flex flex-col bg-gray-50/40">
 
-{/* 1. METADATA BAR */}
+{/* 1. COMPACT AUDIT OVERVIEW — 30% / 30% / 40% */}
 <div
-  className="
-    shrink-0
-    border-b
-    bg-white
-    px-3
-    py-3
-    sm:px-5
-  "
+  className="shrink-0 min-h-0 overflow-x-auto overflow-y-hidden border-b border-slate-200 bg-white"
+  style={{ height: "20%", maxHeight: "20%" }}
 >
-<div
-  className="
-    grid
-    grid-cols-1
-    gap-3
-    sm:grid-cols-2
-    md:grid-cols-3
-    2xl:grid-cols-8
-    items-start
-    text-sm
-  "
->
-    
-    {/* PE */}
-    <div>
-      <span className="text-gray-400 text-xs">PE</span>
-      <div className="font-semibold text-gray-800">
-        {peList.find(p => p.id == selectedPE)?.short_name || "-"}
+  {/* Keep the three sections on one line; smaller screens scroll horizontally. */}
+  <div className="grid h-full min-w-[1050px] grid-cols-10 gap-2 px-3 py-2 sm:px-4">
+
+    {/* SECTION 1 — 30%: AUDIT INFORMATION */}
+    <section className="col-span-3 min-h-0 min-w-0 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
+      <div className="mb-1 text-[11px] font-semibold text-slate-700">Audit Details</div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] leading-tight">
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">PE</div>
+          <div className="truncate font-semibold text-slate-800" title={peList.find(p => p.id == selectedPE)?.short_name || ""}>
+            {peList.find(p => p.id == selectedPE)?.short_name || "-"}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">Vendor</div>
+          <div className="truncate font-semibold text-slate-800" title={vendorList.find(v => v.id == selectedVendor)?.name || ""}>
+            {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">State</div>
+          <div className="truncate font-semibold text-slate-800" title={selectedState}>
+            {selectedState || "-"}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[10px] text-slate-400">Period</div>
+          <div className="truncate font-semibold text-blue-600">{auditPeriod || "-"}</div>
+        </div>
+        <div className="col-span-2 min-w-0">
+          <div className="text-[10px] text-slate-400">Branch</div>
+          <div className="truncate font-semibold text-slate-800" title={branches.find(b => b.id == selectedBranch)?.name || ""}>
+            {branches.find(b => b.id == selectedBranch)?.name || "-"}
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
 
-    {/* Vendor */}
-    <div>
-      <span className="text-gray-400 text-xs">Vendor</span>
-      <div className="font-semibold text-gray-800">
-        {vendorList.find(v => v.id == selectedVendor)?.name || "-"}
+    {/* SECTION 2 — 30%: VENDOR REMARKS */}
+    <aside className="col-span-3 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-blue-100 bg-blue-50/30">
+      <div className="shrink-0 border-b border-blue-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700">
+        Vendor Submission History
       </div>
-    </div>
-
-    {/* State */}
-    <div>
-      <span className="text-gray-400 text-xs">State</span>
-      <div className="font-semibold text-gray-800">{selectedState || "-"}</div>
-    </div>
-
-    {/* Branch */}
-    <div>
-      <span className="text-gray-400 text-xs">Branch</span>
-      <div className="font-semibold text-gray-800">
-        {branches.find(b => b.id == selectedBranch)?.name || "-"}
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-1 text-[11px]">
+        {remarksData.length ? (
+          <Timeline
+            className="!mb-0 !mt-1 compact-timeline"
+            items={remarksData.map((item: any) => ({
+              color: item.is_reuploaded ? "orange" : "green",
+              children: (
+                <div className="mb-1 min-w-0">
+                  <div className="break-words text-[11px] text-slate-700">
+                    {item.remark || "Uploaded"}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    {dayjs(item.created_at).format("DD MMM YYYY • hh:mm A")}
+                  </div>
+                </div>
+              ),
+            }))}
+          />
+        ) : (
+          <span className="text-slate-400">No submission remarks</span>
+        )}
       </div>
-    </div>
+    </aside>
 
-    {/* Period */}
-    <div>
-      <span className="text-gray-400 text-xs">Period</span>
-      <div className="font-semibold text-blue-600">{auditPeriod || "-"}</div>
-    </div>
-
-    {/* Mapping Active - right after Period */}
-    <span
-  className="
-    inline-flex
-    w-fit
-    max-w-full
-    flex-wrap
-    items-center
-    px-3
-    py-1
-    rounded-full
-    bg-green-50
-    border
-    border-green-200
-    text-green-700
-    text-xs
-    font-medium
-  "
->
-      Mapping Active:{" "}
-      {mappingStartDate
-        ? new Date(mappingStartDate).toLocaleDateString("en-IN")
-        : "-"}{" "}
-      →{" "}
-      {mappingEndDate
-        ? new Date(mappingEndDate).toLocaleDateString("en-IN")
-        : "-"}
-    </span>
-
-    {/* Buttons on the right */}
-<div
-  className="
-    col-span-full
-    2xl:col-span-2
-    flex
-    w-full
-    flex-col
-    gap-2
-    pt-1
-    sm:flex-row
-    2xl:justify-end
-  "
->
-      <Button
-        type="primary"
-        icon={<DownloadOutlined />}
-        onClick={downloadZip}
-        className="
-        w-full
-        sm:w-auto
-        h-10
-        px-6
-        text-sm
-        font-medium
-        !bg-blue-600
-        hover:!bg-blue-700
-        "
-      >
-        Download Audit Documents
-      </Button>
-
-      <Button
-        type="primary"
-        onClick={() => setComplianceModalOpen(true)}
-        className="
-        w-full
-        sm:w-auto
-        h-10
-        px-6
-        text-sm
-        font-medium
-        !bg-blue-600
-        hover:!bg-blue-700
-        "
-      >
-        View Compliance Summary
-      </Button>
-    </div>
-
+    {/* SECTION 3 — 40%: STATUS + ACTIONS AT FAR RIGHT */}
+    <section className="col-span-4 flex min-h-0 min-w-0 items-end gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white px-3 py-2">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 self-stretch">
+        <span className="w-fit max-w-full rounded-full border border-green-200 bg-green-50 px-2 py-1 text-[10px] leading-tight font-medium text-green-700">
+          Mapping: {mappingStartDate ? new Date(mappingStartDate).toLocaleDateString("en-IN") : "-"}
+          {" → "}
+          {mappingEndDate ? new Date(mappingEndDate).toLocaleDateString("en-IN") : "-"}
+        </span>
+        {isAuditLocked && (
+          <span className="w-fit rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+            Frozen &amp; locked
+          </span>
+        )}
+      </div>
+      <div className="flex w-[205px] shrink-0 flex-col justify-center gap-1.5 self-stretch">
+        <Button
+          size="small"
+          type="primary"
+          icon={<DownloadOutlined />}
+          onClick={downloadZip}
+          loading={downloading}
+          block
+          className="!h-8 !bg-blue-600 hover:!bg-blue-700"
+        >
+          Download Audit Documents
+        </Button>
+        <Button
+          size="small"
+          type="primary"
+          onClick={() => setComplianceModalOpen(true)}
+          block
+          className="!h-8 !bg-blue-600 hover:!bg-blue-700"
+        >
+          View Compliance Summary
+        </Button>
+      </div>
+    </section>
   </div>
 </div>
-
 
     {/* 2. FULL WIDTH TABLE AREA */}
 <div className="flex-1 min-h-0 flex overflow-hidden">
   <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
-        {/* Locked banner, Remarks, Stats, Table - as in previous response */}
-        {isAuditLocked && (
-          <div className="mx-4 mt-3 p-2.5 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium">
-            This audit report has been frozen, finalized, and locked from further modifications.
-          </div>
-        )}
-
-{remarksData.length > 0 && (
-  <div className="mx-4 mt-2 mb-1">
-    <Card
-      size="small"
-      className="!shadow-none border-gray-200"
-      styles={{
-        body: { padding: "10px 16px 6px" },
-        header: { padding: "8px 16px", minHeight: 36 },
-      }}
-      title={
-        <div className="flex items-center gap-2">
-          <span className="text-sm">📝</span>
-          <span className="font-semibold text-sm">Vendor Submission History</span>
-          <span className="text-xs text-gray-400 font-normal">
-            · Review vendor upload remarks before auditing
-          </span>
-        </div>
-      }
-    >
-      <Timeline
-        className="!mt-0 !mb-0 compact-timeline"
-        items={remarksData.map((item: any) => ({
-          color: item.is_reuploaded ? "orange" : "green",
-          children: (
-            <div className="flex justify-between items-start gap-6 -mt-0.5 pb-1">
-              <Typography.Text
-                style={{
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                  color: "#374151",
-                  fontSize: 13,
-                  lineHeight: 1.45,
-                }}
-              >
-                {item.remark || "Uploaded"}
-              </Typography.Text>
-
-              <Typography.Text
-                type="secondary"
-                className="text-xs whitespace-nowrap shrink-0 pt-0.5"
-              >
-                {dayjs(item.created_at).format("DD MMM YYYY • hh:mm A")}
-              </Typography.Text>
-            </div>
-          ),
-        }))}
-      />
-    </Card>
-  </div>
-)}
-
-        {/* Stats bar will be added here */}
-
-<div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto px-2 sm:px-4 pt-2 pb-3">
+<div className="flex-1 min-h-0 overflow-hidden px-2 py-2 sm:px-4">
             {!hasDocuments ? (
             <div className="flex items-center justify-center h-full bg-white rounded-xl border border-dashed border-gray-300">
               <div className="text-center">
@@ -1963,13 +1889,13 @@ text-sm
               flex-col
               overflow-hidden
               rounded-xl
-              border
-              border-gray-200
+              border-2
+              border-blue-200
               bg-white
               shadow-sm
             "
           >
-            <div className="border-b border-gray-200 bg-white p-2">
+            <div className="border-b border-blue-100 bg-blue-50/60 p-2">
               <Input
                 allowClear
                 value={auditSearch}
@@ -1979,9 +1905,9 @@ text-sm
               />
             </div>
 
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div ref={auditTableViewportRef} className="flex-1 min-h-0 overflow-hidden">
               <Table
-                rowClassName={() => "hover:bg-blue-50/60 transition-colors"}
+                rowClassName={(_, index) => `${index % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-blue-50/60 transition-colors`}
                 columns={columns}
                 dataSource={filteredGroupedChecklist}
                 rowKey="id"
@@ -1991,7 +1917,7 @@ text-sm
                 className="audit-table-highlighted"
                 scroll={{
                   x: "max-content",
-                  y: "calc(100dvh - 540px)",
+                  y: auditTableScrollHeight,
                 }}
               />
             </div>
@@ -2019,37 +1945,39 @@ text-sm
   "
 >
   {/* Upload Supporting Document - ONLY for Exceptional Approval */}
-  {groupedChecklist.some(
-    (row: any) => row.status === "Exceptional Approval - Delayed Complied"
-  ) && (
-    <Upload
+{groupedChecklist.some(
+  (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+) && (
+  <Upload
+    disabled={isAuditLocked}
+    multiple={false}
+    beforeUpload={(file) => {
+      const exceptionalRows = groupedChecklist.filter(
+        (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+      );
+
+      const updatedFiles: any = { ...exceptionalFiles };
+
+      exceptionalRows.forEach((row: any) => {
+        updatedFiles[row.id] = file;
+      });
+
+      setExceptionalFiles(updatedFiles);
+      message.success(`${file.name} attached for Exceptional Approval`);
+      return false;
+    }}
+    showUploadList={false}
+  >
+    <Button
+      icon={<UploadOutlined />}
       disabled={isAuditLocked}
-      multiple={false}
-      beforeUpload={(file) => {
-        const exceptionalRows = groupedChecklist.filter(
-          (row: any) => row.status === "Exceptional Approval - Delayed Complied"
-        );
-
-        const updatedFiles: any = { ...exceptionalFiles };
-
-        exceptionalRows.forEach((row: any) => {
-          updatedFiles[row.id] = file;
-        });
-
-        setExceptionalFiles(updatedFiles);
-        message.success(`${file.name} attached for Exceptional Approval`);
-        return false;
-      }}
-      showUploadList={false}
+      className={`h-9 text-sm ${isAuditLocked ? "cursor-not-allowed" : ""}`}
+      style={isAuditLocked ? { cursor: "not-allowed" } : undefined}
     >
-      <Button
-        icon={<UploadOutlined />}
-        className="h-9 text-sm"
-      >
-        Upload Supporting Document
-      </Button>
-    </Upload>
-  )}
+      Upload Supporting Document
+    </Button>
+  </Upload>
+)}
 
   {/* Submit Button */}
   {hasDocuments && (

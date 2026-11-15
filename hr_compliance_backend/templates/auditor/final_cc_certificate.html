@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 
 <html>
@@ -35,9 +36,35 @@ body{
     margin-bottom:10px;
 }
 
+
 .header{
-    text-align:center;
+    width:100%;
+    border-collapse:collapse;
 }
+
+.header td{
+    border:none;
+    vertical-align:middle;
+}
+
+.header-content{
+    text-align:center;
+    padding-left:80px;
+}
+
+.logo-cell{
+    width:80px;
+    text-align:right;
+}
+
+.corner-logo{
+    width:68px;
+    height:68px;
+    border:2px solid #dbeafe;
+    border-radius:50%;
+    background:#ffffff;
+}
+
 
 .title{
     font-size:20px;
@@ -103,6 +130,44 @@ body{
     width:22%;
 }
 
+.payroll-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-top: 6px;
+}
+
+.payroll-table th,
+.payroll-table td {
+    border: 1px solid #e5e7eb;
+    padding: 5px 3px;
+    font-size: 8px;
+    text-align: left;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+.payroll-table th {
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-weight: bold;
+}
+
+.na-text {
+    color: #92400e;
+    font-weight: bold;
+}
+
+.na-reason {
+    display: block;
+    margin-top: 3px;
+    color: #92400e;
+    font-size: 8px;
+    font-weight: normal;
+    word-wrap: break-word;
+}
+
+
 .signature{
     margin-top:12px;
 }
@@ -141,21 +206,37 @@ body{
 
 <div class="top-line"></div>
 
-<div class="header">
 
-    <div class="title">
-        Compliance Clearance Certificate
-    </div>
+<table class="header">
+    <tr>
+        <td class="header-content">
 
-    <div class="subtitle">
-        Final Compliance Audit Successfully Completed
-    </div>
+            <div class="title">
+                Compliance Clearance Certificate
+            </div>
 
-    <div class="badge">
-        ✓ AUDIT FINALIZED & FROZEN
-    </div>
+            <div class="subtitle">
+                Final Compliance Audit Successfully Completed
+            </div>
 
-</div>
+            <div class="badge">
+                &#10003; AUDIT FINALIZED &amp; FROZEN
+            </div>
+
+        </td>
+
+        <td class="logo-cell">
+            <img
+                src="{% static 'images/KekulBiz.png' %}"
+                class="corner-logo"
+                width="68"
+                height="68"
+                alt="Kekul Bizserv"
+            />
+        </td>
+    </tr>
+</table>
+
 
 <div class="message-box">
 
@@ -206,9 +287,92 @@ body{
         <td colspan="3">{{ generated_at }}</td>
     </tr>
 
+
+</table>
+
+<!-- PAYROLL SUMMARY -->
+<div class="section-title">
+    Payroll Summary
+</div>
+
+<table class="payroll-table">
+    <thead>
+        <tr>
+            <th>Month</th>
+            <th>Male</th>
+            <th>Female</th>
+            <th>Gross Wages</th>
+            <th>Net Wages</th>
+            <th>PF</th>
+            <th>ESIC</th>
+            <th>RC</th>
+            <th>LWF</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for row in payroll_data %}
+        <tr>
+            <td>{{ row.month|default:"-" }}</td>
+            <td>{{ row.male_employees|default_if_none:"-" }}</td>
+            <td>{{ row.female_employees|default_if_none:"-" }}</td>
+            <td>{{ row.gross_wages|default_if_none:"-" }}</td>
+            <td>{{ row.net_wages|default_if_none:"-" }}</td>
+
+            <td>
+                {{ row.pf_remittance_date|default:"-" }}
+            </td>
+
+            <td>
+                {% if row.esic_not_applicable %}
+                    <span class="na-text">
+                        Not Applicable
+                    </span>
+
+                    {% if row.esic_not_applicable_reason %}
+                        <span class="na-reason">
+                            Remark:
+                            {{ row.esic_not_applicable_reason }}
+                        </span>
+                    {% endif %}
+                {% else %}
+                    {{ row.esic_remittance_date|default:"-" }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if row.pt_rc_not_applicable %}
+                    <span class="na-text">
+                        Not Applicable
+                    </span>
+                {% else %}
+                    {{ row.rc_remittance_date|default:"-" }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if row.lwf_not_applicable %}
+                    <span class="na-text">
+                        Not Applicable
+                    </span>
+                {% else %}
+                    {{ row.lwf_remittance_date|default:"-" }}
+                {% endif %}
+            </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="9" style="text-align:center;">
+                No payroll information available.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 
 <div class="signature">
+
 
     <div class="signature-line"></div>
 

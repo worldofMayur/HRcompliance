@@ -16,6 +16,10 @@ import BarChart from "./pages/Charts/BarChart";
 import Calendar from "./pages/Calendar";
 import BasicTables from "./pages/Tables/BasicTables";
 import FormElements from "./pages/Forms/FormElements";
+
+import "./utils/api";
+import SessionExpiredModal from "./components/SessionExpiredModal";
+
 import ReportsDashboard from "./pages/Reports/ReportsDashboard";
 import PENotifications from "./pages/PrincipleEmployee/Notifications";
 import Blank from "./pages/Blank";
@@ -53,8 +57,11 @@ export default function App() {
   }, []);
 
   return (
-    <Router basename="/">   {/* ← Changed to "/" */}
-      <ScrollToTop />
+
+<Router basename="/">
+  <SessionExpiredModal />
+  <ScrollToTop />
+
 
       <Routes>
 
