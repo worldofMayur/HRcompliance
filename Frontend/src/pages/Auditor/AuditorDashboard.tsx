@@ -1945,37 +1945,39 @@ text-sm
   "
 >
   {/* Upload Supporting Document - ONLY for Exceptional Approval */}
-  {groupedChecklist.some(
-    (row: any) => row.status === "Exceptional Approval - Delayed Complied"
-  ) && (
-    <Upload
+{groupedChecklist.some(
+  (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+) && (
+  <Upload
+    disabled={isAuditLocked}
+    multiple={false}
+    beforeUpload={(file) => {
+      const exceptionalRows = groupedChecklist.filter(
+        (row: any) => row.status === "Exceptional Approval - Delayed Complied"
+      );
+
+      const updatedFiles: any = { ...exceptionalFiles };
+
+      exceptionalRows.forEach((row: any) => {
+        updatedFiles[row.id] = file;
+      });
+
+      setExceptionalFiles(updatedFiles);
+      message.success(`${file.name} attached for Exceptional Approval`);
+      return false;
+    }}
+    showUploadList={false}
+  >
+    <Button
+      icon={<UploadOutlined />}
       disabled={isAuditLocked}
-      multiple={false}
-      beforeUpload={(file) => {
-        const exceptionalRows = groupedChecklist.filter(
-          (row: any) => row.status === "Exceptional Approval - Delayed Complied"
-        );
-
-        const updatedFiles: any = { ...exceptionalFiles };
-
-        exceptionalRows.forEach((row: any) => {
-          updatedFiles[row.id] = file;
-        });
-
-        setExceptionalFiles(updatedFiles);
-        message.success(`${file.name} attached for Exceptional Approval`);
-        return false;
-      }}
-      showUploadList={false}
+      className={`h-9 text-sm ${isAuditLocked ? "cursor-not-allowed" : ""}`}
+      style={isAuditLocked ? { cursor: "not-allowed" } : undefined}
     >
-      <Button
-        icon={<UploadOutlined />}
-        className="h-9 text-sm"
-      >
-        Upload Supporting Document
-      </Button>
-    </Upload>
-  )}
+      Upload Supporting Document
+    </Button>
+  </Upload>
+)}
 
   {/* Submit Button */}
   {hasDocuments && (
