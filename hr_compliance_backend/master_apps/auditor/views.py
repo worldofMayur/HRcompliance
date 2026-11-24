@@ -3500,11 +3500,20 @@ class FreezeAuditReportsAPIView(APIView):
                 "checklist"
             ).order_by("-id")
 
-        else:
-
-            entries = AuditEntry.objects.all().select_related(
-                "checklist"
+        elif request.user.role == "PE":
+            entries = AuditEntry.objects.filter(
+                submission__principal_employer__user=request.user,
+                submission__is_frozen=True,
+            ).select_related(
+                "checklist",
+                "submission",
             ).order_by("-id")
+
+        else:
+            return Response(
+                {"detail": "Not authorized to view frozen audit reports."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         grouped = {}
 
@@ -3517,17 +3526,21 @@ class FreezeAuditReportsAPIView(APIView):
 
             audit_period = entry.audit_period
 
-            mapping = (
-                VendorBranchMapping.objects.filter(
-                    branch_id=entry.branch_id
-                )
-                .select_related(
-                    "vendor",
-                    "principal_employer",
-                    "branch"
-                )
-                .first()
+            mapping_query = VendorBranchMapping.objects.filter(
+                branch_id=entry.branch_id
             )
+
+            if request.user.role == "PE" and entry.submission_id:
+                mapping_query = mapping_query.filter(
+                    principal_employer_id=entry.submission.principal_employer_id,
+                    vendor_id=entry.submission.vendor_id,
+                )
+
+            mapping = mapping_query.select_related(
+                "vendor",
+                "principal_employer",
+                "branch",
+            ).first()
 
             vendor_name = (
                 mapping.vendor.name
@@ -3553,12 +3566,19 @@ class FreezeAuditReportsAPIView(APIView):
                 else "-"
             )
 
-            submission = (
-                VendorComplianceSubmission.objects.filter(
-                    vendor_id=mapping.vendor_id if mapping else None,
-                    branch_id=entry.branch_id,
-                    audit_period__iexact=audit_period,
+            submission_query = VendorComplianceSubmission.objects.filter(
+                vendor_id=mapping.vendor_id if mapping else None,
+                branch_id=entry.branch_id,
+                audit_period__iexact=audit_period,
+            )
+
+            if request.user.role == "PE" and entry.submission_id:
+                submission_query = submission_query.filter(
+                    principal_employer_id=entry.submission.principal_employer_id
                 )
+
+            submission = (
+                submission_query
                 .exclude(frozen_at__isnull=True)
                 .order_by("-id")
                 .first()
@@ -3574,6 +3594,11 @@ class FreezeAuditReportsAPIView(APIView):
                     audit_period__iexact=audit_period,
                     is_frozen=True,
                 )
+
+                if request.user.role == "PE":
+                    payroll_submissions = payroll_submissions.filter(
+                        principal_employer_id=submission.principal_employer_id
+                    )
 
                 payroll_rows = (
                     VendorCompliancePayroll.objects
